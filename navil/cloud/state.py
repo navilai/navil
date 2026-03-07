@@ -12,7 +12,7 @@ from navil._compat import has_llm
 from navil.adaptive.feedback import FeedbackLoop
 from navil.adaptive.pattern_store import PatternStore
 from navil.anomaly_detector import BehavioralAnomalyDetector
-from navil.cloud.billing import BillingManager
+from navil.cloud.billing import get_billing_backend
 from navil.credential_manager import CredentialManager
 from navil.policy_engine import PolicyEngine
 from navil.scanner import MCPSecurityScanner
@@ -36,7 +36,12 @@ class AppState:
             pattern_store=self.pattern_store,
         )
         self.demo_seeded = False
-        self.billing = BillingManager()
+        self.billing = get_billing_backend()
+
+        # Stripe billing flag
+        from navil.cloud.stripe_billing import stripe_configured
+
+        self.stripe_enabled: bool = stripe_configured()
 
         # Proxy state (set when proxy is started from Cloud API)
         self.proxy: Any = None

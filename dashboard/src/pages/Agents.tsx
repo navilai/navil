@@ -5,6 +5,7 @@ import PageHeader from '../components/PageHeader'
 import MiniBar from '../components/MiniBar'
 import Icon from '../components/Icon'
 import { SkeletonCard, SkeletonTable } from '../components/Skeleton'
+import ConnectionError from '../components/ConnectionError'
 
 const anomalyBarColor: Record<string, string> = {
   OK: 'bg-emerald-500',
@@ -21,9 +22,12 @@ export default function Agents() {
   const [error, setError] = useState('')
   const [loaded, setLoaded] = useState(false)
 
-  useEffect(() => {
+  const fetchData = () => {
+    setError('')
     api.getAgents().then(a => { setAgents(a); setLoaded(true) }).catch(e => setError(e.message))
-  }, [])
+  }
+
+  useEffect(() => { fetchData() }, [])
 
   useEffect(() => {
     if (selected) {
@@ -32,7 +36,12 @@ export default function Agents() {
     }
   }, [selected])
 
-  if (error) return <p className="text-red-400">{error}</p>
+  if (error) return (
+    <div className="space-y-6">
+      <PageHeader title="Agent Fleet" subtitle="Monitor and inspect agent behavior" />
+      <ConnectionError onRetry={fetchData} />
+    </div>
+  )
 
   if (!loaded) return (
     <div className="space-y-6">

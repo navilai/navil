@@ -9,6 +9,7 @@ import { SkeletonTable } from '../components/Skeleton'
 import LLMErrorCard from '../components/LLMErrorCard'
 import UpgradePrompt from '../components/UpgradePrompt'
 import useBilling from '../hooks/useBilling'
+import useSessionState from '../hooks/useSessionState'
 
 export default function Policy() {
   const { canUseLLM, setPlan } = useBilling()
@@ -21,13 +22,13 @@ export default function Policy() {
   const [toolName, setToolName] = useState('')
   const [action, setAction] = useState('')
   const [checking, setChecking] = useState(false)
-  const [result, setResult] = useState<PolicyCheckResult | null>(null)
+  const [result, setResult] = useSessionState<PolicyCheckResult | null>('policy_check', null)
 
   // AI Policy Generator
-  const [genDescription, setGenDescription] = useState('')
+  const [genDescription, setGenDescription] = useSessionState('policy_desc', '')
   const [generating, setGenerating] = useState(false)
-  const [generatedYaml, setGeneratedYaml] = useState('')
-  const [generatedPolicy, setGeneratedPolicy] = useState<Record<string, unknown> | null>(null)
+  const [generatedYaml, setGeneratedYaml] = useSessionState('policy_yaml', '')
+  const [generatedPolicy, setGeneratedPolicy] = useSessionState<Record<string, unknown> | null>('policy_gen', null)
   const [refineInput, setRefineInput] = useState('')
   const [refining, setRefining] = useState(false)
   const [copied, setCopied] = useState(false)
@@ -203,7 +204,7 @@ export default function Policy() {
           Generate Policy with AI
         </h3>
         {!canUseLLM ? (
-          <UpgradePrompt feature="AI Policy Generator" onUpgrade={() => setPlan('pro')} compact />
+          <UpgradePrompt feature="AI Policy Generator" onUpgrade={() => setPlan('lite')} compact />
         ) : (
         <div className="space-y-3">
           <div>
@@ -211,9 +212,15 @@ export default function Policy() {
             <textarea
               value={genDescription}
               onChange={e => setGenDescription(e.target.value)}
-              className="w-full h-24 bg-gray-800 border border-gray-700 rounded-lg px-3 py-2 text-sm text-gray-300 focus:border-indigo-500 focus:outline-none resize-none"
-              placeholder="e.g., Only allow data-reader to read logs and metrics. Block admin tools for all agents except admin-bot. Rate limit to 100 requests/hour."
+              className="w-full h-24 bg-gray-800 border border-gray-700 rounded-lg px-3 py-2 text-sm text-gray-300 placeholder:text-gray-600 focus:border-indigo-500 focus:outline-none resize-none"
+              placeholder="e.g., Allow data-reader to read logs only. Deny write/delete for all agents except admin-bot. Rate limit 60 req/hr."
             />
+            {genDescription.trim() && genDescription.trim().split(/\s+/).length < 5 && (
+              <p className="text-xs text-amber-400 mt-1 flex items-center gap-1">
+                <Icon name="warning" size={11} />
+                Vague descriptions produce weak policies. Be specific about agents, tools, and permissions.
+              </p>
+            )}
           </div>
           <button
             onClick={async () => {
@@ -232,11 +239,11 @@ export default function Policy() {
                 setGenerating(false)
               }
             }}
-            disabled={!genDescription.trim() || generating}
+            disabled={!genDescription.trim() || (generating && !generatedYaml)}
             className="px-4 py-2.5 bg-violet-600 text-white rounded-lg text-sm font-medium hover:bg-violet-500 disabled:opacity-40 disabled:cursor-not-allowed flex items-center gap-2"
           >
-            <Icon name="sparkles" size={14} className={generating ? 'animate-spin' : ''} />
-            {generating ? 'Generating...' : 'Generate Policy'}
+            <Icon name="sparkles" size={14} className={generating && !generatedYaml ? 'animate-spin' : ''} />
+            {generating && !generatedYaml ? 'Generating...' : 'Generate Policy'}
           </button>
         </div>
         )}
@@ -282,7 +289,7 @@ export default function Policy() {
                 {copied ? 'Copied!' : 'Copy'}
               </button>
             </div>
-            <pre className="bg-gray-900/80 border border-gray-800/60 rounded-lg p-4 text-sm text-gray-300 font-mono overflow-x-auto max-h-80 overflow-y-auto whitespace-pre-wrap">
+            <pre className={`bg-gray-900/80 border border-gray-800/60 rounded-lg p-4 text-sm text-gray-300 font-mono overflow-x-auto max-h-80 overflow-y-auto whitespace-pre-wrap transition-opacity ${generating ? 'opacity-30' : ''}`}>
               {generatedYaml}
             </pre>
             <div className="flex gap-2">
@@ -298,7 +305,11 @@ export default function Policy() {
                   setRefining(true)
                   setGenError(null)
                   try {
-                    const res = await api.refinePolicy(generatedPolicy, refineInput)
+                    const hasPolicy = generatedPolicy && Object.keys(generatedPolicy).length > 0
+                    const instruction = hasPolicy
+                      ? refineInput
+                      : `${genDescription}\n\nAdditional requirement: ${refineInput}`
+                    const res = await api.refinePolicy(generatedPolicy || {}, instruction)
                     setGeneratedYaml(res.yaml)
                     setGeneratedPolicy(res.policy)
                     setRefineInput('')

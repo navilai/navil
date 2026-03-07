@@ -7,7 +7,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 from typing import Literal
 
-Plan = Literal["free", "pro"]
+Plan = Literal["free", "lite", "elite"]
 
 
 @dataclass
@@ -54,4 +54,13 @@ class BillingManager:
         """
         if has_byok:
             return True
-        return self.get_billing(user_id).plan == "pro"
+        return self.get_billing(user_id).plan in ("lite", "elite")
+
+
+def get_billing_backend() -> BillingManager:
+    """Return a Stripe-backed manager if configured, else in-memory."""
+    from navil.cloud.stripe_billing import StripeBillingManager, stripe_configured
+
+    if stripe_configured():
+        return StripeBillingManager()  # type: ignore[return-value]
+    return BillingManager()

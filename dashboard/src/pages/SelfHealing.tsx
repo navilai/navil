@@ -1,5 +1,6 @@
 import { useEffect, useState, useRef } from 'react'
 import { api, RemediationSuggestion, RemediationAction, AutoRemediateResult, LLMConfig } from '../api'
+import useSessionState from '../hooks/useSessionState'
 import PageHeader from '../components/PageHeader'
 import SeverityBadge from '../components/SeverityBadge'
 import MiniBar from '../components/MiniBar'
@@ -34,7 +35,7 @@ export default function SelfHealing() {
 
   // Manual flow state
   const [analyzing, setAnalyzing] = useState(false)
-  const [suggestion, setSuggestion] = useState<RemediationSuggestion | null>(null)
+  const [suggestion, setSuggestion] = useSessionState<RemediationSuggestion | null>('healing_suggestion', null)
   const [applying, setApplying] = useState<number | null>(null)
   const [applied, setApplied] = useState<Set<number>>(new Set())
   const [expanded, setExpanded] = useState<Set<number>>(new Set())
@@ -42,7 +43,7 @@ export default function SelfHealing() {
   // Auto-remediate flow state
   const [autoRemediating, setAutoRemediating] = useState(false)
   const [autoPhase, setAutoPhase] = useState<Phase | null>(null)
-  const [autoResult, setAutoResult] = useState<AutoRemediateResult | null>(null)
+  const [autoResult, setAutoResult] = useSessionState<AutoRemediateResult | null>('healing_auto', null)
   const [autoApplying, setAutoApplying] = useState<number | null>(null)
   const [autoApplied, setAutoApplied] = useState<Set<number>>(new Set())
 
@@ -67,7 +68,7 @@ export default function SelfHealing() {
   const handleAnalyze = async () => {
     setAnalyzing(true)
     setError(null)
-    setSuggestion(null)
+    // Don't clear suggestion — let old results stay visible until replaced
     setAutoResult(null)
     setApplied(new Set())
     setExpanded(new Set())
@@ -105,7 +106,7 @@ export default function SelfHealing() {
     setAutoPhase('analyzing')
     setError(null)
     setSuggestion(null)
-    setAutoResult(null)
+    // Don't clear autoResult — let old results stay visible until replaced
     setAutoApplied(new Set())
     setApplied(new Set())
 
@@ -202,7 +203,7 @@ export default function SelfHealing() {
         <LLMErrorCard message={error.message} errorType={error.type as any} onRetry={handleAnalyze} />
       )}
       {llmReady && !canUseLLM && !busy && !suggestion && !autoResult && (
-        <UpgradePrompt feature="Self-Healing AI" onUpgrade={() => setPlan('pro')} />
+        <UpgradePrompt feature="Self-Healing AI" onUpgrade={() => setPlan('lite')} />
       )}
 
       {/* Empty state */}
@@ -215,8 +216,8 @@ export default function SelfHealing() {
         </div>
       )}
 
-      {/* Manual analyze spinner */}
-      {analyzing && (
+      {/* Manual analyze spinner — hide once results arrive */}
+      {analyzing && !suggestion && (
         <div className="text-center py-16 animate-fadeIn">
           <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-violet-500/10 mb-4">
             <Icon name="sparkles" size={32} className="text-violet-400 animate-spin" />
@@ -226,8 +227,8 @@ export default function SelfHealing() {
         </div>
       )}
 
-      {/* Auto-remediate phased progress */}
-      {autoRemediating && (
+      {/* Auto-remediate phased progress — hide once results arrive */}
+      {autoRemediating && !autoResult && (
         <div className="text-center py-16 animate-fadeIn">
           <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-emerald-500/10 mb-6">
             <Icon name="shield" size={32} className="text-emerald-400 animate-spin" />

@@ -5,6 +5,7 @@ import StatusBadge from '../components/StatusBadge'
 import RelativeTime from '../components/RelativeTime'
 import Icon from '../components/Icon'
 import { SkeletonTable } from '../components/Skeleton'
+import ConnectionError from '../components/ConnectionError'
 
 const TTL_OPTIONS = [
   { label: '1 hour', value: 3600 },
@@ -65,7 +66,12 @@ export default function Credentials() {
     setTimeout(() => setCopied(false), 2000)
   }
 
-  if (error && !loaded) return <p className="text-red-400">{error}</p>
+  if (error && !loaded) return (
+    <div className="space-y-6">
+      <PageHeader title="Credentials" subtitle="Manage agent API tokens" />
+      <ConnectionError onRetry={load} />
+    </div>
+  )
 
   return (
     <div className="space-y-6">

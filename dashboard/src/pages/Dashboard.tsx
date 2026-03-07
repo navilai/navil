@@ -1,11 +1,12 @@
-import { useEffect, useState } from 'react'
+import { useCallback, useEffect, useState } from 'react'
+import { Link } from 'react-router-dom'
 import { api, Overview, Credential, PolicyDecision, FeedbackStats } from '../api'
 import StatCard from '../components/StatCard'
 import SeverityBadge from '../components/SeverityBadge'
 import StatusBadge from '../components/StatusBadge'
 import PageHeader from '../components/PageHeader'
 import MiniBar from '../components/MiniBar'
-import Icon from '../components/Icon'
+import Icon, { type IconName } from '../components/Icon'
 import RelativeTime from '../components/RelativeTime'
 import AnimatedNumber from '../components/AnimatedNumber'
 import { SkeletonCard, SkeletonTable } from '../components/Skeleton'
@@ -41,7 +42,8 @@ export default function Dashboard() {
   const [feedbackStats, setFeedbackStats] = useState<FeedbackStats | null>(null)
   const [error, setError] = useState('')
 
-  useEffect(() => {
+  const fetchData = useCallback(() => {
+    setError('')
     Promise.all([
       api.getOverview(),
       api.getCredentials(),
@@ -57,7 +59,14 @@ export default function Dashboard() {
       .catch(e => setError(e.message))
   }, [])
 
-  if (error) return <p className="text-red-400">{error}</p>
+  useEffect(() => { fetchData() }, [fetchData])
+
+  if (error) return (
+    <div className="space-y-6">
+      <PageHeader title="Dashboard" subtitle="Agent fleet security overview" />
+      <SetupGuide onRetry={fetchData} />
+    </div>
+  )
 
   if (!data) return (
     <div className="space-y-6">
@@ -253,6 +262,126 @@ export default function Dashboard() {
             </table>
           </div>
         )}
+      </div>
+    </div>
+  )
+}
+
+/* ── Setup Guide (shown on first visit / when no data yet) ──── */
+
+const setupSteps: { num: string; icon: IconName; title: string; description: string; code?: string; linkTo?: string; linkLabel?: string }[] = [
+  {
+    num: '01',
+    icon: 'signal',
+    title: 'Server is running',
+    description: 'The Navil backend is up and serving this dashboard. Configure your LLM provider in Settings to enable AI features.',
+    linkTo: '/dashboard/settings',
+    linkLabel: 'Open Settings',
+  },
+  {
+    num: '02',
+    icon: 'gateway',
+    title: 'Start the security proxy',
+    description: 'Launch the MCP proxy from the Gateway page to intercept and monitor agent-to-tool traffic in real time.',
+    linkTo: '/dashboard/gateway',
+    linkLabel: 'Open Gateway',
+  },
+  {
+    num: '03',
+    icon: 'scan',
+    title: 'Run your first scan',
+    description: 'Upload or paste your MCP config to scan for credential leaks, permission issues, and insecure patterns.',
+    linkTo: '/dashboard/scanner',
+    linkLabel: 'Open Scanner',
+  },
+  {
+    num: '04',
+    icon: 'shield',
+    title: 'Set up policies',
+    description: 'Define access rules for each agent and tool — rate limits, data sensitivity levels, and allowed actions.',
+    linkTo: '/dashboard/policy',
+    linkLabel: 'Open Policy Engine',
+  },
+  {
+    num: '05',
+    icon: 'sparkles',
+    title: 'Enable AI analysis',
+    description: 'Connect an LLM provider (Ollama, OpenAI, or any compatible API) for automated threat analysis and remediation.',
+    linkTo: '/dashboard/settings',
+    linkLabel: 'Go to Settings',
+  },
+]
+
+function SetupGuide({ onRetry }: { onRetry: () => void }) {
+  return (
+    <div className="max-w-2xl mx-auto animate-fadeIn">
+      {/* Welcome card */}
+      <div className="glass-card p-8 text-center mb-8">
+        <div className="w-14 h-14 mx-auto mb-5 rounded-full bg-indigo-500/10 border border-indigo-500/20 flex items-center justify-center">
+          <Icon name="shield" size={28} className="text-indigo-400" />
+        </div>
+        <h2 className="text-xl font-bold text-white mb-2">Welcome to Navil</h2>
+        <p className="text-sm text-gray-400 max-w-md mx-auto">
+          Your agent security dashboard is ready. Follow these steps to get up and running.
+        </p>
+      </div>
+
+      {/* Steps */}
+      <div className="space-y-4">
+        {setupSteps.map((step, i) => (
+          <div
+            key={step.num}
+            className="glass-card p-5 animate-slideUp opacity-0"
+            style={{ animationDelay: `${0.1 + i * 0.08}s` }}
+          >
+            <div className="flex items-start gap-4">
+              <div className="w-9 h-9 rounded-lg bg-indigo-500/10 flex items-center justify-center shrink-0 mt-0.5">
+                <Icon name={step.icon} size={18} className="text-indigo-400" />
+              </div>
+              <div className="flex-1 min-w-0">
+                <div className="flex items-center gap-2 mb-1">
+                  <span className="text-[10px] text-indigo-400 font-mono">{step.num}</span>
+                  <h3 className="text-sm font-medium text-white">{step.title}</h3>
+                </div>
+                <p className="text-sm text-gray-500 mb-2">{step.description}</p>
+                {step.code && (
+                  <div className="bg-gray-900 border border-gray-800/60 rounded-lg px-3 py-2 mb-2 font-mono text-sm text-indigo-300">
+                    $ {step.code}
+                  </div>
+                )}
+                {step.linkTo && (
+                  <Link
+                    to={step.linkTo}
+                    className="inline-flex items-center gap-1.5 text-sm text-indigo-400 hover:text-indigo-300"
+                  >
+                    {step.linkLabel}
+                    <Icon name="arrow-right" size={12} />
+                  </Link>
+                )}
+              </div>
+            </div>
+          </div>
+        ))}
+      </div>
+
+      {/* Actions */}
+      <div className="flex items-center justify-center gap-3 mt-8">
+        <button
+          onClick={onRetry}
+          className="px-5 py-2.5 bg-indigo-600 text-white rounded-lg text-sm font-medium hover:bg-indigo-500 flex items-center gap-2"
+        >
+          <Icon name="activity" size={14} />
+          Refresh Dashboard
+        </button>
+        <a
+          href="https://navil.ai/docs"
+          target="_blank"
+          rel="noopener noreferrer"
+          className="px-5 py-2.5 bg-gray-800 text-gray-300 border border-gray-700 rounded-lg text-sm font-medium hover:bg-gray-700 flex items-center gap-2"
+        >
+          <Icon name="book" size={14} />
+          Documentation
+        </a>
       </div>
     </div>
   )

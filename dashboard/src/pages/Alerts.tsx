@@ -7,6 +7,7 @@ import RelativeTime from '../components/RelativeTime'
 import LLMErrorCard from '../components/LLMErrorCard'
 import UpgradePrompt from '../components/UpgradePrompt'
 import useBilling from '../hooks/useBilling'
+import ConnectionError from '../components/ConnectionError'
 
 const severities = ['', 'CRITICAL', 'HIGH', 'MEDIUM', 'LOW']
 
@@ -20,6 +21,12 @@ export default function Alerts() {
   const [explaining, setExplaining] = useState<number | null>(null)
   const [explanations, setExplanations] = useState<Record<number, AnomalyExplanation>>({})
   const [llmError, setLlmError] = useState<Record<number, { message: string; type: string }>>({})
+
+  const fetchAlerts = () => {
+    setError('')
+    api.getAlerts().then(setAllAlerts).catch(e => setError(e.message))
+    api.getAlerts(filter || undefined).then(setAlerts).catch(e => setError(e.message))
+  }
 
   // Fetch all alerts once for counts
   useEffect(() => {
@@ -38,7 +45,12 @@ export default function Alerts() {
     alertCounts[a.severity] = (alertCounts[a.severity] || 0) + 1
   }
 
-  if (error) return <p className="text-red-400">{error}</p>
+  if (error) return (
+    <div className="space-y-6">
+      <PageHeader title="Alerts" subtitle="Anomaly detection alerts" />
+      <ConnectionError onRetry={fetchAlerts} />
+    </div>
+  )
 
   return (
     <div className="space-y-6">
@@ -145,7 +157,7 @@ export default function Alerts() {
                           {explaining === i ? 'Analyzing...' : 'Explain with AI'}
                         </button>
                       ) : (
-                        <UpgradePrompt feature="AI-powered alert analysis" onUpgrade={() => setPlan('pro')} compact />
+                        <UpgradePrompt feature="AI-powered alert analysis" onUpgrade={() => setPlan('lite')} compact />
                       )
                     ) : (
                       <div className="space-y-2 animate-fadeIn">
