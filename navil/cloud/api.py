@@ -855,10 +855,8 @@ def analytics_overview(request: Request) -> dict[str, Any]:
 
     avg_score = sum(t["score"] for t in trust_scores) / max(len(trust_scores), 1)
     total_alerts = len(alerts)
-    total_events: int = len(invocations) or sum(
-        p["total_events"]
-        for p in profiles  # type: ignore[misc]
-    )
+    _profile_events = [p["total_events"] for p in profiles]
+    total_events = len(invocations) or int(sum(_profile_events))  # type: ignore[arg-type]
     anomaly_rate = total_alerts / max(total_events, 1)
 
     return {
