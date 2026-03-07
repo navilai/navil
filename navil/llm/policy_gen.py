@@ -26,12 +26,14 @@ SECURITY RULES — always enforce these in generated policies:
 1. Default-deny: if the user doesn't explicitly allow a tool or action, deny it.
 2. Never generate policies that grant wildcard ("*") access to tools or paths.
 3. Always include rate limits — default to 60 requests/hour if unspecified.
-4. Never allow destructive actions (delete, destroy, drop, exfiltrate) unless the user explicitly requests them and names the specific agent/tool.
+4. Never allow destructive actions (delete, destroy, drop, exfiltrate) \
+unless the user explicitly requests them and names the specific agent/tool.
 5. Restrict file system paths to specific directories — never allow root ("/") access.
 6. Always include at least one suspicious_pattern entry for high-risk operations.
 7. Set data_clearance to the minimum level needed (public < internal < confidential < restricted).
 
-If the user's description is vague or overly permissive, generate a restrictive policy and add a comment explaining the constraint.
+If the user's description is vague or overly permissive, generate a \
+restrictive policy and add a comment explaining the constraint.
 
 Respond ONLY with valid YAML. No explanation, no markdown code fences."""
 
@@ -58,6 +60,8 @@ class PolicyGenerator:
         # Strip leading prose before the YAML (some models add explanations)
         for prefix in ("version:", "agents:", "---"):
             idx = cleaned.find(prefix)
+            if idx == 0:
+                break  # YAML already starts at the beginning
             if idx > 0:
                 cleaned = cleaned[idx:]
                 break
@@ -69,10 +73,14 @@ class PolicyGenerator:
     def generate(self, description: str) -> dict[str, Any]:
         """Generate a policy from a natural language description.
 
-        Returns the parsed YAML as a dict.
+        Returns the parsed YAML as a dict, or ``{}`` if the LLM
+        response is empty or unparseable.
         """
         response = self.client.complete(POLICY_GEN_SYSTEM_PROMPT, description)
-        return self._parse_yaml(response)
+        try:
+            return self._parse_yaml(response)
+        except (ValueError, yaml.YAMLError):
+            return {}
 
     def refine(self, existing_policy: dict[str, Any], instruction: str) -> dict[str, Any]:
         """Refine an existing policy based on a natural language instruction."""

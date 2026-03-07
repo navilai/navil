@@ -124,6 +124,7 @@ module = [
     "joblib.*",
     "sqlalchemy.*",
     "alembic.*",
+    "stripe.*",
 ]
 ignore_missing_imports = true
 

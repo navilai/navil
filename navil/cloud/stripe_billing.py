@@ -85,10 +85,7 @@ class StripeBillingManager:
         )
         if subs.data:
             price_id = subs.data[0].get("items", {}).get("data", [{}])[0].get("price", {}).get("id")
-            if price_id == STRIPE_ELITE_PRICE_ID:
-                plan = "elite"
-            else:
-                plan = "lite"
+            plan = "elite" if price_id == STRIPE_ELITE_PRICE_ID else "lite"
         else:
             plan = "free"
         status = CachedStatus(

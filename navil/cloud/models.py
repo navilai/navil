@@ -46,7 +46,9 @@ class Event(Base):
     duration_ms = Column(Integer, nullable=False)
     data_accessed_bytes = Column(Integer, nullable=False, default=0)
     success = Column(Boolean, nullable=False, default=True)
-    created_at = Column(DateTime, nullable=False, default=dt.datetime.utcnow, server_default=func.now())
+    created_at = Column(
+        DateTime, nullable=False, default=dt.datetime.utcnow, server_default=func.now(),
+    )
 
     __table_args__ = (
         Index("ix_events_user_agent", "user_id", "agent_name"),
@@ -65,7 +67,9 @@ class Alert(Base):
     anomaly_type = Column(String(128), nullable=False)
     severity = Column(String(16), nullable=False)  # LOW, MEDIUM, HIGH, CRITICAL
     details = Column(Text, nullable=False, default="{}")  # JSON blob
-    created_at = Column(DateTime, nullable=False, default=dt.datetime.utcnow, server_default=func.now())
+    created_at = Column(
+        DateTime, nullable=False, default=dt.datetime.utcnow, server_default=func.now(),
+    )
 
     __table_args__ = (
         Index("ix_alerts_user_severity", "user_id", "severity"),
@@ -86,7 +90,9 @@ class AgentMetric(Base):
     data_volume_mean = Column(Float, nullable=False, default=0.0)
     known_tools = Column(Text, nullable=False, default="[]")  # JSON array
     trust_score = Column(Float, nullable=True)  # 0-100, null if not computed
-    created_at = Column(DateTime, nullable=False, default=dt.datetime.utcnow, server_default=func.now())
+    created_at = Column(
+        DateTime, nullable=False, default=dt.datetime.utcnow, server_default=func.now(),
+    )
 
     __table_args__ = (
         Index("ix_agent_metrics_user_agent", "user_id", "agent_name"),
@@ -105,7 +111,9 @@ class TrustScore(Base):
     score = Column(Float, nullable=False)  # 0-100
     # JSON: {policy_compliance, anomaly_frequency, data_pattern, behavioral_stability}
     components = Column(Text, nullable=False, default="{}")
-    created_at = Column(DateTime, nullable=False, default=dt.datetime.utcnow, server_default=func.now())
+    created_at = Column(
+        DateTime, nullable=False, default=dt.datetime.utcnow, server_default=func.now(),
+    )
 
     __table_args__ = (
         Index("ix_trust_scores_user_agent", "user_id", "agent_name"),
@@ -127,7 +135,9 @@ class AnomalyTrend(Base):
     anomaly_count = Column(Integer, nullable=False, default=0)
     anomaly_rate = Column(Float, nullable=False, default=0.0)
     severity_breakdown = Column(Text, nullable=False, default="{}")  # JSON
-    created_at = Column(DateTime, nullable=False, default=dt.datetime.utcnow, server_default=func.now())
+    created_at = Column(
+        DateTime, nullable=False, default=dt.datetime.utcnow, server_default=func.now(),
+    )
 
     __table_args__ = (
         Index("ix_anomaly_trends_user_period", "user_id", "period_start"),

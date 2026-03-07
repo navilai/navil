@@ -46,7 +46,7 @@ def proxy(
 def _mock_forward(response_data: dict) -> AsyncMock:
     """Create an AsyncMock for proxy._forward that returns given response."""
     response_bytes = len(json.dumps(response_data).encode())
-    return AsyncMock(return_value=(response_data, response_bytes))
+    return AsyncMock(return_value=(response_data, response_bytes, {}))
 
 
 class TestParseJsonRPC:
@@ -145,13 +145,13 @@ class TestHandleJsonRPC:
             }
         ).encode()
 
-        result = await proxy.handle_jsonrpc(body, {})
+        result, _headers = await proxy.handle_jsonrpc(body, {})
         assert result["error"]["code"] == -32003
         assert proxy.stats["blocked"] == 1
 
     @pytest.mark.asyncio
     async def test_invalid_json_returns_parse_error(self, proxy: MCPSecurityProxy) -> None:
-        result = await proxy.handle_jsonrpc(b"not json", {})
+        result, _headers = await proxy.handle_jsonrpc(b"not json", {})
         assert result["error"]["code"] == -32700
 
     @pytest.mark.asyncio
@@ -174,7 +174,7 @@ class TestHandleJsonRPC:
 
         proxy._forward = _mock_forward(upstream_response)
 
-        result = await proxy.handle_jsonrpc(body, {"x-agent-name": "test-agent"})
+        result, _headers = await proxy.handle_jsonrpc(body, {"x-agent-name": "test-agent"})
 
         assert "result" in result
         assert proxy.stats["forwarded"] == 1
@@ -206,7 +206,7 @@ class TestHandleJsonRPC:
 
         proxy._forward = _mock_forward(upstream_response)
 
-        result = await proxy.handle_jsonrpc(body, {"x-agent-name": "test-agent"})
+        result, _headers = await proxy.handle_jsonrpc(body, {"x-agent-name": "test-agent"})
 
         assert "result" in result
         assert "http://localhost:3000" in proxy.detector.registered_tools
