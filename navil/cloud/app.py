@@ -53,6 +53,14 @@ def create_app(with_demo: bool = True) -> FastAPI:
 
     @app.on_event("startup")
     def on_startup() -> None:
+        # Initialize persistent storage (creates tables if needed)
+        try:
+            from navil.cloud.database import init_db
+
+            init_db()
+        except Exception:
+            logger.warning("Database initialization skipped (sqlalchemy not installed?)")
+
         state = AppState.get()
         if with_demo:
             seed_demo_data(state)
@@ -68,7 +76,11 @@ def create_app(with_demo: bool = True) -> FastAPI:
             file_path = DASHBOARD_DIR / path
             if file_path.exists() and file_path.is_file():
                 return FileResponse(str(file_path))
-            return FileResponse(str(DASHBOARD_DIR / "index.html"))
+            # Never cache index.html so new builds are picked up immediately
+            return FileResponse(
+                str(DASHBOARD_DIR / "index.html"),
+                headers={"Cache-Control": "no-cache, no-store, must-revalidate"},
+            )
     else:
 
         @app.get("/")

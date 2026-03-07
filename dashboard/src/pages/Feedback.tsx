@@ -49,7 +49,7 @@ export default function Feedback() {
 
   const handleSubmit = async () => {
     if (!selectedAlert) return
-    const alert = alerts.find((_, i) => String(i) === selectedAlert)
+    const alert = alerts.find(a => `${a.timestamp}|${a.anomaly_type}|${a.agent}` === selectedAlert)
     if (!alert) return
 
     setSubmitting(true)
@@ -177,8 +177,8 @@ export default function Feedback() {
                 className="w-full bg-gray-800 border border-gray-700 rounded-lg px-3 py-2 text-sm text-gray-300 focus:border-indigo-500 focus:outline-none"
               >
                 <option value="">Choose an alert...</option>
-                {alerts.slice(0, 20).map((a, i) => (
-                  <option key={`${a.timestamp}-${a.anomaly_type}-${a.agent}`} value={String(i)}>
+                {alerts.slice(0, 20).map((a) => (
+                  <option key={`${a.timestamp}-${a.anomaly_type}-${a.agent}`} value={`${a.timestamp}|${a.anomaly_type}|${a.agent}`}>
                     [{a.severity}] {a.anomaly_type} — {a.agent}
                   </option>
                 ))}

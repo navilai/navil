@@ -57,6 +57,10 @@ MANIFEST
 .claude/
 CLAUDE_CODE_PROMPT.md
 
+# Database (dev)
+*.db
+*.db-journal
+
 # Dashboard (React frontend)
 dashboard/node_modules/
 dashboard/dist/

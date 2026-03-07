@@ -78,7 +78,7 @@ def verify_clerk_token(token: str) -> dict[str, Any]:
 # ---------------------------------------------------------------------------
 
 # Paths that never require authentication (even when Clerk is configured).
-_PUBLIC_PATHS = frozenset({"/api/billing/plan"})
+_PUBLIC_PATHS = frozenset({"/api/billing/plan", "/api/billing/webhook"})
 
 
 def _is_public(path: str) -> bool:

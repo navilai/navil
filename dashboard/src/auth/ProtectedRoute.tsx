@@ -1,23 +1,38 @@
 import { SignedIn, SignedOut } from '@clerk/clerk-react'
 import { Navigate } from 'react-router-dom'
 import type { ReactNode } from 'react'
-import { isAuthEnabled } from './ClerkProviderWrapper'
+import { isAuthEnabled, isAnyAuthRequired } from './ClerkProviderWrapper'
+import { useLocalAuth } from './LocalAuthContext'
 
 /**
- * Route guard that redirects unauthenticated visitors to `/sign-in`.
+ * Route guard for dashboard routes.
  *
- * When Clerk is not configured the component is transparent — children
- * render unconditionally, preserving the current public-access behaviour.
+ * - Clerk key set → Clerk SignedIn / SignedOut gates.
+ * - VITE_NAVIL_AUTH=true → local auth (localStorage session).
+ * - Neither set → no auth, dashboard is open (default for self-hosted).
  */
 export default function ProtectedRoute({ children }: { children: ReactNode }) {
-  if (!isAuthEnabled()) return <>{children}</>
+  if (isAuthEnabled()) {
+    return (
+      <>
+        <SignedIn>{children}</SignedIn>
+        <SignedOut>
+          <Navigate to="/sign-in" replace />
+        </SignedOut>
+      </>
+    )
+  }
 
-  return (
-    <>
-      <SignedIn>{children}</SignedIn>
-      <SignedOut>
-        <Navigate to="/sign-in" replace />
-      </SignedOut>
-    </>
-  )
+  if (isAnyAuthRequired()) {
+    return <LocalGuard>{children}</LocalGuard>
+  }
+
+  // No auth configured — pass through (self-hosted default)
+  return <>{children}</>
+}
+
+function LocalGuard({ children }: { children: ReactNode }) {
+  const { user } = useLocalAuth()
+  if (!user) return <Navigate to="/sign-in" replace />
+  return <>{children}</>
 }

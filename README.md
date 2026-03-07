@@ -8,6 +8,88 @@ Supply-chain security toolkit for [Model Context Protocol (MCP)](https://modelco
 
 > Developed by **[Pantheon Lab Limited](https://pantheonlab.ai)**.
 
+<p align="center">
+  <img src="docs/screenshots/dashboard.png" alt="Navil Dashboard — Fleet overview with agent health, alerts, credential status, and policy decisions" width="800" />
+</p>
+
+## Features
+
+- **Configuration Scanning** — Detect plaintext credentials, over-privileged permissions, missing authentication, unverified sources, and malicious patterns. Produces a 0-100 security score.
+- **Credential Lifecycle** — Issue, rotate, and revoke JWT tokens with JIT provisioning, configurable TTL, usage tracking, and immutable audit logs.
+- **Policy Enforcement** — YAML-driven tool/action allow-lists, per-agent rate limiting, data-sensitivity gates, and suspicious-pattern detection.
+- **Anomaly Detection** — 12 statistical behavioral detectors: rug-pull, data exfiltration, rate spike, privilege escalation, reconnaissance, persistence, defense evasion, lateral movement, C2 beaconing, and supply chain attacks.
+- **Real-Time Proxy** — MCP security proxy that intercepts JSON-RPC traffic between agents and servers, running all 12 anomaly detectors on live invocations.
+- **Penetration Testing** — 11 SAFE-MCP attack simulations that validate your detectors actually catch threats. No real network traffic generated.
+- **LLM Analysis** — AI-powered config analysis, anomaly explanation, policy generation, and self-healing. Bring your own key (Anthropic, OpenAI, Gemini, Ollama).
+- **Cloud Dashboard** — React-based fleet monitoring dashboard with alerting, gateway traffic visualization, credential management, and pentest UI.
+
+## Dashboard
+
+Navil ships with a full-featured security dashboard for visualizing and managing your MCP fleet.
+
+<table>
+<tr>
+<td width="50%">
+
+**Penetration Testing** — Run all 11 SAFE-MCP attack scenarios and see which threats your detectors catch.
+
+<img src="docs/screenshots/pentest.png" alt="Pentest — 11/11 attacks detected" />
+
+</td>
+<td width="50%">
+
+**Config Scanner** — Paste any MCP server config and get a security score with actionable findings.
+
+<img src="docs/screenshots/scanner.png" alt="Scanner — vulnerability scan results" />
+
+</td>
+</tr>
+<tr>
+<td width="50%">
+
+**Self-Healing AI** — LLM-powered threat analysis with one-click remediation actions.
+
+<img src="docs/screenshots/self-healing.png" alt="Self-Healing — AI remediation suggestions" />
+
+</td>
+<td width="50%">
+
+**Alerts** — Real-time anomaly alerts with severity filtering across your agent fleet.
+
+<img src="docs/screenshots/alerts.png" alt="Alerts — anomaly detection alerts" />
+
+</td>
+</tr>
+<tr>
+<td width="50%">
+
+**Policy Engine** — Check permissions, review decisions, and generate YAML policies with AI.
+
+<img src="docs/screenshots/policy.png" alt="Policy — permission checks and AI generation" />
+
+</td>
+<td width="50%">
+
+**Gateway** — MCP security proxy with real-time traffic monitoring and interception.
+
+<img src="docs/screenshots/gateway.png" alt="Gateway — proxy configuration" />
+
+</td>
+</tr>
+</table>
+
+<details>
+<summary>More screenshots</summary>
+
+| Page | Screenshot |
+|------|-----------|
+| Agents | <img src="docs/screenshots/agents.png" alt="Agents" width="600" /> |
+| Credentials | <img src="docs/screenshots/credentials.png" alt="Credentials" width="600" /> |
+| Analytics | <img src="docs/screenshots/analytics.png" alt="Analytics" width="600" /> |
+| Settings | <img src="docs/screenshots/settings.png" alt="Settings" width="600" /> |
+
+</details>
+
 ## Architecture
 
 ```mermaid
@@ -33,17 +115,6 @@ graph TD
 
     CLI --> API
 ```
-
-## Features
-
-- **Configuration Scanning** — Detect plaintext credentials, over-privileged permissions, missing authentication, unverified sources, and malicious patterns. Produces a 0-100 security score.
-- **Credential Lifecycle** — Issue, rotate, and revoke JWT tokens with JIT provisioning, configurable TTL, usage tracking, and immutable audit logs.
-- **Policy Enforcement** — YAML-driven tool/action allow-lists, per-agent rate limiting, data-sensitivity gates, and suspicious-pattern detection.
-- **Anomaly Detection** — 12 statistical behavioral detectors: rug-pull, data exfiltration, rate spike, privilege escalation, reconnaissance, persistence, defense evasion, lateral movement, C2 beaconing, and supply chain attacks.
-- **Real-Time Proxy** — MCP security proxy that intercepts JSON-RPC traffic between agents and servers, running all 12 anomaly detectors on live invocations.
-- **Penetration Testing** — 11 SAFE-MCP attack simulations that validate your detectors actually catch threats. No real network traffic generated.
-- **LLM Analysis** — AI-powered config analysis, anomaly explanation, policy generation, and self-healing. Bring your own key (Anthropic, OpenAI, Gemini, Ollama).
-- **Cloud Dashboard** — React-based fleet monitoring dashboard with alerting, gateway traffic visualization, credential management, and pentest UI.
 
 ## Installation
 
@@ -99,6 +170,13 @@ pip install navil[cloud]
 navil cloud serve    # Opens at http://localhost:8484
 ```
 
+The dashboard is open by default (no login required). To enable authentication:
+
+```bash
+VITE_NAVIL_AUTH=true navil cloud serve        # Local email auth
+VITE_CLERK_PUBLISHABLE_KEY=pk_... navil cloud serve  # Clerk SSO/OAuth
+```
+
 ### AI-powered analysis (BYOK)
 
 ```bash
@@ -108,6 +186,13 @@ navil llm analyze-config config.json
 # Or specify provider explicitly
 navil llm generate-policy "only allow read access to logs" --provider gemini
 navil llm explain-anomaly '{"type": "rate_spike", "agent": "bot-1"}' --provider openai
+```
+
+Ollama is also supported for fully local, offline AI analysis:
+
+```bash
+navil cloud serve
+# Then configure in Settings: provider=openai, base_url=http://localhost:11434/v1, model=llama3.2
 ```
 
 ### Issue a short-lived credential

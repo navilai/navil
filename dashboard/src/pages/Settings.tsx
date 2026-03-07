@@ -3,6 +3,8 @@ import { api, LLMConfig } from '../api'
 import PageHeader from '../components/PageHeader'
 import Icon from '../components/Icon'
 import useBilling from '../hooks/useBilling'
+import useSessionState from '../hooks/useSessionState'
+import { isAnyAuthRequired } from '../auth/ClerkProviderWrapper'
 
 const providers = [
   { value: 'anthropic', label: 'Anthropic (Claude)', hint: 'ANTHROPIC_API_KEY' },
@@ -22,7 +24,9 @@ const compatibleExamples = [
 ]
 
 export default function Settings() {
-  const { plan, canUseLLM, hasByokKey, llmCallCount, setPlan } = useBilling()
+  const { plan, canUseLLM, hasByokKey, llmCallCount, stripeEnabled, setPlan, checkout, portal } = useBilling()
+  const [checkoutLoading, setCheckoutLoading] = useState(false)
+  const checkoutSuccess = new URLSearchParams(window.location.search).get('checkout') === 'success'
   const [config, setConfig] = useState<LLMConfig | null>(null)
   const [provider, setProvider] = useState('anthropic')
   const [apiKey, setApiKey] = useState('')
@@ -30,8 +34,8 @@ export default function Settings() {
   const [model, setModel] = useState('')
   const [saving, setSaving] = useState(false)
   const [testing, setTesting] = useState(false)
-  const [saveResult, setSaveResult] = useState<{ ok: boolean; msg: string } | null>(null)
-  const [testResult, setTestResult] = useState<{ ok: boolean; msg: string } | null>(null)
+  const [saveResult, setSaveResult] = useSessionState<{ ok: boolean; msg: string } | null>('settings_save', null)
+  const [testResult, setTestResult] = useSessionState<{ ok: boolean; msg: string } | null>('settings_test', null)
 
   const isOllama = provider === 'ollama'
   const isCompatible = provider === 'openai_compatible'
@@ -93,7 +97,18 @@ export default function Settings() {
 
   return (
     <div className="space-y-6">
-      <PageHeader title="Settings" subtitle="Configure Navil Cloud preferences" />
+      <PageHeader title="Settings" subtitle="Configure Navil preferences" />
+
+      {/* Checkout success banner */}
+      {checkoutSuccess && (
+        <div className="p-4 rounded-lg border bg-emerald-500/5 border-emerald-500/20 flex items-center gap-3 animate-fadeIn">
+          <Icon name="check" size={18} className="text-emerald-400 shrink-0" />
+          <div>
+            <p className="text-sm text-emerald-400 font-medium">Welcome to {plan === 'elite' ? 'Elite' : 'Lite'}!</p>
+            <p className="text-xs text-gray-400">Your subscription is active. {plan === 'elite' ? 'All features and analytics are now unlocked.' : 'All AI features are now unlocked.'}</p>
+          </div>
+        </div>
+      )}
 
       {/* Subscription */}
       <div className="glass-card p-6 animate-slideUp opacity-0 stagger-1">
@@ -105,38 +120,65 @@ export default function Settings() {
         <div className="flex items-center justify-between mb-4">
           <div className="flex items-center gap-3">
             <span className={`px-3 py-1 text-xs font-semibold rounded-full border ${
-              plan === 'pro'
-                ? 'bg-violet-500/15 text-violet-400 border-violet-500/30'
-                : 'bg-gray-800 text-gray-400 border-gray-700'
+              plan === 'elite'
+                ? 'bg-indigo-500/15 text-indigo-400 border-indigo-500/30'
+                : plan === 'lite'
+                  ? 'bg-violet-500/15 text-violet-400 border-violet-500/30'
+                  : 'bg-gray-800 text-gray-400 border-gray-700'
             }`}>
-              {plan === 'pro' ? 'Pro' : 'Free'}
+              {plan === 'elite' ? 'Elite' : plan === 'lite' ? 'Lite' : 'Free'}
             </span>
             <div>
               <p className="text-sm text-gray-300">
-                {plan === 'pro' ? 'All AI features unlocked' : 'Core monitoring features'}
+                {plan === 'elite' ? 'Full analytics & trust scoring' : plan === 'lite' ? 'All AI features unlocked' : 'Core monitoring features'}
               </p>
               <p className="text-xs text-gray-600 mt-0.5">
                 {hasByokKey
                   ? 'BYOK key configured — AI features available regardless of plan'
                   : plan === 'free'
-                    ? 'Upgrade to Pro or add your own API key to unlock AI features'
+                    ? 'Upgrade to Lite or add your own API key to unlock AI features'
                     : `${llmCallCount} AI calls this session`
                 }
               </p>
             </div>
           </div>
 
-          <button
-            onClick={() => setPlan(plan === 'pro' ? 'free' : 'pro')}
-            className={`px-4 py-2 text-sm font-medium rounded-lg flex items-center gap-2 ${
-              plan === 'pro'
-                ? 'bg-gray-800 text-gray-400 border border-gray-700 hover:bg-gray-700'
-                : 'bg-violet-600 text-white hover:bg-violet-500'
-            }`}
-          >
-            <Icon name="sparkles" size={14} />
-            {plan === 'pro' ? 'Downgrade' : 'Upgrade to Pro'}
-          </button>
+          {stripeEnabled ? (
+            plan !== 'free' ? (
+              <button
+                onClick={() => portal()}
+                className="px-4 py-2 text-sm font-medium rounded-lg flex items-center gap-2 bg-gray-800 text-gray-400 border border-gray-700 hover:bg-gray-700"
+              >
+                <Icon name="settings" size={14} />
+                Manage Subscription
+              </button>
+            ) : (
+              <button
+                onClick={async () => { setCheckoutLoading(true); await checkout(); setCheckoutLoading(false) }}
+                disabled={checkoutLoading}
+                className="px-4 py-2 text-sm font-medium rounded-lg flex items-center gap-2 bg-violet-600 text-white hover:bg-violet-500 disabled:opacity-50"
+              >
+                <Icon name="sparkles" size={14} />
+                {checkoutLoading ? 'Redirecting...' : 'Upgrade'}
+              </button>
+            )
+          ) : (
+            <div className="flex items-center gap-2">
+              {(['free', 'lite', 'elite'] as const).map((p) => (
+                <button
+                  key={p}
+                  onClick={() => setPlan(p)}
+                  className={`px-3 py-1.5 text-xs font-medium rounded-lg ${
+                    plan === p
+                      ? 'bg-violet-600 text-white'
+                      : 'bg-gray-800 text-gray-400 border border-gray-700 hover:bg-gray-700'
+                  }`}
+                >
+                  {p.charAt(0).toUpperCase() + p.slice(1)}
+                </button>
+              ))}
+            </div>
+          )}
         </div>
 
         {/* AI access status */}
@@ -151,10 +193,12 @@ export default function Settings() {
           </p>
         </div>
 
-        <p className="text-xs text-gray-600 mt-3 flex items-center gap-1">
-          <Icon name="info" size={10} className="text-gray-600" />
-          Subscription is session-only for demo. Stripe billing coming soon.
-        </p>
+        {!stripeEnabled && (
+          <p className="text-xs text-gray-600 mt-3 flex items-center gap-1">
+            <Icon name="info" size={10} className="text-gray-600" />
+            Subscription is session-only for demo. Configure Stripe for real billing.
+          </p>
+        )}
       </div>
 
       {/* LLM Configuration */}
@@ -230,7 +274,7 @@ export default function Settings() {
                 onChange={e => { setBaseUrl(e.target.value); setSaveResult(null) }}
                 className="w-full bg-gray-800 border border-gray-700 rounded-lg px-3 py-2 text-sm text-gray-300 focus:border-indigo-500 focus:outline-none font-mono"
                 placeholder="https://api.example.com/v1"
-                disabled={!config?.available}
+                
               />
               <div className="flex flex-wrap gap-1.5 mt-2">
                 {compatibleExamples.map(ex => (
@@ -255,7 +299,7 @@ export default function Settings() {
                 onChange={e => { setModel(e.target.value); setSaveResult(null) }}
                 className="w-full bg-gray-800 border border-gray-700 rounded-lg px-3 py-2 text-sm text-gray-300 focus:border-indigo-500 focus:outline-none font-mono"
                 placeholder={isOllama ? 'e.g., llama3.2, deepseek-r1:70b, qwen3' : 'e.g., anthropic/claude-sonnet-4, deepseek-chat, llama-3.1-70b'}
-                disabled={!config?.available}
+                
               />
             </div>
           )}
@@ -270,7 +314,7 @@ export default function Settings() {
               onKeyDown={e => e.key === 'Enter' && handleSave()}
               className="w-full bg-gray-800 border border-gray-700 rounded-lg px-3 py-2 text-sm text-gray-300 focus:border-indigo-500 focus:outline-none font-mono"
               placeholder={config?.api_key_set ? '••••••••  (key is set — enter new to replace)' : 'Paste your API key here'}
-              disabled={!config?.available}
+              
             />
             <p className="text-xs text-gray-600 mt-1 flex items-center gap-1">
               <Icon name="lock" size={10} className="text-gray-600" />
@@ -282,7 +326,7 @@ export default function Settings() {
           <div className="flex gap-3 pt-1">
             <button
               onClick={handleSave}
-              disabled={!canSave || saving || !config?.available}
+              disabled={!canSave || saving}
               className="px-4 py-2 bg-indigo-600 text-white rounded-lg text-sm font-medium hover:bg-indigo-500 disabled:opacity-40 disabled:cursor-not-allowed flex items-center gap-2"
             >
               <Icon name="check" size={14} />
@@ -321,6 +365,35 @@ export default function Settings() {
           )}
         </div>
       </div>
+
+      {/* Authentication */}
+      {!isAnyAuthRequired() && (
+        <div className="glass-card p-6 animate-slideUp opacity-0 stagger-3">
+          <h3 className="text-sm font-medium text-gray-300 mb-4 flex items-center gap-2">
+            <Icon name="lock" size={16} className="text-amber-400" />
+            Authentication
+          </h3>
+          <div className="p-3 rounded-lg border bg-amber-500/5 border-amber-500/20 mb-4 flex items-start gap-3">
+            <Icon name="warning" size={14} className="text-amber-400 shrink-0 mt-0.5" />
+            <div>
+              <p className="text-sm text-amber-400">No authentication configured</p>
+              <p className="text-xs text-gray-500 mt-0.5">
+                Your dashboard is publicly accessible. Enable auth to require sign-in.
+              </p>
+            </div>
+          </div>
+          <div className="space-y-3 text-sm">
+            <p className="text-gray-400">To enable authentication, set the environment variable before starting the dashboard:</p>
+            <div className="bg-gray-900 rounded-lg p-3 font-mono text-xs text-gray-300 border border-gray-800">
+              <p className="text-gray-500"># Local auth (email-based, stored in browser)</p>
+              <p>VITE_NAVIL_AUTH=true npm run dev</p>
+            </div>
+            <p className="text-xs text-gray-500">
+              Users will be prompted to sign in with their email. Sessions are stored in localStorage.
+            </p>
+          </div>
+        </div>
+      )}
 
       {/* About */}
       <div className="glass-card p-6 animate-slideUp opacity-0 stagger-3">

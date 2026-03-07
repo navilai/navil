@@ -2,10 +2,16 @@ import { ClerkProvider } from '@clerk/clerk-react'
 import type { ReactNode } from 'react'
 
 const CLERK_KEY = import.meta.env.VITE_CLERK_PUBLISHABLE_KEY as string | undefined
+const LOCAL_AUTH = import.meta.env.VITE_NAVIL_AUTH as string | undefined
 
 /** Whether Clerk auth is configured (publishable key present). */
 export function isAuthEnabled(): boolean {
   return !!CLERK_KEY
+}
+
+/** Whether any form of auth is required (Clerk or local). */
+export function isAnyAuthRequired(): boolean {
+  return !!CLERK_KEY || LOCAL_AUTH === 'true'
 }
 
 /**

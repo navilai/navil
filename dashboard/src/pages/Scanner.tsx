@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { api, ScanResult, ConfigAnalysis } from '../api'
+import useSessionState from '../hooks/useSessionState'
 import SeverityBadge from '../components/SeverityBadge'
 import PageHeader from '../components/PageHeader'
 import ScoreGauge from '../components/ScoreGauge'
@@ -45,19 +46,19 @@ const levelBorderColor: Record<string, string> = {
 
 export default function Scanner() {
   const { canUseLLM, setPlan } = useBilling()
-  const [config, setConfig] = useState('')
-  const [result, setResult] = useState<ScanResult | null>(null)
+  const [config, setConfig] = useSessionState('scanner_config', '')
+  const [result, setResult] = useSessionState<ScanResult | null>('scanner_result', null)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
   const [analyzing, setAnalyzing] = useState(false)
-  const [analysis, setAnalysis] = useState<ConfigAnalysis | null>(null)
+  const [analysis, setAnalysis] = useSessionState<ConfigAnalysis | null>('scanner_analysis', null)
   const [analysisError, setAnalysisError] = useState<{ message: string; type: string } | null>(null)
 
   const doScan = async () => {
     setError('')
     setAnalysis(null)
     setAnalysisError(null)
-    setResult(null)
+    // Don't clear result — let old results stay visible until replaced
     setLoading(true)
     try {
       const parsed = JSON.parse(config)
@@ -91,12 +92,23 @@ export default function Scanner() {
         </button>
       </div>
 
-      <textarea
-        value={config}
-        onChange={e => setConfig(e.target.value)}
-        placeholder="Paste your MCP server configuration JSON here..."
-        className="w-full h-64 bg-gray-900/60 backdrop-blur border border-gray-800/60 rounded-xl p-4 font-mono text-sm text-gray-300 focus:border-indigo-500 focus:outline-none resize-y leading-6"
-      />
+      <div className="relative">
+        <textarea
+          value={config}
+          onChange={e => setConfig(e.target.value)}
+          placeholder="Paste your MCP server configuration JSON here..."
+          className="w-full h-64 bg-gray-900/60 backdrop-blur border border-gray-800/60 rounded-xl p-4 pr-10 font-mono text-sm text-gray-300 focus:border-indigo-500 focus:outline-none resize-y leading-6"
+        />
+        {config && (
+          <button
+            onClick={() => { setConfig(''); setResult(null); setAnalysis(null); setAnalysisError(null); setError('') }}
+            className="absolute top-3 right-3 w-7 h-7 rounded-lg bg-gray-700 border border-gray-600 hover:bg-red-500/20 hover:border-red-500/40 flex items-center justify-center text-gray-400 hover:text-red-400 transition-colors z-10"
+            title="Clear"
+          >
+            <Icon name="x" size={14} />
+          </button>
+        )}
+      </div>
 
       <div className="relative inline-block">
         <button
@@ -104,7 +116,7 @@ export default function Scanner() {
           disabled={loading || !config.trim()}
           className="px-6 py-2.5 bg-indigo-600 text-white rounded-lg font-medium hover:bg-indigo-500 disabled:opacity-40 disabled:cursor-not-allowed flex items-center gap-2"
         >
-          {loading ? (
+          {loading && !result ? (
             <>
               <Icon name="scan" size={16} className="animate-spin" />
               Scanning...
@@ -116,7 +128,7 @@ export default function Scanner() {
             </>
           )}
         </button>
-        {loading && (
+        {loading && !result && (
           <div className="absolute inset-0 rounded-lg bg-indigo-500/20 animate-pulseGlow pointer-events-none" />
         )}
       </div>
@@ -214,7 +226,7 @@ export default function Scanner() {
             </div>
 
             {!canUseLLM && !analysis && !analysisError && !analyzing && (
-              <UpgradePrompt feature="AI Deep Analysis" onUpgrade={() => setPlan('pro')} compact />
+              <UpgradePrompt feature="AI Deep Analysis" onUpgrade={() => setPlan('lite')} compact />
             )}
 
             {analysisError && (

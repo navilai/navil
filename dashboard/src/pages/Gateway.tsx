@@ -39,6 +39,27 @@ export default function Gateway() {
 
   const [fetchError, setFetchError] = useState('')
 
+  // Start proxy form state
+  const [targetUrl, setTargetUrl] = useState('http://localhost:3000')
+  const [proxyPort, setProxyPort] = useState('9090')
+  const [requireAuth, setRequireAuth] = useState(true)
+  const [starting, setStarting] = useState(false)
+  const [startError, setStartError] = useState('')
+
+  const handleStartProxy = async () => {
+    if (!targetUrl.trim()) return
+    setStarting(true)
+    setStartError('')
+    try {
+      await api.proxyStart(targetUrl.trim(), Number(proxyPort) || 9090, requireAuth)
+      fetchData()
+    } catch (e: unknown) {
+      setStartError(e instanceof Error ? e.message : String(e))
+    } finally {
+      setStarting(false)
+    }
+  }
+
   const fetchData = useCallback(() => {
     api.proxyStatus().then(s => { setStatus(s); setFetchError('') }).catch(e => setFetchError(e.message))
     api.proxyTraffic(agentFilter || undefined, blockedOnly)
@@ -84,25 +105,71 @@ export default function Gateway() {
       </PageHeader>
 
       {!running ? (
-        /* Empty state when proxy not running */
-        <div className="flex flex-col items-center justify-center py-24 text-center">
+        /* Start proxy form */
+        <div className="flex flex-col items-center justify-center py-16 text-center">
           <div className="w-16 h-16 rounded-2xl bg-indigo-500/10 border border-indigo-500/20 flex items-center justify-center mb-6">
             <Icon name="gateway" size={32} className="text-indigo-400" />
           </div>
-          <h3 className="text-xl font-semibold mb-2">MCP Proxy Not Running</h3>
+          <h3 className="text-xl font-semibold mb-2">Start MCP Security Proxy</h3>
           <p className="text-gray-400 max-w-md mb-6">
-            Start the MCP security proxy to intercept and monitor agent-to-tool traffic
-            in real time. The proxy enforces policies, detects anomalies, and blocks threats.
+            Intercept and monitor agent-to-tool traffic in real time.
+            The proxy enforces policies, detects anomalies, and blocks threats.
           </p>
-          <div className="bg-gray-900/50 border border-gray-800/60 rounded-xl p-5 max-w-lg w-full text-left">
-            <p className="text-sm text-gray-400 mb-3">Start via CLI:</p>
-            <code className="block bg-black/30 rounded-lg p-3 text-sm text-emerald-400 font-mono">
-              navil proxy start --target http://localhost:3000 --no-auth
-            </code>
-            <p className="text-xs text-gray-500 mt-3">
-              The proxy runs on port 9090 by default. Point your AI agents
-              to <span className="text-gray-400">http://localhost:9090/mcp</span> instead
-              of the MCP server directly.
+
+          <div className="bg-gray-900/50 border border-gray-800/60 rounded-xl p-6 max-w-lg w-full text-left space-y-4">
+            <div>
+              <label className="block text-xs text-gray-500 mb-1.5">Target MCP Server URL</label>
+              <input
+                type="text"
+                value={targetUrl}
+                onChange={e => setTargetUrl(e.target.value)}
+                placeholder="http://localhost:3000"
+                className="w-full bg-gray-800 border border-gray-700 rounded-lg px-3 py-2 text-sm text-gray-300 font-mono focus:border-indigo-500 focus:outline-none"
+              />
+            </div>
+
+            <div className="flex gap-4">
+              <div className="flex-1">
+                <label className="block text-xs text-gray-500 mb-1.5">Proxy Port</label>
+                <input
+                  type="number"
+                  value={proxyPort}
+                  onChange={e => setProxyPort(e.target.value)}
+                  placeholder="9090"
+                  className="w-full bg-gray-800 border border-gray-700 rounded-lg px-3 py-2 text-sm text-gray-300 font-mono focus:border-indigo-500 focus:outline-none"
+                />
+              </div>
+              <div className="flex-1 flex items-end pb-1">
+                <label className="flex items-center gap-2 text-sm text-gray-400 cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={requireAuth}
+                    onChange={e => setRequireAuth(e.target.checked)}
+                    className="rounded border-gray-700 bg-gray-800 text-indigo-500 focus:ring-indigo-500/30"
+                  />
+                  Require auth tokens
+                </label>
+              </div>
+            </div>
+
+            {startError && (
+              <p className="text-xs text-red-400 flex items-center gap-1">
+                <Icon name="warning" size={11} />
+                {startError}
+              </p>
+            )}
+
+            <button
+              onClick={handleStartProxy}
+              disabled={!targetUrl.trim() || starting}
+              className="w-full px-4 py-2.5 bg-indigo-600 text-white rounded-lg text-sm font-medium hover:bg-indigo-500 disabled:opacity-40 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+            >
+              <Icon name="gateway" size={14} className={starting ? 'animate-spin' : ''} />
+              {starting ? 'Starting...' : 'Start Proxy'}
+            </button>
+
+            <p className="text-xs text-gray-600 text-center">
+              Agents connect to <span className="text-gray-400 font-mono">http://localhost:{proxyPort || '9090'}/mcp</span> instead of the MCP server directly.
             </p>
           </div>
         </div>

@@ -1,46 +1,114 @@
 import { useUser, useClerk } from '@clerk/clerk-react'
-import { NavLink } from 'react-router-dom'
-import { isAuthEnabled } from '../auth/ClerkProviderWrapper'
+import { NavLink, useNavigate } from 'react-router-dom'
+import { isAuthEnabled, isAnyAuthRequired } from '../auth/ClerkProviderWrapper'
+import { useLocalAuth } from '../auth/LocalAuthContext'
 import Icon from './Icon'
 
 /**
- * Sidebar footer: user avatar + sign-out when authenticated,
- * or the default version + settings link when auth is off.
+ * Sidebar footer: user avatar + sign-out.
+ * Works with both Clerk auth, local auth, and no-auth mode.
  */
 export default function UserProfile() {
-  if (!isAuthEnabled()) {
-    return <DefaultFooter />
+  if (isAuthEnabled()) {
+    return <ClerkFooter />
   }
-  return <AuthFooter />
+  if (isAnyAuthRequired()) {
+    return <LocalFooter />
+  }
+  return <NoAuthFooter />
 }
 
-function DefaultFooter() {
+function LocalFooter() {
+  const { user, signOut } = useLocalAuth()
+  const navigate = useNavigate()
+
+  const handleSignOut = () => {
+    signOut()
+    navigate('/', { replace: true })
+  }
+
+  const initial = user?.name?.[0]?.toUpperCase() || user?.email?.[0]?.toUpperCase() || '?'
+
   return (
-    <div className="relative p-4 border-t border-gray-800/60 flex items-center justify-between">
-      <p className="text-xs text-gray-600">Navil v0.1.0</p>
-      <NavLink
-        to="/settings"
-        className={({ isActive }) =>
-          `p-1.5 rounded-lg transition-colors ${
-            isActive
-              ? 'text-indigo-400 bg-indigo-500/10'
-              : 'text-gray-600 hover:text-gray-400 hover:bg-gray-800/60'
-          }`
-        }
-      >
-        <Icon name="settings" size={14} />
-      </NavLink>
+    <div className="relative border-t border-gray-800/60">
+      <div className="p-3 flex items-center gap-3">
+        <div className="w-7 h-7 rounded-full bg-indigo-500/20 border border-indigo-500/30 flex items-center justify-center shrink-0 text-xs font-semibold text-indigo-400">
+          {initial}
+        </div>
+        <div className="flex-1 min-w-0">
+          <p className="text-xs text-gray-300 truncate">{user?.name || 'User'}</p>
+          <p className="text-[10px] text-gray-600 truncate">{user?.email || ''}</p>
+        </div>
+      </div>
+
+      <div className="px-3 pb-3 flex items-center justify-between">
+        <button
+          onClick={handleSignOut}
+          className="text-[10px] text-gray-500 hover:text-red-400 transition-colors flex items-center gap-1"
+        >
+          <Icon name="lock" size={10} />
+          Sign out
+        </button>
+        <div className="flex items-center gap-2">
+          <span className="text-[10px] text-gray-600">v0.1.0</span>
+          <NavLink
+            to="/dashboard/settings"
+            className={({ isActive }) =>
+              `p-1 rounded transition-colors ${
+                isActive
+                  ? 'text-indigo-400 bg-indigo-500/10'
+                  : 'text-gray-600 hover:text-gray-400 hover:bg-gray-800/60'
+              }`
+            }
+          >
+            <Icon name="settings" size={12} />
+          </NavLink>
+        </div>
+      </div>
     </div>
   )
 }
 
-function AuthFooter() {
+function NoAuthFooter() {
+  return (
+    <div className="relative border-t border-gray-800/60">
+      <div className="p-3 flex items-center gap-3">
+        <div className="w-7 h-7 rounded-full bg-indigo-500/20 border border-indigo-500/30 flex items-center justify-center shrink-0 text-xs font-semibold text-indigo-400">
+          N
+        </div>
+        <div className="flex-1 min-w-0">
+          <p className="text-xs text-gray-300 truncate">Navil OSS</p>
+          <p className="text-[10px] text-gray-600 truncate">Self-hosted</p>
+        </div>
+      </div>
+
+      <div className="px-3 pb-3 flex items-center justify-end">
+        <div className="flex items-center gap-2">
+          <span className="text-[10px] text-gray-600">v0.1.0</span>
+          <NavLink
+            to="/dashboard/settings"
+            className={({ isActive }) =>
+              `p-1 rounded transition-colors ${
+                isActive
+                  ? 'text-indigo-400 bg-indigo-500/10'
+                  : 'text-gray-600 hover:text-gray-400 hover:bg-gray-800/60'
+              }`
+            }
+          >
+            <Icon name="settings" size={12} />
+          </NavLink>
+        </div>
+      </div>
+    </div>
+  )
+}
+
+function ClerkFooter() {
   const { user } = useUser()
   const { signOut } = useClerk()
 
   return (
     <div className="relative border-t border-gray-800/60">
-      {/* User info row */}
       <div className="p-3 flex items-center gap-3">
         {user?.imageUrl ? (
           <img
@@ -63,7 +131,6 @@ function AuthFooter() {
         </div>
       </div>
 
-      {/* Actions row */}
       <div className="px-3 pb-3 flex items-center justify-between">
         <button
           onClick={() => signOut()}
@@ -75,7 +142,7 @@ function AuthFooter() {
         <div className="flex items-center gap-2">
           <span className="text-[10px] text-gray-600">v0.1.0</span>
           <NavLink
-            to="/settings"
+            to="/dashboard/settings"
             className={({ isActive }) =>
               `p-1 rounded transition-colors ${
                 isActive

@@ -6,6 +6,7 @@ export default {
       animation: {
         fadeIn: 'fadeIn 0.4s ease-out forwards',
         slideUp: 'slideUp 0.4s ease-out forwards',
+        slideDown: 'slideDown 0.2s ease-out forwards',
         shimmer: 'shimmer 1.5s infinite',
         pulseGlow: 'pulseGlow 2s ease-in-out infinite',
         scoreReveal: 'scoreReveal 1.2s ease-out 0.3s forwards',
@@ -17,6 +18,10 @@ export default {
         },
         slideUp: {
           '0%': { opacity: '0', transform: 'translateY(12px)' },
+          '100%': { opacity: '1', transform: 'translateY(0)' },
+        },
+        slideDown: {
+          '0%': { opacity: '0', transform: 'translateY(-4px)' },
           '100%': { opacity: '1', transform: 'translateY(0)' },
         },
         shimmer: {

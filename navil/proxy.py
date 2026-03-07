@@ -23,6 +23,8 @@ from collections import deque
 from datetime import datetime, timezone
 from typing import Any
 
+from starlette.requests import Request as _StarletteRequest
+
 logger = logging.getLogger(__name__)
 
 
@@ -125,10 +127,12 @@ class MCPSecurityProxy:
 
     # ── Core Request Handler ──────────────────────────────────
 
-    async def handle_jsonrpc(self, body: bytes, headers: dict[str, str]) -> dict[str, Any]:
+    async def handle_jsonrpc(
+        self, body: bytes, headers: dict[str, str]
+    ) -> tuple[dict[str, Any], dict[str, str]]:
         """Handle an incoming JSON-RPC request.
 
-        Returns a JSON-RPC 2.0 response dict (either proxied result or error).
+        Returns (json_rpc_response, upstream_headers) tuple.
         """
         self.stats["total_requests"] += 1
         start = time.time()
@@ -137,7 +141,7 @@ class MCPSecurityProxy:
         try:
             parsed = self.parse_jsonrpc(body)
         except ValueError as e:
-            return self._jsonrpc_error(-32700, f"Parse error: {e}", None)
+            return self._jsonrpc_error(-32700, f"Parse error: {e}", None), {}
 
         req_id = parsed["id"]
         method = parsed["method"]
@@ -147,7 +151,7 @@ class MCPSecurityProxy:
         if self.require_auth and not agent_name:
             self.stats["blocked"] += 1
             self._log_traffic(agent_name, method, "", "AUTH_REQUIRED", 0, 0)
-            return self._jsonrpc_error(-32003, "Authentication required", req_id)
+            return self._jsonrpc_error(-32003, "Authentication required", req_id), {}
 
         agent_name = agent_name or "anonymous"
 
@@ -171,10 +175,10 @@ class MCPSecurityProxy:
                         -32001,
                         f"Blocked by policy: {tool_name}",
                         req_id,
-                    )
+                    ), {}
 
             # Forward to upstream
-            response_data, response_bytes = await self._forward(body, headers)
+            response_data, response_bytes, upstream_hdrs = await self._forward(body, headers)
             duration_ms = int((time.time() - start) * 1000)
 
             # Post-execution: record invocation
@@ -201,11 +205,11 @@ class MCPSecurityProxy:
 
             self.stats["forwarded"] += 1
             self._log_traffic(agent_name, method, tool_name, "ALLOWED", duration_ms, response_bytes)
-            return response_data
+            return response_data, upstream_hdrs
 
         elif method == "tools/list":
             # Forward tools/list and track registered tools
-            response_data, response_bytes = await self._forward(body, headers)
+            response_data, response_bytes, upstream_hdrs = await self._forward(body, headers)
             duration_ms = int((time.time() - start) * 1000)
 
             # Record as invocation for reconnaissance detection
@@ -236,22 +240,24 @@ class MCPSecurityProxy:
 
             self.stats["forwarded"] += 1
             self._log_traffic(agent_name, method, "", "ALLOWED", duration_ms, response_bytes)
-            return response_data
+            return response_data, upstream_hdrs
 
         else:
             # Forward all other methods transparently
-            response_data, response_bytes = await self._forward(body, headers)
+            response_data, response_bytes, upstream_hdrs = await self._forward(body, headers)
             duration_ms = int((time.time() - start) * 1000)
             self.stats["forwarded"] += 1
             self._log_traffic(agent_name, method, "", "FORWARDED", duration_ms, response_bytes)
-            return response_data
+            return response_data, upstream_hdrs
 
     # ── Upstream Forwarding ───────────────────────────────────
 
-    async def _forward(self, body: bytes, headers: dict[str, str]) -> tuple[dict[str, Any], int]:
+    async def _forward(
+        self, body: bytes, headers: dict[str, str]
+    ) -> tuple[dict[str, Any], int, dict[str, str]]:
         """Forward request to upstream MCP server via httpx.
 
-        Returns (response_json, response_size_bytes).
+        Returns (response_json, response_size_bytes, upstream_headers).
         """
         import httpx
 
@@ -262,6 +268,7 @@ class MCPSecurityProxy:
             if k.lower() not in ("host", "connection", "transfer-encoding")
         }
         forward_headers["content-type"] = "application/json"
+        forward_headers["accept"] = "application/json, text/event-stream"
 
         async with httpx.AsyncClient(timeout=30.0) as client:
             resp = await client.post(
@@ -271,16 +278,44 @@ class MCPSecurityProxy:
             )
 
         response_bytes = len(resp.content)
-        try:
-            response_data = resp.json()
-        except Exception:
-            response_data = {
-                "jsonrpc": "2.0",
-                "error": {"code": -32603, "message": "Upstream returned non-JSON"},
-                "id": None,
-            }
+        content_type = resp.headers.get("content-type", "")
 
-        return response_data, response_bytes
+        if "text/event-stream" in content_type:
+            # Parse SSE: extract JSON from "data: {...}" lines
+            response_data = self._parse_sse_response(resp.text)
+        else:
+            try:
+                response_data = resp.json()
+            except Exception:
+                response_data = {
+                    "jsonrpc": "2.0",
+                    "error": {"code": -32603, "message": "Upstream returned non-JSON"},
+                    "id": None,
+                }
+
+        # Collect headers to forward back (e.g. mcp-session-id)
+        upstream_headers = {
+            k: v
+            for k, v in resp.headers.items()
+            if k.lower() in ("mcp-session-id",)
+        }
+
+        return response_data, response_bytes, upstream_headers
+
+    @staticmethod
+    def _parse_sse_response(text: str) -> dict[str, Any]:
+        """Extract JSON-RPC response from SSE stream (text/event-stream)."""
+        for line in text.splitlines():
+            if line.startswith("data: "):
+                try:
+                    return json.loads(line[6:])
+                except json.JSONDecodeError:
+                    continue
+        return {
+            "jsonrpc": "2.0",
+            "error": {"code": -32603, "message": "No valid JSON in SSE response"},
+            "id": None,
+        }
 
     # ── Traffic Logging ───────────────────────────────────────
 
@@ -360,11 +395,11 @@ def create_proxy_app(proxy: MCPSecurityProxy) -> Any:
     )
 
     @app.post("/mcp")
-    async def handle_mcp(request: Request) -> JSONResponse:
+    async def handle_mcp(request: _StarletteRequest) -> JSONResponse:
         body = await request.body()
         headers = dict(request.headers)
-        result = await proxy.handle_jsonrpc(body, headers)
-        return JSONResponse(content=result)
+        result, upstream_headers = await proxy.handle_jsonrpc(body, headers)
+        return JSONResponse(content=result, headers=upstream_headers)
 
     @app.get("/health")
     async def health() -> dict[str, Any]:

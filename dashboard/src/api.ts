@@ -20,21 +20,30 @@ async function authHeaders(): Promise<Record<string, string>> {
 
 // ── Error parsing ─────────────────────────────────────────
 async function parseError(res: Response, method: string, path: string): Promise<never> {
+  let body: Record<string, unknown> | null = null
   try {
-    const body = await res.json()
-    if (body.detail?.message) {
-      const err = new Error(body.detail.message) as Error & { errorType?: string }
-      err.errorType = body.detail.error_type || 'unknown'
+    body = await res.json()
+  } catch {
+    // Response is not JSON (e.g. HTML 404 from proxy) — fall through to generic error
+  }
+  if (body?.detail) {
+    const detail = body.detail as Record<string, unknown>
+    if (typeof detail === 'object' && detail?.message) {
+      const err = new Error(detail.message as string) as Error & { errorType?: string }
+      err.errorType = (detail.error_type as string) || 'unknown'
       throw err
     }
     if (typeof body.detail === 'string') throw new Error(body.detail)
-  } catch (e) {
-    if (e instanceof Error && !e.message.includes('failed:')) throw e
+  }
+  // Friendly message when backend is unreachable (500 from dev proxy or no backend)
+  if (res.status === 500 || res.status === 502 || res.status === 503) {
+    throw new Error('Backend not reachable. Run: navil cloud serve')
   }
   throw new Error(`${method} ${path} failed: ${res.status}`)
 }
 
 const FETCH_TIMEOUT_MS = 30_000
+const LLM_TIMEOUT_MS = 120_000  // LLM calls can be slow (Ollama, large models)
 
 function withTimeout(ms: number): { signal: AbortSignal; clear: () => void } {
   const controller = new AbortController()
@@ -44,14 +53,15 @@ function withTimeout(ms: number): { signal: AbortSignal; clear: () => void } {
 
 async function get<T>(path: string): Promise<T> {
   const headers = await authHeaders()
-  const { signal, clear } = withTimeout(FETCH_TIMEOUT_MS)
+  const timeout = path.startsWith('/llm/') ? LLM_TIMEOUT_MS : FETCH_TIMEOUT_MS
+  const { signal, clear } = withTimeout(timeout)
   try {
     const res = await fetch(`${BASE}${path}`, { headers, signal })
     if (!res.ok) return parseError(res, 'GET', path)
     try { return await res.json() } catch { throw new Error(`GET ${path}: invalid JSON response`) }
   } catch (e) {
     if (e instanceof DOMException && e.name === 'AbortError') {
-      throw new Error(`GET ${path} timed out after ${FETCH_TIMEOUT_MS / 1000}s`)
+      throw new Error(`GET ${path} timed out after ${timeout / 1000}s`)
     }
     throw e
   } finally {
@@ -61,7 +71,8 @@ async function get<T>(path: string): Promise<T> {
 
 async function post<T>(path: string, body: unknown): Promise<T> {
   const auth = await authHeaders()
-  const { signal, clear } = withTimeout(FETCH_TIMEOUT_MS)
+  const timeout = path.startsWith('/llm/') ? LLM_TIMEOUT_MS : FETCH_TIMEOUT_MS
+  const { signal, clear } = withTimeout(timeout)
   try {
     const res = await fetch(`${BASE}${path}`, {
       method: 'POST',
@@ -73,7 +84,7 @@ async function post<T>(path: string, body: unknown): Promise<T> {
     try { return await res.json() } catch { throw new Error(`POST ${path}: invalid JSON response`) }
   } catch (e) {
     if (e instanceof DOMException && e.name === 'AbortError') {
-      throw new Error(`POST ${path} timed out after ${FETCH_TIMEOUT_MS / 1000}s`)
+      throw new Error(`POST ${path} timed out after ${timeout / 1000}s`)
     }
     throw e
   } finally {
@@ -314,12 +325,51 @@ export interface PentestReport {
   results: PentestScenarioResult[]
 }
 
+// Analytics Types (Elite)
+export interface AgentTrustScore {
+  agent_name: string
+  score: number
+  verdict: string
+  components: {
+    policy_compliance: number
+    anomaly_frequency: number
+    data_pattern: number
+    behavioral_stability: number
+  }
+}
+
+export interface BehavioralProfileSummary {
+  agent_name: string
+  total_events: number
+  top_tool: string
+  top_tool_pct: number
+  avg_duration_ms: number
+  total_data_bytes: number
+}
+
+export interface TrendPoint {
+  label: string
+  events: number
+  anomalies: number
+}
+
+export interface AnalyticsOverview {
+  avg_trust_score: number
+  agents_monitored: number
+  anomaly_rate: number
+  total_events_24h: number
+  trust_scores: AgentTrustScore[]
+  behavioral_profiles: BehavioralProfileSummary[]
+  trends: TrendPoint[]
+}
+
 // Billing Types
 export interface BillingInfo {
-  plan: 'free' | 'pro'
+  plan: 'free' | 'lite' | 'elite'
   llm_call_count: number
   has_byok_key: boolean
   can_use_llm: boolean
+  stripe_enabled: boolean
 }
 
 // API calls
@@ -388,8 +438,15 @@ export const api = {
   proxyStart: (target_url: string, port = 9090, require_auth = true) =>
     post<{ status: string; target_url: string; port: number }>('/proxy/start', { target_url, port, require_auth }),
 
+  // Analytics endpoints (Elite)
+  getAnalyticsOverview: () => get<AnalyticsOverview>('/analytics/overview'),
+
   // Billing endpoints
   getBilling: () => get<BillingInfo>('/billing/plan'),
   setPlan: (plan: string) =>
     post<{ plan: string; status: string }>('/billing/plan', { plan }),
+  createCheckout: (data: { success_url: string; cancel_url: string }) =>
+    post<{ checkout_url: string }>('/billing/checkout', data),
+  createPortal: () =>
+    post<{ portal_url: string }>('/billing/portal', {}),
 }
