@@ -23,7 +23,10 @@ from collections import deque
 from datetime import datetime, timezone
 from typing import Any
 
-from starlette.requests import Request as _StarletteRequest
+try:
+    from starlette.requests import Request as _StarletteRequest
+except ModuleNotFoundError:  # starlette is optional (proxy extras)
+    _StarletteRequest = None  # type: ignore[assignment,misc]
 
 logger = logging.getLogger(__name__)
 
@@ -395,7 +398,7 @@ def create_proxy_app(proxy: MCPSecurityProxy) -> Any:
     )
 
     @app.post("/mcp")
-    async def handle_mcp(request: _StarletteRequest) -> JSONResponse:
+    async def handle_mcp(request: Request) -> JSONResponse:
         body = await request.body()
         headers = dict(request.headers)
         result, upstream_headers = await proxy.handle_jsonrpc(body, headers)

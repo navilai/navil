@@ -111,7 +111,11 @@ class LLMClient:
             content = msg.content or ""
             # Some thinking models (e.g. glm-4) put output in reasoning
             if not content.strip():
-                reasoning = getattr(msg, "reasoning", None) or getattr(msg, "reasoning_content", None) or ""
+                reasoning = (
+                    getattr(msg, "reasoning", None)
+                    or getattr(msg, "reasoning_content", None)
+                    or ""
+                )
                 if reasoning:
                     logger.debug("Empty content, falling back to reasoning field")
                     content = reasoning

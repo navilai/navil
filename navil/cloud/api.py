@@ -797,14 +797,14 @@ def analytics_overview(request: Request) -> dict[str, Any]:
         if not bl:
             continue
         tools = list(bl.known_tools)
-        agent_invocations = [inv for inv in invocations if inv.get("agent") == name]
+        agent_invocations = [inv for inv in invocations if inv.agent_name == name]
         total = len(agent_invocations)
         tool_counts: dict[str, int] = {}
         total_bytes = 0
         for inv in agent_invocations:
-            t = inv.get("tool", "unknown")
+            t = inv.tool_name or "unknown"
             tool_counts[t] = tool_counts.get(t, 0) + 1
-            total_bytes += inv.get("data_bytes", 0)
+            total_bytes += inv.data_accessed_bytes
 
         top_tool = (
             max(tool_counts, key=tool_counts.get)  # type: ignore[arg-type]
@@ -841,7 +841,9 @@ def analytics_overview(request: Request) -> dict[str, Any]:
 
     avg_score = sum(t["score"] for t in trust_scores) / max(len(trust_scores), 1)
     total_alerts = len(alerts)
-    total_events = len(invocations) or sum(p["total_events"] for p in profiles)
+    total_events: int = len(invocations) or sum(
+        p["total_events"] for p in profiles  # type: ignore[misc]
+    )
     anomaly_rate = total_alerts / max(total_events, 1)
 
     return {
@@ -878,7 +880,11 @@ def run_pentest(req: PentestRequest) -> dict[str, Any]:
             "passed": 1 if result.verdict == "PASS" else 0,
             "failed": 1 if result.verdict == "FAIL" else 0,
             "partial": 1 if result.verdict == "PARTIAL" else 0,
-            "detection_rate": 100.0 if result.verdict == "PASS" else 50.0 if result.verdict == "PARTIAL" else 0.0,
+            "detection_rate": (
+                100.0 if result.verdict == "PASS"
+                else 50.0 if result.verdict == "PARTIAL"
+                else 0.0
+            ),
             "results": [result.to_dict()],
         }
     return engine.run_all()
