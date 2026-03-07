@@ -575,8 +575,7 @@ Examples:
         if args.scenario:
             if args.scenario not in SCENARIOS:
                 print(
-                    f"Unknown scenario: {args.scenario}\n"
-                    f"Available: {', '.join(SCENARIOS.keys())}",
+                    f"Unknown scenario: {args.scenario}\nAvailable: {', '.join(SCENARIOS.keys())}",
                     file=sys.stderr,
                 )
                 return 1
