@@ -80,7 +80,7 @@ export default function Credentials() {
       {/* Issue new credential */}
       <div className="glass-card p-5">
         <h3 className="text-sm font-medium text-gray-300 mb-4 flex items-center gap-2">
-          <Icon name="key" size={16} className="text-indigo-400" />
+          <Icon name="key" size={16} className="text-cyan-400" />
           Issue New Credential
         </h3>
         <div className="flex flex-wrap gap-3 items-end">
@@ -89,7 +89,7 @@ export default function Credentials() {
             <select
               value={agentName}
               onChange={e => setAgentName(e.target.value)}
-              className="bg-gray-800 border border-gray-700 rounded-lg px-3 py-2 text-sm text-gray-300 focus:border-indigo-500 focus:outline-none"
+              className="bg-gray-800 border border-gray-700 rounded-lg px-3 py-2 text-sm text-gray-300 focus:border-cyan-500 focus:outline-none"
             >
               <option value="">Select agent...</option>
               {agents.map(a => <option key={a.name} value={a.name}>{a.name}</option>)}
@@ -100,7 +100,7 @@ export default function Credentials() {
             <input
               value={scope}
               onChange={e => setScope(e.target.value)}
-              className="bg-gray-800 border border-gray-700 rounded-lg px-3 py-2 text-sm text-gray-300 focus:border-indigo-500 focus:outline-none w-48"
+              className="bg-gray-800 border border-gray-700 rounded-lg px-3 py-2 text-sm text-gray-300 focus:border-cyan-500 focus:outline-none w-48"
               placeholder="read:tools write:logs"
             />
           </div>
@@ -109,7 +109,7 @@ export default function Credentials() {
             <select
               value={ttl}
               onChange={e => setTtl(Number(e.target.value))}
-              className="bg-gray-800 border border-gray-700 rounded-lg px-3 py-2 text-sm text-gray-300 focus:border-indigo-500 focus:outline-none"
+              className="bg-gray-800 border border-gray-700 rounded-lg px-3 py-2 text-sm text-gray-300 focus:border-cyan-500 focus:outline-none"
             >
               {TTL_OPTIONS.map(o => <option key={o.value} value={o.value}>{o.label}</option>)}
             </select>
@@ -117,7 +117,7 @@ export default function Credentials() {
           <button
             onClick={handleIssue}
             disabled={!agentName || issuing}
-            className="px-4 py-2 bg-indigo-600 text-white rounded-lg text-sm font-medium hover:bg-indigo-500 disabled:opacity-40 disabled:cursor-not-allowed flex items-center gap-2"
+            className="px-4 py-2 bg-cyan-500 text-white rounded-lg text-sm font-medium hover:bg-cyan-400 disabled:opacity-40 disabled:cursor-not-allowed flex items-center gap-2"
           >
             <Icon name="key" size={14} />
             {issuing ? 'Issuing...' : 'Issue Token'}
@@ -186,7 +186,7 @@ export default function Credentials() {
                   <td className="px-4 py-3 font-mono text-xs text-gray-400">{c.token_id.slice(0, 16)}...</td>
                   <td className="px-4 py-3 text-gray-300">{c.agent_name}</td>
                   <td className="px-4 py-3">
-                    <span className="px-2 py-0.5 bg-indigo-500/10 text-indigo-300/80 border border-indigo-500/20 rounded-full text-xs">
+                    <span className="px-2 py-0.5 bg-cyan-500/10 text-cyan-300/80 border border-cyan-500/20 rounded-full text-xs">
                       {c.scope}
                     </span>
                   </td>

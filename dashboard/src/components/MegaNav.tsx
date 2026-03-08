@@ -147,8 +147,8 @@ const dropdowns: DropdownDef[] = [
 function NavLink({ item }: { item: NavItem }) {
   const inner = (
     <div className="flex items-start gap-3 p-2 rounded-lg hover:bg-white/5 transition-colors group">
-      <div className="mt-0.5 flex-shrink-0 w-8 h-8 rounded-lg bg-indigo-500/10 flex items-center justify-center">
-        <Icon name={item.icon} size={16} className="text-indigo-400" />
+      <div className="mt-0.5 flex-shrink-0 w-8 h-8 rounded-lg bg-cyan-500/10 flex items-center justify-center">
+        <Icon name={item.icon} size={16} className="text-cyan-400" />
       </div>
       <div className="min-w-0">
         <p className="text-sm font-medium text-gray-200 group-hover:text-white flex items-center gap-2">
@@ -230,12 +230,12 @@ export default function MegaNav() {
           {/* ---- Logo ---- */}
           <Link to="/" className="flex items-center gap-2.5">
             <div className="relative">
-              <div className="absolute inset-0 bg-indigo-500/20 rounded-lg blur-sm" />
-              <Icon name="shield" size={24} className="text-indigo-400 relative" />
+              <div className="absolute inset-0 bg-cyan-500/20 rounded-lg blur-sm" />
+              <Icon name="shield" size={24} className="text-cyan-400 relative" />
             </div>
             <span className="text-lg font-bold text-white">
               Navil{' '}
-              <span className="text-xs font-normal text-indigo-400 bg-indigo-400/10 px-1.5 py-0.5 rounded">
+              <span className="text-xs font-normal text-cyan-400 bg-cyan-400/10 px-1.5 py-0.5 rounded">
                 Cloud
               </span>
             </span>
@@ -293,14 +293,14 @@ export default function MegaNav() {
                           className="glass-card p-4 rounded-xl flex flex-col justify-between hover:bg-white/5 transition-colors group"
                         >
                           <div>
-                            <p className="text-sm font-medium text-white group-hover:text-indigo-300 transition-colors">
+                            <p className="text-sm font-medium text-white group-hover:text-cyan-300 transition-colors">
                               {dd.highlight.title}
                             </p>
                             <p className="text-xs text-gray-500 mt-2 leading-relaxed">
                               {dd.highlight.description}
                             </p>
                           </div>
-                          <div className="flex items-center gap-1 text-xs text-indigo-400 mt-4">
+                          <div className="flex items-center gap-1 text-xs text-cyan-400 mt-4">
                             Learn more
                             <Icon name="arrow-right" size={12} />
                           </div>
@@ -357,7 +357,7 @@ export default function MegaNav() {
               </Link>
               <Link
                 to={isAuthEnabled() ? '/sign-up' : '/dashboard'}
-                className="px-4 py-2 bg-indigo-600 text-white rounded-lg text-sm font-medium hover:bg-indigo-500 transition-colors"
+                className="px-4 py-2 bg-cyan-500 text-gray-950 rounded-lg text-sm font-bold hover:bg-cyan-400 transition-colors"
               >
                 Get Started
               </Link>
@@ -387,12 +387,12 @@ export default function MegaNav() {
                 className="flex items-center gap-2.5"
               >
                 <div className="relative">
-                  <div className="absolute inset-0 bg-indigo-500/20 rounded-lg blur-sm" />
-                  <Icon name="shield" size={24} className="text-indigo-400 relative" />
+                  <div className="absolute inset-0 bg-cyan-500/20 rounded-lg blur-sm" />
+                  <Icon name="shield" size={24} className="text-cyan-400 relative" />
                 </div>
                 <span className="text-lg font-bold text-white">
                   Navil{' '}
-                  <span className="text-xs font-normal text-indigo-400 bg-indigo-400/10 px-1.5 py-0.5 rounded">
+                  <span className="text-xs font-normal text-cyan-400 bg-cyan-400/10 px-1.5 py-0.5 rounded">
                     Cloud
                   </span>
                 </span>
@@ -436,7 +436,7 @@ export default function MegaNav() {
                     onClick={() => setMobileOpen(false)}
                     className="flex items-center gap-3 p-2 rounded-lg text-sm text-gray-300 hover:text-white hover:bg-white/5 transition-colors"
                   >
-                    <Icon name="book" size={16} className="text-indigo-400" />
+                    <Icon name="book" size={16} className="text-cyan-400" />
                     Docs
                   </Link>
                   <Link
@@ -444,7 +444,7 @@ export default function MegaNav() {
                     onClick={() => setMobileOpen(false)}
                     className="flex items-center gap-3 p-2 rounded-lg text-sm text-gray-300 hover:text-white hover:bg-white/5 transition-colors"
                   >
-                    <Icon name="tag" size={16} className="text-indigo-400" />
+                    <Icon name="tag" size={16} className="text-cyan-400" />
                     Pricing
                   </Link>
                 </div>
@@ -456,7 +456,7 @@ export default function MegaNav() {
               <Link
                 to={isAuthEnabled() ? '/sign-up' : '/dashboard'}
                 onClick={() => setMobileOpen(false)}
-                className="block w-full text-center px-4 py-3 bg-indigo-600 text-white rounded-lg text-sm font-medium hover:bg-indigo-500 transition-colors"
+                className="block w-full text-center px-4 py-3 bg-cyan-500 text-gray-950 rounded-lg text-sm font-bold hover:bg-cyan-400 transition-colors"
               >
                 Get Started
               </Link>
@@ -488,7 +488,7 @@ function MobileNavLink({
 }) {
   const inner = (
     <div className="flex items-center gap-3 p-2 rounded-lg text-sm text-gray-300 hover:text-white hover:bg-white/5 transition-colors">
-      <Icon name={item.icon} size={16} className="text-indigo-400" />
+      <Icon name={item.icon} size={16} className="text-cyan-400" />
       <span>{item.label}</span>
       {item.badge && (
         <span className="text-[10px] font-semibold uppercase tracking-wider text-violet-400 bg-violet-400/10 px-1.5 py-0.5 rounded">

@@ -54,7 +54,7 @@ export default function MCPSecurity() {
         <div className="hero-glow absolute inset-0 pointer-events-none" />
         <div className="max-w-4xl mx-auto px-6 pt-24 pb-16 text-center relative">
           <div
-            className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-indigo-500/10 border border-indigo-500/20 text-xs text-indigo-400 mb-6 animate-fadeIn"
+            className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-cyan-500/10 border border-cyan-500/20 text-xs text-cyan-400 mb-6 animate-fadeIn"
           >
             <Icon name="shield" size={12} />
             Solution
@@ -79,7 +79,7 @@ export default function MCPSecurity() {
           >
             <Link
               to="/docs/getting-started"
-              className="px-6 py-3 bg-indigo-600 text-white rounded-lg text-sm font-medium hover:bg-indigo-500 flex items-center gap-2"
+              className="px-6 py-3 bg-cyan-500 text-white rounded-lg text-sm font-medium hover:bg-cyan-400 flex items-center gap-2"
             >
               Get Started
               <Icon name="arrow-right" size={16} />
@@ -144,8 +144,8 @@ export default function MCPSecurity() {
               className="glass-card p-6 animate-slideUp opacity-0"
               style={{ animationDelay: `${0.1 + i * 0.08}s` }}
             >
-              <div className="w-10 h-10 rounded-lg bg-indigo-500/10 flex items-center justify-center mb-4">
-                <Icon name={s.icon} size={20} className="text-indigo-400" />
+              <div className="w-10 h-10 rounded-lg bg-cyan-500/10 flex items-center justify-center mb-4">
+                <Icon name={s.icon} size={20} className="text-cyan-400" />
               </div>
               <h3 className="text-sm font-medium text-gray-200 mb-2">{s.title}</h3>
               <p className="text-sm text-gray-500 leading-relaxed">{s.description}</p>
@@ -168,7 +168,7 @@ export default function MCPSecurity() {
           <div className="flex items-center justify-center gap-4 flex-wrap">
             <Link
               to="/pricing"
-              className="px-6 py-3 bg-indigo-600 text-white rounded-lg text-sm font-medium hover:bg-indigo-500 flex items-center gap-2"
+              className="px-6 py-3 bg-cyan-500 text-white rounded-lg text-sm font-medium hover:bg-cyan-400 flex items-center gap-2"
             >
               View Pricing
               <Icon name="arrow-right" size={16} />

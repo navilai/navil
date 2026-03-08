@@ -121,7 +121,7 @@ export default function Settings() {
           <div className="flex items-center gap-3">
             <span className={`px-3 py-1 text-xs font-semibold rounded-full border ${
               plan === 'elite'
-                ? 'bg-indigo-500/15 text-indigo-400 border-indigo-500/30'
+                ? 'bg-cyan-500/15 text-cyan-400 border-cyan-500/30'
                 : plan === 'lite'
                   ? 'bg-violet-500/15 text-violet-400 border-violet-500/30'
                   : 'bg-gray-800 text-gray-400 border-gray-700'
@@ -249,7 +249,7 @@ export default function Settings() {
             <select
               value={provider}
               onChange={e => { setProvider(e.target.value); setSaveResult(null); setTestResult(null) }}
-              className="w-full bg-gray-800 border border-gray-700 rounded-lg px-3 py-2 text-sm text-gray-300 focus:border-indigo-500 focus:outline-none"
+              className="w-full bg-gray-800 border border-gray-700 rounded-lg px-3 py-2 text-sm text-gray-300 focus:border-cyan-500 focus:outline-none"
             >
               {providers.map(p => (
                 <option key={p.value} value={p.value}>{p.label}</option>
@@ -272,7 +272,7 @@ export default function Settings() {
               <input
                 value={baseUrl}
                 onChange={e => { setBaseUrl(e.target.value); setSaveResult(null) }}
-                className="w-full bg-gray-800 border border-gray-700 rounded-lg px-3 py-2 text-sm text-gray-300 focus:border-indigo-500 focus:outline-none font-mono"
+                className="w-full bg-gray-800 border border-gray-700 rounded-lg px-3 py-2 text-sm text-gray-300 focus:border-cyan-500 focus:outline-none font-mono"
                 placeholder="https://api.example.com/v1"
                 
               />
@@ -297,7 +297,7 @@ export default function Settings() {
               <input
                 value={model}
                 onChange={e => { setModel(e.target.value); setSaveResult(null) }}
-                className="w-full bg-gray-800 border border-gray-700 rounded-lg px-3 py-2 text-sm text-gray-300 focus:border-indigo-500 focus:outline-none font-mono"
+                className="w-full bg-gray-800 border border-gray-700 rounded-lg px-3 py-2 text-sm text-gray-300 focus:border-cyan-500 focus:outline-none font-mono"
                 placeholder={isOllama ? 'e.g., llama3.2, deepseek-r1:70b, qwen3' : 'e.g., anthropic/claude-sonnet-4, deepseek-chat, llama-3.1-70b'}
                 
               />
@@ -312,7 +312,7 @@ export default function Settings() {
               value={apiKey}
               onChange={e => { setApiKey(e.target.value); setSaveResult(null) }}
               onKeyDown={e => e.key === 'Enter' && handleSave()}
-              className="w-full bg-gray-800 border border-gray-700 rounded-lg px-3 py-2 text-sm text-gray-300 focus:border-indigo-500 focus:outline-none font-mono"
+              className="w-full bg-gray-800 border border-gray-700 rounded-lg px-3 py-2 text-sm text-gray-300 focus:border-cyan-500 focus:outline-none font-mono"
               placeholder={config?.api_key_set ? '••••••••  (key is set — enter new to replace)' : 'Paste your API key here'}
               
             />
@@ -327,7 +327,7 @@ export default function Settings() {
             <button
               onClick={handleSave}
               disabled={!canSave || saving}
-              className="px-4 py-2 bg-indigo-600 text-white rounded-lg text-sm font-medium hover:bg-indigo-500 disabled:opacity-40 disabled:cursor-not-allowed flex items-center gap-2"
+              className="px-4 py-2 bg-cyan-500 text-white rounded-lg text-sm font-medium hover:bg-cyan-400 disabled:opacity-40 disabled:cursor-not-allowed flex items-center gap-2"
             >
               <Icon name="check" size={14} />
               {saving ? 'Saving...' : 'Save'}

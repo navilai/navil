@@ -129,7 +129,7 @@ export default function Dashboard() {
             )}
           </div>
           {proxyConn.status === 'disconnected' && (
-            <Link to="/onboarding" className="text-xs text-indigo-400 hover:text-indigo-300">
+            <Link to="/onboarding" className="text-xs text-cyan-400 hover:text-cyan-300">
               Setup Guide
             </Link>
           )}
@@ -138,11 +138,11 @@ export default function Dashboard() {
 
       {/* Stat cards — 6 cards in 3x2 grid */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-        <StatCard label="Agents" value={data.total_agents} icon="bot" accent="indigo" index={0} />
+        <StatCard label="Agents" value={data.total_agents} icon="bot" accent="cyan" index={0} />
         <StatCard label="Active Alerts" value={data.total_alerts} icon="alert" accent={data.critical_alerts > 0 ? 'red' : 'amber'} index={1} />
         <StatCard label="Invocations" value={data.total_invocations} icon="signal" accent="emerald" index={2} />
         <StatCard label="Credentials" value={`${data.active_credentials}/${data.total_credentials}`} icon="key" accent="amber" index={3} />
-        <StatCard label="Policy Decisions" value={decisions.length} icon="shield" accent="indigo" index={4} />
+        <StatCard label="Policy Decisions" value={decisions.length} icon="shield" accent="cyan" index={4} />
         <StatCard label="Feedback Entries" value={feedbackStats?.total_entries || 0} icon="activity" accent="emerald" index={5} />
       </div>
 
@@ -179,7 +179,7 @@ export default function Dashboard() {
         {/* Credential Status */}
         <div className="glass-card p-5 animate-slideUp opacity-0" style={{ animationDelay: '0.1s' }}>
           <h3 className="text-sm font-medium text-gray-300 mb-4 flex items-center gap-2">
-            <Icon name="key" size={16} className="text-indigo-400" />
+            <Icon name="key" size={16} className="text-cyan-400" />
             Credential Status
           </h3>
           <div className="space-y-3">
@@ -223,7 +223,7 @@ export default function Dashboard() {
         {/* Recent Policy Decisions */}
         <div className="glass-card p-5 animate-slideUp opacity-0" style={{ animationDelay: '0.16s' }}>
           <h3 className="text-sm font-medium text-gray-300 mb-4 flex items-center gap-2">
-            <Icon name="shield" size={16} className="text-indigo-400" />
+            <Icon name="shield" size={16} className="text-cyan-400" />
             Recent Policy Decisions
           </h3>
           {recentDecisions.length === 0 ? (
@@ -242,7 +242,7 @@ export default function Dashboard() {
                       <Icon name="chevron-right" size={12} className="text-gray-600 shrink-0" />
                       <span className="text-gray-400 truncate">{d.tool}</span>
                       <span className="text-gray-600">→</span>
-                      <span className="text-indigo-300/80 text-xs font-mono">{d.action}</span>
+                      <span className="text-cyan-300/80 text-xs font-mono">{d.action}</span>
                     </div>
                     <p className="text-xs text-gray-500 truncate mt-0.5">{d.reason}</p>
                   </div>
@@ -280,7 +280,7 @@ export default function Dashboard() {
                 {data.recent_alerts.map((alert, i) => (
                   <tr
                     key={alert.timestamp + alert.anomaly_type + alert.agent}
-                    className="border-b border-gray-800/30 hover:bg-indigo-500/[0.04] animate-fadeIn opacity-0"
+                    className="border-b border-gray-800/30 hover:bg-cyan-400/[0.04] animate-fadeIn opacity-0"
                     style={{ animationDelay: `${i * 0.04}s` }}
                   >
                     <td className="px-4 py-3"><SeverityBadge severity={alert.severity} /></td>
@@ -289,7 +289,7 @@ export default function Dashboard() {
                     <td className="px-4 py-3 text-gray-400 max-w-xs truncate">{alert.description}</td>
                     <td className="px-4 py-3">
                       <div className="flex items-center gap-2">
-                        <MiniBar value={alert.confidence * 100} max={100} color="bg-indigo-500" height="h-1" className="w-16" />
+                        <MiniBar value={alert.confidence * 100} max={100} color="bg-cyan-500" height="h-1" className="w-16" />
                         <span className="text-gray-300 text-xs">{(alert.confidence * 100).toFixed(0)}%</span>
                       </div>
                     </td>
@@ -354,8 +354,8 @@ function SetupGuide({ onRetry }: { onRetry: () => void }) {
     <div className="max-w-2xl mx-auto animate-fadeIn">
       {/* Welcome card */}
       <div className="glass-card p-8 text-center mb-8">
-        <div className="w-14 h-14 mx-auto mb-5 rounded-full bg-indigo-500/10 border border-indigo-500/20 flex items-center justify-center">
-          <Icon name="shield" size={28} className="text-indigo-400" />
+        <div className="w-14 h-14 mx-auto mb-5 rounded-full bg-cyan-500/10 border border-cyan-500/20 flex items-center justify-center">
+          <Icon name="shield" size={28} className="text-cyan-400" />
         </div>
         <h2 className="text-xl font-bold text-white mb-2">Welcome to Navil</h2>
         <p className="text-sm text-gray-400 max-w-md mx-auto">
@@ -372,24 +372,24 @@ function SetupGuide({ onRetry }: { onRetry: () => void }) {
             style={{ animationDelay: `${0.1 + i * 0.08}s` }}
           >
             <div className="flex items-start gap-4">
-              <div className="w-9 h-9 rounded-lg bg-indigo-500/10 flex items-center justify-center shrink-0 mt-0.5">
-                <Icon name={step.icon} size={18} className="text-indigo-400" />
+              <div className="w-9 h-9 rounded-lg bg-cyan-500/10 flex items-center justify-center shrink-0 mt-0.5">
+                <Icon name={step.icon} size={18} className="text-cyan-400" />
               </div>
               <div className="flex-1 min-w-0">
                 <div className="flex items-center gap-2 mb-1">
-                  <span className="text-[10px] text-indigo-400 font-mono">{step.num}</span>
+                  <span className="text-[10px] text-cyan-400 font-mono">{step.num}</span>
                   <h3 className="text-sm font-medium text-white">{step.title}</h3>
                 </div>
                 <p className="text-sm text-gray-500 mb-2">{step.description}</p>
                 {step.code && (
-                  <div className="bg-gray-900 border border-gray-800/60 rounded-lg px-3 py-2 mb-2 font-mono text-sm text-indigo-300">
+                  <div className="bg-gray-900 border border-gray-800/60 rounded-lg px-3 py-2 mb-2 font-mono text-sm text-cyan-300">
                     $ {step.code}
                   </div>
                 )}
                 {step.linkTo && (
                   <Link
                     to={step.linkTo}
-                    className="inline-flex items-center gap-1.5 text-sm text-indigo-400 hover:text-indigo-300"
+                    className="inline-flex items-center gap-1.5 text-sm text-cyan-400 hover:text-cyan-300"
                   >
                     {step.linkLabel}
                     <Icon name="arrow-right" size={12} />
@@ -405,7 +405,7 @@ function SetupGuide({ onRetry }: { onRetry: () => void }) {
       <div className="flex items-center justify-center gap-3 mt-8">
         <button
           onClick={onRetry}
-          className="px-5 py-2.5 bg-indigo-600 text-white rounded-lg text-sm font-medium hover:bg-indigo-500 flex items-center gap-2"
+          className="px-5 py-2.5 bg-cyan-500 text-white rounded-lg text-sm font-medium hover:bg-cyan-400 flex items-center gap-2"
         >
           <Icon name="activity" size={14} />
           Refresh Dashboard

@@ -10,7 +10,7 @@ import UpgradePrompt from '../components/UpgradePrompt'
 import useBilling from '../hooks/useBilling'
 
 const actionTypeColors: Record<string, string> = {
-  policy_update: 'bg-indigo-500/15 text-indigo-400 border-indigo-500/30',
+  policy_update: 'bg-cyan-500/15 text-cyan-400 border-cyan-500/30',
   threshold_adjustment: 'bg-yellow-500/15 text-yellow-400 border-yellow-500/30',
   credential_rotation: 'bg-amber-500/15 text-amber-400 border-amber-500/30',
   agent_block: 'bg-red-500/15 text-red-400 border-red-500/30',
@@ -339,7 +339,7 @@ export default function SelfHealing() {
                         </span>
                       ) : (
                         <button onClick={() => handleApply(action, i)} disabled={applying === i}
-                          className="px-3 py-1.5 text-xs bg-indigo-500/15 text-indigo-400 border border-indigo-500/30 rounded-lg hover:bg-indigo-500/25 flex items-center gap-1.5 disabled:opacity-50">
+                          className="px-3 py-1.5 text-xs bg-cyan-500/15 text-cyan-400 border border-cyan-500/30 rounded-lg hover:bg-cyan-400/25 flex items-center gap-1.5 disabled:opacity-50">
                           <Icon name="shield" size={13} className={applying === i ? 'animate-spin' : ''} />
                           {applying === i ? 'Applying...' : 'Apply'}
                         </button>
@@ -473,7 +473,7 @@ export default function SelfHealing() {
                           </span>
                         ) : (
                           <button onClick={() => handleAutoManualApply(action, i)} disabled={autoApplying === i}
-                            className="px-3 py-1.5 text-xs bg-indigo-500/15 text-indigo-400 border border-indigo-500/30 rounded-lg hover:bg-indigo-500/25 flex items-center gap-1.5 disabled:opacity-50">
+                            className="px-3 py-1.5 text-xs bg-cyan-500/15 text-cyan-400 border border-cyan-500/30 rounded-lg hover:bg-cyan-400/25 flex items-center gap-1.5 disabled:opacity-50">
                             <Icon name="shield" size={13} className={autoApplying === i ? 'animate-spin' : ''} />
                             {autoApplying === i ? 'Applying...' : 'Apply'}
                           </button>

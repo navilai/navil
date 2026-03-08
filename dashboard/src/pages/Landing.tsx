@@ -2,8 +2,6 @@ import { Link } from 'react-router-dom'
 import { useEffect, useState } from 'react'
 import Icon, { type IconName } from '../components/Icon'
 import LogoCloud from '../components/LogoCloud'
-import TestimonialCard from '../components/TestimonialCard'
-import FeatureComparisonTable from '../components/FeatureComparisonTable'
 import NewsletterSignup from '../components/NewsletterSignup'
 import MockTrafficMonitor from '../components/MockTrafficMonitor'
 import MockAnomalyDashboard from '../components/MockAnomalyDashboard'
@@ -216,30 +214,6 @@ const steps = [
     title: 'Threats Blocked',
     desc: 'Anomalies detected, explained, and auto-remediated.',
     code: '[alert] Exfiltration blocked → policy applied',
-  },
-]
-
-const testimonials = [
-  {
-    quote:
-      'Navil caught a credential exfiltration pattern in our staging environment that our existing monitoring completely missed.',
-    author: 'Sarah Chen',
-    role: 'Head of Security',
-    company: 'Sentinel AI',
-  },
-  {
-    quote:
-      'We went from zero visibility into our MCP tool calls to full observability in under 5 minutes. The proxy setup is dead simple.',
-    author: 'Marcus Johnson',
-    role: 'Platform Lead',
-    company: 'TechFlow',
-  },
-  {
-    quote:
-      "The auto-remediation blocked a rogue agent and tightened our policy before we even saw the alert. That's the tooling we need.",
-    author: 'Elena Rodriguez',
-    role: 'CTO',
-    company: 'CloudSec',
   },
 ]
 
@@ -506,71 +480,98 @@ export default function Landing() {
         </div>
       </section>
 
-      {/* ── TESTIMONIALS — editorial layout ───────────────────────── */}
-      <section className="border-t border-gray-800/40">
-        <div className="max-w-6xl mx-auto px-6 py-24">
-          <Reveal>
-            <p className="font-mono text-[11px] uppercase tracking-widest text-cyan-400 mb-3">What Teams Say</p>
-            <h2 className="font-display text-3xl sm:text-4xl font-bold text-white mb-14">
-              Trusted by security engineers
-            </h2>
-          </Reveal>
-
-          <Reveal stagger>
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-              {/* Featured large testimonial */}
-              <div className="reveal-child lg:col-span-2 glass-card p-8 border border-cyan-500/10 relative overflow-hidden">
-                <div className="absolute top-4 right-6 text-[120px] font-display leading-none text-cyan-500/[0.06] select-none">
-                  &ldquo;
-                </div>
-                <div className="relative">
-                  <p className="text-lg sm:text-xl italic text-gray-200 leading-relaxed mb-6">
-                    {testimonials[0].quote}
-                  </p>
-                  <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 rounded-full bg-cyan-500/20 flex items-center justify-center text-xs font-bold text-cyan-400">
-                      {testimonials[0].author.split(' ').map(w => w[0]).join('')}
-                    </div>
-                    <div>
-                      <p className="text-sm font-semibold text-gray-200">{testimonials[0].author}</p>
-                      <p className="text-xs text-gray-500">{testimonials[0].role}, {testimonials[0].company}</p>
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-              {/* Smaller testimonials stacked */}
-              <div className="flex flex-col gap-6">
-                {testimonials.slice(1).map((t) => (
-                  <div key={t.author} className="reveal-child flex-1">
-                    <TestimonialCard {...t} />
-                  </div>
-                ))}
-              </div>
-            </div>
-          </Reveal>
-        </div>
-      </section>
-
-      {/* ── FEATURE COMPARISON ────────────────────────────────────── */}
+      {/* ── PRICING SNAPSHOT ──────────────────────────────────────── */}
       <section className="border-t border-gray-800/40 bg-gray-900/20">
         <div className="max-w-5xl mx-auto px-6 py-24">
           <Reveal className="text-center mb-14">
-            <p className="font-mono text-[11px] uppercase tracking-widest text-cyan-400 mb-3">Plans</p>
+            <p className="font-mono text-[11px] uppercase tracking-widest text-cyan-400 mb-3">Pricing</p>
             <h2 className="font-display text-3xl sm:text-4xl font-bold text-white mb-4">
-              Compare features across plans
+              Start free. Scale as you grow.
             </h2>
-            <p className="text-gray-400">Start free. Scale as your agent fleet grows.</p>
+            <p className="text-gray-400">No credit card required. Upgrade when you need more.</p>
           </Reveal>
 
-          <Reveal>
-            <FeatureComparisonTable />
+          <Reveal stagger>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
+              {/* Free */}
+              <div className="reveal-child glass-card p-6 border border-gray-700/40 hover:border-gray-600/60 transition-all">
+                <p className="font-mono text-[11px] uppercase tracking-widest text-gray-500 mb-2">Free</p>
+                <div className="flex items-baseline gap-1 mb-3">
+                  <span className="font-display text-3xl font-bold text-white">$0</span>
+                  <span className="text-sm text-gray-500">/month</span>
+                </div>
+                <p className="text-sm text-gray-500 mb-5">Essential monitoring for small teams.</p>
+                <ul className="space-y-2 mb-6">
+                  {['3 agents', '1K events/mo', 'Scanner + Policy + Anomaly'].map((f) => (
+                    <li key={f} className="flex items-center gap-2 text-sm text-gray-300">
+                      <Icon name="check" size={14} className="text-cyan-400 shrink-0" />
+                      {f}
+                    </li>
+                  ))}
+                </ul>
+                <Link
+                  to="/sign-up"
+                  className="block w-full text-center py-2.5 bg-white/[0.03] text-gray-300 border border-gray-700/80 rounded-lg text-sm font-medium hover:bg-white/[0.06] transition-all"
+                >
+                  Get Started
+                </Link>
+              </div>
+
+              {/* Lite — highlighted */}
+              <div className="reveal-child glass-card p-6 border border-cyan-500/30 ring-1 ring-cyan-500/10 relative hover:border-cyan-500/50 transition-all">
+                <span className="absolute -top-3 left-1/2 -translate-x-1/2 px-3 py-0.5 text-[10px] font-mono font-bold bg-cyan-500 text-gray-950 rounded-full">
+                  POPULAR
+                </span>
+                <p className="font-mono text-[11px] uppercase tracking-widest text-cyan-400 mb-2">Lite</p>
+                <div className="flex items-baseline gap-1 mb-3">
+                  <span className="font-display text-3xl font-bold text-white">$29</span>
+                  <span className="text-sm text-gray-500">/month</span>
+                </div>
+                <p className="text-sm text-gray-500 mb-5">Full security for growing teams.</p>
+                <ul className="space-y-2 mb-6">
+                  {['10 agents', '50K events/mo', 'Proxy + Pentest + LLM + Auto-fix'].map((f) => (
+                    <li key={f} className="flex items-center gap-2 text-sm text-gray-300">
+                      <Icon name="check" size={14} className="text-cyan-400 shrink-0" />
+                      {f}
+                    </li>
+                  ))}
+                </ul>
+                <Link
+                  to="/pricing"
+                  className="block w-full text-center py-2.5 bg-cyan-500 text-gray-950 rounded-lg text-sm font-bold hover:bg-cyan-400 transition-all"
+                >
+                  Start Free Trial
+                </Link>
+              </div>
+
+              {/* Elite */}
+              <div className="reveal-child glass-card p-6 border border-gray-700/40 hover:border-gray-600/60 transition-all">
+                <p className="font-mono text-[11px] uppercase tracking-widest text-gray-500 mb-2">Elite</p>
+                <div className="flex items-baseline gap-1 mb-3">
+                  <span className="font-display text-3xl font-bold text-white">$99</span>
+                  <span className="text-sm text-gray-500">/month</span>
+                </div>
+                <p className="text-sm text-gray-500 mb-5">Advanced analytics + trust scoring.</p>
+                <ul className="space-y-2 mb-6">
+                  {['50 agents', '250K events/mo', 'Trust Score + Analytics + SSO'].map((f) => (
+                    <li key={f} className="flex items-center gap-2 text-sm text-gray-300">
+                      <Icon name="check" size={14} className="text-cyan-400 shrink-0" />
+                      {f}
+                    </li>
+                  ))}
+                </ul>
+                <Link
+                  to="/pricing"
+                  className="block w-full text-center py-2.5 bg-white/[0.03] text-gray-300 border border-gray-700/80 rounded-lg text-sm font-medium hover:bg-white/[0.06] transition-all"
+                >
+                  Start Free Trial
+                </Link>
+              </div>
+            </div>
+
             <div className="text-center mt-8">
-              <Link
-                to="/pricing"
-                className="text-sm text-cyan-400 hover:text-cyan-300 font-mono"
-              >
-                View detailed pricing &rarr;
+              <Link to="/pricing" className="text-sm text-cyan-400 hover:text-cyan-300 font-mono">
+                View full plan comparison &rarr;
               </Link>
             </div>
           </Reveal>

@@ -73,7 +73,7 @@ export default function Onboarding() {
           {[1, 2, 3, 4].map(s => (
             <div key={s} className="flex-1 flex items-center gap-2">
               <div className={`h-1.5 flex-1 rounded-full transition-colors ${
-                s <= step ? 'bg-indigo-500' : 'bg-gray-800'
+                s <= step ? 'bg-cyan-500' : 'bg-gray-800'
               }`} />
             </div>
           ))}
@@ -82,8 +82,8 @@ export default function Onboarding() {
         {/* Step 1: Welcome */}
         {step === 1 && (
           <div className="glass-card p-8 text-center animate-fadeIn">
-            <div className="w-16 h-16 mx-auto mb-6 rounded-2xl bg-indigo-500/20 flex items-center justify-center">
-              <Icon name="shield" size={32} className="text-indigo-400" />
+            <div className="w-16 h-16 mx-auto mb-6 rounded-2xl bg-cyan-500/20 flex items-center justify-center">
+              <Icon name="shield" size={32} className="text-cyan-400" />
             </div>
             <h1 className="text-2xl font-bold text-white mb-3">
               Secure your MCP servers
@@ -94,7 +94,7 @@ export default function Onboarding() {
             </p>
             <button
               onClick={() => setStep(2)}
-              className="px-6 py-3 bg-indigo-600 text-white rounded-lg font-medium hover:bg-indigo-500 transition-colors"
+              className="px-6 py-3 bg-cyan-500 text-white rounded-lg font-medium hover:bg-cyan-400 transition-colors"
             >
               Get Started
             </button>
@@ -105,7 +105,7 @@ export default function Onboarding() {
         {step === 2 && (
           <div className="glass-card p-8 animate-fadeIn">
             <div className="flex items-center gap-3 mb-6">
-              <div className="w-8 h-8 rounded-full bg-indigo-500/20 flex items-center justify-center text-sm font-bold text-indigo-400">
+              <div className="w-8 h-8 rounded-full bg-cyan-500/20 flex items-center justify-center text-sm font-bold text-cyan-400">
                 1
               </div>
               <h2 className="text-xl font-bold text-white">Generate your API key</h2>
@@ -118,7 +118,7 @@ export default function Onboarding() {
             <button
               onClick={handleCreateKey}
               disabled={creating}
-              className="px-6 py-3 bg-indigo-600 text-white rounded-lg font-medium hover:bg-indigo-500 disabled:opacity-40 disabled:cursor-not-allowed flex items-center gap-2"
+              className="px-6 py-3 bg-cyan-500 text-white rounded-lg font-medium hover:bg-cyan-400 disabled:opacity-40 disabled:cursor-not-allowed flex items-center gap-2"
             >
               <Icon name="key" size={16} />
               {creating ? 'Generating...' : 'Generate API Key'}
@@ -130,7 +130,7 @@ export default function Onboarding() {
         {step === 3 && newKey && (
           <div className="glass-card p-8 animate-fadeIn space-y-6">
             <div className="flex items-center gap-3 mb-2">
-              <div className="w-8 h-8 rounded-full bg-indigo-500/20 flex items-center justify-center text-sm font-bold text-indigo-400">
+              <div className="w-8 h-8 rounded-full bg-cyan-500/20 flex items-center justify-center text-sm font-bold text-cyan-400">
                 2
               </div>
               <h2 className="text-xl font-bold text-white">Install & connect your proxy</h2>
@@ -148,7 +148,7 @@ export default function Onboarding() {
                   {copied ? 'Copied!' : 'Copy'}
                 </button>
               </div>
-              <code className="block text-xs text-indigo-300 font-mono break-all">
+              <code className="block text-xs text-cyan-300 font-mono break-all">
                 {newKey.raw_key}
               </code>
               <p className="text-xs text-amber-400/70 mt-2 flex items-center gap-1">
@@ -185,7 +185,7 @@ export default function Onboarding() {
 
             <button
               onClick={() => setStep(4)}
-              className="w-full px-6 py-3 bg-indigo-600 text-white rounded-lg font-medium hover:bg-indigo-500 transition-colors"
+              className="w-full px-6 py-3 bg-cyan-500 text-white rounded-lg font-medium hover:bg-cyan-400 transition-colors"
             >
               I've started the proxy
             </button>
@@ -196,7 +196,7 @@ export default function Onboarding() {
         {step === 4 && (
           <div className="glass-card p-8 text-center animate-fadeIn">
             <div className="flex items-center gap-3 mb-6 justify-center">
-              <div className="w-8 h-8 rounded-full bg-indigo-500/20 flex items-center justify-center text-sm font-bold text-indigo-400">
+              <div className="w-8 h-8 rounded-full bg-cyan-500/20 flex items-center justify-center text-sm font-bold text-cyan-400">
                 3
               </div>
               <h2 className="text-xl font-bold text-white">
@@ -223,7 +223,7 @@ export default function Onboarding() {
             ) : (
               <div className="space-y-4">
                 {polling && (
-                  <div className="w-12 h-12 mx-auto rounded-full border-2 border-indigo-500/30 border-t-indigo-500 animate-spin" />
+                  <div className="w-12 h-12 mx-auto rounded-full border-2 border-cyan-500/30 border-t-cyan-500 animate-spin" />
                 )}
                 <p className="text-gray-500 text-sm">
                   Listening for your proxy's heartbeat...

@@ -92,7 +92,7 @@ export default function FeatureComparisonTable() {
             <th className="text-sm font-medium text-gray-300 px-4 py-3 text-center">
               Lite
             </th>
-            <th className="text-sm font-medium text-indigo-400 px-4 py-3 text-center">
+            <th className="text-sm font-medium text-cyan-400 px-4 py-3 text-center">
               Elite
             </th>
             <th className="text-sm font-medium text-gray-300 px-4 py-3 text-center">

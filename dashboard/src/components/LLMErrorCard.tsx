@@ -36,12 +36,12 @@ export default function LLMErrorCard({ message, errorType = 'unknown', onRetry, 
           <p className="text-xs text-gray-500 mt-0.5">{cfg.hint}</p>
           <div className="flex gap-3 mt-1">
             {cfg.showSettings && (
-              <Link to="/settings" className="text-xs text-indigo-400 hover:text-indigo-300">
+              <Link to="/settings" className="text-xs text-cyan-400 hover:text-cyan-300">
                 Go to Settings →
               </Link>
             )}
             {onRetry && (
-              <button onClick={onRetry} className="text-xs text-indigo-400 hover:text-indigo-300">
+              <button onClick={onRetry} className="text-xs text-cyan-400 hover:text-cyan-300">
                 Retry
               </button>
             )}
@@ -80,7 +80,7 @@ export default function LLMErrorCard({ message, errorType = 'unknown', onRetry, 
             {cfg.showSettings && (
               <Link
                 to="/settings"
-                className="px-3 py-1.5 text-xs bg-indigo-500/15 text-indigo-400 border border-indigo-500/30 rounded-lg hover:bg-indigo-500/25 flex items-center gap-1.5"
+                className="px-3 py-1.5 text-xs bg-cyan-500/15 text-cyan-400 border border-cyan-500/30 rounded-lg hover:bg-cyan-400/25 flex items-center gap-1.5"
               >
                 <Icon name="settings" size={13} />
                 Configure API Key

@@ -97,7 +97,7 @@ export default function Scanner() {
           value={config}
           onChange={e => setConfig(e.target.value)}
           placeholder="Paste your MCP server configuration JSON here..."
-          className="w-full h-64 bg-gray-900/60 backdrop-blur border border-gray-800/60 rounded-xl p-4 pr-10 font-mono text-sm text-gray-300 focus:border-indigo-500 focus:outline-none resize-y leading-6"
+          className="w-full h-64 bg-gray-900/60 backdrop-blur border border-gray-800/60 rounded-xl p-4 pr-10 font-mono text-sm text-gray-300 focus:border-cyan-500 focus:outline-none resize-y leading-6"
         />
         {config && (
           <button
@@ -114,7 +114,7 @@ export default function Scanner() {
         <button
           onClick={doScan}
           disabled={loading || !config.trim()}
-          className="px-6 py-2.5 bg-indigo-600 text-white rounded-lg font-medium hover:bg-indigo-500 disabled:opacity-40 disabled:cursor-not-allowed flex items-center gap-2"
+          className="px-6 py-2.5 bg-cyan-500 text-white rounded-lg font-medium hover:bg-cyan-400 disabled:opacity-40 disabled:cursor-not-allowed flex items-center gap-2"
         >
           {loading && !result ? (
             <>
@@ -129,7 +129,7 @@ export default function Scanner() {
           )}
         </button>
         {loading && !result && (
-          <div className="absolute inset-0 rounded-lg bg-indigo-500/20 animate-pulseGlow pointer-events-none" />
+          <div className="absolute inset-0 rounded-lg bg-cyan-500/20 animate-pulseGlow pointer-events-none" />
         )}
       </div>
 
@@ -182,7 +182,7 @@ export default function Scanner() {
                         <p className="font-medium text-gray-200">{vuln.title}</p>
                       </div>
                       <p className="text-sm text-gray-400 mt-1">{vuln.description}</p>
-                      <p className="text-sm text-indigo-400 mt-2">
+                      <p className="text-sm text-cyan-400 mt-2">
                         <span className="text-gray-500">Remediation:</span> {vuln.remediation}
                       </p>
                     </div>
@@ -281,8 +281,8 @@ export default function Scanner() {
                     <p className="text-xs text-gray-500 mb-2">Remediations</p>
                     <ul className="space-y-1.5">
                       {analysis.remediations.map((rem, j) => (
-                        <li key={j} className="text-sm text-indigo-400 flex items-start gap-2">
-                          <Icon name="check" size={12} className="text-indigo-500 mt-0.5 shrink-0" />
+                        <li key={j} className="text-sm text-cyan-400 flex items-start gap-2">
+                          <Icon name="check" size={12} className="text-cyan-500 mt-0.5 shrink-0" />
                           {rem}
                         </li>
                       ))}

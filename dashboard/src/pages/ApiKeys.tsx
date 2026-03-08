@@ -74,7 +74,7 @@ export default function ApiKeys() {
       {/* Create new key */}
       <div className="glass-card p-5">
         <h3 className="text-sm font-medium text-gray-300 mb-4 flex items-center gap-2">
-          <Icon name="key" size={16} className="text-indigo-400" />
+          <Icon name="key" size={16} className="text-cyan-400" />
           Create New API Key
         </h3>
         <div className="flex flex-wrap gap-3 items-end">
@@ -83,7 +83,7 @@ export default function ApiKeys() {
             <input
               value={keyName}
               onChange={e => setKeyName(e.target.value)}
-              className="w-full bg-gray-800 border border-gray-700 rounded-lg px-3 py-2 text-sm text-gray-300 focus:border-indigo-500 focus:outline-none"
+              className="w-full bg-gray-800 border border-gray-700 rounded-lg px-3 py-2 text-sm text-gray-300 focus:border-cyan-500 focus:outline-none"
               placeholder="e.g. Production Proxy"
               onKeyDown={e => e.key === 'Enter' && handleCreate()}
             />
@@ -91,7 +91,7 @@ export default function ApiKeys() {
           <button
             onClick={handleCreate}
             disabled={creating}
-            className="px-4 py-2 bg-indigo-600 text-white rounded-lg text-sm font-medium hover:bg-indigo-500 disabled:opacity-40 disabled:cursor-not-allowed flex items-center gap-2"
+            className="px-4 py-2 bg-cyan-500 text-white rounded-lg text-sm font-medium hover:bg-cyan-400 disabled:opacity-40 disabled:cursor-not-allowed flex items-center gap-2"
           >
             <Icon name="key" size={14} />
             {creating ? 'Creating...' : 'Create Key'}
@@ -116,7 +116,7 @@ export default function ApiKeys() {
               </code>
               <div className="mt-3 p-3 bg-gray-800/50 rounded-lg border border-gray-700/50">
                 <p className="text-xs text-gray-400 font-medium mb-1">Quick start:</p>
-                <code className="text-xs text-indigo-300 font-mono">
+                <code className="text-xs text-cyan-300 font-mono">
                   navil proxy start --target &lt;MCP_SERVER&gt; --cloud-key {newKey.raw_key.slice(0, 16)}...
                 </code>
               </div>
@@ -178,7 +178,7 @@ export default function ApiKeys() {
                       <td className="px-4 py-3 font-mono text-xs text-gray-400">{k.key_prefix}...</td>
                       <td className="px-4 py-3">
                         {k.scopes.map(s => (
-                          <span key={s} className="mr-1 px-2 py-0.5 bg-indigo-500/10 text-indigo-300/80 border border-indigo-500/20 rounded-full text-xs">
+                          <span key={s} className="mr-1 px-2 py-0.5 bg-cyan-500/10 text-cyan-300/80 border border-cyan-500/20 rounded-full text-xs">
                             {s}
                           </span>
                         ))}

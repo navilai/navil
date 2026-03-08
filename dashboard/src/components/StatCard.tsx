@@ -9,15 +9,15 @@ interface StatCardProps {
   index?: number
 }
 
-export default function StatCard({ label, value, icon, accent = 'indigo', index = 0 }: StatCardProps) {
+export default function StatCard({ label, value, icon, accent = 'cyan', index = 0 }: StatCardProps) {
   const accentMap: Record<string, string> = {
-    indigo: 'from-indigo-500/20 to-indigo-500/5 border-indigo-500/20',
+    cyan: 'from-cyan-500/20 to-cyan-500/5 border-cyan-500/20',
     red: 'from-red-500/20 to-red-500/5 border-red-500/20',
     emerald: 'from-emerald-500/20 to-emerald-500/5 border-emerald-500/20',
     amber: 'from-amber-500/20 to-amber-500/5 border-amber-500/20',
   }
   const iconColorMap: Record<string, string> = {
-    indigo: 'text-indigo-400',
+    cyan: 'text-cyan-400',
     red: 'text-red-400',
     emerald: 'text-emerald-400',
     amber: 'text-amber-400',
@@ -27,7 +27,7 @@ export default function StatCard({ label, value, icon, accent = 'indigo', index 
 
   return (
     <div
-      className={`bg-gradient-to-br ${accentMap[accent] || accentMap.indigo} border rounded-xl p-5 animate-slideUp opacity-0`}
+      className={`bg-gradient-to-br ${accentMap[accent] || accentMap.cyan} border rounded-xl p-5 animate-slideUp opacity-0`}
       style={{ animationDelay: `${index * 0.08}s` }}
     >
       <div className="flex items-center justify-between">
@@ -39,7 +39,7 @@ export default function StatCard({ label, value, icon, accent = 'indigo', index 
             <p className="text-3xl font-bold mt-1">{value}</p>
           )}
         </div>
-        <div className={`${iconColorMap[accent] || 'text-indigo-400'} opacity-50`}>
+        <div className={`${iconColorMap[accent] || 'text-cyan-400'} opacity-50`}>
           <Icon name={icon} size={28} />
         </div>
       </div>

@@ -15,13 +15,13 @@ export default function ConnectionError({ onRetry }: ConnectionErrorProps) {
         <p className="text-sm text-gray-400 mb-6">
           The backend API is not responding. Make sure the Navil server is running:
         </p>
-        <div className="bg-gray-900 border border-gray-800/60 rounded-lg p-3 mb-6 font-mono text-sm text-indigo-300">
+        <div className="bg-gray-900 border border-gray-800/60 rounded-lg p-3 mb-6 font-mono text-sm text-cyan-300">
           $ navil cloud serve
         </div>
         <div className="flex items-center justify-center gap-3">
           <button
             onClick={onRetry}
-            className="px-5 py-2.5 bg-indigo-600 text-white rounded-lg text-sm font-medium hover:bg-indigo-500 flex items-center gap-2"
+            className="px-5 py-2.5 bg-cyan-500 text-white rounded-lg text-sm font-medium hover:bg-cyan-400 flex items-center gap-2"
           >
             <Icon name="activity" size={14} />
             Retry

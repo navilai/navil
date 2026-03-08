@@ -27,7 +27,7 @@ export default function UpgradePrompt({ feature, onUpgrade, compact }: UpgradePr
             </button>
           )}{' '}
           or{' '}
-          <Link to="/dashboard/settings" className="text-indigo-400 hover:underline">
+          <Link to="/dashboard/settings" className="text-cyan-400 hover:underline">
             add your own API key
           </Link>
         </p>
