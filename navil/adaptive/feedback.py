@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import json
 import logging
+from collections import deque
 from dataclasses import asdict, dataclass
 from datetime import datetime, timezone
 from pathlib import Path
@@ -36,8 +37,8 @@ class FeedbackLoop:
     maintaining detection sensitivity.
     """
 
-    def __init__(self, persistence_path: str | None = None) -> None:
-        self.entries: list[FeedbackEntry] = []
+    def __init__(self, persistence_path: str | None = None, max_entries: int = 500) -> None:
+        self.entries: deque[FeedbackEntry] = deque(maxlen=max_entries)
         self.persistence_path = Path(persistence_path) if persistence_path else None
         self._load()
 
@@ -141,7 +142,9 @@ class FeedbackLoop:
         try:
             with open(self.persistence_path) as f:
                 data = json.load(f)
-            self.entries = [FeedbackEntry(**d) for d in data]
+            self.entries.clear()
+            for d in data:
+                self.entries.append(FeedbackEntry(**d))
         except (json.JSONDecodeError, TypeError):
             logger.warning(f"Could not load feedback from {self.persistence_path}")
-            self.entries = []
+            self.entries.clear()

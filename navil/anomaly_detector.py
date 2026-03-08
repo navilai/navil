@@ -127,7 +127,7 @@ class BehavioralAnomalyDetector:
         self._max_agents: int = 500
         self._max_invocations_per_agent: int = 500
         self._total_invocation_count: int = 0
-        self.alerts: list[AnomalyAlert] = []
+        self.alerts: deque[AnomalyAlert] = deque(maxlen=5000)
         self.baselines: dict[str, dict[str, Any]] = {}
         self.feedback_loop = feedback_loop
         self.pattern_store = pattern_store
@@ -401,7 +401,7 @@ class BehavioralAnomalyDetector:
         rate_limit = max(60, int(baseline_rate_per_min * 3 * 60))
 
         # Hard block on new CRITICAL alerts
-        new_alerts = self.alerts[alert_count_before:]
+        new_alerts = list(self.alerts)[alert_count_before:]
         blocked = any(a.severity == "CRITICAL" for a in new_alerts)
 
         with self._threshold_lock:

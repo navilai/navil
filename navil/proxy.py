@@ -371,7 +371,7 @@ class MCPSecurityProxy:
                             success="error" not in response_data,
                         )
                     )
-                    for a in self.detector.alerts[-new_alerts:] if new_alerts > 0 else []:
+                    for a in list(self.detector.alerts)[-new_alerts:] if new_alerts > 0 else []:
                         a_dict = a if isinstance(a, dict) else a.__dict__
                         asyncio.ensure_future(
                             self.cloud_client.report_alert(
