@@ -26,6 +26,8 @@ from collections import deque
 from datetime import datetime, timezone
 from typing import Any
 
+from navil.telemetry_event import TELEMETRY_QUEUE, build_telemetry_event
+
 try:
     from starlette.requests import Request as _StarletteRequest
 except ModuleNotFoundError:  # starlette is optional (proxy extras)
@@ -53,6 +55,7 @@ class MCPSecurityProxy:
         credential_manager: Any,
         require_auth: bool = True,
         cloud_client: Any | None = None,
+        redis_client: Any | None = None,
     ) -> None:
         self.target_url = target_url.rstrip("/")
         self.policy_engine = policy_engine
@@ -60,6 +63,7 @@ class MCPSecurityProxy:
         self.credential_manager = credential_manager
         self.require_auth = require_auth
         self.cloud_client = cloud_client  # NavilCloudClient for telemetry
+        self.redis_client = redis_client  # async Redis for LPUSH telemetry path
 
         self.http_client: httpx.AsyncClient | None = None
 
@@ -339,6 +343,24 @@ class MCPSecurityProxy:
             args_bytes = orjson.dumps(arguments, option=orjson.OPT_SORT_KEYS)
             args_hash = hashlib.sha256(args_bytes).hexdigest()
 
+            # Redis LPUSH path: enqueue canonical event and return early.
+            # The TelemetryWorker will consume and run full detection.
+            if self.redis_client is not None:
+                event_bytes = build_telemetry_event(
+                    agent_name=agent_name,
+                    tool_name=tool_name,
+                    method="tools/call",
+                    action="FORWARDED",
+                    payload_bytes=len(args_bytes),
+                    response_bytes=response_bytes,
+                    duration_ms=duration_ms,
+                    target_server=self.target_url,
+                    arguments_hash=args_hash,
+                    arguments_size_bytes=len(args_bytes),
+                )
+                await self.redis_client.lpush(TELEMETRY_QUEUE, event_bytes)
+                return
+
             alert_count_before = len(self.detector.alerts)
             await self.detector.record_invocation_async(
                 agent_name=agent_name,
@@ -396,6 +418,21 @@ class MCPSecurityProxy:
     ) -> None:
         """Run heavy anomaly detection for tools/list off the hot path."""
         try:
+            # Redis LPUSH path: enqueue canonical event and return early.
+            if self.redis_client is not None:
+                event_bytes = build_telemetry_event(
+                    agent_name=agent_name,
+                    tool_name="__tools_list__",
+                    method="tools/list",
+                    action="tools/list",
+                    response_bytes=response_bytes,
+                    duration_ms=duration_ms,
+                    target_server=self.target_url,
+                    is_list_tools=True,
+                )
+                await self.redis_client.lpush(TELEMETRY_QUEUE, event_bytes)
+                return
+
             alert_count_before = len(self.detector.alerts)
             await self.detector.record_invocation_async(
                 agent_name=agent_name,

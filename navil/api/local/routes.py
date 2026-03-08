@@ -358,8 +358,24 @@ def list_alerts(severity: str | None = None, agent: str | None = None) -> list[d
 
 
 @router.post("/invocations")
-def record_invocation(req: InvocationRequest) -> dict[str, str]:
+async def record_invocation(req: InvocationRequest) -> dict[str, str]:
     s = AppState.get()
+
+    # Redis LPUSH path: enqueue canonical event for the TelemetryWorker.
+    if s.redis_client is not None:
+        from navil.telemetry_event import TELEMETRY_QUEUE, build_telemetry_event
+
+        event_bytes = build_telemetry_event(
+            agent_name=req.agent_name,
+            tool_name=req.tool_name,
+            method="tools/call",
+            action=req.action,
+            response_bytes=req.data_accessed_bytes,
+            duration_ms=req.duration_ms,
+        )
+        await s.redis_client.lpush(TELEMETRY_QUEUE, event_bytes)
+        return {"status": "recorded"}
+
     s.anomaly_detector.record_invocation(
         agent_name=req.agent_name,
         tool_name=req.tool_name,
@@ -943,6 +959,7 @@ def proxy_start_endpoint(req: ProxyStartRequest) -> dict[str, Any]:
         anomaly_detector=s.anomaly_detector,
         credential_manager=s.credential_manager,
         require_auth=req.require_auth,
+        redis_client=s.redis_client,
     )
     s.proxy = proxy
     s.proxy_running = True

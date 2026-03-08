@@ -4,10 +4,12 @@
 
 from __future__ import annotations
 
+import asyncio
 import logging
 import os
+from contextlib import asynccontextmanager
 from pathlib import Path
-from typing import Any
+from typing import Any, AsyncIterator
 
 from fastapi import FastAPI, Request, Response
 from fastapi.middleware.cors import CORSMiddleware
@@ -55,10 +57,75 @@ class SecurityHeadersMiddleware(BaseHTTPMiddleware):
 
 def create_app(with_demo: bool = True) -> FastAPI:
     """Create the FastAPI application."""
+
+    worker_task: asyncio.Task[None] | None = None
+
+    @asynccontextmanager
+    async def lifespan(app: FastAPI) -> AsyncIterator[None]:
+        nonlocal worker_task
+
+        # Initialize persistent storage (creates tables if needed)
+        try:
+            from navil.cloud.database import init_db
+
+            init_db()
+        except Exception:
+            logger.warning("Database initialization skipped (sqlalchemy not installed?)")
+
+        state = AppState.get()
+        if with_demo:
+            seed_demo_data(state)
+            logger.info("Demo data seeded: 5 agents, ~150 invocations, 5 credentials")
+
+        # ── Redis + TelemetryWorker bootstrap ────────────────────
+        redis_url = os.environ.get("NAVIL_REDIS_URL")
+        worker = None
+        if redis_url:
+            try:
+                import redis.asyncio as aioredis
+
+                from navil.telemetry_worker import TelemetryWorker
+
+                state.redis_client = aioredis.from_url(redis_url)
+                # Attach to anomaly detector so it can sync thresholds
+                state.anomaly_detector.redis = state.redis_client
+
+                worker = TelemetryWorker(
+                    redis_client=state.redis_client,
+                    detector=state.anomaly_detector,
+                )
+                worker_task = asyncio.create_task(worker.run())
+                logger.info("Redis connected, TelemetryWorker started (%s)", redis_url)
+            except Exception:
+                logger.warning(
+                    "Redis unavailable (%s) — running in standalone mode",
+                    redis_url,
+                )
+                state.redis_client = None
+
+        yield
+
+        # ── Shutdown: stop worker, close Redis ───────────────────
+        if worker is not None:
+            worker.stop()
+        if worker_task is not None:
+            worker_task.cancel()
+            try:
+                await worker_task
+            except asyncio.CancelledError:
+                pass
+        if state.redis_client is not None:
+            try:
+                await state.redis_client.aclose()
+            except Exception:
+                pass
+            state.redis_client = None
+
     app = FastAPI(
         title="Navil",
         description="Security dashboard for AI agent fleet monitoring",
         version="0.1.0",
+        lifespan=lifespan,
     )
 
     # Security headers (outermost → runs first)
@@ -73,21 +140,6 @@ def create_app(with_demo: bool = True) -> FastAPI:
     )
 
     app.include_router(router)
-
-    @app.on_event("startup")
-    def on_startup() -> None:
-        # Initialize persistent storage (creates tables if needed)
-        try:
-            from navil.cloud.database import init_db
-
-            init_db()
-        except Exception:
-            logger.warning("Database initialization skipped (sqlalchemy not installed?)")
-
-        state = AppState.get()
-        if with_demo:
-            seed_demo_data(state)
-            logger.info("Demo data seeded: 5 agents, ~150 invocations, 5 credentials")
 
     # Serve frontend static files if built
     if DASHBOARD_DIR.exists():
