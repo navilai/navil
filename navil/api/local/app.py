@@ -80,6 +80,8 @@ def create_app(with_demo: bool = True) -> FastAPI:
         # ── Redis + TelemetryWorker bootstrap ────────────────────
         redis_url = os.environ.get("NAVIL_REDIS_URL")
         worker = None
+        threat_intel_task: asyncio.Task[None] | None = None
+        consumer: ThreatIntelConsumer | None = None
         if redis_url:
             try:
                 import redis.asyncio as aioredis
@@ -96,6 +98,16 @@ def create_app(with_demo: bool = True) -> FastAPI:
                 )
                 worker_task = asyncio.create_task(worker.run())
                 logger.info("Redis connected, TelemetryWorker started (%s)", redis_url)
+
+                # ── ThreatIntelConsumer ───────────────────────────
+                from navil.threat_intel import ThreatIntelConsumer
+
+                consumer = ThreatIntelConsumer(
+                    redis_client=state.redis_client,
+                    pattern_store=state.anomaly_detector.pattern_store,
+                )
+                if consumer.is_enabled():
+                    threat_intel_task = asyncio.create_task(consumer.run())
             except Exception:
                 logger.warning(
                     "Redis unavailable (%s) — running in standalone mode",
@@ -105,7 +117,15 @@ def create_app(with_demo: bool = True) -> FastAPI:
 
         yield
 
-        # ── Shutdown: stop worker, close Redis ───────────────────
+        # ── Shutdown: stop workers, close Redis ──────────────────
+        if consumer is not None:
+            consumer.stop()
+        if threat_intel_task is not None:
+            threat_intel_task.cancel()
+            try:
+                await threat_intel_task
+            except asyncio.CancelledError:
+                pass
         if worker is not None:
             worker.stop()
         if worker_task is not None:

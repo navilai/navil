@@ -58,6 +58,11 @@ class PatternStore:
         self._persist()
         logger.info(f"Learned pattern added: {pattern.pattern_id}")
 
+    def add_community_pattern(self, pattern: LearnedPattern) -> None:
+        """Add a community-sourced pattern. Tagged for eviction preference."""
+        pattern.source = "community"
+        self.add_pattern(pattern)
+
     def match(self, context: dict[str, Any]) -> list[tuple[LearnedPattern, float]]:
         """Find matching patterns and return (pattern, match_score) pairs.
 
