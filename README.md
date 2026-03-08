@@ -267,6 +267,48 @@ When cloud sync is enabled, Navil enforces strict privacy guarantees at the tran
 
 See [ARCHITECTURE.md](ARCHITECTURE.md#zero-knowledge-telemetry) for the full field allowlist/blocklist.
 
+## The Navil "Give-to-Get" Initiative
+
+Navil is an open-core security project. Our mission is to protect the world's AI agents from prompt injection, data exfiltration, and autonomous drift. To do this sustainably, we operate on a **Mutual Defense** model.
+
+### How It Works
+
+AI threats evolve in minutes, not months. A prompt injection discovered on a hobbyist's laptop in Berlin should protect a startup's infrastructure in San Francisco within seconds. To make this possible, Navil instances across the globe share anonymous, sanitized threat signatures with the **Navil Global Brain**.
+
+**The Give:** Your local Navil instance detects a new attack pattern and sends a sanitized metadata snippet — anomaly type, severity, confidence score, tool name, and timing — to our central hub. Agent identities are HMAC-anonymized. Raw data never leaves your machine. You can audit exactly what is sent by inspecting [`navil/cloud/telemetry_sync.py`](navil/cloud/telemetry_sync.py).
+
+**The Get:** In exchange for contributing to the network's herd immunity, your instance receives real-time updates from the **Global Threat Blocklist** — a curated feed of malicious patterns discovered by thousands of other Navil nodes, applied instantly to your local detectors and Rust proxy.
+
+### Why We Built It This Way
+
+Security is only as strong as its data. By sharing signals, every node strengthens every other node. This creates a **flywheel of protection** that makes everyone safer for free — the more deployments participate, the faster new threats are neutralized globally.
+
+### Privacy-First Architecture
+
+We are a security company; your data privacy is our absolute priority. The Give-to-Get handshake is designed with zero-knowledge principles:
+
+1. **Local Sanitization** — All telemetry is stripped of PII, secrets, and raw prompt content on your machine before it ever reaches our servers. An explicit field allowlist and banned-field blocklist are enforced at the transmission boundary.
+2. **No Raw Data** — We never see your AI's conversations. We only see the *shape* of the attack (anomaly type, severity, timing, tool name). Descriptions, evidence, file paths, server URLs, and IP addresses are actively blocked.
+3. **Full Transparency** — You can audit exactly what is being sent by inspecting [`navil/cloud/telemetry_sync.py`](navil/cloud/telemetry_sync.py). The sanitization logic is open source.
+
+### Tiered Participation
+
+| Tier | Telemetry Sharing | Global Blocklist Access |
+|------|-------------------|------------------------|
+| **Community (OSS)** | Required (default) | Full access (crowdsourced feed) |
+| **Dark Site (OSS)** | Disabled | No global updates (local-only protection) |
+| **Pro / Team (Paid)** | Optional ("privacy premium") | Premium access (real-time + verified feed) |
+
+**For enterprises** whose security policy prohibits outbound telemetry: provide a valid `NAVIL_API_KEY` to receive threat intelligence without sharing your own signals. Visit [navil.ai](https://navil.ai) to get a key.
+
+```bash
+# Community mode (default): share and receive
+navil cloud serve
+
+# Paid mode: receive without sharing
+NAVIL_API_KEY=nvl_your_key NAVIL_DISABLE_CLOUD_SYNC=true navil cloud serve
+```
+
 ## Commands
 
 | Command | Description |
@@ -296,7 +338,10 @@ See [ARCHITECTURE.md](ARCHITECTURE.md#zero-knowledge-telemetry) for the full fie
 | `NAVIL_REDIS_URL` | `redis://127.0.0.1:6379` | Redis connection (Rust proxy) |
 | `NAVIL_HMAC_SECRET` | *(none)* | HMAC signing key for request auth |
 | `NAVIL_PORT` | `8080` | Rust proxy listen port |
-| `NAVIL_DISABLE_CLOUD_SYNC` | `false` | Disable cloud telemetry sync |
+| `NAVIL_DISABLE_CLOUD_SYNC` | `false` | Disable cloud telemetry sync (community: loses intel; paid: privacy premium) |
+| `NAVIL_API_KEY` | *(none)* | Navil Cloud API key (enables paid mode / privacy premium) |
+| `NAVIL_INTEL_SYNC_INTERVAL` | `3600` | Seconds between cloud sync cycles |
+| `NAVIL_DEPLOYMENT_SECRET` | *(auto-generated)* | Secret for HMAC agent anonymization |
 | `ANTHROPIC_API_KEY` | *(none)* | Anthropic API key for LLM features |
 | `OPENAI_API_KEY` | *(none)* | OpenAI API key for LLM features |
 | `GEMINI_API_KEY` | *(none)* | Google Gemini API key for LLM features |
@@ -308,7 +353,7 @@ See [ARCHITECTURE.md](ARCHITECTURE.md#zero-knowledge-telemetry) for the full fie
 # Install dev dependencies
 pip install -e ".[dev]"
 
-# Run tests (324 tests)
+# Run tests (348 tests)
 pytest
 
 # Lint
