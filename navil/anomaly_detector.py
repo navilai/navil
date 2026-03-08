@@ -257,7 +257,15 @@ class BehavioralAnomalyDetector:
             timestamp: ISO-format timestamp string; defaults to now (UTC)
         """
         ts_str = timestamp or datetime.now(timezone.utc).isoformat()
-        ts_dt = datetime.fromisoformat(ts_str)
+        try:
+            ts_dt = datetime.fromisoformat(ts_str)
+        except ValueError:
+            logger.warning("Invalid timestamp %r, falling back to now()", ts_str)
+            ts_dt = datetime.now(timezone.utc)
+            ts_str = ts_dt.isoformat()
+
+        if ts_dt.tzinfo is None:
+            ts_dt = ts_dt.replace(tzinfo=timezone.utc)
 
         invocation = ToolInvocation(
             timestamp=ts_str,
