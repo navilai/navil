@@ -79,6 +79,19 @@ class FakeRedis:
             self._data[name].insert(0, val)
         return len(self._data[name])
 
+    async def llen(self, name: str) -> int:
+        lst = self._data.get(name, [])
+        return len(lst) if isinstance(lst, list) else 0
+
+    async def ltrim(self, name: str, start: int, stop: int) -> bool:
+        lst = self._data.get(name, [])
+        if isinstance(lst, list):
+            if stop == -1:
+                self._data[name] = lst[start:]
+            else:
+                self._data[name] = lst[start:stop + 1]
+        return True
+
     async def brpop(self, keys: str | list[str], timeout: int = 0) -> tuple[bytes, bytes] | None:
         """Pop from the right of the first non-empty list.
 
