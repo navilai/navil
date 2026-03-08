@@ -559,8 +559,17 @@ def test_llm_connection(req: LLMTestRequest) -> dict[str, Any]:
 @router.get("/settings/telemetry")
 def get_telemetry_settings() -> dict[str, Any]:
     """Return community threat feed / cloud sync settings."""
-    enabled = os.environ.get("NAVIL_DISABLE_CLOUD_SYNC", "").lower() not in ("1", "true", "yes")
-    return {"cloud_sync_enabled": enabled}
+    from navil.threat_intel import get_intel_mode
+
+    enabled = os.environ.get("NAVIL_DISABLE_CLOUD_SYNC", "").lower() not in (
+        "1", "true", "yes",
+    )
+    api_key_present = bool(os.environ.get("NAVIL_API_KEY", "").strip())
+    return {
+        "cloud_sync_enabled": enabled,
+        "api_key_present": api_key_present,
+        "mode": get_intel_mode(),
+    }
 
 
 class TelemetrySettingsRequest(BaseModel):
@@ -571,15 +580,33 @@ class TelemetrySettingsRequest(BaseModel):
 def update_telemetry_settings(req: TelemetrySettingsRequest) -> dict[str, Any]:
     """Toggle community threat feed (cloud sync).
 
-    Setting ``enabled=false`` sets ``NAVIL_DISABLE_CLOUD_SYNC=1`` in the
-    process environment so all downstream code sees the preference immediately.
+    Community mode: cannot disable sync (give-to-get enforcement).
+    Paid mode (NAVIL_API_KEY): can disable sync ("privacy premium").
     """
-    enabled = req.enabled
-    if enabled:
+    from navil.threat_intel import get_intel_mode
+
+    api_key_present = bool(os.environ.get("NAVIL_API_KEY", "").strip())
+
+    if not req.enabled and not api_key_present:
+        raise HTTPException(
+            status_code=403,
+            detail=(
+                "Community tier requires sharing anonymous threat data "
+                "to receive threat intelligence. Provide a NAVIL_API_KEY "
+                "for privacy premium (paid mode)."
+            ),
+        )
+
+    if req.enabled:
         os.environ.pop("NAVIL_DISABLE_CLOUD_SYNC", None)
     else:
         os.environ["NAVIL_DISABLE_CLOUD_SYNC"] = "1"
-    return {"cloud_sync_enabled": enabled}
+
+    return {
+        "cloud_sync_enabled": req.enabled,
+        "api_key_present": api_key_present,
+        "mode": get_intel_mode(),
+    }
 
 
 # ── LLM-Powered Features ──────────────────────────────────
