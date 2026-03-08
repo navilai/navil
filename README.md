@@ -23,7 +23,7 @@ High-performance Rust/Python security gateway for [Model Context Protocol (MCP)]
 - **Policy Enforcement** — YAML-driven tool/action allow-lists, per-agent rate limiting, data-sensitivity gates, and suspicious-pattern detection.
 - **Penetration Testing** — 11 SAFE-MCP attack simulations that validate your detectors actually catch threats. No real network traffic generated.
 - **LLM Analysis** — AI-powered config analysis, anomaly explanation, policy generation, and self-healing with SSE streaming. Bring your own key (Anthropic, OpenAI, Gemini, Ollama).
-- **Cloud Dashboard** — React-based fleet monitoring dashboard with alerting, gateway traffic visualization, credential management, and pentest UI.
+- **OSS Dashboard** — React-based fleet monitoring dashboard with alerting, gateway traffic visualization, credential management, and pentest UI. Serves at `/` via the Python control plane.
 
 ## Architecture
 
@@ -103,7 +103,7 @@ Navil ships with a full-featured security dashboard for visualizing and managing
 |------|-----------|
 | Agents | <img src="docs/screenshots/agents.png" alt="Agents" width="600" /> |
 | Credentials | <img src="docs/screenshots/credentials.png" alt="Credentials" width="600" /> |
-| Analytics | <img src="docs/screenshots/analytics.png" alt="Analytics" width="600" /> |
+| Feedback | <img src="docs/screenshots/feedback.png" alt="Feedback" width="600" /> |
 | Settings | <img src="docs/screenshots/settings.png" alt="Settings" width="600" /> |
 
 </details>
