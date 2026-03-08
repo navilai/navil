@@ -51,21 +51,17 @@ class TestPersistence:
 
     def test_regular_interval_detected(self, detector: BehavioralAnomalyDetector) -> None:
         """Regular 30s intervals should trigger PERSISTENCE alert."""
-        from navil.anomaly_detector import ToolInvocation
-
         base = datetime.now(timezone.utc) - timedelta(minutes=10)
         for i in range(8):
             ts = base + timedelta(seconds=i * 30)
-            detector.invocations.append(
-                ToolInvocation(
-                    timestamp=ts.isoformat(),
-                    agent_name="agent-b",
-                    tool_name="heartbeat",
-                    action="ping",
-                    duration_ms=5,
-                    data_accessed_bytes=0,
-                    success=True,
-                )
+            detector.record_invocation(
+                agent_name="agent-b",
+                tool_name="heartbeat",
+                action="ping",
+                duration_ms=5,
+                data_accessed_bytes=0,
+                success=True,
+                timestamp=ts.isoformat(),
             )
 
         detector._detect_persistence("agent-b")
@@ -75,24 +71,20 @@ class TestPersistence:
 
     def test_irregular_interval_no_alert(self, detector: BehavioralAnomalyDetector) -> None:
         """Irregular intervals should NOT trigger PERSISTENCE alert."""
-        from navil.anomaly_detector import ToolInvocation
-
         base = datetime.now(timezone.utc) - timedelta(minutes=10)
         intervals = [0, 5, 23, 8, 45, 12, 3]
         cumulative = 0
         for dt in intervals:
             cumulative += dt
             ts = base + timedelta(seconds=cumulative)
-            detector.invocations.append(
-                ToolInvocation(
-                    timestamp=ts.isoformat(),
-                    agent_name="agent-c",
-                    tool_name="work",
-                    action="do",
-                    duration_ms=100,
-                    data_accessed_bytes=0,
-                    success=True,
-                )
+            detector.record_invocation(
+                agent_name="agent-c",
+                tool_name="work",
+                action="do",
+                duration_ms=100,
+                data_accessed_bytes=0,
+                success=True,
+                timestamp=ts.isoformat(),
             )
 
         detector._detect_persistence("agent-c")
@@ -171,22 +163,18 @@ class TestCommandAndControl:
 
     def test_beaconing_detected(self, detector: BehavioralAnomalyDetector) -> None:
         """Regular intervals with small consistent responses = beaconing."""
-        from navil.anomaly_detector import ToolInvocation
-
         base = datetime.now(timezone.utc) - timedelta(minutes=5)
         for i in range(8):
             ts = base + timedelta(seconds=i * 10)
-            detector.invocations.append(
-                ToolInvocation(
-                    timestamp=ts.isoformat(),
-                    agent_name="agent-h",
-                    tool_name="status",
-                    action="check",
-                    duration_ms=20,
-                    data_accessed_bytes=0,
-                    success=True,
-                    response_size_bytes=256,  # Small, consistent
-                )
+            detector.record_invocation(
+                agent_name="agent-h",
+                tool_name="status",
+                action="check",
+                duration_ms=20,
+                data_accessed_bytes=0,
+                success=True,
+                response_size_bytes=256,  # Small, consistent
+                timestamp=ts.isoformat(),
             )
 
         detector._detect_command_and_control("agent-h")
