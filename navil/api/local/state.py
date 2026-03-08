@@ -36,6 +36,9 @@ class AppState:
         )
         self.demo_seeded = False
 
+        # Redis client (set at startup when NAVIL_REDIS_URL is configured)
+        self.redis_client: Any | None = None
+
         # Proxy state (set when proxy is started from dashboard)
         self.proxy: Any = None
         self.proxy_running: bool = False
