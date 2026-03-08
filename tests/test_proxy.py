@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import asyncio
 import json
 from unittest.mock import AsyncMock
 
@@ -19,8 +20,8 @@ def policy_engine() -> PolicyEngine:
 
 
 @pytest.fixture
-def detector() -> BehavioralAnomalyDetector:
-    return BehavioralAnomalyDetector()
+def detector(fake_redis) -> BehavioralAnomalyDetector:
+    return BehavioralAnomalyDetector(redis_client=fake_redis)
 
 
 @pytest.fixture
@@ -175,6 +176,7 @@ class TestHandleJsonRPC:
         proxy._forward = _mock_forward(upstream_response)
 
         result, _headers = await proxy.handle_jsonrpc(body, {"x-agent-name": "test-agent"})
+        await asyncio.sleep(0)  # let background task run
 
         assert "result" in result
         assert proxy.stats["forwarded"] == 1
@@ -207,6 +209,7 @@ class TestHandleJsonRPC:
         proxy._forward = _mock_forward(upstream_response)
 
         result, _headers = await proxy.handle_jsonrpc(body, {"x-agent-name": "test-agent"})
+        await asyncio.sleep(0)  # let background task run
 
         assert "result" in result
         assert "http://localhost:3000" in proxy.detector.registered_tools
@@ -246,6 +249,71 @@ class TestGetStatus:
         assert status["target_url"] == "http://localhost:3000"
         assert "total_requests" in status["stats"]
         assert "uptime_seconds" in status
+
+
+class TestSanitizeRequest:
+    """Request sanitization: byte limit, whitespace strip, depth limit."""
+
+    def test_normal_payload_passes(self) -> None:
+        body = json.dumps({"jsonrpc": "2.0", "method": "tools/call", "id": 1}).encode()
+        result = MCPSecurityProxy.sanitize_request(body)
+        # Should be valid JSON and compacted (no extra whitespace)
+        assert b"tools/call" in result
+
+    def test_whitespace_padding_stripped(self) -> None:
+        """Padded JSON should be compacted to tight form."""
+        padded = b'  {  "method" :  "tools/call" ,  "id" : 1  }  '
+        result = MCPSecurityProxy.sanitize_request(padded)
+        # orjson produces compact output — no spaces around colons/commas
+        assert b"  " not in result
+        assert b"tools/call" in result
+
+    def test_payload_too_large(self) -> None:
+        body = b"x" * (MCPSecurityProxy.MAX_PAYLOAD_BYTES + 1)
+        with pytest.raises(ValueError, match="Payload too large"):
+            MCPSecurityProxy.sanitize_request(body)
+
+    def test_depth_limit_exceeded(self) -> None:
+        """Deeply nested JSON should be rejected."""
+        # Build nesting depth of 15 (exceeds limit of 10)
+        inner: dict = {"leaf": True}
+        for _ in range(14):
+            inner = {"nested": inner}
+        body = json.dumps(inner).encode()
+        with pytest.raises(ValueError, match="nesting depth"):
+            MCPSecurityProxy.sanitize_request(body)
+
+    def test_depth_at_limit_passes(self) -> None:
+        """Nesting exactly at the limit should pass."""
+        inner: dict = {"leaf": True}
+        for _ in range(MCPSecurityProxy.MAX_JSON_DEPTH - 2):
+            inner = {"nested": inner}
+        body = json.dumps(inner).encode()
+        result = MCPSecurityProxy.sanitize_request(body)
+        assert b"leaf" in result
+
+    def test_invalid_json_rejected(self) -> None:
+        with pytest.raises(ValueError, match="Invalid JSON"):
+            MCPSecurityProxy.sanitize_request(b"not json at all")
+
+    @pytest.mark.asyncio
+    async def test_oversized_payload_blocked_in_handler(self, proxy: MCPSecurityProxy) -> None:
+        """handle_jsonrpc should reject oversized payloads."""
+        body = b"{" + b" " * (MCPSecurityProxy.MAX_PAYLOAD_BYTES + 1) + b"}"
+        result, _headers = await proxy.handle_jsonrpc(body, {"x-agent-name": "test"})
+        assert result["error"]["code"] == -32700
+        assert "too large" in result["error"]["message"]
+
+    @pytest.mark.asyncio
+    async def test_deep_json_blocked_in_handler(self, proxy: MCPSecurityProxy) -> None:
+        """handle_jsonrpc should reject deeply nested JSON."""
+        inner: dict = {"jsonrpc": "2.0", "method": "tools/call", "id": 1}
+        for _ in range(15):
+            inner = {"nested": inner}
+        body = json.dumps(inner).encode()
+        result, _headers = await proxy.handle_jsonrpc(body, {"x-agent-name": "test"})
+        assert result["error"]["code"] == -32700
+        assert "nesting depth" in result["error"]["message"]
 
 
 class TestJsonRPCError:

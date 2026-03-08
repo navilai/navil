@@ -15,10 +15,13 @@ Architecture:
 
 from __future__ import annotations
 
+import asyncio
 import hashlib
-import json
 import logging
 import time
+
+import httpx
+import orjson
 from collections import deque
 from datetime import datetime, timezone
 from typing import Any
@@ -39,6 +42,8 @@ class MCPSecurityProxy:
     """
 
     MAX_TRAFFIC_LOG = 1000
+    MAX_PAYLOAD_BYTES = 5 * 1024 * 1024  # 5 MB hard ceiling
+    MAX_JSON_DEPTH = 10
 
     def __init__(
         self,
@@ -56,6 +61,8 @@ class MCPSecurityProxy:
         self.require_auth = require_auth
         self.cloud_client = cloud_client  # NavilCloudClient for telemetry
 
+        self.http_client: httpx.AsyncClient | None = None
+
         self.traffic_log: deque[dict[str, Any]] = deque(maxlen=self.MAX_TRAFFIC_LOG)
         self.stats = {
             "total_requests": 0,
@@ -64,6 +71,65 @@ class MCPSecurityProxy:
             "forwarded": 0,
         }
         self.start_time = time.time()
+
+    async def init_client(self) -> None:
+        """Initialize the shared httpx.AsyncClient (call on app startup)."""
+        self.http_client = httpx.AsyncClient(timeout=30.0)
+
+    async def close_client(self) -> None:
+        """Close the shared httpx.AsyncClient (call on app shutdown)."""
+        if self.http_client:
+            await self.http_client.aclose()
+            self.http_client = None
+
+    # ── Request Sanitization ─────────────────────────────────
+
+    @classmethod
+    def sanitize_request(cls, body: bytes) -> bytes:
+        """Sanitize raw request bytes before any processing.
+
+        1. Reject payloads over MAX_PAYLOAD_BYTES (413).
+        2. Parse + re-serialize via orjson to strip whitespace padding.
+        3. Reject nesting depth > MAX_JSON_DEPTH (JSON bomb defence).
+
+        Returns the compacted bytes on success.
+        Raises ValueError with a descriptive message on rejection.
+        """
+        # ── Byte limit ────────────────────────────────────────
+        if len(body) > cls.MAX_PAYLOAD_BYTES:
+            raise ValueError(
+                f"Payload too large: {len(body)} bytes "
+                f"(limit {cls.MAX_PAYLOAD_BYTES} bytes)"
+            )
+
+        # ── Parse & compact ───────────────────────────────────
+        try:
+            data = orjson.loads(body)
+        except orjson.JSONDecodeError as e:
+            raise ValueError(f"Invalid JSON: {e}") from e
+
+        # ── Depth check ───────────────────────────────────────
+        depth = cls._json_depth(data)
+        if depth > cls.MAX_JSON_DEPTH:
+            raise ValueError(
+                f"JSON nesting depth {depth} exceeds limit {cls.MAX_JSON_DEPTH}"
+            )
+
+        # Re-serialize tightly (no whitespace, no padding)
+        return orjson.dumps(data)
+
+    @staticmethod
+    def _json_depth(obj: Any, _current: int = 1) -> int:
+        """Return the maximum nesting depth of a JSON-compatible object."""
+        if isinstance(obj, dict):
+            if not obj:
+                return _current
+            return max(MCPSecurityProxy._json_depth(v, _current + 1) for v in obj.values())
+        if isinstance(obj, list):
+            if not obj:
+                return _current
+            return max(MCPSecurityProxy._json_depth(v, _current + 1) for v in obj)
+        return _current
 
     # ── JSON-RPC Parsing ──────────────────────────────────────
 
@@ -75,8 +141,8 @@ class MCPSecurityProxy:
         Raises ValueError on invalid JSON-RPC.
         """
         try:
-            data = json.loads(body)
-        except json.JSONDecodeError as e:
+            data = orjson.loads(body)
+        except orjson.JSONDecodeError as e:
             raise ValueError(f"Invalid JSON: {e}") from e
 
         if not isinstance(data, dict):
@@ -142,6 +208,12 @@ class MCPSecurityProxy:
         self.stats["total_requests"] += 1
         start = time.time()
 
+        # Sanitize raw bytes (size limit, whitespace strip, depth check)
+        try:
+            body = self.sanitize_request(body)
+        except ValueError as e:
+            return self._jsonrpc_error(-32700, f"Request rejected: {e}", None), {}
+
         # Parse JSON-RPC
         try:
             parsed = self.parse_jsonrpc(body)
@@ -182,87 +254,40 @@ class MCPSecurityProxy:
                         req_id,
                     ), {}
 
+            # O(1) fast-path anomaly gate (pre-computed thresholds)
+            allowed, reason = await self.detector.check_fast(agent_name, len(body))
+            if not allowed:
+                self.stats["blocked"] += 1
+                duration_ms = int((time.time() - start) * 1000)
+                self._log_traffic(agent_name, method, tool_name, "ANOMALY_BLOCKED", duration_ms, 0)
+                return self._jsonrpc_error(-32002, f"Blocked by anomaly detector: {reason}", req_id), {}
+
             # Forward to upstream
             response_data, response_bytes, upstream_hdrs = await self._forward(body, headers)
             duration_ms = int((time.time() - start) * 1000)
 
-            # Post-execution: record invocation
-            args_json = json.dumps(arguments, sort_keys=True)
-            args_hash = hashlib.sha256(args_json.encode()).hexdigest()
-
-            alert_count_before = len(self.detector.alerts)
-            self.detector.record_invocation(
-                agent_name=agent_name,
-                tool_name=tool_name,
-                action=action,
-                duration_ms=duration_ms,
-                data_accessed_bytes=response_bytes,
-                success="error" not in response_data,
-                target_server=self.target_url,
-                arguments_hash=args_hash,
-                arguments_size_bytes=len(args_json.encode()),
-                response_size_bytes=response_bytes,
-                is_list_tools=False,
-            )
-            alert_count_after = len(self.detector.alerts)
-            new_alerts = alert_count_after - alert_count_before
-            if new_alerts > 0:
-                self.stats["alerts_generated"] += new_alerts
-
-            # Cloud telemetry: ship event + any new alerts
-            if self.cloud_client:
-                import asyncio
-
-                try:
-                    asyncio.ensure_future(
-                        self.cloud_client.record_event(
-                            agent_name=agent_name,
-                            tool_name=tool_name,
-                            action=action,
-                            duration_ms=duration_ms,
-                            data_accessed_bytes=response_bytes,
-                            success="error" not in response_data,
-                        )
-                    )
-                    # Ship new alerts
-                    for a in self.detector.alerts[-new_alerts:] if new_alerts > 0 else []:
-                        a_dict = a if isinstance(a, dict) else a.__dict__
-                        asyncio.ensure_future(
-                            self.cloud_client.report_alert(
-                                agent_name=a_dict.get("agent_name", agent_name),
-                                anomaly_type=a_dict.get("anomaly_type", "UNKNOWN"),
-                                severity=a_dict.get("severity", "MEDIUM"),
-                                description=a_dict.get("description", ""),
-                                evidence=a_dict.get("evidence", []),
-                            )
-                        )
-                except Exception:
-                    pass  # telemetry is best-effort
-
             self.stats["forwarded"] += 1
             self._log_traffic(agent_name, method, tool_name, "ALLOWED", duration_ms, response_bytes)
+
+            # Heavy anomaly detection + telemetry → background task
+            asyncio.create_task(
+                self._background_record(
+                    agent_name=agent_name,
+                    tool_name=tool_name,
+                    action=action,
+                    arguments=arguments,
+                    duration_ms=duration_ms,
+                    response_data=response_data,
+                    response_bytes=response_bytes,
+                )
+            )
+
             return response_data, upstream_hdrs
 
         elif method == "tools/list":
             # Forward tools/list and track registered tools
             response_data, response_bytes, upstream_hdrs = await self._forward(body, headers)
             duration_ms = int((time.time() - start) * 1000)
-
-            # Record as invocation for reconnaissance detection
-            alert_count_before = len(self.detector.alerts)
-            self.detector.record_invocation(
-                agent_name=agent_name,
-                tool_name="__tools_list__",
-                action="tools/list",
-                duration_ms=duration_ms,
-                data_accessed_bytes=response_bytes,
-                success="error" not in response_data,
-                target_server=self.target_url,
-                is_list_tools=True,
-            )
-            alert_count_after = len(self.detector.alerts)
-            if alert_count_after > alert_count_before:
-                self.stats["alerts_generated"] += alert_count_after - alert_count_before
 
             # Extract tool names from response for supply chain tracking
             try:
@@ -276,6 +301,17 @@ class MCPSecurityProxy:
 
             self.stats["forwarded"] += 1
             self._log_traffic(agent_name, method, "", "ALLOWED", duration_ms, response_bytes)
+
+            # Background: reconnaissance detection
+            asyncio.create_task(
+                self._background_record_list(
+                    agent_name=agent_name,
+                    duration_ms=duration_ms,
+                    response_data=response_data,
+                    response_bytes=response_bytes,
+                )
+            )
+
             return response_data, upstream_hdrs
 
         else:
@@ -286,6 +322,97 @@ class MCPSecurityProxy:
             self._log_traffic(agent_name, method, "", "FORWARDED", duration_ms, response_bytes)
             return response_data, upstream_hdrs
 
+    # ── Background Heavy Detection ─────────────────────────────
+
+    async def _background_record(
+        self,
+        agent_name: str,
+        tool_name: str,
+        action: str,
+        arguments: dict[str, Any],
+        duration_ms: int,
+        response_data: dict[str, Any],
+        response_bytes: int,
+    ) -> None:
+        """Run heavy anomaly detection off the hot path."""
+        try:
+            args_bytes = orjson.dumps(arguments, option=orjson.OPT_SORT_KEYS)
+            args_hash = hashlib.sha256(args_bytes).hexdigest()
+
+            alert_count_before = len(self.detector.alerts)
+            await self.detector.record_invocation_async(
+                agent_name=agent_name,
+                tool_name=tool_name,
+                action=action,
+                duration_ms=duration_ms,
+                data_accessed_bytes=response_bytes,
+                success="error" not in response_data,
+                target_server=self.target_url,
+                arguments_hash=args_hash,
+                arguments_size_bytes=len(args_bytes),
+                response_size_bytes=response_bytes,
+                is_list_tools=False,
+            )
+            alert_count_after = len(self.detector.alerts)
+            new_alerts = alert_count_after - alert_count_before
+            if new_alerts > 0:
+                self.stats["alerts_generated"] += new_alerts
+
+            # Cloud telemetry (best-effort)
+            if self.cloud_client:
+                try:
+                    asyncio.ensure_future(
+                        self.cloud_client.record_event(
+                            agent_name=agent_name,
+                            tool_name=tool_name,
+                            action=action,
+                            duration_ms=duration_ms,
+                            data_accessed_bytes=response_bytes,
+                            success="error" not in response_data,
+                        )
+                    )
+                    for a in self.detector.alerts[-new_alerts:] if new_alerts > 0 else []:
+                        a_dict = a if isinstance(a, dict) else a.__dict__
+                        asyncio.ensure_future(
+                            self.cloud_client.report_alert(
+                                agent_name=a_dict.get("agent_name", agent_name),
+                                anomaly_type=a_dict.get("anomaly_type", "UNKNOWN"),
+                                severity=a_dict.get("severity", "MEDIUM"),
+                                description=a_dict.get("description", ""),
+                                evidence=a_dict.get("evidence", []),
+                            )
+                        )
+                except Exception:
+                    pass
+        except Exception:
+            logger.exception("Background anomaly detection failed for agent=%s", agent_name)
+
+    async def _background_record_list(
+        self,
+        agent_name: str,
+        duration_ms: int,
+        response_data: dict[str, Any],
+        response_bytes: int,
+    ) -> None:
+        """Run heavy anomaly detection for tools/list off the hot path."""
+        try:
+            alert_count_before = len(self.detector.alerts)
+            await self.detector.record_invocation_async(
+                agent_name=agent_name,
+                tool_name="__tools_list__",
+                action="tools/list",
+                duration_ms=duration_ms,
+                data_accessed_bytes=response_bytes,
+                success="error" not in response_data,
+                target_server=self.target_url,
+                is_list_tools=True,
+            )
+            alert_count_after = len(self.detector.alerts)
+            if alert_count_after > alert_count_before:
+                self.stats["alerts_generated"] += alert_count_after - alert_count_before
+        except Exception:
+            logger.exception("Background anomaly detection failed for tools/list agent=%s", agent_name)
+
     # ── Upstream Forwarding ───────────────────────────────────
 
     async def _forward(
@@ -295,7 +422,7 @@ class MCPSecurityProxy:
 
         Returns (response_json, response_size_bytes, upstream_headers).
         """
-        import httpx
+        assert self.http_client is not None, "http_client not initialised — call init_client()"
 
         # Strip hop-by-hop headers
         forward_headers = {
@@ -306,12 +433,11 @@ class MCPSecurityProxy:
         forward_headers["content-type"] = "application/json"
         forward_headers["accept"] = "application/json, text/event-stream"
 
-        async with httpx.AsyncClient(timeout=30.0) as client:
-            resp = await client.post(
-                self.target_url,
-                content=body,
-                headers=forward_headers,
-            )
+        resp = await self.http_client.post(
+            self.target_url,
+            content=body,
+            headers=forward_headers,
+        )
 
         response_bytes = len(resp.content)
         content_type = resp.headers.get("content-type", "")
@@ -321,8 +447,8 @@ class MCPSecurityProxy:
             response_data = self._parse_sse_response(resp.text)
         else:
             try:
-                response_data = resp.json()
-            except Exception:
+                response_data = orjson.loads(resp.content)
+            except orjson.JSONDecodeError:
                 response_data = {
                     "jsonrpc": "2.0",
                     "error": {"code": -32603, "message": "Upstream returned non-JSON"},
@@ -342,8 +468,8 @@ class MCPSecurityProxy:
         for line in text.splitlines():
             if line.startswith("data: "):
                 try:
-                    return json.loads(line[6:])
-                except json.JSONDecodeError:
+                    return orjson.loads(line[6:])
+                except orjson.JSONDecodeError:
                     continue
         return {
             "jsonrpc": "2.0",
@@ -419,17 +545,43 @@ def create_proxy_app(proxy: MCPSecurityProxy) -> Any:
     The proxy runs on its own port (separate from the dashboard)
     so agents connect to it directly.
     """
+    from contextlib import asynccontextmanager
+
     from fastapi import FastAPI, Request
     from fastapi.responses import JSONResponse
+
+    @asynccontextmanager
+    async def lifespan(app: FastAPI):  # type: ignore[no-untyped-def]
+        await proxy.init_client()
+        yield
+        await proxy.close_client()
 
     app = FastAPI(
         title="Navil MCP Security Proxy",
         description="Real-time MCP security proxy with policy enforcement and anomaly detection",
         version="0.1.0",
+        lifespan=lifespan,
     )
 
     @app.post("/mcp")
     async def handle_mcp(request: Request) -> JSONResponse:
+        # Early byte-length check before reading the full body into memory
+        content_length = int(request.headers.get("content-length", 0))
+        if content_length > MCPSecurityProxy.MAX_PAYLOAD_BYTES:
+            return JSONResponse(
+                status_code=413,
+                content={
+                    "jsonrpc": "2.0",
+                    "error": {
+                        "code": -32700,
+                        "message": (
+                            f"Payload too large: {content_length} bytes "
+                            f"(limit {MCPSecurityProxy.MAX_PAYLOAD_BYTES} bytes)"
+                        ),
+                    },
+                    "id": None,
+                },
+            )
         body = await request.body()
         headers = dict(request.headers)
         result, upstream_headers = await proxy.handle_jsonrpc(body, headers)
