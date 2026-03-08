@@ -7,13 +7,13 @@ import Icon from '../components/Icon'
 import RelativeTime from '../components/RelativeTime'
 import LLMErrorCard from '../components/LLMErrorCard'
 import UpgradePrompt from '../components/UpgradePrompt'
-import useBilling from '../hooks/useBilling'
+import useLLMAvailable from '../hooks/useLLMAvailable'
 import ConnectionError from '../components/ConnectionError'
 
 const severities = ['', 'CRITICAL', 'HIGH', 'MEDIUM', 'LOW']
 
 export default function Alerts() {
-  const { canUseLLM, setPlan } = useBilling()
+  const { canUseLLM } = useLLMAvailable()
   const [alerts, setAlerts] = useState<Alert[]>([])
   const [allAlerts, setAllAlerts] = useState<Alert[]>([])
   const [filter, setFilter] = useState('')
@@ -176,7 +176,7 @@ export default function Alerts() {
                           )}
                         </>
                       ) : (
-                        <UpgradePrompt feature="AI-powered alert analysis" onUpgrade={() => setPlan('lite')} compact />
+                        <UpgradePrompt feature="AI-powered alert analysis" compact />
                       )
                     ) : (
                       <div className="space-y-2 animate-fadeIn">
