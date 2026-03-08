@@ -61,6 +61,9 @@ CLAUDE_CODE_PROMPT.md
 *.db
 *.db-journal
 
+# Rust build artifacts
+target/
+
 # Dashboard (React frontend)
 dashboard/node_modules/
 dashboard/dist/
