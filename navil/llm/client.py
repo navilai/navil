@@ -5,6 +5,7 @@
 from __future__ import annotations
 
 import logging
+from collections.abc import Iterator
 from typing import Any
 
 from navil._compat import require_llm
@@ -148,3 +149,48 @@ class LLMClient:
                     logger.debug("Empty content, falling back to reasoning field")
                     content = reasoning
             return content
+
+    def stream(self, system_prompt: str, user_message: str) -> Iterator[str]:
+        """Streaming completion — yields text chunks as they arrive.
+
+        Works with Anthropic, OpenAI (including Ollama), and Gemini.
+        """
+        if self.provider == "anthropic":
+            with self.client.messages.stream(
+                model=self.model,
+                max_tokens=self.max_tokens,
+                temperature=self.temperature,
+                system=system_prompt,
+                messages=[{"role": "user", "content": user_message}],
+            ) as stream:
+                for text in stream.text_stream:
+                    yield text
+        elif self.provider == "gemini":
+            model = self.client.GenerativeModel(
+                self.model,
+                system_instruction=system_prompt,
+                generation_config={
+                    "max_output_tokens": self.max_tokens,
+                    "temperature": self.temperature,
+                },
+            )
+            response = model.generate_content(user_message, stream=True)
+            for chunk in response:
+                if hasattr(chunk, "text") and chunk.text:
+                    yield chunk.text
+        else:
+            # OpenAI / Ollama / OpenAI-compatible
+            response = self.client.chat.completions.create(
+                model=self.model,
+                max_tokens=self.max_tokens,
+                temperature=self.temperature,
+                stream=True,
+                messages=[
+                    {"role": "system", "content": system_prompt},
+                    {"role": "user", "content": user_message},
+                ],
+            )
+            for chunk in response:
+                delta = chunk.choices[0].delta if chunk.choices else None
+                if delta and delta.content:
+                    yield delta.content

@@ -7,14 +7,17 @@ from __future__ import annotations
 import json
 import logging
 import tempfile
+from collections.abc import Iterator
 from pathlib import Path
 from typing import Any
 
 import yaml
 from fastapi import APIRouter, HTTPException, Request
+from fastapi.responses import StreamingResponse
 from pydantic import BaseModel
 
 from navil.cloud.state import AppState
+from navil.llm.cache import LLMResponseCache, cache_key
 
 router = APIRouter(prefix="/api")
 
@@ -83,6 +86,92 @@ def _call_llm(fn: Any, *args: Any, **kwargs: Any) -> Any:
             status_code=status,
             detail={"error": "llm_error", "message": message, "error_type": error_type},
         ) from e
+
+
+# ── LLM Response Cache ────────────────────────────────────
+
+_llm_cache = LLMResponseCache()
+
+
+def _get_llm_cache() -> LLMResponseCache:
+    """Return the module-level LLM response cache (test-friendly accessor)."""
+    return _llm_cache
+
+
+# ── SSE Streaming Helpers ─────────────────────────────────
+
+
+def _sse_event(data: str, event: str | None = None) -> str:
+    """Format a single SSE event."""
+    lines = []
+    if event:
+        lines.append(f"event: {event}")
+    # SSE spec: multi-line data needs each line prefixed with "data: "
+    for line in data.split("\n"):
+        lines.append(f"data: {line}")
+    lines.append("")  # trailing blank line = event boundary
+    lines.append("")
+    return "\n".join(lines)
+
+
+def _stream_llm_sse(
+    system_prompt: str,
+    user_message: str,
+    llm_client: Any,
+    ck: str,
+    post_process: Any = None,
+) -> Iterator[str]:
+    """Generator that streams LLM output as SSE events.
+
+    Yields:
+      event: chunk   → each text delta from the LLM
+      event: done    → final assembled JSON result
+      event: error   → if something goes wrong mid-stream
+
+    After streaming completes, the full response is cached under *ck*.
+
+    *post_process* is an optional ``fn(full_text) -> dict`` that converts
+    the raw LLM output to a structured result for the ``done`` event.
+    If None, the raw text is sent as-is in the ``done`` payload.
+    """
+    accumulated = ""
+    try:
+        for chunk in llm_client.stream(system_prompt, user_message):
+            accumulated += chunk
+            yield _sse_event(json.dumps({"text": chunk}), event="chunk")
+
+        # Cache the raw completion
+        _get_llm_cache().put_sync(ck, accumulated)
+
+        # Build final structured result
+        if post_process:
+            try:
+                result = post_process(accumulated)
+            except Exception:
+                result = {"raw": accumulated}
+        else:
+            result = {"raw": accumulated}
+
+        yield _sse_event(json.dumps(result), event="done")
+    except Exception as e:
+        _logger.error(f"SSE stream error: {e}")
+        yield _sse_event(
+            json.dumps({"error": "llm_error", "message": str(e)}),
+            event="error",
+        )
+
+
+def _make_sse_response(generator: Iterator[str]) -> StreamingResponse:
+    """Wrap an SSE generator in a properly-typed StreamingResponse."""
+    return StreamingResponse(
+        generator,
+        media_type="text/event-stream",
+        headers={
+            "Cache-Control": "no-cache",
+            "Connection": "keep-alive",
+            "X-Accel-Buffering": "no",  # disable nginx buffering
+        },
+    )
 
 
 # ── Request / Response Models ───────────────────────────────
@@ -577,63 +666,191 @@ def llm_status() -> dict[str, Any]:
 
 
 @router.post("/llm/explain-anomaly")
-def explain_anomaly(req: ExplainAnomalyRequest, request: Request) -> dict[str, Any]:
+def explain_anomaly(req: ExplainAnomalyRequest, request: Request) -> StreamingResponse:
+    """Stream an anomaly explanation via SSE. Returns cached result instantly if available."""
     s = AppState.get()
     _require_llm(s)
     _require_pro_or_byok(request)
-    result = _call_llm(s.llm_analyzer.explain_anomaly, req.anomaly_data)
+
+    from navil.llm.analyzer import ANOMALY_EXPLANATION_PROMPT
+
+    user_msg = f"Explain this behavioral anomaly:\n\n{json.dumps(req.anomaly_data, indent=2)}"
+    ck = cache_key(ANOMALY_EXPLANATION_PROMPT, user_msg)
+
+    # Cache hit → instant JSON response (no SSE overhead)
+    cached = _get_llm_cache().get_sync(ck)
+    if cached is not None:
+        from navil.llm import extract_json
+
+        try:
+            result = json.loads(extract_json(cached))
+        except (json.JSONDecodeError, ValueError):
+            result = {"explanation": cached[:500], "likely_threat": False, "recommended_actions": []}
+
+        def _cached_sse() -> Iterator[str]:
+            yield _sse_event(json.dumps({"text": cached, "cached": True}), event="chunk")
+            yield _sse_event(json.dumps(result), event="done")
+
+        return _make_sse_response(_cached_sse())
+
     s.billing.increment_llm_calls(_get_user_id(request))
-    return result
+
+    def _post_process(text: str) -> dict[str, Any]:
+        from navil.llm import extract_json
+
+        try:
+            return json.loads(extract_json(text))
+        except (json.JSONDecodeError, ValueError):
+            return {"explanation": text[:500], "likely_threat": False, "recommended_actions": []}
+
+    return _make_sse_response(
+        _stream_llm_sse(ANOMALY_EXPLANATION_PROMPT, user_msg, s.llm_analyzer.client, ck, _post_process)
+    )
 
 
 @router.post("/llm/analyze-config")
-def analyze_config_llm(req: AnalyzeConfigRequest, request: Request) -> dict[str, Any]:
+def analyze_config_llm(req: AnalyzeConfigRequest, request: Request) -> StreamingResponse:
+    """Stream a config security analysis via SSE. Cached by config hash."""
     s = AppState.get()
     _require_llm(s)
     _require_pro_or_byok(request)
-    result = _call_llm(s.llm_analyzer.analyze_config, req.config)
+
+    from navil.llm.analyzer import ANALYSIS_SYSTEM_PROMPT
+
+    config_str = json.dumps(req.config, indent=2)
+    user_msg = f"Analyze this MCP server configuration:\n\n{config_str}"
+    ck = cache_key(ANALYSIS_SYSTEM_PROMPT, user_msg)
+
+    cached = _get_llm_cache().get_sync(ck)
+    if cached is not None:
+        from navil.llm import extract_json
+
+        try:
+            result = json.loads(extract_json(cached))
+        except (json.JSONDecodeError, ValueError):
+            result = {"explanation": cached[:500], "risks": [], "remediations": [], "severity": "UNKNOWN"}
+
+        def _cached_sse() -> Iterator[str]:
+            yield _sse_event(json.dumps({"text": cached, "cached": True}), event="chunk")
+            yield _sse_event(json.dumps(result), event="done")
+
+        return _make_sse_response(_cached_sse())
+
     s.billing.increment_llm_calls(_get_user_id(request))
-    return result
+
+    def _post_process(text: str) -> dict[str, Any]:
+        from navil.llm import extract_json
+
+        try:
+            return json.loads(extract_json(text))
+        except (json.JSONDecodeError, ValueError):
+            return {"explanation": text[:500], "risks": [], "remediations": [], "severity": "UNKNOWN"}
+
+    return _make_sse_response(
+        _stream_llm_sse(ANALYSIS_SYSTEM_PROMPT, user_msg, s.llm_analyzer.client, ck, _post_process)
+    )
 
 
 @router.post("/llm/generate-policy")
-def generate_policy(req: GeneratePolicyRequest, request: Request) -> dict[str, Any]:
+def generate_policy(req: GeneratePolicyRequest, request: Request) -> StreamingResponse:
+    """Stream policy generation via SSE. Cached by description hash."""
     s = AppState.get()
     _require_llm(s)
     _require_pro_or_byok(request)
-    policy = _call_llm(s.policy_generator.generate, req.description)
+
+    from navil.llm.policy_gen import POLICY_GEN_SYSTEM_PROMPT, PolicyGenerator
+
+    ck = cache_key(POLICY_GEN_SYSTEM_PROMPT, req.description)
+
+    cached = _get_llm_cache().get_sync(ck)
+    if cached is not None:
+        try:
+            policy = PolicyGenerator._parse_yaml(cached)
+        except (ValueError, yaml.YAMLError):
+            policy = {}
+        result = {"policy": policy, "yaml": yaml.dump(policy, default_flow_style=False)}
+
+        def _cached_sse() -> Iterator[str]:
+            yield _sse_event(json.dumps({"text": cached, "cached": True}), event="chunk")
+            yield _sse_event(json.dumps(result), event="done")
+
+        return _make_sse_response(_cached_sse())
+
     s.billing.increment_llm_calls(_get_user_id(request))
-    return {
-        "policy": policy,
-        "yaml": yaml.dump(policy, default_flow_style=False),
-    }
+
+    def _post_process(text: str) -> dict[str, Any]:
+        try:
+            policy = PolicyGenerator._parse_yaml(text)
+        except (ValueError, yaml.YAMLError):
+            policy = {}
+        return {"policy": policy, "yaml": yaml.dump(policy, default_flow_style=False)}
+
+    return _make_sse_response(
+        _stream_llm_sse(POLICY_GEN_SYSTEM_PROMPT, req.description, s.policy_generator.client, ck, _post_process)
+    )
 
 
 @router.post("/llm/refine-policy")
-def refine_policy(req: RefinePolicyRequest, request: Request) -> dict[str, Any]:
+def refine_policy(req: RefinePolicyRequest, request: Request) -> StreamingResponse:
+    """Stream policy refinement via SSE."""
     s = AppState.get()
     _require_llm(s)
     _require_pro_or_byok(request)
-    policy = _call_llm(s.policy_generator.refine, req.existing_policy, req.instruction)
+
+    from navil.llm.policy_gen import POLICY_GEN_SYSTEM_PROMPT, PolicyGenerator
+
+    policy_yaml = yaml.dump(req.existing_policy, default_flow_style=False)
+    user_msg = f"Current policy:\n\n{policy_yaml}\n\nModification requested:\n{req.instruction}"
+    ck = cache_key(POLICY_GEN_SYSTEM_PROMPT, user_msg)
+
+    cached = _get_llm_cache().get_sync(ck)
+    if cached is not None:
+        try:
+            policy = PolicyGenerator._parse_yaml(cached)
+        except (ValueError, yaml.YAMLError):
+            policy = {}
+        result = {"policy": policy, "yaml": yaml.dump(policy, default_flow_style=False)}
+
+        def _cached_sse() -> Iterator[str]:
+            yield _sse_event(json.dumps({"text": cached, "cached": True}), event="chunk")
+            yield _sse_event(json.dumps(result), event="done")
+
+        return _make_sse_response(_cached_sse())
+
     s.billing.increment_llm_calls(_get_user_id(request))
-    return {
-        "policy": policy,
-        "yaml": yaml.dump(policy, default_flow_style=False),
-    }
+
+    def _post_process(text: str) -> dict[str, Any]:
+        try:
+            policy = PolicyGenerator._parse_yaml(text)
+        except (ValueError, yaml.YAMLError):
+            policy = {}
+        return {"policy": policy, "yaml": yaml.dump(policy, default_flow_style=False)}
+
+    return _make_sse_response(
+        _stream_llm_sse(POLICY_GEN_SYSTEM_PROMPT, user_msg, s.policy_generator.client, ck, _post_process)
+    )
 
 
 @router.post("/llm/suggest-remediation")
-def suggest_remediation(request: Request) -> dict[str, Any]:
+def suggest_remediation(request: Request) -> StreamingResponse:
+    """Stream remediation suggestions via SSE."""
     s = AppState.get()
     _require_llm(s)
     _require_pro_or_byok(request)
+
     alerts = s.anomaly_detector.get_alerts()
     if not alerts:
-        return {
+        no_threat = {
             "summary": "No active threats detected. The system is healthy.",
             "risk_assessment": "LOW",
             "actions": [],
         }
+
+        def _empty_sse() -> Iterator[str]:
+            yield _sse_event(json.dumps(no_threat), event="done")
+
+        return _make_sse_response(_empty_sse())
+
     critical = [a for a in alerts if a.get("severity") in ("CRITICAL", "HIGH")]
     selected = critical[-10:] if critical else alerts[-10:]
     current_policy = getattr(s.policy_engine, "policy", {})
@@ -644,13 +861,53 @@ def suggest_remediation(request: Request) -> dict[str, Any]:
             "data_volume_mean": bl.data_volume_ema.mean,
             "known_tools": list(bl.known_tools),
         }
-    result = _call_llm(s.self_healing.suggest_remediation, selected, current_policy, baselines)
+
+    from navil.llm.self_healing import SELF_HEALING_SYSTEM_PROMPT
+
+    context = {"alerts": selected, "current_policy": current_policy, "baselines": baselines}
+    user_msg = f"Analyze and suggest remediations:\n\n{json.dumps(context, indent=2)}"
+    ck = cache_key(SELF_HEALING_SYSTEM_PROMPT, user_msg)
+
+    cached = _get_llm_cache().get_sync(ck)
+    if cached is not None:
+        from navil.llm import extract_json
+
+        try:
+            result = json.loads(extract_json(cached))
+        except (json.JSONDecodeError, ValueError):
+            result = {"actions": [], "summary": cached[:500], "risk_assessment": "UNKNOWN"}
+
+        def _cached_sse() -> Iterator[str]:
+            yield _sse_event(json.dumps({"text": cached, "cached": True}), event="chunk")
+            yield _sse_event(json.dumps(result), event="done")
+
+        return _make_sse_response(_cached_sse())
+
     s.billing.increment_llm_calls(_get_user_id(request))
-    return result
+
+    def _post_process(text: str) -> dict[str, Any]:
+        from navil.llm import extract_json
+
+        try:
+            return json.loads(extract_json(text))
+        except (json.JSONDecodeError, ValueError):
+            return {"actions": [], "summary": text[:500], "risk_assessment": "UNKNOWN"}
+
+    # Use higher max_tokens for remediation
+    prev_max = getattr(s.self_healing.client, "max_tokens", 1024)
+    if isinstance(prev_max, int) and prev_max < 4096:
+        s.self_healing.client.max_tokens = 4096
+    try:
+        return _make_sse_response(
+            _stream_llm_sse(SELF_HEALING_SYSTEM_PROMPT, user_msg, s.self_healing.client, ck, _post_process)
+        )
+    finally:
+        s.self_healing.client.max_tokens = prev_max
 
 
 @router.post("/llm/apply-action")
 def apply_action(req: ApplyActionRequest, request: Request) -> dict[str, Any]:
+    """Apply a single remediation action (non-streaming — instant action)."""
     s = AppState.get()
     _require_llm(s)
     _require_pro_or_byok(request)
@@ -663,7 +920,10 @@ def apply_action(req: ApplyActionRequest, request: Request) -> dict[str, Any]:
 
 @router.post("/llm/auto-remediate")
 def auto_remediate(req: AutoRemediateRequest, request: Request) -> dict[str, Any]:
-    """Full auto-remediation cycle: analyze, auto-apply safe actions, verify."""
+    """Full auto-remediation cycle: analyze, auto-apply safe actions, verify.
+
+    Not streamed — actions are applied server-side and the full result returned.
+    """
     s = AppState.get()
     _require_llm(s)
     _require_pro_or_byok(request)
