@@ -162,7 +162,8 @@ class BehavioralAnomalyDetector:
 
         # Evict LRU agent if at capacity
         if len(self._per_agent_invocations) >= self._max_agents:
-            self._per_agent_invocations.popitem(last=False)
+            _evicted_name, evicted_dq = self._per_agent_invocations.popitem(last=False)
+            self._total_invocation_count -= len(evicted_dq)
 
         dq: deque[ToolInvocation] = deque(maxlen=self._max_invocations_per_agent)
         self._per_agent_invocations[agent_name] = dq
@@ -400,8 +401,21 @@ class BehavioralAnomalyDetector:
         rate_limit = max(60, int(baseline_rate_per_min * 3 * 60))
 
         # Hard block on new CRITICAL alerts
-        new_alerts = list(self.alerts)[alert_count_before:]
-        blocked = any(a.severity == "CRITICAL" for a in new_alerts)
+        current_count = len(self.alerts)
+        new_alert_count = current_count - alert_count_before
+        if new_alert_count < 0:
+            # Deque evicted old alerts; check all current alerts as fallback
+            new_alert_count = current_count
+        blocked = False
+        if new_alert_count > 0:
+            # Iterate only the tail of the deque (newest alerts)
+            for alert in reversed(self.alerts):
+                if new_alert_count <= 0:
+                    break
+                if alert.severity == "CRITICAL":
+                    blocked = True
+                    break
+                new_alert_count -= 1
 
         with self._threshold_lock:
             existing = self._agent_thresholds.get(agent_name, AgentThresholds())
