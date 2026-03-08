@@ -18,6 +18,7 @@ import re
 import statistics
 import threading
 import time as _time
+from collections import OrderedDict, deque
 from dataclasses import dataclass, field
 from datetime import datetime, timedelta, timezone
 from enum import Enum
@@ -122,7 +123,10 @@ class BehavioralAnomalyDetector:
             redis_client: Optional async Redis client for shared threshold storage
         """
         self.baseline_window_hours = baseline_window_hours
-        self.invocations: list[ToolInvocation] = []
+        self._per_agent_invocations: OrderedDict[str, deque[ToolInvocation]] = OrderedDict()
+        self._max_agents: int = 500
+        self._max_invocations_per_agent: int = 500
+        self._total_invocation_count: int = 0
         self.alerts: list[AnomalyAlert] = []
         self.baselines: dict[str, dict[str, Any]] = {}
         self.feedback_loop = feedback_loop
@@ -141,6 +145,34 @@ class BehavioralAnomalyDetector:
 
         # Proxy-mode tracking for SAFE-MCP detectors
         self.registered_tools: dict[str, set[str]] = {}  # server_url -> known tool names
+
+    # ── Per-agent invocation storage ──────────────────────────
+
+    def _get_agent_deque(self, agent_name: str) -> deque[ToolInvocation]:
+        """Return the invocation deque for *agent_name*, applying LRU eviction.
+
+        * Existing agent: ``move_to_end`` keeps the OrderedDict in LRU order.
+        * New agent at capacity (``len >= _max_agents``): evict the
+          least-recently-used entry via ``popitem(last=False)``.
+        * Creates a bounded ``deque(maxlen=_max_invocations_per_agent)``
+          for new agents.
+        """
+        if agent_name in self._per_agent_invocations:
+            self._per_agent_invocations.move_to_end(agent_name)
+            return self._per_agent_invocations[agent_name]
+
+        # Evict LRU agent if at capacity
+        if len(self._per_agent_invocations) >= self._max_agents:
+            self._per_agent_invocations.popitem(last=False)
+
+        dq: deque[ToolInvocation] = deque(maxlen=self._max_invocations_per_agent)
+        self._per_agent_invocations[agent_name] = dq
+        return dq
+
+    @property
+    def invocations(self) -> list[ToolInvocation]:
+        """Flat list of all invocations (cold-path only, for API/ML consumers)."""
+        return [inv for dq in self._per_agent_invocations.values() for inv in dq]
 
     # ── O(1) Fast-Path Gate ─────────────────────────────────
 
@@ -284,7 +316,9 @@ class BehavioralAnomalyDetector:
             timestamp_dt=ts_dt,
         )
 
-        self.invocations.append(invocation)
+        dq = self._get_agent_deque(agent_name)
+        dq.append(invocation)
+        self._total_invocation_count += 1
 
         # Update adaptive baseline (O(1))
         self._update_adaptive_baseline(agent_name, invocation)

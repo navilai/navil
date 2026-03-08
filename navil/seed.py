@@ -28,7 +28,7 @@ from datetime import datetime, timedelta, timezone
 from http.server import BaseHTTPRequestHandler, HTTPServer
 from typing import Any
 
-from navil.anomaly_detector import BehavioralAnomalyDetector, ToolInvocation
+from navil.anomaly_detector import BehavioralAnomalyDetector
 from navil.pentest import SCENARIOS
 
 logger = logging.getLogger(__name__)
@@ -385,18 +385,16 @@ def _inject_baseline(detector: BehavioralAnomalyDetector, agent: str) -> int:
     n_baseline = _fuzz_int(15, 5, lo=8, hi=25)
     for i in range(n_baseline):
         ts = baseline_time + timedelta(minutes=i * 6)
-        detector.invocations.append(
-            ToolInvocation(
-                timestamp=ts.isoformat(),
-                agent_name=agent,
-                tool_name=random.choice(_NORMAL_TOOLS),
-                action="read",
-                duration_ms=_fuzz_int(50, 20, lo=5),
-                data_accessed_bytes=_fuzz_int(100, 50, lo=0),
-                success=True,
-                arguments_size_bytes=_fuzz_int(80, 30, lo=10),
-                response_size_bytes=_fuzz_int(200, 80, lo=20),
-            )
+        detector.record_invocation(
+            agent_name=agent,
+            tool_name=random.choice(_NORMAL_TOOLS),
+            action="read",
+            duration_ms=_fuzz_int(50, 20, lo=5),
+            data_accessed_bytes=_fuzz_int(100, 50, lo=0),
+            success=True,
+            arguments_size_bytes=_fuzz_int(80, 30, lo=10),
+            response_size_bytes=_fuzz_int(200, 80, lo=20),
+            timestamp=ts.isoformat(),
         )
     detector._build_baseline(agent)
     return n_baseline
@@ -422,23 +420,21 @@ def _inject_invocations(
             _inject_baseline(detector, inv["agent_name"])
 
         if raw_ts:
-            # Direct append for timestamp-sensitive scenarios (persistence, C2)
-            detector.invocations.append(
-                ToolInvocation(
-                    timestamp=raw_ts,
-                    agent_name=inv["agent_name"],
-                    tool_name=inv["tool_name"],
-                    action=inv.get("action", "unknown"),
-                    duration_ms=inv.get("duration_ms", 10),
-                    data_accessed_bytes=inv.get("data_accessed_bytes", 0),
-                    success=inv.get("success", True),
-                    location=inv.get("location"),
-                    target_server=inv.get("target_server"),
-                    arguments_hash=inv.get("arguments_hash"),
-                    arguments_size_bytes=inv.get("arguments_size_bytes", 0),
-                    response_size_bytes=inv.get("response_size_bytes", 0),
-                    is_list_tools=inv.get("is_list_tools", False),
-                )
+            # Use record_invocation with explicit timestamp for timestamp-sensitive scenarios
+            detector.record_invocation(
+                agent_name=inv["agent_name"],
+                tool_name=inv["tool_name"],
+                action=inv.get("action", "unknown"),
+                duration_ms=inv.get("duration_ms", 10),
+                data_accessed_bytes=inv.get("data_accessed_bytes", 0),
+                success=inv.get("success", True),
+                location=inv.get("location"),
+                target_server=inv.get("target_server"),
+                arguments_hash=inv.get("arguments_hash"),
+                arguments_size_bytes=inv.get("arguments_size_bytes", 0),
+                response_size_bytes=inv.get("response_size_bytes", 0),
+                is_list_tools=inv.get("is_list_tools", False),
+                timestamp=raw_ts,
             )
         else:
             # Use record_invocation for full detection pipeline
