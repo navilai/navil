@@ -62,6 +62,8 @@ class ToolInvocation:
     arguments_size_bytes: int = 0  # Size of serialized arguments
     response_size_bytes: int = 0  # Size of tool response
     is_list_tools: bool = False  # Whether this was a tools/list call
+    # Pre-parsed datetime for O(1) access in detector loops
+    timestamp_dt: datetime | None = None
 
 
 @dataclass
@@ -234,6 +236,7 @@ class BehavioralAnomalyDetector:
         arguments_size_bytes: int = 0,
         response_size_bytes: int = 0,
         is_list_tools: bool = False,
+        timestamp: str | None = None,
     ) -> None:
         """
         Record a tool invocation.
@@ -251,9 +254,13 @@ class BehavioralAnomalyDetector:
             arguments_size_bytes: Size of serialized arguments
             response_size_bytes: Size of tool response
             is_list_tools: Whether this was a tools/list call
+            timestamp: ISO-format timestamp string; defaults to now (UTC)
         """
+        ts_str = timestamp or datetime.now(timezone.utc).isoformat()
+        ts_dt = datetime.fromisoformat(ts_str)
+
         invocation = ToolInvocation(
-            timestamp=datetime.now(timezone.utc).isoformat(),
+            timestamp=ts_str,
             agent_name=agent_name,
             tool_name=tool_name,
             action=action,
@@ -266,6 +273,7 @@ class BehavioralAnomalyDetector:
             arguments_size_bytes=arguments_size_bytes,
             response_size_bytes=response_size_bytes,
             is_list_tools=is_list_tools,
+            timestamp_dt=ts_dt,
         )
 
         self.invocations.append(invocation)
@@ -290,6 +298,7 @@ class BehavioralAnomalyDetector:
         arguments_size_bytes: int = 0,
         response_size_bytes: int = 0,
         is_list_tools: bool = False,
+        timestamp: str | None = None,
     ) -> None:
         """Async variant of record_invocation that writes thresholds to Redis."""
         self.record_invocation(
@@ -305,6 +314,7 @@ class BehavioralAnomalyDetector:
             arguments_size_bytes=arguments_size_bytes,
             response_size_bytes=response_size_bytes,
             is_list_tools=is_list_tools,
+            timestamp=timestamp,
         )
         # Sync detectors already ran; now push thresholds to Redis
         await self._sync_thresholds_to_redis(agent_name)
