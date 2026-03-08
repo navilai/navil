@@ -9,7 +9,6 @@ from typing import Any
 import pytest
 import yaml
 
-
 # ── Fake Redis for unit tests (no real server needed) ─────────
 
 
@@ -75,7 +74,12 @@ class FakeRedis:
         if name not in self._data or not isinstance(self._data[name], list):
             self._data[name] = []
         for v in values:
-            val = v.encode() if isinstance(v, str) else v if isinstance(v, bytes) else str(v).encode()
+            if isinstance(v, str):
+                val = v.encode()
+            elif isinstance(v, bytes):
+                val = v
+            else:
+                val = str(v).encode()
             self._data[name].insert(0, val)
         return len(self._data[name])
 
@@ -120,19 +124,21 @@ class FakeRedisPipeline:
         self._redis = redis
         self._commands: list[tuple[str, tuple, dict]] = []
 
-    def hset(self, name: str, mapping: dict[str, Any] | None = None, **kw: Any) -> "FakeRedisPipeline":
+    def hset(
+        self, name: str, mapping: dict[str, Any] | None = None, **kw: Any,
+    ) -> FakeRedisPipeline:
         self._commands.append(("hset", (name,), {"mapping": mapping, **kw}))
         return self
 
-    def hmget(self, name: str, keys: list[str]) -> "FakeRedisPipeline":
+    def hmget(self, name: str, keys: list[str]) -> FakeRedisPipeline:
         self._commands.append(("hmget", (name, keys), {}))
         return self
 
-    def incr(self, name: str) -> "FakeRedisPipeline":
+    def incr(self, name: str) -> FakeRedisPipeline:
         self._commands.append(("incr", (name,), {}))
         return self
 
-    def expire(self, name: str, time: int) -> "FakeRedisPipeline":
+    def expire(self, name: str, time: int) -> FakeRedisPipeline:
         self._commands.append(("expire", (name, time), {}))
         return self
 
@@ -144,7 +150,7 @@ class FakeRedisPipeline:
         self._commands.clear()
         return results
 
-    async def __aenter__(self) -> "FakeRedisPipeline":
+    async def __aenter__(self) -> FakeRedisPipeline:
         return self
 
     async def __aexit__(self, *exc: Any) -> None:

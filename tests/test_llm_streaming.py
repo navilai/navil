@@ -106,7 +106,7 @@ class TestLLMResponseCache:
 
     async def test_async_redis_get_put(self, fake_redis) -> None:
         """Async API with FakeRedis uses Redis."""
-        from navil.llm.cache import LLMResponseCache, REDIS_KEY_PREFIX
+        from navil.llm.cache import REDIS_KEY_PREFIX, LLMResponseCache
 
         cache = LLMResponseCache(redis_client=fake_redis, ttl=300)
         await cache.put("rk1", "redis-value")
@@ -302,8 +302,8 @@ class TestSSEEndpoints:
     @pytest.fixture
     def app(self):
         """Create a test FastAPI app with mocked LLM components."""
-        from navil.api.local.routes import _get_llm_cache
         from navil.api.local.app import create_app
+        from navil.api.local.routes import _get_llm_cache
         from navil.api.local.state import AppState
 
         # Clear cache between tests
@@ -382,7 +382,6 @@ class TestSSEEndpoints:
 
     def test_cache_hit_returns_instantly(self, client) -> None:
         """Second identical request should return from cache (no LLM call)."""
-        from navil.api.local.routes import _get_llm_cache
         from navil.api.local.state import AppState
 
         s = AppState.get()

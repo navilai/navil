@@ -1,14 +1,12 @@
 """Tests for the community threat intelligence consumer."""
 from __future__ import annotations
 
-import os
 from typing import Any
 
 import pytest
 
 from navil.adaptive.pattern_store import LearnedPattern, PatternStore
 from navil.threat_intel import ThreatIntelConsumer, ThreatIntelEntry
-
 
 # ---------------------------------------------------------------------------
 # Helpers

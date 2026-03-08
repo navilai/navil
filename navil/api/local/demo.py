@@ -6,7 +6,7 @@ from __future__ import annotations
 
 import random
 from datetime import datetime, timezone
-from typing import Any, TYPE_CHECKING
+from typing import TYPE_CHECKING, Any
 
 if TYPE_CHECKING:
     from navil.api.local.state import AppState
