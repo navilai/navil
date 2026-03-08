@@ -3,23 +3,17 @@ import { NavLink, Outlet, Link } from 'react-router-dom'
 import Icon, { type IconName } from '../components/Icon'
 import UserProfile from '../components/UserProfile'
 
-/** True when running as Navil Cloud (Clerk key or explicit VITE_NAVIL_CLOUD flag) */
-const isCloud = !!import.meta.env.VITE_CLERK_PUBLISHABLE_KEY || import.meta.env.VITE_NAVIL_CLOUD === 'true'
-
 const navItems: { to: string; label: string; icon: IconName }[] = [
-  { to: '/dashboard', label: 'Dashboard', icon: 'chart' },
-  { to: '/dashboard/gateway', label: 'Gateway', icon: 'gateway' },
-  { to: '/dashboard/pentest', label: 'Pentest', icon: 'pentest' },
-  { to: '/dashboard/scanner', label: 'Scanner', icon: 'scan' },
-  { to: '/dashboard/agents', label: 'Agents', icon: 'bot' },
-  { to: '/dashboard/alerts', label: 'Alerts', icon: 'alert' },
-  { to: '/dashboard/credentials', label: 'Credentials', icon: 'key' },
-  { to: '/dashboard/policy', label: 'Policy', icon: 'shield' },
-  { to: '/dashboard/feedback', label: 'Feedback', icon: 'activity' },
-  { to: '/dashboard/self-healing', label: 'Self-Healing', icon: 'sparkles' },
-  { to: '/dashboard/analytics', label: 'Analytics', icon: 'chart' },
-  { to: '/dashboard/api-keys', label: 'API Keys', icon: 'key' },
-  { to: '/dashboard/settings', label: 'Settings', icon: 'settings' },
+  { to: '/',             label: 'Agents',       icon: 'bot' },
+  { to: '/gateway',      label: 'Gateway',      icon: 'gateway' },
+  { to: '/pentest',      label: 'Pentest',      icon: 'pentest' },
+  { to: '/scanner',      label: 'Scanner',      icon: 'scan' },
+  { to: '/alerts',       label: 'Alerts',       icon: 'alert' },
+  { to: '/credentials',  label: 'Credentials',  icon: 'key' },
+  { to: '/policy',       label: 'Policy',       icon: 'shield' },
+  { to: '/feedback',     label: 'Feedback',     icon: 'activity' },
+  { to: '/self-healing', label: 'Self-Healing', icon: 'sparkles' },
+  { to: '/settings',     label: 'Settings',     icon: 'settings' },
 ]
 
 export default function DashboardLayout() {
@@ -45,19 +39,15 @@ export default function DashboardLayout() {
         <div className="absolute inset-0 bg-gradient-to-b from-cyan-500/[0.03] to-transparent pointer-events-none rounded-r-xl" />
 
         <div className="relative p-5 border-b border-gray-800/60">
-          <Link to="/dashboard" className="text-xl font-bold flex items-center gap-2.5 hover:opacity-80 transition-opacity">
+          <Link to="/" className="text-xl font-bold flex items-center gap-2.5 hover:opacity-80 transition-opacity">
             <div className="relative">
               <div className="absolute inset-0 bg-cyan-500/20 rounded-lg blur-sm animate-pulseGlow" />
               <Icon name="shield" size={24} className="text-cyan-400 relative" />
             </div>
             <span>
               Navil{' '}
-              <span className={`text-xs font-normal px-1.5 py-0.5 rounded ${
-                isCloud
-                  ? 'text-emerald-400 bg-emerald-400/10'
-                  : 'text-cyan-400 bg-cyan-400/10'
-              }`}>
-                {isCloud ? 'Cloud' : 'OSS'}
+              <span className="text-xs font-normal px-1.5 py-0.5 rounded text-cyan-400 bg-cyan-400/10">
+                OSS
               </span>
             </span>
           </Link>
@@ -69,7 +59,7 @@ export default function DashboardLayout() {
             <NavLink
               key={to}
               to={to}
-              end={to === '/dashboard'}
+              end={to === '/'}
               onClick={() => setSidebarOpen(false)}
               className={({ isActive }) =>
                 `flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm nav-glow ${
@@ -83,9 +73,6 @@ export default function DashboardLayout() {
               {label}
             </NavLink>
           ))}
-
-          {/* Admin portal: no sidebar link — admins access /admin directly.
-             Backend gates with NAVIL_ADMIN_IDS; customers never see the route. */}
         </nav>
 
         <UserProfile />
