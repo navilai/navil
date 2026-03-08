@@ -14,7 +14,7 @@ export default function SectionHeader({
   return (
     <div className={centered ? 'text-center' : ''}>
       {eyebrow && (
-        <p className="text-sm font-medium text-indigo-400 mb-2">{eyebrow}</p>
+        <p className="text-sm font-medium text-cyan-400 mb-2">{eyebrow}</p>
       )}
       <h2 className="text-3xl font-bold text-white">{title}</h2>
       {subtitle && (

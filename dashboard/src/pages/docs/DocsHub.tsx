@@ -84,13 +84,13 @@ export default function DocsHub() {
             <Link
               key={item.title}
               to={item.link}
-              className="glass-card p-5 hover:border-indigo-500/40 transition-colors group"
+              className="glass-card p-5 hover:border-cyan-500/40 transition-colors group"
             >
               <h3 className="text-sm font-semibold text-white mb-3">{item.title}</h3>
-              <div className="bg-gray-950/60 rounded-lg px-3 py-2 mb-4 font-mono text-sm text-indigo-300">
+              <div className="bg-gray-950/60 rounded-lg px-3 py-2 mb-4 font-mono text-sm text-cyan-300">
                 $ {item.code}
               </div>
-              <span className="text-xs text-indigo-400 group-hover:underline flex items-center gap-1">
+              <span className="text-xs text-cyan-400 group-hover:underline flex items-center gap-1">
                 Learn more
                 <Icon name="arrow-right" size={12} />
               </span>
@@ -109,16 +109,16 @@ export default function DocsHub() {
             <Link
               key={feature.title}
               to={feature.link}
-              className="glass-card p-5 hover:border-indigo-500/40 transition-colors group"
+              className="glass-card p-5 hover:border-cyan-500/40 transition-colors group"
             >
               <div className="flex items-start justify-between mb-3">
-                <div className="p-2 rounded-lg bg-indigo-500/10 text-indigo-400">
+                <div className="p-2 rounded-lg bg-cyan-500/10 text-cyan-400">
                   <Icon name={feature.icon} size={18} />
                 </div>
                 <Icon
                   name="arrow-right"
                   size={16}
-                  className="text-gray-600 group-hover:text-indigo-400 transition-colors mt-1"
+                  className="text-gray-600 group-hover:text-cyan-400 transition-colors mt-1"
                 />
               </div>
               <h3 className="text-sm font-semibold text-white mb-1.5">{feature.title}</h3>

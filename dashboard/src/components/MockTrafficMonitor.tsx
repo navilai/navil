@@ -34,7 +34,7 @@ export default function MockTrafficMonitor() {
           }`}
         >
           <span className="text-gray-600">{row.time}</span>
-          <span className="text-indigo-400">{row.method}</span>
+          <span className="text-cyan-400">{row.method}</span>
           <span className="text-gray-300 truncate">{row.tool}</span>
           <span className="text-gray-500 truncate">{row.agent}</span>
           <span className={`px-1.5 py-0.5 rounded text-center text-[10px] ${statusStyle[row.status]}`}>

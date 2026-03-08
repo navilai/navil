@@ -67,7 +67,7 @@ export default function Policy() {
         <div className="space-y-4">
           <div className="glass-card p-5">
             <h3 className="text-sm font-medium text-gray-300 mb-4 flex items-center gap-2">
-              <Icon name="shield" size={16} className="text-indigo-400" />
+              <Icon name="shield" size={16} className="text-cyan-400" />
               Check Permission
             </h3>
             <div className="space-y-3">
@@ -76,7 +76,7 @@ export default function Policy() {
                 <input
                   value={agentName}
                   onChange={e => setAgentName(e.target.value)}
-                  className="w-full bg-gray-800 border border-gray-700 rounded-lg px-3 py-2 text-sm text-gray-300 focus:border-indigo-500 focus:outline-none"
+                  className="w-full bg-gray-800 border border-gray-700 rounded-lg px-3 py-2 text-sm text-gray-300 focus:border-cyan-500 focus:outline-none"
                   placeholder="e.g., code-assistant"
                 />
               </div>
@@ -85,7 +85,7 @@ export default function Policy() {
                 <input
                   value={toolName}
                   onChange={e => setToolName(e.target.value)}
-                  className="w-full bg-gray-800 border border-gray-700 rounded-lg px-3 py-2 text-sm text-gray-300 focus:border-indigo-500 focus:outline-none"
+                  className="w-full bg-gray-800 border border-gray-700 rounded-lg px-3 py-2 text-sm text-gray-300 focus:border-cyan-500 focus:outline-none"
                   placeholder="e.g., admin_panel"
                 />
               </div>
@@ -94,14 +94,14 @@ export default function Policy() {
                 <input
                   value={action}
                   onChange={e => setAction(e.target.value)}
-                  className="w-full bg-gray-800 border border-gray-700 rounded-lg px-3 py-2 text-sm text-gray-300 focus:border-indigo-500 focus:outline-none"
+                  className="w-full bg-gray-800 border border-gray-700 rounded-lg px-3 py-2 text-sm text-gray-300 focus:border-cyan-500 focus:outline-none"
                   placeholder="e.g., read, write, delete"
                 />
               </div>
               <button
                 onClick={handleCheck}
                 disabled={!agentName || !toolName || !action || checking}
-                className="w-full px-4 py-2.5 bg-indigo-600 text-white rounded-lg text-sm font-medium hover:bg-indigo-500 disabled:opacity-40 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                className="w-full px-4 py-2.5 bg-cyan-500 text-white rounded-lg text-sm font-medium hover:bg-cyan-400 disabled:opacity-40 disabled:cursor-not-allowed flex items-center justify-center gap-2"
               >
                 <Icon name="shield" size={14} />
                 {checking ? 'Checking...' : 'Check Permission'}
@@ -170,7 +170,7 @@ export default function Policy() {
                     {decisions.map((d, i) => (
                       <tr
                         key={`${d.timestamp}-${d.agent}-${d.tool}-${d.action}`}
-                        className="border-b border-gray-800/30 hover:bg-indigo-500/[0.04] animate-fadeIn opacity-0"
+                        className="border-b border-gray-800/30 hover:bg-cyan-400/[0.04] animate-fadeIn opacity-0"
                         style={{ animationDelay: `${i * 0.03}s` }}
                       >
                         <td className="px-3 py-2.5">
@@ -212,7 +212,7 @@ export default function Policy() {
             <textarea
               value={genDescription}
               onChange={e => setGenDescription(e.target.value)}
-              className="w-full h-24 bg-gray-800 border border-gray-700 rounded-lg px-3 py-2 text-sm text-gray-300 placeholder:text-gray-600 focus:border-indigo-500 focus:outline-none resize-none"
+              className="w-full h-24 bg-gray-800 border border-gray-700 rounded-lg px-3 py-2 text-sm text-gray-300 placeholder:text-gray-600 focus:border-cyan-500 focus:outline-none resize-none"
               placeholder="e.g., Allow data-reader to read logs only. Deny write/delete for all agents except admin-bot. Rate limit 60 req/hr."
             />
             {genDescription.trim() && genDescription.trim().split(/\s+/).length < 5 && (
@@ -296,7 +296,7 @@ export default function Policy() {
               <input
                 value={refineInput}
                 onChange={e => setRefineInput(e.target.value)}
-                className="flex-1 bg-gray-800 border border-gray-700 rounded-lg px-3 py-2 text-sm text-gray-300 focus:border-indigo-500 focus:outline-none"
+                className="flex-1 bg-gray-800 border border-gray-700 rounded-lg px-3 py-2 text-sm text-gray-300 focus:border-cyan-500 focus:outline-none"
                 placeholder="Refine: e.g., Add a rate limit of 50/hr for deploy-agent"
               />
               <button
@@ -322,7 +322,7 @@ export default function Policy() {
                   }
                 }}
                 disabled={!refineInput.trim() || refining}
-                className="px-4 py-2 bg-indigo-600 text-white rounded-lg text-sm hover:bg-indigo-500 disabled:opacity-40 disabled:cursor-not-allowed flex items-center gap-1.5"
+                className="px-4 py-2 bg-cyan-500 text-white rounded-lg text-sm hover:bg-cyan-400 disabled:opacity-40 disabled:cursor-not-allowed flex items-center gap-1.5"
               >
                 <Icon name="sparkles" size={13} className={refining ? 'animate-spin' : ''} />
                 Refine

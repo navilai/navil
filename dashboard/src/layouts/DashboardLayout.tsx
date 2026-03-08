@@ -42,20 +42,20 @@ export default function DashboardLayout() {
           ${sidebarOpen ? 'translate-x-0' : '-translate-x-full'}`}
       >
         {/* Subtle gradient overlay */}
-        <div className="absolute inset-0 bg-gradient-to-b from-indigo-500/[0.03] to-transparent pointer-events-none rounded-r-xl" />
+        <div className="absolute inset-0 bg-gradient-to-b from-cyan-500/[0.03] to-transparent pointer-events-none rounded-r-xl" />
 
         <div className="relative p-5 border-b border-gray-800/60">
           <Link to="/dashboard" className="text-xl font-bold flex items-center gap-2.5 hover:opacity-80 transition-opacity">
             <div className="relative">
-              <div className="absolute inset-0 bg-indigo-500/20 rounded-lg blur-sm animate-pulseGlow" />
-              <Icon name="shield" size={24} className="text-indigo-400 relative" />
+              <div className="absolute inset-0 bg-cyan-500/20 rounded-lg blur-sm animate-pulseGlow" />
+              <Icon name="shield" size={24} className="text-cyan-400 relative" />
             </div>
             <span>
               Navil{' '}
               <span className={`text-xs font-normal px-1.5 py-0.5 rounded ${
                 isCloud
                   ? 'text-emerald-400 bg-emerald-400/10'
-                  : 'text-indigo-400 bg-indigo-400/10'
+                  : 'text-cyan-400 bg-cyan-400/10'
               }`}>
                 {isCloud ? 'Cloud' : 'OSS'}
               </span>
@@ -74,7 +74,7 @@ export default function DashboardLayout() {
               className={({ isActive }) =>
                 `flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm nav-glow ${
                   isActive
-                    ? 'nav-active-bar bg-indigo-500/10 text-indigo-300 font-medium'
+                    ? 'nav-active-bar bg-cyan-500/10 text-cyan-300 font-medium'
                     : 'text-gray-400 hover:bg-gray-800/60 hover:text-gray-200'
                 }`
               }

@@ -33,11 +33,11 @@ export default function NewsletterSignup() {
             placeholder="you@company.com"
             value={email}
             onChange={(e) => setEmail(e.target.value)}
-            className="bg-gray-800 border border-gray-700 rounded-lg px-4 py-2.5 text-sm text-gray-300 placeholder-gray-500 focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 w-full sm:w-64"
+            className="bg-gray-800 border border-gray-700 rounded-lg px-4 py-2.5 text-sm text-gray-300 placeholder-gray-500 focus:outline-none focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500 w-full sm:w-64"
           />
           <button
             type="submit"
-            className="bg-indigo-600 text-white rounded-lg px-5 py-2.5 text-sm font-medium hover:bg-indigo-500 transition-colors shrink-0"
+            className="bg-cyan-500 text-white rounded-lg px-5 py-2.5 text-sm font-medium hover:bg-cyan-400 transition-colors shrink-0"
           >
             Subscribe
           </button>

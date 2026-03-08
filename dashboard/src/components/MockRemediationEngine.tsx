@@ -39,10 +39,10 @@ export default function MockRemediationEngine() {
           <span className="text-gray-300">Tighten network_access policy</span>
           <span className="text-[10px] text-emerald-400 ml-auto">done</span>
         </div>
-        <div className="flex items-center gap-2 p-1.5 rounded bg-indigo-500/5">
-          <Icon name="shield" size={11} className="text-indigo-400" />
+        <div className="flex items-center gap-2 p-1.5 rounded bg-cyan-500/5">
+          <Icon name="shield" size={11} className="text-cyan-400" />
           <span className="text-gray-300">Flag for manual review</span>
-          <span className="text-[10px] text-indigo-400 ml-auto">pending</span>
+          <span className="text-[10px] text-cyan-400 ml-auto">pending</span>
         </div>
       </div>
     </div>

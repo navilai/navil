@@ -169,10 +169,10 @@ export default function Analytics() {
       <>
         <PageHeader title="Analytics" subtitle="Agent trust scores and behavioral profiling" />
         <div className="glass-card p-10 text-center animate-fadeIn">
-          <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-indigo-500/10 mb-4">
-            <Icon name="chart" size={32} className="text-indigo-400" />
+          <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-cyan-500/10 mb-4">
+            <Icon name="chart" size={32} className="text-cyan-400" />
           </div>
-          <div className="inline-block px-2.5 py-0.5 text-[10px] font-semibold bg-indigo-500/15 text-indigo-400 border border-indigo-500/30 rounded-full mb-3">
+          <div className="inline-block px-2.5 py-0.5 text-[10px] font-semibold bg-cyan-500/15 text-cyan-400 border border-cyan-500/30 rounded-full mb-3">
             NAVIL CLOUD
           </div>
           <h3 className="text-lg font-medium text-gray-200 mb-2">
@@ -192,7 +192,7 @@ export default function Analytics() {
               href="https://www.navil.ai/pricing"
               target="_blank"
               rel="noopener noreferrer"
-              className="inline-flex items-center gap-2 px-6 py-2.5 bg-indigo-600 text-white rounded-lg text-sm font-medium hover:bg-indigo-500"
+              className="inline-flex items-center gap-2 px-6 py-2.5 bg-cyan-500 text-white rounded-lg text-sm font-medium hover:bg-cyan-400"
             >
               <Icon name="sparkles" size={14} />
               Get Navil Cloud
@@ -221,7 +221,7 @@ export default function Analytics() {
   return (
     <>
       <PageHeader title="Analytics" subtitle="Agent trust scores and behavioral profiling">
-        <span className="px-2.5 py-1 text-[10px] font-semibold bg-indigo-500/15 text-indigo-400 border border-indigo-500/30 rounded-full">
+        <span className="px-2.5 py-1 text-[10px] font-semibold bg-cyan-500/15 text-cyan-400 border border-cyan-500/30 rounded-full">
           ELITE
         </span>
       </PageHeader>
@@ -229,9 +229,9 @@ export default function Analytics() {
       {/* Stat cards */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
         <StatCard label="Avg Trust Score" value={Math.round(data.avg_trust_score)} icon="shield" accent="emerald" index={0} />
-        <StatCard label="Agents Monitored" value={data.agents_monitored} icon="bot" accent="indigo" index={1} />
+        <StatCard label="Agents Monitored" value={data.agents_monitored} icon="bot" accent="cyan" index={1} />
         <StatCard label="Anomaly Rate" value={`${(data.anomaly_rate * 100).toFixed(1)}%`} icon="alert" accent="amber" index={2} />
-        <StatCard label="Events (24h)" value={data.total_events_24h} icon="activity" accent="indigo" index={3} />
+        <StatCard label="Events (24h)" value={data.total_events_24h} icon="activity" accent="cyan" index={3} />
       </div>
 
       {/* Trust Scores + Trends */}
@@ -239,7 +239,7 @@ export default function Analytics() {
         {/* Trust Scores */}
         <div className="glass-card p-5 animate-slideUp opacity-0" style={{ animationDelay: '0.1s' }}>
           <h3 className="text-sm font-semibold text-gray-300 mb-4 flex items-center gap-2">
-            <Icon name="shield" size={16} className="text-indigo-400" />
+            <Icon name="shield" size={16} className="text-cyan-400" />
             Agent Trust Scores
           </h3>
           <div className="space-y-4">
@@ -274,7 +274,7 @@ export default function Analytics() {
         {/* Anomaly Trends */}
         <div className="glass-card p-5 animate-slideUp opacity-0" style={{ animationDelay: '0.15s' }}>
           <h3 className="text-sm font-semibold text-gray-300 mb-4 flex items-center gap-2">
-            <Icon name="activity" size={16} className="text-indigo-400" />
+            <Icon name="activity" size={16} className="text-cyan-400" />
             Anomaly Trends (24h)
           </h3>
           <div className="mb-4">
@@ -301,7 +301,7 @@ export default function Analytics() {
           </div>
           <div className="flex items-center gap-4 text-xs text-gray-500 mt-1">
             <span className="flex items-center gap-1.5">
-              <span className="w-2.5 h-0.5 bg-indigo-400 rounded-full inline-block" />
+              <span className="w-2.5 h-0.5 bg-cyan-400 rounded-full inline-block" />
               Total Events
             </span>
           </div>
@@ -312,7 +312,7 @@ export default function Analytics() {
       <div className="glass-card overflow-x-auto animate-slideUp opacity-0" style={{ animationDelay: '0.2s' }}>
         <div className="p-5 border-b border-gray-800/50">
           <h3 className="text-sm font-semibold text-gray-300 flex items-center gap-2">
-            <Icon name="bot" size={16} className="text-indigo-400" />
+            <Icon name="bot" size={16} className="text-cyan-400" />
             Behavioral Profiles
           </h3>
         </div>
@@ -358,7 +358,7 @@ export default function Analytics() {
                   </td>
                   <td className="px-5 py-3.5">
                     <div className="flex items-center gap-2">
-                      <code className="text-xs bg-gray-800 px-1.5 py-0.5 rounded text-indigo-300">
+                      <code className="text-xs bg-gray-800 px-1.5 py-0.5 rounded text-cyan-300">
                         {profile.top_tool}
                       </code>
                       <span className="text-xs text-gray-500">{profile.top_tool_pct}%</span>

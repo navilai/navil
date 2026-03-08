@@ -74,8 +74,8 @@ export default function Agents() {
                 onClick={() => setSelected(a.name)}
                 className={`border-b border-gray-800/30 cursor-pointer transition-colors animate-fadeIn opacity-0 ${
                   selected === a.name
-                    ? 'bg-indigo-500/10 border-l-2 border-l-indigo-500'
-                    : 'hover:bg-indigo-500/[0.04]'
+                    ? 'bg-cyan-500/10 border-l-2 border-l-cyan-500'
+                    : 'hover:bg-cyan-400/[0.04]'
                 }`}
                 style={{ animationDelay: `${i * 0.04}s` }}
               >
@@ -91,7 +91,7 @@ export default function Agents() {
                 <td className="px-4 py-3">
                   <div className="flex gap-1 flex-wrap">
                     {a.known_tools.slice(0, 4).map(t => (
-                      <span key={t} className="px-2 py-0.5 bg-indigo-500/10 text-indigo-300/80 border border-indigo-500/20 rounded-full text-xs">
+                      <span key={t} className="px-2 py-0.5 bg-cyan-500/10 text-cyan-300/80 border border-cyan-500/20 rounded-full text-xs">
                         {t}
                       </span>
                     ))}
@@ -110,7 +110,7 @@ export default function Agents() {
       {selected && (
         <div className="space-y-4 animate-slideUp">
           <h3 className="text-lg font-semibold flex items-center gap-2">
-            <Icon name="bot" size={20} className="text-indigo-400" />
+            <Icon name="bot" size={20} className="text-cyan-400" />
             {selected}
             <button
               onClick={() => setSelected(null)}
@@ -142,7 +142,7 @@ export default function Agents() {
                             <p className="text-gray-500 text-xs">{k.replace(/_/g, ' ')}</p>
                             <p className="text-gray-300 font-mono text-xs">{numVal.toFixed(2)}</p>
                           </div>
-                          <MiniBar value={Math.abs(numVal)} max={maxVal} color="bg-indigo-500/60" height="h-1" />
+                          <MiniBar value={Math.abs(numVal)} max={maxVal} color="bg-cyan-500/60" height="h-1" />
                         </div>
                       )
                     })

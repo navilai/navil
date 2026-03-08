@@ -4,6 +4,27 @@ import { isAuthEnabled } from '../auth/ClerkProviderWrapper'
 import Icon from '../components/Icon'
 import { api } from '../api'
 import FeatureComparisonTable from '../components/FeatureComparisonTable'
+import useReveal from '../hooks/useReveal'
+
+/* ─── Reveal wrapper ─────────────────────────────────────────────── */
+function Reveal({
+  children,
+  className = '',
+  stagger = false,
+}: {
+  children: React.ReactNode
+  className?: string
+  stagger?: boolean
+}) {
+  const ref = useReveal()
+  return (
+    <div ref={ref} className={`${stagger ? 'reveal-stagger' : 'reveal'} ${className}`}>
+      {children}
+    </div>
+  )
+}
+
+/* ─── Tier data ──────────────────────────────────────────────────── */
 
 interface Tier {
   name: string
@@ -150,218 +171,240 @@ export default function Pricing() {
   }
 
   return (
-    <div className="max-w-6xl mx-auto px-6 py-24">
-      {/* ── 1. Header ───────────────────────────────────────────── */}
-      <div className="text-center mb-12 animate-fadeIn">
-        <h1 className="text-4xl font-bold text-white mb-4">
-          Simple, Transparent Pricing
-        </h1>
-        <p className="text-lg text-gray-400 mb-8">
-          Start free. Upgrade when you need more power.
-        </p>
+    <div className="bg-gray-950">
+      {/* ── Header ───────────────────────────────────────────────── */}
+      <section className="relative overflow-hidden">
+        <div className="absolute inset-0 dot-grid pointer-events-none" />
+        <div className="absolute inset-0 hero-glow pointer-events-none" />
 
-        {/* Annual/Monthly toggle */}
-        <div className="inline-flex items-center gap-3 bg-gray-900/60 border border-gray-800/60 rounded-full px-1.5 py-1.5">
-          <button
-            onClick={() => setAnnual(false)}
-            className={`px-4 py-1.5 rounded-full text-sm font-medium transition-all ${
-              !annual
-                ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-500/20'
-                : 'text-gray-400 hover:text-gray-300'
-            }`}
-          >
-            Monthly
-          </button>
-          <button
-            onClick={() => setAnnual(true)}
-            className={`px-4 py-1.5 rounded-full text-sm font-medium transition-all flex items-center gap-1.5 ${
-              annual
-                ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-500/20'
-                : 'text-gray-400 hover:text-gray-300'
-            }`}
-          >
-            Annual
-            <span className="text-[10px] font-bold bg-emerald-500/20 text-emerald-400 px-1.5 py-0.5 rounded-full">
-              Save 20%
-            </span>
-          </button>
-        </div>
-      </div>
+        <div className="max-w-6xl mx-auto px-6 pt-28 pb-16 text-center relative">
+          <Reveal>
+            <p className="font-mono text-[11px] uppercase tracking-widest text-cyan-400 mb-4">Pricing</p>
+            <h1 className="font-display text-4xl sm:text-5xl font-bold text-white mb-4">
+              Simple, transparent pricing
+            </h1>
+            <p className="text-lg text-gray-400 mb-8 max-w-xl mx-auto">
+              Start free. Upgrade when you need more power.
+            </p>
 
-      {/* ── 2. Tier Cards ───────────────────────────────────────── */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-5">
-        {tiers.map((tier, i) => {
-          const price = annual ? tier.annualPrice : tier.monthlyPrice
-          const monthlyFull = tier.monthlyPrice
-          const showDiscount = annual && monthlyFull && price && monthlyFull > price
-
-          return (
-            <div
-              key={tier.name}
-              className={`glass-card p-6 flex flex-col animate-slideUp opacity-0 ${
-                tier.highlighted
-                  ? 'border-indigo-500/40 ring-1 ring-indigo-500/20 relative'
-                  : ''
-              }`}
-              style={{ animationDelay: `${i * 0.08}s` }}
-            >
-              {tier.badge && (
-                <span className="absolute -top-3 left-1/2 -translate-x-1/2 px-3 py-1 text-xs font-semibold bg-indigo-600 text-white rounded-full whitespace-nowrap">
-                  {tier.badge}
+            {/* Annual/Monthly toggle */}
+            <div className="inline-flex items-center gap-3 bg-gray-900/60 border border-gray-800/60 rounded-full px-1.5 py-1.5">
+              <button
+                onClick={() => setAnnual(false)}
+                className={`px-4 py-1.5 rounded-full text-sm font-medium transition-all ${
+                  !annual
+                    ? 'bg-cyan-500 text-gray-950 font-bold shadow-lg shadow-cyan-500/20'
+                    : 'text-gray-400 hover:text-gray-300'
+                }`}
+              >
+                Monthly
+              </button>
+              <button
+                onClick={() => setAnnual(true)}
+                className={`px-4 py-1.5 rounded-full text-sm font-medium transition-all flex items-center gap-1.5 ${
+                  annual
+                    ? 'bg-cyan-500 text-gray-950 font-bold shadow-lg shadow-cyan-500/20'
+                    : 'text-gray-400 hover:text-gray-300'
+                }`}
+              >
+                Annual
+                <span className="text-[10px] font-bold bg-emerald-500/20 text-emerald-400 px-1.5 py-0.5 rounded-full">
+                  Save 20%
                 </span>
-              )}
+              </button>
+            </div>
+          </Reveal>
+        </div>
+      </section>
 
-              <div className="mb-6">
-                <h3 className="text-lg font-medium text-gray-200 mb-1">{tier.name}</h3>
-                <div className="flex items-baseline gap-1 mb-2">
-                  {price !== null ? (
-                    <>
-                      {showDiscount && (
-                        <span className="text-lg text-gray-600 line-through mr-1">${monthlyFull}</span>
+      {/* ── Tier Cards ───────────────────────────────────────────── */}
+      <section className="max-w-6xl mx-auto px-6 pb-20">
+        <Reveal stagger>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-5">
+            {tiers.map((tier) => {
+              const price = annual ? tier.annualPrice : tier.monthlyPrice
+              const monthlyFull = tier.monthlyPrice
+              const showDiscount = annual && monthlyFull && price && monthlyFull > price
+
+              return (
+                <div
+                  key={tier.name}
+                  className={`reveal-child glass-card p-6 flex flex-col ${
+                    tier.highlighted
+                      ? 'border-cyan-500/40 ring-1 ring-cyan-500/20 relative'
+                      : ''
+                  }`}
+                >
+                  {tier.badge && (
+                    <span className="absolute -top-3 left-1/2 -translate-x-1/2 px-3 py-0.5 text-[10px] font-mono font-bold bg-cyan-500 text-gray-950 rounded-full whitespace-nowrap">
+                      {tier.badge}
+                    </span>
+                  )}
+
+                  <div className="mb-6">
+                    <h3 className="font-mono text-[11px] uppercase tracking-widest text-gray-500 mb-2">{tier.name}</h3>
+                    <div className="flex items-baseline gap-1 mb-2">
+                      {price !== null ? (
+                        <>
+                          {showDiscount && (
+                            <span className="text-lg text-gray-600 line-through mr-1">${monthlyFull}</span>
+                          )}
+                          <span className="font-display text-3xl font-bold text-white">${price}</span>
+                          <span className="text-sm text-gray-500">/month</span>
+                        </>
+                      ) : (
+                        <span className="font-display text-3xl font-bold text-white">Custom</span>
                       )}
-                      <span className="text-3xl font-bold text-white">${price}</span>
-                      <span className="text-sm text-gray-500">/month</span>
-                    </>
+                    </div>
+                    {annual && price !== null && price > 0 && (
+                      <p className="text-xs text-emerald-400/80">
+                        Billed ${price * 12}/year
+                      </p>
+                    )}
+                    <p className="text-sm text-gray-500 mt-1">{tier.description}</p>
+                  </div>
+
+                  <ul className="space-y-3 mb-4 flex-1">
+                    {tier.features.map((feature) => (
+                      <li key={feature} className="flex items-start gap-2.5 text-sm">
+                        <Icon name="check" size={16} className="text-cyan-400 shrink-0 mt-0.5" />
+                        <span className="text-gray-300">{feature}</span>
+                      </li>
+                    ))}
+                  </ul>
+
+                  {tier.excluded && (
+                    <ul className="space-y-3 mb-6">
+                      {tier.excluded.map((feature) => (
+                        <li key={feature} className="flex items-start gap-2.5 text-sm">
+                          <Icon name="x" size={16} className="text-gray-600 shrink-0 mt-0.5" />
+                          <span className="text-gray-600">{feature}</span>
+                        </li>
+                      ))}
+                    </ul>
+                  )}
+
+                  {!tier.excluded && <div className="mb-6" />}
+
+                  {tier.isEnterprise ? (
+                    <a
+                      href="mailto:info@pantheonlab.ai?subject=Navil Enterprise"
+                      className="w-full py-2.5 bg-gray-800 text-gray-300 border border-gray-700 rounded-lg text-sm font-medium hover:bg-gray-700 text-center block"
+                    >
+                      Contact Sales
+                    </a>
+                  ) : tier.name === 'Elite' ? (
+                    <button
+                      onClick={() => handleCheckout('elite')}
+                      disabled={!!loading}
+                      className="w-full py-2.5 bg-cyan-500 text-gray-950 rounded-lg text-sm font-bold hover:bg-cyan-400 disabled:opacity-50 flex items-center justify-center gap-2"
+                    >
+                      <Icon name="sparkles" size={14} />
+                      {loading === 'elite' ? 'Redirecting...' : 'Start Elite Trial'}
+                    </button>
+                  ) : tier.name === 'Lite' ? (
+                    <button
+                      onClick={() => handleCheckout('lite')}
+                      disabled={!!loading}
+                      className="w-full py-2.5 bg-gray-800 text-gray-300 border border-gray-700 rounded-lg text-sm font-medium hover:bg-gray-700 disabled:opacity-50 flex items-center justify-center gap-2"
+                    >
+                      {loading === 'lite' ? 'Redirecting...' : 'Start Lite Trial'}
+                    </button>
                   ) : (
-                    <span className="text-3xl font-bold text-white">Custom</span>
+                    <Link
+                      to={ctaLink}
+                      className="w-full py-2.5 bg-gray-800 text-gray-300 border border-gray-700 rounded-lg text-sm font-medium hover:bg-gray-700 text-center block"
+                    >
+                      Get Started Free
+                    </Link>
                   )}
                 </div>
-                {annual && price !== null && price > 0 && (
-                  <p className="text-xs text-emerald-400/80">
-                    Billed ${price * 12}/year
-                  </p>
-                )}
-                <p className="text-sm text-gray-500 mt-1">{tier.description}</p>
-              </div>
+              )
+            })}
+          </div>
+        </Reveal>
+      </section>
 
-              <ul className="space-y-3 mb-4 flex-1">
-                {tier.features.map((feature) => (
-                  <li key={feature} className="flex items-start gap-2.5 text-sm">
-                    <Icon name="check" size={16} className="text-indigo-400 shrink-0 mt-0.5" />
-                    <span className="text-gray-300">{feature}</span>
-                  </li>
-                ))}
-              </ul>
-
-              {tier.excluded && (
-                <ul className="space-y-3 mb-6">
-                  {tier.excluded.map((feature) => (
-                    <li key={feature} className="flex items-start gap-2.5 text-sm">
-                      <Icon name="x" size={16} className="text-gray-600 shrink-0 mt-0.5" />
-                      <span className="text-gray-600">{feature}</span>
-                    </li>
-                  ))}
-                </ul>
-              )}
-
-              {!tier.excluded && <div className="mb-6" />}
-
-              {tier.isEnterprise ? (
-                <a
-                  href="mailto:info@pantheonlab.ai?subject=Navil Enterprise"
-                  className="w-full py-2.5 bg-gray-800 text-gray-300 border border-gray-700 rounded-lg text-sm font-medium hover:bg-gray-700 text-center block"
-                >
-                  Contact Sales
-                </a>
-              ) : tier.name === 'Elite' ? (
-                <button
-                  onClick={() => handleCheckout('elite')}
-                  disabled={!!loading}
-                  className="w-full py-2.5 bg-indigo-600 text-white rounded-lg text-sm font-medium hover:bg-indigo-500 disabled:opacity-50 flex items-center justify-center gap-2"
-                >
-                  <Icon name="sparkles" size={14} />
-                  {loading === 'elite' ? 'Redirecting...' : 'Start Elite Trial'}
-                </button>
-              ) : tier.name === 'Lite' ? (
-                <button
-                  onClick={() => handleCheckout('lite')}
-                  disabled={!!loading}
-                  className="w-full py-2.5 bg-gray-800 text-gray-300 border border-gray-700 rounded-lg text-sm font-medium hover:bg-gray-700 disabled:opacity-50 flex items-center justify-center gap-2"
-                >
-                  {loading === 'lite' ? 'Redirecting...' : 'Start Lite Trial'}
-                </button>
-              ) : (
-                <Link
-                  to={ctaLink}
-                  className="w-full py-2.5 bg-gray-800 text-gray-300 border border-gray-700 rounded-lg text-sm font-medium hover:bg-gray-700 text-center block"
-                >
-                  Get Started Free
-                </Link>
-              )}
+      {/* ── Self-Host Callout ─────────────────────────────────────── */}
+      <section className="max-w-6xl mx-auto px-6 pb-20">
+        <Reveal>
+          <div className="glass-card p-8 border-cyan-500/20 flex flex-col md:flex-row items-center gap-6">
+            <div className="flex items-center justify-center w-14 h-14 rounded-full bg-cyan-500/10 border border-cyan-500/20 shrink-0">
+              <Icon name="github" size={26} className="text-cyan-400" />
             </div>
-          )
-        })}
-      </div>
+            <div className="flex-1 text-center md:text-left">
+              <h3 className="font-display text-lg font-semibold text-white mb-1">Prefer to self-host?</h3>
+              <p className="text-sm text-gray-400">
+                Navil is open source. Run the full security toolkit on your own infrastructure with no limits.
+              </p>
+            </div>
+            <div className="flex items-center gap-3 shrink-0">
+              <a
+                href="https://github.com/ivanlkf/navil"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="px-5 py-2.5 bg-gray-800 text-gray-300 border border-gray-700 rounded-lg text-sm font-medium hover:bg-gray-700 flex items-center gap-2"
+              >
+                <Icon name="github" size={16} />
+                View on GitHub
+                <Icon name="external-link" size={14} />
+              </a>
+              <Link
+                to="/docs/getting-started"
+                className="px-5 py-2.5 bg-cyan-500 text-gray-950 rounded-lg text-sm font-bold hover:bg-cyan-400 flex items-center gap-2"
+              >
+                Self-hosting guide
+                <Icon name="arrow-right" size={14} />
+              </Link>
+            </div>
+          </div>
+        </Reveal>
+      </section>
 
-      {/* ── 3. Self-Host Callout ─────────────────────────────────── */}
-      <div className="mt-16 animate-fadeIn">
-        <div className="glass-card p-8 border-indigo-500/30 flex flex-col md:flex-row items-center gap-6">
-          <div className="flex items-center justify-center w-14 h-14 rounded-full bg-indigo-500/10 border border-indigo-500/20 shrink-0">
-            <Icon name="github" size={26} className="text-indigo-400" />
-          </div>
-          <div className="flex-1 text-center md:text-left">
-            <h3 className="text-lg font-semibold text-white mb-1">Prefer to self-host?</h3>
-            <p className="text-sm text-gray-400">
-              Navil is open source. Run the full security toolkit on your own infrastructure with no limits.
-            </p>
-          </div>
-          <div className="flex items-center gap-3 shrink-0">
-            <a
-              href="https://github.com/ivanlkf/navil"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="px-5 py-2.5 bg-gray-800 text-gray-300 border border-gray-700 rounded-lg text-sm font-medium hover:bg-gray-700 flex items-center gap-2"
-            >
-              <Icon name="github" size={16} />
-              View on GitHub
-              <Icon name="external-link" size={14} />
-            </a>
-            <Link
-              to="/docs/getting-started"
-              className="px-5 py-2.5 bg-indigo-600 text-white rounded-lg text-sm font-medium hover:bg-indigo-500 flex items-center gap-2"
-            >
-              Self-hosting guide
-              <Icon name="arrow-right" size={14} />
-            </Link>
-          </div>
+      {/* ── Feature Comparison Table ──────────────────────────────── */}
+      <section className="max-w-5xl mx-auto px-6 pb-20">
+        <Reveal>
+          <h2 className="font-display text-2xl font-bold text-white text-center mb-10">
+            Compare plans in detail
+          </h2>
+          <FeatureComparisonTable />
+        </Reveal>
+      </section>
+
+      {/* ── FAQ ──────────────────────────────────────────────────── */}
+      <section className="border-t border-gray-800/40">
+        <div className="max-w-3xl mx-auto px-6 py-20">
+          <Reveal>
+            <h2 className="font-display text-2xl font-bold text-white text-center mb-10">
+              Frequently asked questions
+            </h2>
+          </Reveal>
+
+          <Reveal stagger>
+            <div className="space-y-3">
+              {faqItems.map((item) => (
+                <details key={item.question} className="reveal-child faq-item group glass-card">
+                  <summary className="flex items-center justify-between cursor-pointer px-6 py-4 text-sm font-medium text-gray-200 hover:text-white">
+                    {item.question}
+                    <Icon
+                      name="chevron-down"
+                      size={16}
+                      className="text-gray-500 transition-transform group-open:rotate-180"
+                    />
+                  </summary>
+                  <div className="px-6 pb-4 text-sm text-gray-400 leading-relaxed">
+                    {item.answer}
+                  </div>
+                </details>
+              ))}
+            </div>
+          </Reveal>
         </div>
-      </div>
+      </section>
 
-      {/* ── 4. Feature Comparison Table ──────────────────────────── */}
-      <div className="mt-20">
-        <h2 className="text-2xl font-bold text-white text-center mb-10">
-          Compare plans in detail
-        </h2>
-        <FeatureComparisonTable />
-      </div>
-
-      {/* ── 5. FAQ ──────────────────────────────────────────────── */}
-      <div className="mt-20">
-        <h2 className="text-2xl font-bold text-white text-center mb-10">
-          Frequently asked questions
-        </h2>
-        <div className="max-w-3xl mx-auto space-y-3">
-          {faqItems.map((item) => (
-            <details key={item.question} className="faq-item group">
-              <summary className="flex items-center justify-between cursor-pointer px-6 py-4 text-sm font-medium text-gray-200 hover:text-white">
-                {item.question}
-                <Icon
-                  name="chevron-down"
-                  size={16}
-                  className="text-gray-500 transition-transform group-open:rotate-180"
-                />
-              </summary>
-              <div className="px-6 pb-4 text-sm text-gray-400 leading-relaxed">
-                {item.answer}
-              </div>
-            </details>
-          ))}
-        </div>
-      </div>
-
-      {/* ── 6. Bottom Note ──────────────────────────────────────── */}
-      <div className="mt-16 text-center">
-        <p className="text-sm text-gray-500">
+      {/* ── Bottom Note ──────────────────────────────────────────── */}
+      <div className="text-center pb-20">
+        <p className="text-[11px] text-gray-600 font-mono">
           All paid plans include a 14-day free trial. No credit card required to start.
         </p>
       </div>

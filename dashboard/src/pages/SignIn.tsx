@@ -64,7 +64,7 @@ function LocalSignInPage() {
                 type="email"
                 value={email}
                 onChange={e => { setEmail(e.target.value); setError('') }}
-                className="w-full bg-gray-800 border border-gray-700 rounded-lg px-3 py-2.5 text-sm text-gray-200 focus:border-indigo-500 focus:outline-none"
+                className="w-full bg-gray-800 border border-gray-700 rounded-lg px-3 py-2.5 text-sm text-gray-200 focus:border-cyan-500 focus:outline-none"
                 placeholder="you@example.com"
                 autoFocus
               />
@@ -73,7 +73,7 @@ function LocalSignInPage() {
 
             <button
               type="submit"
-              className="w-full py-2.5 bg-indigo-600 text-white rounded-lg text-sm font-medium hover:bg-indigo-500 flex items-center justify-center gap-2"
+              className="w-full py-2.5 bg-cyan-500 text-white rounded-lg text-sm font-medium hover:bg-cyan-400 flex items-center justify-center gap-2"
             >
               Continue
               <Icon name="arrow-right" size={14} />
@@ -82,7 +82,7 @@ function LocalSignInPage() {
 
           <p className="text-xs text-gray-600 text-center mt-4">
             Don't have an account?{' '}
-            <Link to="/sign-up" className="text-indigo-400 hover:text-indigo-300">Sign up</Link>
+            <Link to="/sign-up" className="text-cyan-400 hover:text-cyan-300">Sign up</Link>
           </p>
         </div>
       </div>
@@ -95,12 +95,12 @@ function AuthBranding() {
     <div className="mb-8 text-center">
       <Link to="/" className="inline-flex items-center justify-center gap-3 mb-3">
         <div className="relative">
-          <div className="absolute inset-0 bg-indigo-500/20 rounded-lg blur-sm animate-pulseGlow" />
-          <Icon name="shield" size={32} className="text-indigo-400 relative" />
+          <div className="absolute inset-0 bg-cyan-500/20 rounded-lg blur-sm animate-pulseGlow" />
+          <Icon name="shield" size={32} className="text-cyan-400 relative" />
         </div>
         <h1 className="text-2xl font-bold text-white">
           Navil{' '}
-          <span className="text-sm font-normal text-indigo-400 bg-indigo-400/10 px-2 py-0.5 rounded">
+          <span className="text-sm font-normal text-cyan-400 bg-cyan-400/10 px-2 py-0.5 rounded">
             OSS
           </span>
         </h1>

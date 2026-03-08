@@ -62,7 +62,7 @@ export default function Alerts() {
               onClick={() => setFilter(s)}
               className={`px-3 py-1.5 text-xs rounded-lg border flex items-center gap-1.5 ${
                 filter === s
-                  ? 'bg-indigo-500/20 border-indigo-500/40 text-indigo-300 shadow-[0_0_8px_rgba(99,102,241,0.15)]'
+                  ? 'bg-cyan-500/20 border-cyan-500/40 text-cyan-300 shadow-[0_0_8px_rgba(99,102,241,0.15)]'
                   : 'bg-gray-900/60 border-gray-700 text-gray-400 hover:border-gray-600 hover:text-gray-300'
               }`}
             >
@@ -128,7 +128,7 @@ export default function Alerts() {
                   </div>
                   <div>
                     <p className="text-xs text-gray-500 mb-1">Recommended Action</p>
-                    <p className="text-sm text-indigo-400">{alert.recommended_action}</p>
+                    <p className="text-sm text-cyan-400">{alert.recommended_action}</p>
                   </div>
                   {/* AI Explanation */}
                   <div className="pt-2 border-t border-gray-800/30">
@@ -178,8 +178,8 @@ export default function Alerts() {
                             <p className="text-xs text-gray-500 mb-1">AI Recommended Actions</p>
                             <ul className="space-y-1">
                               {explanations[i].recommended_actions.map((a, j) => (
-                                <li key={j} className="text-sm text-indigo-400 flex items-start gap-2">
-                                  <Icon name="chevron-right" size={12} className="text-indigo-600 mt-0.5 shrink-0" />
+                                <li key={j} className="text-sm text-cyan-400 flex items-start gap-2">
+                                  <Icon name="chevron-right" size={12} className="text-cyan-500 mt-0.5 shrink-0" />
                                   {a}
                                 </li>
                               ))}

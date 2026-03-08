@@ -15,7 +15,7 @@ function getInitials(name: string) {
 }
 
 const avatarColors = [
-  'bg-indigo-500/20 text-indigo-400',
+  'bg-cyan-500/20 text-cyan-400',
   'bg-violet-500/20 text-violet-400',
   'bg-emerald-500/20 text-emerald-400',
   'bg-amber-500/20 text-amber-400',
@@ -34,7 +34,7 @@ export default function TestimonialCard({
 
   return (
     <div className="glass-card p-6">
-      <span className="text-4xl text-indigo-500/30 leading-none select-none">
+      <span className="text-4xl text-cyan-500/30 leading-none select-none">
         &ldquo;
       </span>
       <p className="italic text-gray-300 mt-2">{quote}</p>

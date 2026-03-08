@@ -112,7 +112,7 @@ export default function Feedback() {
         {/* Anomaly type breakdown */}
         <div className="glass-card p-5">
           <h3 className="text-sm font-medium text-gray-300 mb-4 flex items-center gap-2">
-            <Icon name="chart" size={16} className="text-indigo-400" />
+            <Icon name="chart" size={16} className="text-cyan-400" />
             Feedback by Anomaly Type
           </h3>
           {stats && Object.keys(stats.by_anomaly_type).length > 0 ? (
@@ -165,7 +165,7 @@ export default function Feedback() {
         {/* Submit feedback form */}
         <div className="glass-card p-5">
           <h3 className="text-sm font-medium text-gray-300 mb-4 flex items-center gap-2">
-            <Icon name="activity" size={16} className="text-indigo-400" />
+            <Icon name="activity" size={16} className="text-cyan-400" />
             Submit Feedback
           </h3>
           <div className="space-y-4">
@@ -174,7 +174,7 @@ export default function Feedback() {
               <select
                 value={selectedAlert}
                 onChange={e => setSelectedAlert(e.target.value)}
-                className="w-full bg-gray-800 border border-gray-700 rounded-lg px-3 py-2 text-sm text-gray-300 focus:border-indigo-500 focus:outline-none"
+                className="w-full bg-gray-800 border border-gray-700 rounded-lg px-3 py-2 text-sm text-gray-300 focus:border-cyan-500 focus:outline-none"
               >
                 <option value="">Choose an alert...</option>
                 {alerts.slice(0, 20).map((a) => (
@@ -209,7 +209,7 @@ export default function Feedback() {
               <textarea
                 value={notes}
                 onChange={e => setNotes(e.target.value)}
-                className="w-full h-24 bg-gray-800 border border-gray-700 rounded-lg px-3 py-2 text-sm text-gray-300 focus:border-indigo-500 focus:outline-none resize-none"
+                className="w-full h-24 bg-gray-800 border border-gray-700 rounded-lg px-3 py-2 text-sm text-gray-300 focus:border-cyan-500 focus:outline-none resize-none"
                 placeholder="Additional context about this alert..."
               />
             </div>
@@ -217,7 +217,7 @@ export default function Feedback() {
             <button
               onClick={handleSubmit}
               disabled={!selectedAlert || submitting}
-              className="w-full px-4 py-2.5 bg-indigo-600 text-white rounded-lg text-sm font-medium hover:bg-indigo-500 disabled:opacity-40 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+              className="w-full px-4 py-2.5 bg-cyan-500 text-white rounded-lg text-sm font-medium hover:bg-cyan-400 disabled:opacity-40 disabled:cursor-not-allowed flex items-center justify-center gap-2"
             >
               <Icon name="activity" size={14} />
               {submitting ? 'Submitting...' : 'Submit Feedback'}

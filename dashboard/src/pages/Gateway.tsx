@@ -107,8 +107,8 @@ export default function Gateway() {
       {!running ? (
         /* Start proxy form */
         <div className="flex flex-col items-center justify-center py-16 text-center">
-          <div className="w-16 h-16 rounded-2xl bg-indigo-500/10 border border-indigo-500/20 flex items-center justify-center mb-6">
-            <Icon name="gateway" size={32} className="text-indigo-400" />
+          <div className="w-16 h-16 rounded-2xl bg-cyan-500/10 border border-cyan-500/20 flex items-center justify-center mb-6">
+            <Icon name="gateway" size={32} className="text-cyan-400" />
           </div>
           <h3 className="text-xl font-semibold mb-2">Start MCP Security Proxy</h3>
           <p className="text-gray-400 max-w-md mb-6">
@@ -124,7 +124,7 @@ export default function Gateway() {
                 value={targetUrl}
                 onChange={e => setTargetUrl(e.target.value)}
                 placeholder="http://localhost:3000"
-                className="w-full bg-gray-800 border border-gray-700 rounded-lg px-3 py-2 text-sm text-gray-300 font-mono focus:border-indigo-500 focus:outline-none"
+                className="w-full bg-gray-800 border border-gray-700 rounded-lg px-3 py-2 text-sm text-gray-300 font-mono focus:border-cyan-500 focus:outline-none"
               />
             </div>
 
@@ -136,7 +136,7 @@ export default function Gateway() {
                   value={proxyPort}
                   onChange={e => setProxyPort(e.target.value)}
                   placeholder="9090"
-                  className="w-full bg-gray-800 border border-gray-700 rounded-lg px-3 py-2 text-sm text-gray-300 font-mono focus:border-indigo-500 focus:outline-none"
+                  className="w-full bg-gray-800 border border-gray-700 rounded-lg px-3 py-2 text-sm text-gray-300 font-mono focus:border-cyan-500 focus:outline-none"
                 />
               </div>
               <div className="flex-1 flex items-end pb-1">
@@ -145,7 +145,7 @@ export default function Gateway() {
                     type="checkbox"
                     checked={requireAuth}
                     onChange={e => setRequireAuth(e.target.checked)}
-                    className="rounded border-gray-700 bg-gray-800 text-indigo-500 focus:ring-indigo-500/30"
+                    className="rounded border-gray-700 bg-gray-800 text-cyan-500 focus:ring-cyan-500/30"
                   />
                   Require auth tokens
                 </label>
@@ -162,7 +162,7 @@ export default function Gateway() {
             <button
               onClick={handleStartProxy}
               disabled={!targetUrl.trim() || starting}
-              className="w-full px-4 py-2.5 bg-indigo-600 text-white rounded-lg text-sm font-medium hover:bg-indigo-500 disabled:opacity-40 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+              className="w-full px-4 py-2.5 bg-cyan-500 text-white rounded-lg text-sm font-medium hover:bg-cyan-400 disabled:opacity-40 disabled:cursor-not-allowed flex items-center justify-center gap-2"
             >
               <Icon name="gateway" size={14} className={starting ? 'animate-spin' : ''} />
               {starting ? 'Starting...' : 'Start Proxy'}
@@ -181,7 +181,7 @@ export default function Gateway() {
               label="Total Requests"
               value={status?.stats.total_requests ?? 0}
               icon="activity"
-              accent="indigo"
+              accent="cyan"
               index={0}
             />
             <StatCard
@@ -212,7 +212,7 @@ export default function Gateway() {
             <select
               value={agentFilter}
               onChange={e => setAgentFilter(e.target.value)}
-              className="bg-gray-900/50 border border-gray-800/60 rounded-lg px-3 py-2 text-sm text-gray-300 focus:outline-none focus:border-indigo-500/50"
+              className="bg-gray-900/50 border border-gray-800/60 rounded-lg px-3 py-2 text-sm text-gray-300 focus:outline-none focus:border-cyan-500/50"
             >
               <option value="">All agents</option>
               {agents.map(a => (
@@ -225,7 +225,7 @@ export default function Gateway() {
                 type="checkbox"
                 checked={blockedOnly}
                 onChange={e => setBlockedOnly(e.target.checked)}
-                className="rounded border-gray-700 bg-gray-800 text-indigo-500 focus:ring-indigo-500/30"
+                className="rounded border-gray-700 bg-gray-800 text-cyan-500 focus:ring-cyan-500/30"
               />
               Blocked only
             </label>

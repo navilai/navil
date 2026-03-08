@@ -39,7 +39,7 @@ function MiniSparkBars() {
       {bars.map((v, i) => (
         <div
           key={i}
-          className="w-[3px] rounded-sm bg-indigo-500/60"
+          className="w-[3px] rounded-sm bg-cyan-500/60"
           style={{ height: `${(v / max) * 100}%` }}
         />
       ))}

@@ -32,7 +32,7 @@ function LocalFooter() {
   return (
     <div className="relative border-t border-gray-800/60">
       <div className="p-3 flex items-center gap-3">
-        <div className="w-7 h-7 rounded-full bg-indigo-500/20 border border-indigo-500/30 flex items-center justify-center shrink-0 text-xs font-semibold text-indigo-400">
+        <div className="w-7 h-7 rounded-full bg-cyan-500/20 border border-cyan-500/30 flex items-center justify-center shrink-0 text-xs font-semibold text-cyan-400">
           {initial}
         </div>
         <div className="flex-1 min-w-0">
@@ -56,7 +56,7 @@ function LocalFooter() {
             className={({ isActive }) =>
               `p-1 rounded transition-colors ${
                 isActive
-                  ? 'text-indigo-400 bg-indigo-500/10'
+                  ? 'text-cyan-400 bg-cyan-500/10'
                   : 'text-gray-600 hover:text-gray-400 hover:bg-gray-800/60'
               }`
             }
@@ -73,7 +73,7 @@ function NoAuthFooter() {
   return (
     <div className="relative border-t border-gray-800/60">
       <div className="p-3 flex items-center gap-3">
-        <div className="w-7 h-7 rounded-full bg-indigo-500/20 border border-indigo-500/30 flex items-center justify-center shrink-0 text-xs font-semibold text-indigo-400">
+        <div className="w-7 h-7 rounded-full bg-cyan-500/20 border border-cyan-500/30 flex items-center justify-center shrink-0 text-xs font-semibold text-cyan-400">
           N
         </div>
         <div className="flex-1 min-w-0">
@@ -90,7 +90,7 @@ function NoAuthFooter() {
             className={({ isActive }) =>
               `p-1 rounded transition-colors ${
                 isActive
-                  ? 'text-indigo-400 bg-indigo-500/10'
+                  ? 'text-cyan-400 bg-cyan-500/10'
                   : 'text-gray-600 hover:text-gray-400 hover:bg-gray-800/60'
               }`
             }
@@ -117,8 +117,8 @@ function ClerkFooter() {
             className="w-7 h-7 rounded-full border border-gray-700 shrink-0"
           />
         ) : (
-          <div className="w-7 h-7 rounded-full bg-indigo-500/20 border border-indigo-500/30 flex items-center justify-center shrink-0">
-            <Icon name="bot" size={14} className="text-indigo-400" />
+          <div className="w-7 h-7 rounded-full bg-cyan-500/20 border border-cyan-500/30 flex items-center justify-center shrink-0">
+            <Icon name="bot" size={14} className="text-cyan-400" />
           </div>
         )}
         <div className="flex-1 min-w-0">
@@ -146,7 +146,7 @@ function ClerkFooter() {
             className={({ isActive }) =>
               `p-1 rounded transition-colors ${
                 isActive
-                  ? 'text-indigo-400 bg-indigo-500/10'
+                  ? 'text-cyan-400 bg-cyan-500/10'
                   : 'text-gray-600 hover:text-gray-400 hover:bg-gray-800/60'
               }`
             }

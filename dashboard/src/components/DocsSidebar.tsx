@@ -64,7 +64,7 @@ export default function DocsSidebar({ onNavigate }: DocsSidebarProps) {
                   className={({ isActive }) =>
                     `flex items-center gap-2.5 px-3 py-2 rounded-lg text-sm transition-colors ${
                       isActive
-                        ? 'bg-indigo-500/10 text-indigo-300 font-medium'
+                        ? 'bg-cyan-500/10 text-cyan-300 font-medium'
                         : 'text-gray-400 hover:bg-gray-800/60 hover:text-gray-200'
                     }`
                   }
