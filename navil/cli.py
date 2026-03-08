@@ -866,6 +866,75 @@ Examples:
 
     pentest_parser.set_defaults(func=_pentest_run)
 
+    # ── Seed-database command ────────────────────────────────────
+    seed_parser = subparsers.add_parser(
+        "seed-database",
+        help="Populate anomaly detector with synthetic SAFE-MCP attack baselines",
+    )
+    seed_parser.add_argument(
+        "-n", "--iterations",
+        type=int,
+        default=1000,
+        help="Number of times to run each scenario (default: 1000)",
+    )
+    seed_parser.add_argument(
+        "--no-server",
+        action="store_true",
+        help="Skip starting the mock MCP server",
+    )
+    seed_parser.add_argument(
+        "--json",
+        action="store_true",
+        dest="json_output",
+        help="Output raw JSON stats instead of formatted summary",
+    )
+    seed_parser.add_argument(
+        "--quiet",
+        action="store_true",
+        help="Suppress progress bar",
+    )
+
+    def _seed_database(cli: MCPGuardianCLI, args: argparse.Namespace) -> int:
+        from navil.pentest import SCENARIOS as _SCENARIOS
+        from navil.seed import seed_database
+
+        if not args.quiet:
+            print(
+                f"\n  Navil Seed Database"
+                f"\n  Running {len(_SCENARIOS) - 1} scenarios × {args.iterations} iterations"
+                f"\n  with mathematical fuzzing (Gaussian payload/rate/depth variance)\n"
+            )
+
+        stats = seed_database(
+            iterations=args.iterations,
+            detector=cli.anomaly_detector,
+            show_progress=not args.quiet,
+            mock_server=not args.no_server,
+        )
+
+        if args.json_output:
+            import json as _json
+
+            print(_json.dumps(stats.to_dict(), indent=2))
+        else:
+            print(f"\n  Seeding complete!")
+            print(f"  {'Iterations:':<24} {stats.iterations:>10,}")
+            print(f"  {'Total invocations:':<24} {stats.total_invocations:>10,}")
+            print(f"  {'Total alerts fired:':<24} {stats.total_alerts:>10,}")
+            print(f"  {'Elapsed time:':<24} {stats.elapsed_seconds:>9.1f}s")
+            print()
+            if stats.alerts_by_type:
+                print("  Alerts by type:")
+                for atype, count in sorted(
+                    stats.alerts_by_type.items(), key=lambda x: x[1], reverse=True
+                ):
+                    print(f"    {atype:<28} {count:>8,}")
+            print()
+
+        return 0
+
+    seed_parser.set_defaults(func=_seed_database)
+
     # ── Cloud commands ──────────────────────────────────────────
     cloud_parser = subparsers.add_parser(
         "cloud", help="Launch Navil Cloud dashboard (requires navil[cloud])"
