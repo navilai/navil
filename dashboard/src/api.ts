@@ -343,9 +343,17 @@ export const api = {
     post<LLMConfig>('/settings/llm', { provider, api_key, base_url, model }),
   testLLMConnection: (provider = '', api_key = '', base_url = '', model = '') =>
     post<{ success: boolean; response_preview?: string; error?: string }>('/settings/llm/test', { provider, api_key, base_url, model }),
-  getTelemetrySettings: () => get<{ cloud_sync_enabled: boolean }>('/settings/telemetry'),
+  getTelemetrySettings: () => get<{
+    cloud_sync_enabled: boolean;
+    api_key_present: boolean;
+    mode: 'community' | 'paid';
+  }>('/settings/telemetry'),
   updateTelemetrySettings: (enabled: boolean) =>
-    post<{ cloud_sync_enabled: boolean }>('/settings/telemetry', { enabled }),
+    post<{
+      cloud_sync_enabled: boolean;
+      api_key_present: boolean;
+      mode: 'community' | 'paid';
+    }>('/settings/telemetry', { enabled }),
 
   // Pentest endpoints
   pentest: (scenario?: string) =>
