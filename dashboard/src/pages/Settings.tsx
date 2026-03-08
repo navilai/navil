@@ -305,35 +305,79 @@ export default function Settings() {
 
 function TelemetryToggle() {
   const [enabled, setEnabled] = useState<boolean | null>(null)
+  const [mode, setMode] = useState<'community' | 'paid' | null>(null)
+  const [apiKeyPresent, setApiKeyPresent] = useState(false)
   const [saving, setSaving] = useState(false)
+  const [error, setError] = useState<string | null>(null)
 
   useEffect(() => {
     api.getTelemetrySettings()
-      .then(r => setEnabled(r.cloud_sync_enabled))
-      .catch(() => setEnabled(false))
+      .then(r => {
+        setEnabled(r.cloud_sync_enabled)
+        setMode(r.mode ?? 'community')
+        setApiKeyPresent(r.api_key_present ?? false)
+      })
+      .catch(() => {
+        setEnabled(false)
+        setMode('community')
+      })
   }, [])
 
   const toggle = async () => {
     if (enabled === null) return
     setSaving(true)
+    setError(null)
     try {
       const res = await api.updateTelemetrySettings(!enabled)
       setEnabled(res.cloud_sync_enabled)
-    } catch { /* ignore */ }
-    finally { setSaving(false) }
+      setMode(res.mode ?? mode)
+      setApiKeyPresent(res.api_key_present ?? apiKeyPresent)
+    } catch (e: unknown) {
+      const msg = e instanceof Error ? e.message : String(e)
+      // Handle 403 — community mode requires sync enabled
+      if (msg.includes('403') || msg.toLowerCase().includes('forbidden') || msg.toLowerCase().includes('community')) {
+        setError('Community mode requires threat feed sync to be enabled. Add a Navil Cloud API key to unlock independent mode.')
+      } else {
+        setError(msg)
+      }
+    } finally {
+      setSaving(false)
+    }
   }
+
+  const isCommunity = mode === 'community'
 
   return (
     <div className="glass-card p-6 animate-slideUp opacity-0 stagger-3">
-      <h3 className="text-sm font-medium text-gray-300 mb-4 flex items-center gap-2">
-        <Icon name="activity" size={16} className="text-cyan-400" />
-        Community Threat Feed
-      </h3>
+      <div className="flex items-center gap-3 mb-4">
+        <h3 className="text-sm font-medium text-gray-300 flex items-center gap-2">
+          <Icon name="activity" size={16} className="text-cyan-400" />
+          Community Threat Feed
+        </h3>
+        {mode && (
+          <span className={`px-2 py-0.5 text-[10px] font-medium rounded-full ${
+            isCommunity
+              ? 'bg-cyan-500/10 text-cyan-400 border border-cyan-500/20'
+              : 'bg-violet-500/10 text-violet-400 border border-violet-500/20'
+          }`}>
+            {isCommunity ? 'Community' : 'Paid'}
+          </span>
+        )}
+        {apiKeyPresent && (
+          <span className="px-2 py-0.5 text-[10px] font-medium rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 flex items-center gap-1">
+            <Icon name="lock" size={8} className="text-emerald-400" />
+            Privacy Premium
+          </span>
+        )}
+      </div>
+
       <div className="flex items-center justify-between">
         <div>
           <p className="text-sm text-gray-300">Share anonymous attack metadata</p>
           <p className="text-xs text-gray-500 mt-0.5">
-            Share anonymous attack metadata to help protect the global agent ecosystem.
+            {isCommunity
+              ? 'Give-to-get: share anonymous metadata to receive community threat intelligence.'
+              : 'Share anonymous attack metadata to help protect the global agent ecosystem.'}
           </p>
         </div>
         <button
@@ -348,6 +392,25 @@ function TelemetryToggle() {
           }`} />
         </button>
       </div>
+
+      {isCommunity && enabled && (
+        <div className="mt-3 p-2.5 rounded-lg bg-cyan-500/5 border border-cyan-500/15">
+          <p className="text-[11px] text-cyan-400/80 leading-relaxed">
+            In community mode, sync must stay enabled to receive threat intelligence updates.
+            Add a Navil Cloud API key to gain independent control over sync.
+          </p>
+        </div>
+      )}
+
+      {error && (
+        <div className="mt-3 p-2.5 rounded-lg bg-red-500/5 border border-red-500/20 animate-fadeIn">
+          <p className="text-[11px] text-red-400 flex items-center gap-1.5">
+            <Icon name="warning" size={11} className="text-red-400 shrink-0" />
+            {error}
+          </p>
+        </div>
+      )}
+
       <p className="text-[10px] text-gray-600 mt-3 flex items-center gap-1">
         <Icon name="lock" size={10} className="text-gray-600" />
         Controlled by NAVIL_DISABLE_CLOUD_SYNC environment variable.
