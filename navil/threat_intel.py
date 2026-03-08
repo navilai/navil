@@ -62,10 +62,32 @@ class ThreatIntelConsumer:
 
     @staticmethod
     def is_enabled() -> bool:
-        """Check if cloud sync / threat intel is enabled."""
-        return os.environ.get("NAVIL_DISABLE_CLOUD_SYNC", "").lower() not in (
-            "1", "true", "yes",
-        )
+        """Check if threat intel consumption is enabled.
+
+        Give-to-Get enforcement:
+        - Paid mode (NAVIL_API_KEY set): always enabled ("privacy premium")
+        - Community mode (no API key): must share to receive.
+          If NAVIL_DISABLE_CLOUD_SYNC is set, intel consumer refuses to start.
+        """
+        has_api_key = bool(os.environ.get("NAVIL_API_KEY", "").strip())
+        if has_api_key:
+            # Paid mode: always get intel, regardless of sync setting
+            return True
+
+        # Community mode: must share to receive
+        sync_disabled = os.environ.get(
+            "NAVIL_DISABLE_CLOUD_SYNC", "",
+        ).lower() in ("1", "true", "yes")
+        if sync_disabled:
+            logger.warning(
+                "Community tier requires sharing threat data to receive "
+                "intelligence. Set NAVIL_API_KEY for privacy premium "
+                "(paid mode) or re-enable cloud sync. "
+                "ThreatIntelConsumer will NOT start.",
+            )
+            return False
+
+        return True
 
     async def run(self) -> None:
         """Run the consumer loop. Subscribes to THREAT_INTEL_CHANNEL via Redis pub/sub."""
@@ -136,3 +158,8 @@ class ThreatIntelConsumer:
             except Exception:
                 logger.warning("Invalid pattern data in threat intel entry")
                 self._errors += 1
+
+
+def get_intel_mode() -> str:
+    """Return 'paid' if NAVIL_API_KEY is set, else 'community'."""
+    return "paid" if os.environ.get("NAVIL_API_KEY", "").strip() else "community"
