@@ -164,7 +164,7 @@ Operator marks alert as false positive
 
 ### SSE Streaming + LLM Cache
 
-**Location:** `navil/cloud/api.py`, `navil/llm/cache.py`
+**Location:** `navil/api/local/routes.py`, `navil/llm/cache.py`
 
 Five LLM endpoints stream responses via Server-Sent Events instead of waiting for full completion:
 
@@ -274,4 +274,4 @@ When disabled, all anomaly detection and threshold computation still runs locall
 | Component | License | Directory |
 |-----------|---------|-----------|
 | Core detectors, proxy, CLI, adaptive ML | Apache 2.0 | `navil/`, `navil/adaptive/`, `navil-proxy/` |
-| Cloud dashboard, LLM features, API server | BSL 1.1 | `navil/cloud/`, `navil/llm/`, `dashboard/` |
+| Cloud dashboard, LLM features, API server | BSL 1.1 | `navil/api/local/`, `navil/llm/`, `dashboard/` |
