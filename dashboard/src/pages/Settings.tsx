@@ -366,6 +366,9 @@ export default function Settings() {
         </div>
       </div>
 
+      {/* Community Threat Feed */}
+      <TelemetryToggle />
+
       {/* Authentication */}
       {!isAnyAuthRequired() && (
         <div className="glass-card p-6 animate-slideUp opacity-0 stagger-3">
@@ -432,6 +435,59 @@ export default function Settings() {
           )}
         </div>
       </div>
+    </div>
+  )
+}
+
+function TelemetryToggle() {
+  const [enabled, setEnabled] = useState<boolean | null>(null)
+  const [saving, setSaving] = useState(false)
+
+  useEffect(() => {
+    api.getTelemetrySettings()
+      .then(r => setEnabled(r.cloud_sync_enabled))
+      .catch(() => setEnabled(false))
+  }, [])
+
+  const toggle = async () => {
+    if (enabled === null) return
+    setSaving(true)
+    try {
+      const res = await api.updateTelemetrySettings(!enabled)
+      setEnabled(res.cloud_sync_enabled)
+    } catch { /* ignore */ }
+    finally { setSaving(false) }
+  }
+
+  return (
+    <div className="glass-card p-6 animate-slideUp opacity-0 stagger-3">
+      <h3 className="text-sm font-medium text-gray-300 mb-4 flex items-center gap-2">
+        <Icon name="activity" size={16} className="text-cyan-400" />
+        Community Threat Feed
+      </h3>
+      <div className="flex items-center justify-between">
+        <div>
+          <p className="text-sm text-gray-300">Share anonymous attack metadata</p>
+          <p className="text-xs text-gray-500 mt-0.5">
+            Share anonymous attack metadata to help protect the global agent ecosystem.
+          </p>
+        </div>
+        <button
+          onClick={toggle}
+          disabled={enabled === null || saving}
+          className={`relative w-11 h-6 rounded-full transition-colors duration-200 focus:outline-none disabled:opacity-50 ${
+            enabled ? 'bg-cyan-500' : 'bg-gray-700'
+          }`}
+        >
+          <span className={`absolute top-0.5 left-0.5 w-5 h-5 bg-white rounded-full shadow transition-transform duration-200 ${
+            enabled ? 'translate-x-5' : 'translate-x-0'
+          }`} />
+        </button>
+      </div>
+      <p className="text-[10px] text-gray-600 mt-3 flex items-center gap-1">
+        <Icon name="lock" size={10} className="text-gray-600" />
+        Controlled by NAVIL_DISABLE_CLOUD_SYNC environment variable.
+      </p>
     </div>
   )
 }

@@ -1,4 +1,4 @@
-const BASE = '/api'
+const BASE = '/api/local'
 
 // ── Auth token injection ──────────────────────────────────
 let _getAuthToken: (() => Promise<string | null>) | null = null
@@ -523,18 +523,8 @@ export const api = {
   }) => post<{ status: string }>('/feedback', data),
   getFeedbackStats: () => get<FeedbackStats>('/feedback/stats'),
 
-  // LLM endpoints
+  // LLM endpoints (streaming endpoints are now handled by useNavilStream hook)
   getLLMStatus: () => get<LLMStatus>('/llm/status'),
-  explainAnomaly: (alert: Alert) =>
-    post<AnomalyExplanation>('/llm/explain-anomaly', { anomaly_data: alert }),
-  analyzeConfig: (config: object) =>
-    post<ConfigAnalysis>('/llm/analyze-config', { config }),
-  generatePolicy: (description: string) =>
-    post<GeneratedPolicy>('/llm/generate-policy', { description }),
-  refinePolicy: (policy: Record<string, unknown>, instruction: string) =>
-    post<GeneratedPolicy>('/llm/refine-policy', { existing_policy: policy, instruction }),
-  suggestRemediation: () =>
-    post<RemediationSuggestion>('/llm/suggest-remediation', {}),
   applyAction: (action: RemediationAction) =>
     post<{ success: boolean; action: RemediationAction }>('/llm/apply-action', { action }),
   autoRemediate: (confidenceThreshold = 0.9) =>
@@ -546,6 +536,9 @@ export const api = {
     post<LLMConfig>('/settings/llm', { provider, api_key, base_url, model }),
   testLLMConnection: (provider = '', api_key = '', base_url = '', model = '') =>
     post<{ success: boolean; response_preview?: string; error?: string }>('/settings/llm/test', { provider, api_key, base_url, model }),
+  getTelemetrySettings: () => get<{ cloud_sync_enabled: boolean }>('/settings/telemetry'),
+  updateTelemetrySettings: (enabled: boolean) =>
+    post<{ cloud_sync_enabled: boolean }>('/settings/telemetry', { enabled }),
 
   // Pentest endpoints
   pentest: (scenario?: string) =>

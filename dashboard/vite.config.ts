@@ -5,7 +5,7 @@ export default defineConfig({
   plugins: [react()],
   server: {
     proxy: {
-      '/api': {
+      '/api/local': {
         target: 'http://localhost:8484',
         timeout: 120000,       // 2 min — LLM calls can be slow
         proxyTimeout: 120000,

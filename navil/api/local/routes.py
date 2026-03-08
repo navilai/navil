@@ -1,11 +1,12 @@
 # Copyright (c) 2026 Pantheon Lab Limited
 # Licensed under the Business Source License 1.1 (see LICENSE.cloud)
-"""REST API endpoints for the Navil Cloud dashboard."""
+"""REST API endpoints for the local Navil dashboard."""
 
 from __future__ import annotations
 
 import json
 import logging
+import os
 import tempfile
 from collections.abc import Iterator
 from pathlib import Path
@@ -16,10 +17,10 @@ from fastapi import APIRouter, HTTPException, Request
 from fastapi.responses import StreamingResponse
 from pydantic import BaseModel
 
-from navil.cloud.state import AppState
+from navil.api.local.state import AppState
 from navil.llm.cache import LLMResponseCache, cache_key
 
-router = APIRouter(prefix="/api")
+router = APIRouter(prefix="/api/local")
 
 _logger = logging.getLogger(__name__)
 
@@ -240,31 +241,6 @@ class LLMConfigRequest(BaseModel):
     api_key: str
     base_url: str = ""
     model: str = ""
-
-
-class SetPlanRequest(BaseModel):
-    plan: str
-
-
-def _get_user_id(request: Request) -> str:
-    """Extract user_id from request state (set by Clerk middleware) or default."""
-    return getattr(request.state, "user_id", "anonymous")
-
-
-def _require_pro_or_byok(request: Request) -> None:
-    """Raise 403 if user is free-tier without a BYOK key configured."""
-    s = AppState.get()
-    user_id = _get_user_id(request)
-    has_byok = s.llm_api_key_configured
-    if not s.billing.can_use_llm(user_id, has_byok):
-        raise HTTPException(
-            status_code=403,
-            detail={
-                "error": "upgrade_required",
-                "message": "AI features require a Pro plan or your own API key (BYOK).",
-                "error_type": "billing",
-            },
-        )
 
 
 # ── Overview ────────────────────────────────────────────────
@@ -564,97 +540,30 @@ def test_llm_connection(req: LLMTestRequest) -> dict[str, Any]:
         return {"success": False, "error": str(e)}
 
 
-# ── Billing ────────────────────────────────────────────────
+@router.get("/settings/telemetry")
+def get_telemetry_settings() -> dict[str, Any]:
+    """Return community threat feed / cloud sync settings."""
+    enabled = os.environ.get("NAVIL_DISABLE_CLOUD_SYNC", "").lower() not in ("1", "true", "yes")
+    return {"cloud_sync_enabled": enabled}
 
 
-@router.get("/billing/plan")
-def get_user_plan(request: Request) -> dict[str, Any]:
-    user_id = _get_user_id(request)
-    s = AppState.get()
-    has_byok = s.llm_api_key_configured
-    result: dict[str, Any] = {
-        "plan": "free",
-        "llm_call_count": 0,
-        "has_byok_key": has_byok,
-        "can_use_llm": False,
-        "stripe_enabled": s.stripe_enabled,
-    }
-    if s.stripe_enabled:
-        status = s.billing.get_subscription_status(user_id)  # type: ignore[attr-defined]
-        result["plan"] = status.plan
-        result["can_use_llm"] = s.billing.can_use_llm(user_id, has_byok)
+class TelemetrySettingsRequest(BaseModel):
+    enabled: bool = True
+
+
+@router.post("/settings/telemetry")
+def update_telemetry_settings(req: TelemetrySettingsRequest) -> dict[str, Any]:
+    """Toggle community threat feed (cloud sync).
+
+    Setting ``enabled=false`` sets ``NAVIL_DISABLE_CLOUD_SYNC=1`` in the
+    process environment so all downstream code sees the preference immediately.
+    """
+    enabled = req.enabled
+    if enabled:
+        os.environ.pop("NAVIL_DISABLE_CLOUD_SYNC", None)
     else:
-        billing = s.billing.get_billing(user_id)  # type: ignore[attr-defined]
-        result["plan"] = billing.plan
-        result["llm_call_count"] = billing.llm_call_count
-        result["can_use_llm"] = s.billing.can_use_llm(user_id, has_byok)
-    return result
-
-
-@router.post("/billing/plan")
-def set_user_plan(req: SetPlanRequest, request: Request) -> dict[str, Any]:
-    user_id = _get_user_id(request)
-    s = AppState.get()
-    if req.plan not in ("free", "lite", "elite"):
-        raise HTTPException(status_code=400, detail="Plan must be 'free', 'lite', or 'elite'")
-    if s.stripe_enabled:
-        raise HTTPException(
-            status_code=400,
-            detail="Use Stripe checkout to change plan",
-        )
-    s.billing.set_plan(user_id, req.plan)  # type: ignore[arg-type]
-    return {"plan": req.plan, "status": "updated"}
-
-
-class CheckoutRequest(BaseModel):
-    success_url: str
-    cancel_url: str
-
-
-@router.post("/billing/checkout")
-def create_checkout(req: CheckoutRequest, request: Request) -> dict[str, Any]:
-    """Create a Stripe Checkout Session for the Pro plan."""
-    s = AppState.get()
-    if not s.stripe_enabled:
-        raise HTTPException(status_code=501, detail="Stripe not configured")
-    user_id = _get_user_id(request)
-    email = getattr(request.state, "user_email", "")
-    url = s.billing.create_checkout_session(  # type: ignore[attr-defined]
-        user_id,
-        req.success_url,
-        req.cancel_url,
-        email,
-    )
-    return {"checkout_url": url}
-
-
-@router.post("/billing/portal")
-def create_portal(request: Request) -> dict[str, Any]:
-    """Create a Stripe Customer Portal session."""
-    s = AppState.get()
-    if not s.stripe_enabled:
-        raise HTTPException(status_code=501, detail="Stripe not configured")
-    user_id = _get_user_id(request)
-    return_url = request.headers.get("referer", "/")
-    url = s.billing.create_portal_session(  # type: ignore[attr-defined]
-        user_id,
-        return_url,
-    )
-    return {"portal_url": url}
-
-
-@router.post("/billing/webhook")
-async def stripe_webhook(request: Request) -> dict[str, Any]:
-    """Handle Stripe webhook events."""
-    s = AppState.get()
-    if not s.stripe_enabled:
-        raise HTTPException(status_code=501, detail="Stripe not configured")
-    payload = await request.body()
-    sig = request.headers.get("stripe-signature", "")
-    try:
-        return s.billing.handle_webhook(payload, sig)  # type: ignore[attr-defined]
-    except Exception as e:
-        raise HTTPException(status_code=400, detail=str(e)) from e
+        os.environ["NAVIL_DISABLE_CLOUD_SYNC"] = "1"
+    return {"cloud_sync_enabled": enabled}
 
 
 # ── LLM-Powered Features ──────────────────────────────────
@@ -666,11 +575,10 @@ def llm_status() -> dict[str, Any]:
 
 
 @router.post("/llm/explain-anomaly")
-def explain_anomaly(req: ExplainAnomalyRequest, request: Request) -> StreamingResponse:
+def explain_anomaly(req: ExplainAnomalyRequest) -> StreamingResponse:
     """Stream an anomaly explanation via SSE. Returns cached result instantly if available."""
     s = AppState.get()
     _require_llm(s)
-    _require_pro_or_byok(request)
 
     from navil.llm.analyzer import ANOMALY_EXPLANATION_PROMPT
 
@@ -693,8 +601,6 @@ def explain_anomaly(req: ExplainAnomalyRequest, request: Request) -> StreamingRe
 
         return _make_sse_response(_cached_sse())
 
-    s.billing.increment_llm_calls(_get_user_id(request))
-
     def _post_process(text: str) -> dict[str, Any]:
         from navil.llm import extract_json
 
@@ -709,11 +615,10 @@ def explain_anomaly(req: ExplainAnomalyRequest, request: Request) -> StreamingRe
 
 
 @router.post("/llm/analyze-config")
-def analyze_config_llm(req: AnalyzeConfigRequest, request: Request) -> StreamingResponse:
+def analyze_config_llm(req: AnalyzeConfigRequest) -> StreamingResponse:
     """Stream a config security analysis via SSE. Cached by config hash."""
     s = AppState.get()
     _require_llm(s)
-    _require_pro_or_byok(request)
 
     from navil.llm.analyzer import ANALYSIS_SYSTEM_PROMPT
 
@@ -736,8 +641,6 @@ def analyze_config_llm(req: AnalyzeConfigRequest, request: Request) -> Streaming
 
         return _make_sse_response(_cached_sse())
 
-    s.billing.increment_llm_calls(_get_user_id(request))
-
     def _post_process(text: str) -> dict[str, Any]:
         from navil.llm import extract_json
 
@@ -752,11 +655,10 @@ def analyze_config_llm(req: AnalyzeConfigRequest, request: Request) -> Streaming
 
 
 @router.post("/llm/generate-policy")
-def generate_policy(req: GeneratePolicyRequest, request: Request) -> StreamingResponse:
+def generate_policy(req: GeneratePolicyRequest) -> StreamingResponse:
     """Stream policy generation via SSE. Cached by description hash."""
     s = AppState.get()
     _require_llm(s)
-    _require_pro_or_byok(request)
 
     from navil.llm.policy_gen import POLICY_GEN_SYSTEM_PROMPT, PolicyGenerator
 
@@ -776,8 +678,6 @@ def generate_policy(req: GeneratePolicyRequest, request: Request) -> StreamingRe
 
         return _make_sse_response(_cached_sse())
 
-    s.billing.increment_llm_calls(_get_user_id(request))
-
     def _post_process(text: str) -> dict[str, Any]:
         try:
             policy = PolicyGenerator._parse_yaml(text)
@@ -791,11 +691,10 @@ def generate_policy(req: GeneratePolicyRequest, request: Request) -> StreamingRe
 
 
 @router.post("/llm/refine-policy")
-def refine_policy(req: RefinePolicyRequest, request: Request) -> StreamingResponse:
+def refine_policy(req: RefinePolicyRequest) -> StreamingResponse:
     """Stream policy refinement via SSE."""
     s = AppState.get()
     _require_llm(s)
-    _require_pro_or_byok(request)
 
     from navil.llm.policy_gen import POLICY_GEN_SYSTEM_PROMPT, PolicyGenerator
 
@@ -817,8 +716,6 @@ def refine_policy(req: RefinePolicyRequest, request: Request) -> StreamingRespon
 
         return _make_sse_response(_cached_sse())
 
-    s.billing.increment_llm_calls(_get_user_id(request))
-
     def _post_process(text: str) -> dict[str, Any]:
         try:
             policy = PolicyGenerator._parse_yaml(text)
@@ -832,11 +729,10 @@ def refine_policy(req: RefinePolicyRequest, request: Request) -> StreamingRespon
 
 
 @router.post("/llm/suggest-remediation")
-def suggest_remediation(request: Request) -> StreamingResponse:
+def suggest_remediation() -> StreamingResponse:
     """Stream remediation suggestions via SSE."""
     s = AppState.get()
     _require_llm(s)
-    _require_pro_or_byok(request)
 
     alerts = s.anomaly_detector.get_alerts()
     if not alerts:
@@ -883,8 +779,6 @@ def suggest_remediation(request: Request) -> StreamingResponse:
 
         return _make_sse_response(_cached_sse())
 
-    s.billing.increment_llm_calls(_get_user_id(request))
-
     def _post_process(text: str) -> dict[str, Any]:
         from navil.llm import extract_json
 
@@ -906,29 +800,24 @@ def suggest_remediation(request: Request) -> StreamingResponse:
 
 
 @router.post("/llm/apply-action")
-def apply_action(req: ApplyActionRequest, request: Request) -> dict[str, Any]:
+def apply_action(req: ApplyActionRequest) -> dict[str, Any]:
     """Apply a single remediation action (non-streaming — instant action)."""
     s = AppState.get()
     _require_llm(s)
-    _require_pro_or_byok(request)
     success = _call_llm(
         s.self_healing.apply_action, req.action, s.policy_engine, s.anomaly_detector
     )
-    s.billing.increment_llm_calls(_get_user_id(request))
     return {"success": success, "action": req.action}
 
 
 @router.post("/llm/auto-remediate")
-def auto_remediate(req: AutoRemediateRequest, request: Request) -> dict[str, Any]:
+def auto_remediate(req: AutoRemediateRequest) -> dict[str, Any]:
     """Full auto-remediation cycle: analyze, auto-apply safe actions, verify.
 
     Not streamed — actions are applied server-side and the full result returned.
     """
     s = AppState.get()
     _require_llm(s)
-    _require_pro_or_byok(request)
-
-    user_id = _get_user_id(request)
 
     alerts = s.anomaly_detector.get_alerts()
     if not alerts:
@@ -965,169 +854,7 @@ def auto_remediate(req: AutoRemediateRequest, request: Request) -> dict[str, Any
         req.confidence_threshold,
     )
 
-    llm_calls = result.get("llm_calls_used", 1)
-    for _ in range(llm_calls):
-        s.billing.increment_llm_calls(user_id)
-
     return result
-
-
-# ── Analytics (Elite) ──────────────────────────────────────
-
-
-def _require_elite(request: Request) -> None:
-    """Raise 403 if user is not on the Elite plan."""
-    s = AppState.get()
-    user_id = _get_user_id(request)
-    if s.stripe_enabled:
-        status = s.billing.get_subscription_status(user_id)  # type: ignore[attr-defined]
-        plan = status.plan
-    else:
-        plan = s.billing.get_billing(user_id).plan  # type: ignore[attr-defined]
-    if plan != "elite":
-        raise HTTPException(
-            status_code=403,
-            detail={
-                "error": "elite_required",
-                "message": "Analytics features require an Elite plan.",
-                "error_type": "billing",
-            },
-        )
-
-
-def _hours_ago(timestamp_str: str, now: Any) -> int:
-    """Return how many hours ago a timestamp was (0-23, clamped)."""
-    import datetime as dt
-
-    try:
-        ts = dt.datetime.fromisoformat(timestamp_str.replace("Z", "+00:00")).replace(tzinfo=None)
-        delta = (now - ts).total_seconds() / 3600
-        return max(0, min(23, int(delta)))
-    except (ValueError, AttributeError):
-        return 12
-
-
-@router.get("/analytics/overview")
-def analytics_overview(request: Request) -> dict[str, Any]:
-    """Return aggregated analytics data for the Elite dashboard."""
-    _require_elite(request)
-    s = AppState.get()
-    alerts = s.anomaly_detector.get_alerts()
-    agents = list(s.anomaly_detector.adaptive_baselines.keys())
-    invocations = s.anomaly_detector.invocations
-
-    # Compute trust scores from in-memory data
-    trust_scores = []
-    for name in agents:
-        bl = s.anomaly_detector.adaptive_baselines.get(name)
-        if not bl:
-            continue
-        agent_alerts = [a for a in alerts if a.get("agent") == name]
-        obs = bl.duration_ema.count
-        alert_rate = len(agent_alerts) / max(obs, 1)
-
-        policy_compliance = min(100.0, max(0.0, (1.0 - alert_rate * 2) * 100))
-        anomaly_frequency = max(0.0, 100.0 - alert_rate * 500)
-        dur_cv = (bl.duration_ema.variance**0.5) / max(bl.duration_ema.mean, 1)
-        behavioral_stability = max(0.0, 100.0 - dur_cv * 50)
-        data_pattern = 75.0
-
-        score = (
-            policy_compliance * 0.30
-            + anomaly_frequency * 0.25
-            + data_pattern * 0.20
-            + behavioral_stability * 0.25
-        )
-        score = max(0.0, min(100.0, score))
-
-        verdict = "trusted" if score >= 70 else ("moderate" if score >= 40 else "untrusted")
-
-        trust_scores.append(
-            {
-                "agent_name": name,
-                "score": round(score, 1),
-                "verdict": verdict,
-                "components": {
-                    "policy_compliance": round(policy_compliance, 1),
-                    "anomaly_frequency": round(anomaly_frequency, 1),
-                    "data_pattern": round(data_pattern, 1),
-                    "behavioral_stability": round(behavioral_stability, 1),
-                },
-            }
-        )
-
-    # Behavioral profiles
-    profiles = []
-    for name in agents:
-        bl = s.anomaly_detector.adaptive_baselines.get(name)
-        if not bl:
-            continue
-        tools = list(bl.known_tools)
-        agent_invocations = [inv for inv in invocations if inv.agent_name == name]
-        total = len(agent_invocations)
-        tool_counts: dict[str, int] = {}
-        total_bytes = 0
-        for inv in agent_invocations:
-            t = inv.tool_name or "unknown"
-            tool_counts[t] = tool_counts.get(t, 0) + 1
-            total_bytes += inv.data_accessed_bytes
-
-        top_tool = (
-            max(tool_counts, key=tool_counts.get)  # type: ignore[arg-type]
-            if tool_counts
-            else (tools[0] if tools else "unknown")
-        )
-        top_pct = round((tool_counts.get(top_tool, 0) / max(total, 1)) * 100, 1)
-
-        profiles.append(
-            {
-                "agent_name": name,
-                "total_events": total or bl.duration_ema.count,
-                "top_tool": top_tool,
-                "top_tool_pct": top_pct if total else 50.0,
-                "avg_duration_ms": round(bl.duration_ema.mean, 0),
-                "total_data_bytes": total_bytes
-                or int(bl.data_volume_ema.mean * bl.duration_ema.count),
-            }
-        )
-
-    # Hourly trend buckets
-    import datetime as dt
-
-    now = dt.datetime.utcnow()
-    trends = []
-    for h in range(24):
-        label = f"{23 - h}h"
-        bucket_alerts = len(
-            [
-                a
-                for a in alerts
-                if a.get("timestamp") and _hours_ago(a["timestamp"], now) == (23 - h)
-            ]
-        )
-        trends.append(
-            {
-                "label": label,
-                "events": max(len(invocations) // 24, 10) + (h % 5) * 3,
-                "anomalies": bucket_alerts,
-            }
-        )
-
-    avg_score = sum(t["score"] for t in trust_scores) / max(len(trust_scores), 1)
-    total_alerts = len(alerts)
-    _profile_events = [p["total_events"] for p in profiles]
-    total_events = len(invocations) or int(sum(_profile_events))  # type: ignore[arg-type]
-    anomaly_rate = total_alerts / max(total_events, 1)
-
-    return {
-        "avg_trust_score": round(avg_score, 1),
-        "agents_monitored": len(agents),
-        "anomaly_rate": round(anomaly_rate, 4),
-        "total_events_24h": total_events,
-        "trust_scores": trust_scores,
-        "behavioral_profiles": profiles,
-        "trends": trends,
-    }
 
 
 # ── Pentest ────────────────────────────────────────────────
@@ -1200,10 +927,7 @@ class ProxyStartRequest(BaseModel):
 
 @router.post("/proxy/start")
 def proxy_start_endpoint(req: ProxyStartRequest) -> dict[str, Any]:
-    """Start the MCP proxy in a background thread.
-
-    For Cloud mode only — CLI mode runs the proxy in the foreground.
-    """
+    """Start the MCP proxy in a background thread."""
     import threading
 
     s = AppState.get()
@@ -1241,359 +965,6 @@ def proxy_start_endpoint(req: ProxyStartRequest) -> dict[str, Any]:
     }
 
 
-# ── Ingestion endpoints (proxy → cloud) ─────────────────────
-
-
-class IngestEvent(BaseModel):
-    agent_name: str
-    tool_name: str
-    action: str
-    duration_ms: int
-    data_accessed_bytes: int = 0
-    success: bool = True
-    timestamp: str | None = None
-
-
-class IngestEventsRequest(BaseModel):
-    events: list[IngestEvent]
-
-
-class IngestAlert(BaseModel):
-    agent_name: str
-    anomaly_type: str
-    severity: str
-    description: str = ""
-    evidence: list[str] = []
-    timestamp: str | None = None
-
-
-class IngestAlertsRequest(BaseModel):
-    alerts: list[IngestAlert]
-
-
-class HeartbeatRequest(BaseModel):
-    proxy_version: str = "unknown"
-    target_url: str = ""
-    uptime_seconds: int = 0
-    stats: dict[str, Any] = {}
-
-
-def _get_user_plan(user_id: str) -> str:
-    """Get the billing plan for a user (for rate limiting)."""
-    s = AppState.get()
-    try:
-        if s.stripe_enabled:
-            status = s.billing.get_subscription_status(user_id)  # type: ignore[attr-defined]
-            return status.plan
-        billing = s.billing.get_billing(user_id)  # type: ignore[attr-defined]
-        return billing.plan
-    except Exception:
-        return "free"
-
-
-def _check_rate(user_id: str, resource: str, count: int = 1) -> None:
-    """Raise 429 if rate limit exceeded."""
-    try:
-        from navil.cloud.rate_limiter import check_rate_limit
-
-        plan = _get_user_plan(user_id)
-        allowed, remaining, retry_after = check_rate_limit(user_id, resource, plan, count)
-        if not allowed:
-            raise HTTPException(
-                status_code=429,
-                detail=f"Rate limit exceeded. Retry after {retry_after}s.",
-                headers={"Retry-After": str(retry_after)},
-            )
-    except HTTPException:
-        raise
-    except Exception:
-        # Rate limiter failure should not block ingestion
-        pass
-
-
-@router.post("/ingest/events")
-def ingest_events(req: IngestEventsRequest, request: Request) -> dict[str, Any]:
-    """Batch-ingest MCP invocation events from a customer proxy.
-
-    Authenticated via API key (``nvl_...``).  Max 1000 events per batch.
-    """
-    if len(req.events) > 1000:
-        raise HTTPException(status_code=400, detail="Maximum 1000 events per batch")
-
-    user_id = _get_user_id(request)
-    _check_rate(user_id, "events_min", len(req.events))
-    _check_rate(user_id, "events_hour", len(req.events))
-
-    # Monthly event quota enforcement
-    s = AppState.get()
-    if s.stripe_enabled:
-        try:
-            allowed, remaining = s.billing.check_monthly_event_limit(  # type: ignore[attr-defined]
-                user_id, len(req.events),
-            )
-            if not allowed:
-                raise HTTPException(
-                    status_code=402,
-                    detail=f"Monthly event quota exceeded. {remaining} remaining.",
-                )
-        except HTTPException:
-            raise
-        except Exception:
-            pass  # Quota check failure should not block ingestion
-
-    from navil.cloud.pipeline import DataPipeline
-
-    pipeline = DataPipeline()
-    s = AppState.get()
-    tenant_detector = s.tenant_detectors.get(user_id)
-
-    ingested = 0
-    for ev in req.events:
-        pipeline.ingest_event(
-            user_id=user_id,
-            agent_name=ev.agent_name,
-            tool_name=ev.tool_name,
-            action=ev.action,
-            duration_ms=ev.duration_ms,
-            data_accessed_bytes=ev.data_accessed_bytes,
-            success=ev.success,
-        )
-        # Feed into per-tenant anomaly detector for server-side detection
-        tenant_detector.record_invocation(
-            agent_name=ev.agent_name,
-            tool_name=ev.tool_name,
-            action=ev.action,
-            duration_ms=ev.duration_ms,
-            data_accessed_bytes=ev.data_accessed_bytes,
-            success=ev.success,
-        )
-        ingested += 1
-
-    # Check for server-side alerts generated by the tenant detector
-    server_alerts = tenant_detector.get_alerts()
-    new_server_alerts = 0
-    if server_alerts:
-        for sa in server_alerts[-ingested:]:
-            pipeline.ingest_alert(
-                user_id=user_id,
-                agent_name=sa.get("agent", "unknown"),
-                anomaly_type=sa.get("anomaly_type", "unknown"),
-                severity=sa.get("severity", "LOW"),
-                details={
-                    "description": sa.get("description", ""),
-                    "evidence": sa.get("evidence", []),
-                    "source": "server_detection",
-                },
-            )
-            new_server_alerts += 1
-
-    return {"ingested": ingested, "server_alerts": new_server_alerts, "status": "ok"}
-
-
-@router.post("/ingest/alerts")
-def ingest_alerts(req: IngestAlertsRequest, request: Request) -> dict[str, Any]:
-    """Ingest anomaly alerts from a customer proxy.
-
-    Max 100 alerts per batch.
-    """
-    if len(req.alerts) > 100:
-        raise HTTPException(status_code=400, detail="Maximum 100 alerts per batch")
-
-    user_id = _get_user_id(request)
-    _check_rate(user_id, "alerts_min", len(req.alerts))
-
-    from navil.cloud.pipeline import DataPipeline
-
-    pipeline = DataPipeline()
-    ingested = 0
-    for alert in req.alerts:
-        pipeline.ingest_alert(
-            user_id=user_id,
-            agent_name=alert.agent_name,
-            anomaly_type=alert.anomaly_type,
-            severity=alert.severity,
-            details={
-                "description": alert.description,
-                "evidence": alert.evidence,
-            },
-        )
-        ingested += 1
-
-    return {"ingested": ingested, "status": "ok"}
-
-
-@router.post("/ingest/heartbeat")
-def ingest_heartbeat(req: HeartbeatRequest, request: Request) -> dict[str, Any]:
-    """Record a heartbeat from a customer proxy."""
-    user_id = _get_user_id(request)
-
-    from navil.cloud.database import get_session
-    from navil.cloud.models import ProxyHeartbeat
-
-    try:
-        with get_session() as session:
-            # Upsert: update existing or create new
-            existing = (
-                session.query(ProxyHeartbeat)
-                .filter(ProxyHeartbeat.user_id == user_id)
-                .first()
-            )
-            if existing:
-                existing.proxy_version = req.proxy_version
-                existing.target_url = req.target_url
-                existing.uptime_seconds = req.uptime_seconds
-                existing.stats = json.dumps(req.stats)
-                import datetime as _dt
-
-                existing.last_seen_at = _dt.datetime.utcnow()
-            else:
-                session.add(
-                    ProxyHeartbeat(
-                        user_id=user_id,
-                        proxy_version=req.proxy_version,
-                        target_url=req.target_url,
-                        uptime_seconds=req.uptime_seconds,
-                        stats=json.dumps(req.stats),
-                    )
-                )
-    except Exception:
-        _logger.exception("Failed to record heartbeat")
-
-    return {"status": "ok"}
-
-
-# ── Connection status ─────────────────────────────────────────
-
-
-@router.get("/proxy/connection")
-def proxy_connection_status(request: Request) -> dict[str, Any]:
-    """Get the connection status of the customer's proxy."""
-    user_id = _get_user_id(request)
-
-    from navil.cloud.database import get_session
-    from navil.cloud.models import ProxyHeartbeat
-
-    try:
-        with get_session() as session:
-            hb = (
-                session.query(ProxyHeartbeat)
-                .filter(ProxyHeartbeat.user_id == user_id)
-                .first()
-            )
-            if hb is None:
-                return {"connected": False, "status": "never_connected"}
-
-            import datetime as _dt
-
-            age = (_dt.datetime.utcnow() - hb.last_seen_at).total_seconds()
-            if age < 120:
-                status = "connected"
-            elif age < 600:
-                status = "stale"
-            else:
-                status = "disconnected"
-
-            return {
-                "connected": status == "connected",
-                "status": status,
-                "last_seen_at": hb.last_seen_at.isoformat() if hb.last_seen_at else None,
-                "proxy_version": hb.proxy_version,
-                "target_url": hb.target_url,
-                "uptime_seconds": hb.uptime_seconds,
-                "stats": json.loads(hb.stats) if hb.stats else {},
-            }
-    except Exception:
-        _logger.exception("Failed to get connection status")
-        return {"connected": False, "status": "error"}
-
-
-# ── API Key management ────────────────────────────────────────
-
-
-class CreateApiKeyRequest(BaseModel):
-    name: str = "Default"
-    scopes: list[str] = ["ingest"]
-
-
-@router.get("/api-keys")
-def list_api_keys(request: Request) -> list[dict[str, Any]]:
-    """List all API keys for the current user."""
-    from navil.cloud.api_keys import ApiKeyManager
-
-    user_id = _get_user_id(request)
-    mgr = ApiKeyManager()
-    keys = mgr.list_keys(user_id)
-    result = []
-    for k in keys:
-        # Parse scopes from JSON string to list
-        scopes = k.scopes
-        if isinstance(scopes, str):
-            try:
-                scopes = json.loads(scopes)
-            except (json.JSONDecodeError, TypeError):
-                scopes = ["ingest"]
-
-        last_used = k.last_used_at
-        expires = k.expires_at
-        created = k.created_at
-        result.append({
-            "id": k.id,
-            "key_prefix": k.key_prefix,
-            "name": k.name,
-            "scopes": scopes,
-            "last_used_at": (
-                last_used.isoformat()
-                if hasattr(last_used, "isoformat") else str(last_used) if last_used else None
-            ),
-            "expires_at": (
-                expires.isoformat()
-                if hasattr(expires, "isoformat") else str(expires) if expires else None
-            ),
-            "revoked": k.revoked,
-            "created_at": (
-                created.isoformat()
-                if hasattr(created, "isoformat") else str(created) if created else None
-            ),
-        })
-    return result
-
-
-@router.post("/api-keys")
-def create_api_key(req: CreateApiKeyRequest, request: Request) -> dict[str, Any]:
-    """Create a new API key.  Returns the raw key exactly once."""
-    from navil.cloud.api_keys import ApiKeyManager
-
-    user_id = _get_user_id(request)
-    mgr = ApiKeyManager()
-
-    # Limit to 10 active keys per user
-    if mgr.count_keys(user_id) >= 10:
-        raise HTTPException(status_code=400, detail="Maximum 10 active API keys per account")
-
-    key_id, raw_key = mgr.create_key(user_id, name=req.name, scopes=req.scopes)
-
-    # Return key_prefix for display and raw_key for one-time copy
-    return {
-        "key_id": key_id,
-        "key_prefix": raw_key[:12],
-        "raw_key": raw_key,
-        "name": req.name,
-        "scopes": req.scopes,
-    }
-
-
-@router.delete("/api-keys/{key_id}")
-def revoke_api_key(key_id: int, request: Request) -> dict[str, Any]:
-    """Revoke an API key."""
-    from navil.cloud.api_keys import ApiKeyManager
-
-    user_id = _get_user_id(request)
-    mgr = ApiKeyManager()
-    if not mgr.revoke_key(user_id, key_id):
-        raise HTTPException(status_code=404, detail="API key not found")
-    return {"status": "revoked", "key_id": key_id}
-
-
 # ── Health check ──────────────────────────────────────────────
 
 
@@ -1614,71 +985,9 @@ def health_check() -> dict[str, Any]:
     except Exception as e:
         components["database"] = f"error: {e}"
 
-    # Redis check
-    try:
-        from navil.cloud.rate_limiter import _get_redis
-
-        r = _get_redis()
-        if r is not None:
-            r.ping()
-            components["redis"] = "ok"
-        else:
-            components["redis"] = "not_configured"
-    except Exception as e:
-        components["redis"] = f"error: {e}"
-
     all_ok = all(v == "ok" or v == "not_configured" for v in components.values())
     return {
         "status": "healthy" if all_ok else "degraded",
         "components": components,
         "version": "0.1.0",
     }
-
-
-# ── Clerk Webhook ────────────────────────────────────────────
-
-
-@router.post("/webhooks/clerk")
-async def clerk_webhook(request: Request) -> dict[str, Any]:
-    """Handle Clerk webhook events (user.created, etc.).
-
-    On user.created: send welcome email, create default API key.
-    """
-    try:
-        body = await request.json()
-    except Exception as exc:
-        raise HTTPException(status_code=400, detail="Invalid JSON") from exc
-
-    event_type = body.get("type", "")
-    data = body.get("data", {})
-
-    if event_type == "user.created":
-        user_id = data.get("id", "")
-        email_addresses = data.get("email_addresses", [])
-        email = email_addresses[0].get("email_address", "") if email_addresses else ""
-        first_name = data.get("first_name", "")
-
-        _logger.info("Clerk user.created: user_id=%s email=%s", user_id, email)
-
-        # Send welcome email
-        if email:
-            try:
-                from navil.cloud.email import get_email_service
-
-                svc = get_email_service()
-                svc.send_welcome(email, first_name)
-            except Exception:
-                _logger.exception("Failed to send welcome email")
-
-        # Create default API key
-        if user_id:
-            try:
-                from navil.cloud.api_keys import ApiKeyManager
-
-                mgr = ApiKeyManager()
-                mgr.create_key(user_id, name="Default", scopes=["ingest"])
-                _logger.info("Default API key created for user %s", user_id)
-            except Exception:
-                _logger.exception("Failed to create default API key")
-
-    return {"status": "ok", "type": event_type}

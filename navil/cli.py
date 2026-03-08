@@ -948,7 +948,7 @@ Examples:
 
     def _cloud_serve(cli: MCPGuardianCLI, args: argparse.Namespace) -> int:
         try:
-            from navil.cloud.app import create_app
+            from navil.api.local.app import create_app
         except ImportError:
             print(
                 "Error: Cloud dependencies not installed. Run: pip install navil[cloud]",

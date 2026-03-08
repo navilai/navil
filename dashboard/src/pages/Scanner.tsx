@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { api, ScanResult, ConfigAnalysis } from '../api'
 import useSessionState from '../hooks/useSessionState'
+import useNavilStream from '../hooks/useNavilStream'
 import SeverityBadge from '../components/SeverityBadge'
 import PageHeader from '../components/PageHeader'
 import ScoreGauge from '../components/ScoreGauge'
@@ -50,9 +51,9 @@ export default function Scanner() {
   const [result, setResult] = useSessionState<ScanResult | null>('scanner_result', null)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
-  const [analyzing, setAnalyzing] = useState(false)
   const [analysis, setAnalysis] = useSessionState<ConfigAnalysis | null>('scanner_analysis', null)
   const [analysisError, setAnalysisError] = useState<{ message: string; type: string } | null>(null)
+  const stream = useNavilStream<ConfigAnalysis>()
 
   const doScan = async () => {
     setError('')
@@ -101,7 +102,7 @@ export default function Scanner() {
         />
         {config && (
           <button
-            onClick={() => { setConfig(''); setResult(null); setAnalysis(null); setAnalysisError(null); setError('') }}
+            onClick={() => { setConfig(''); setResult(null); setAnalysis(null); setAnalysisError(null); setError(''); stream.abort() }}
             className="absolute top-3 right-3 w-7 h-7 rounded-lg bg-gray-700 border border-gray-600 hover:bg-red-500/20 hover:border-red-500/40 flex items-center justify-center text-gray-400 hover:text-red-400 transition-colors z-10"
             title="Clear"
           >
@@ -199,75 +200,86 @@ export default function Scanner() {
                 <Icon name="sparkles" size={16} className="text-violet-400" />
                 AI Deep Analysis
               </h3>
-              {!analysis && canUseLLM && (
+              {!analysis && !stream.result && canUseLLM && (
                 <button
-                  onClick={async () => {
-                    setAnalyzing(true)
+                  onClick={() => {
                     setAnalysisError(null)
                     try {
                       const parsed = JSON.parse(config)
-                      const res = await api.analyzeConfig(parsed)
-                      setAnalysis(res)
+                      stream.start({
+                        endpoint: '/llm/analyze-config',
+                        body: { config: parsed },
+                        onDone: (res) => setAnalysis(res),
+                        onError: (msg) => setAnalysisError({ message: msg, type: 'unknown' }),
+                      })
                     } catch (e: unknown) {
-                      const msg = e instanceof Error ? e.message : String(e)
-                      const errType = e instanceof Error && 'errorType' in e ? (e as Error & { errorType?: string }).errorType || 'unknown' : 'unknown'
-                      setAnalysisError({ message: msg, type: errType })
-                    } finally {
-                      setAnalyzing(false)
+                      setAnalysisError({ message: e instanceof Error ? e.message : String(e), type: 'unknown' })
                     }
                   }}
-                  disabled={analyzing}
+                  disabled={stream.streaming}
                   className="px-3 py-1.5 text-xs bg-violet-500/15 text-violet-400 border border-violet-500/30 rounded-lg hover:bg-violet-500/25 flex items-center gap-1.5 disabled:opacity-50"
                 >
-                  <Icon name="sparkles" size={13} className={analyzing ? 'animate-spin' : ''} />
-                  {analyzing ? 'Analyzing...' : 'Run AI Analysis'}
+                  <Icon name="sparkles" size={13} className={stream.streaming ? 'animate-spin' : ''} />
+                  {stream.streaming ? 'Analyzing...' : 'Run AI Analysis'}
                 </button>
               )}
             </div>
 
-            {!canUseLLM && !analysis && !analysisError && !analyzing && (
+            {!canUseLLM && !analysis && !analysisError && !stream.streaming && (
               <UpgradePrompt feature="AI Deep Analysis" onUpgrade={() => setPlan('lite')} compact />
             )}
 
-            {analysisError && (
+            {(analysisError || stream.error) && (
               <LLMErrorCard
-                message={analysisError.message}
-                errorType={analysisError.type as any}
-                onRetry={async () => {
-                  setAnalyzing(true)
+                message={(analysisError?.message || stream.error)!}
+                errorType={(analysisError?.type || 'unknown') as any}
+                onRetry={() => {
                   setAnalysisError(null)
                   try {
                     const parsed = JSON.parse(config)
-                    const res = await api.analyzeConfig(parsed)
-                    setAnalysis(res)
-                  } catch (e: unknown) {
-                    const msg = e instanceof Error ? e.message : String(e)
-                    const errType = e instanceof Error && 'errorType' in e ? (e as Error & { errorType?: string }).errorType || 'unknown' : 'unknown'
-                    setAnalysisError({ message: msg, type: errType })
-                  } finally {
-                    setAnalyzing(false)
-                  }
+                    stream.start({
+                      endpoint: '/llm/analyze-config',
+                      body: { config: parsed },
+                      onDone: (res) => setAnalysis(res),
+                      onError: (msg) => setAnalysisError({ message: msg, type: 'unknown' }),
+                    })
+                  } catch { /* JSON parse error already shown */ }
                 }}
               />
             )}
 
-            {analysis && (
+            {/* Streaming text — shows LLM thinking in real-time */}
+            {stream.streaming && stream.text && !analysis && (
+              <div className="animate-fadeIn">
+                <pre className="text-sm text-gray-400 whitespace-pre-wrap font-mono bg-gray-900/50 rounded-lg p-3 max-h-48 overflow-y-auto">
+                  {stream.text}
+                  <span className="animate-pulse text-violet-400">|</span>
+                </pre>
+              </div>
+            )}
+
+            {(analysis || stream.result) && (() => {
+              const a = analysis || stream.result!
+              return (
               <div className="space-y-4 animate-fadeIn">
                 <div className="flex items-center gap-3">
-                  <SeverityBadge severity={analysis.severity} />
-                  {analysis.confidence !== undefined && (
+                  <SeverityBadge severity={a.severity} />
+                  {a.confidence !== undefined && (
                     <div className="flex items-center gap-2">
-                      <MiniBar value={analysis.confidence * 100} max={100} color="bg-violet-500" height="h-1" className="w-20" />
-                      <span className="text-xs text-gray-500">{(analysis.confidence * 100).toFixed(0)}% confidence</span>
+                      <MiniBar value={a.confidence * 100} max={100} color="bg-violet-500" height="h-1" className="w-20" />
+                      <span className="text-xs text-gray-500">{(a.confidence * 100).toFixed(0)}% confidence</span>
                     </div>
                   )}
+                  {stream.cached && (
+                    <span className="text-[10px] text-gray-500 bg-gray-800 px-1.5 py-0.5 rounded">cached</span>
+                  )}
                 </div>
-                <p className="text-sm text-gray-300">{analysis.explanation}</p>
-                {analysis.risks.length > 0 && (
+                <p className="text-sm text-gray-300">{a.explanation}</p>
+                {a.risks.length > 0 && (
                   <div>
                     <p className="text-xs text-gray-500 mb-2">Identified Risks</p>
                     <ul className="space-y-1.5">
-                      {analysis.risks.map((risk, j) => (
+                      {a.risks.map((risk, j) => (
                         <li key={j} className="text-sm text-orange-400 flex items-start gap-2">
                           <Icon name="warning" size={12} className="text-orange-500 mt-0.5 shrink-0" />
                           {risk}
@@ -276,11 +288,11 @@ export default function Scanner() {
                     </ul>
                   </div>
                 )}
-                {analysis.remediations.length > 0 && (
+                {a.remediations.length > 0 && (
                   <div>
                     <p className="text-xs text-gray-500 mb-2">Remediations</p>
                     <ul className="space-y-1.5">
-                      {analysis.remediations.map((rem, j) => (
+                      {a.remediations.map((rem, j) => (
                         <li key={j} className="text-sm text-cyan-400 flex items-start gap-2">
                           <Icon name="check" size={12} className="text-cyan-500 mt-0.5 shrink-0" />
                           {rem}
@@ -290,7 +302,8 @@ export default function Scanner() {
                   </div>
                 )}
               </div>
-            )}
+              )
+            })()}
           </div>
         </div>
       )}
