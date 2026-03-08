@@ -23,6 +23,7 @@ class LearnedPattern:
     created_at: str = ""
     match_count: int = 0
     confidence_boost: float = 0.2
+    source: str = "local"
 
     def __post_init__(self) -> None:
         if not self.created_at:
@@ -38,13 +39,21 @@ class PatternStore:
     when a known attack pattern is recognized.
     """
 
-    def __init__(self, store_path: str | None = None) -> None:
+    def __init__(self, store_path: str | None = None, max_patterns: int = 200) -> None:
         self.store_path = Path(store_path) if store_path else None
+        self.max_patterns = max_patterns
         self.patterns: list[LearnedPattern] = []
         self._load()
 
     def add_pattern(self, pattern: LearnedPattern) -> None:
         """Add a learned pattern to the store."""
+        if len(self.patterns) >= self.max_patterns:
+            community = [(i, p) for i, p in enumerate(self.patterns) if p.source == "community"]
+            if community:
+                min_idx = min(community, key=lambda x: x[1].match_count)[0]
+            else:
+                min_idx = min(range(len(self.patterns)), key=lambda i: self.patterns[i].match_count)
+            self.patterns.pop(min_idx)
         self.patterns.append(pattern)
         self._persist()
         logger.info(f"Learned pattern added: {pattern.pattern_id}")
