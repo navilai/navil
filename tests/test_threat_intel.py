@@ -93,6 +93,7 @@ async def test_pattern_entry_added_to_store() -> None:
 
 def test_opt_out_disables_consumer(monkeypatch: pytest.MonkeyPatch) -> None:
     """Setting NAVIL_DISABLE_CLOUD_SYNC=1 should disable the consumer."""
+    monkeypatch.delenv("NAVIL_API_KEY", raising=False)  # ensure community mode
     monkeypatch.setenv("NAVIL_DISABLE_CLOUD_SYNC", "1")
     assert ThreatIntelConsumer.is_enabled() is False
 
@@ -105,6 +106,7 @@ def test_opt_out_disables_consumer(monkeypatch: pytest.MonkeyPatch) -> None:
 
 def test_enabled_by_default(monkeypatch: pytest.MonkeyPatch) -> None:
     """Without the env var, is_enabled() should return True."""
+    monkeypatch.delenv("NAVIL_API_KEY", raising=False)
     monkeypatch.delenv("NAVIL_DISABLE_CLOUD_SYNC", raising=False)
     assert ThreatIntelConsumer.is_enabled() is True
 
@@ -177,3 +179,29 @@ async def test_pattern_entry_with_none_pattern_store() -> None:
     await consumer.apply_entry(entry)
     # No errors tracked — this is a graceful skip
     assert consumer.stats["errors"] == 0
+
+
+# ---------------------------------------------------------------------------
+# Test 6: Give-to-get enforcement and mode detection
+# ---------------------------------------------------------------------------
+
+
+def test_paid_mode_always_enabled(monkeypatch: pytest.MonkeyPatch) -> None:
+    """With NAVIL_API_KEY, is_enabled() is True even if sync is disabled."""
+    monkeypatch.setenv("NAVIL_API_KEY", "nvl_test_key")
+    monkeypatch.setenv("NAVIL_DISABLE_CLOUD_SYNC", "1")
+    assert ThreatIntelConsumer.is_enabled() is True
+
+
+def test_get_intel_mode_community(monkeypatch: pytest.MonkeyPatch) -> None:
+    """Without API key, mode is 'community'."""
+    monkeypatch.delenv("NAVIL_API_KEY", raising=False)
+    from navil.threat_intel import get_intel_mode
+    assert get_intel_mode() == "community"
+
+
+def test_get_intel_mode_paid(monkeypatch: pytest.MonkeyPatch) -> None:
+    """With API key, mode is 'paid'."""
+    monkeypatch.setenv("NAVIL_API_KEY", "nvl_test")
+    from navil.threat_intel import get_intel_mode
+    assert get_intel_mode() == "paid"
