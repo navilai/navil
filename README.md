@@ -2,9 +2,10 @@
 
 [![CI](https://github.com/ivanlkf/navil/actions/workflows/ci.yml/badge.svg)](https://github.com/ivanlkf/navil/actions/workflows/ci.yml)
 [![Python 3.10+](https://img.shields.io/badge/python-3.10%2B-blue.svg)](https://www.python.org/downloads/)
+[![Rust](https://img.shields.io/badge/rust-stable-orange.svg)](https://www.rust-lang.org/)
 [![License: Apache 2.0](https://img.shields.io/badge/License-Apache_2.0-blue.svg)](LICENSE)
 
-Supply-chain security toolkit for [Model Context Protocol (MCP)](https://modelcontextprotocol.io/) servers. Scans configurations for vulnerabilities, manages agent credentials, enforces runtime policies, detects behavioral anomalies, intercepts live traffic through a security proxy, and validates defenses with automated penetration testing.
+High-performance Rust/Python security gateway for [Model Context Protocol (MCP)](https://modelcontextprotocol.io/) servers. A Rust data plane handles live traffic with sub-millisecond O(1) threshold checks, while a Python control plane runs 12 statistical anomaly detectors, adaptive ML baselines, and LLM-powered analysis.
 
 > Developed by **[Pantheon Lab Limited](https://pantheonlab.ai)**.
 
@@ -14,14 +15,31 @@ Supply-chain security toolkit for [Model Context Protocol (MCP)](https://modelco
 
 ## Features
 
+- **Rust Data Plane** — Axum-based reverse proxy with HMAC-SHA256 verification, JSON depth limiting, O(1) Redis threshold checks, and minute-bucketed rate limiting. Sub-millisecond overhead per request.
+- **Python Control Plane** — 12 statistical behavioral detectors with adaptive EMA baselines, operator feedback loops, and learned pattern matching. Runs off the hot path via Redis-bridged telemetry.
+- **Zero-Knowledge Telemetry** — Cloud sync anonymizes all agent identities with HMAC-SHA256, enforces a strict field allowlist, and actively blocks banned fields. Raw data never leaves your deployment. Fully opt-out. See [Privacy Guarantees](#zero-knowledge-telemetry).
 - **Configuration Scanning** — Detect plaintext credentials, over-privileged permissions, missing authentication, unverified sources, and malicious patterns. Produces a 0-100 security score.
 - **Credential Lifecycle** — Issue, rotate, and revoke JWT tokens with JIT provisioning, configurable TTL, usage tracking, and immutable audit logs.
 - **Policy Enforcement** — YAML-driven tool/action allow-lists, per-agent rate limiting, data-sensitivity gates, and suspicious-pattern detection.
-- **Anomaly Detection** — 12 statistical behavioral detectors: rug-pull, data exfiltration, rate spike, privilege escalation, reconnaissance, persistence, defense evasion, lateral movement, C2 beaconing, and supply chain attacks.
-- **Real-Time Proxy** — MCP security proxy that intercepts JSON-RPC traffic between agents and servers, running all 12 anomaly detectors on live invocations.
 - **Penetration Testing** — 11 SAFE-MCP attack simulations that validate your detectors actually catch threats. No real network traffic generated.
-- **LLM Analysis** — AI-powered config analysis, anomaly explanation, policy generation, and self-healing. Bring your own key (Anthropic, OpenAI, Gemini, Ollama).
+- **LLM Analysis** — AI-powered config analysis, anomaly explanation, policy generation, and self-healing with SSE streaming. Bring your own key (Anthropic, OpenAI, Gemini, Ollama).
 - **Cloud Dashboard** — React-based fleet monitoring dashboard with alerting, gateway traffic visualization, credential management, and pentest UI.
+
+## Architecture
+
+```
+  Agents ──> [ Rust Proxy :8080 ] ──> MCP Servers
+                    |
+              Redis :6379  (thresholds, rate counters, telemetry queue)
+                    |
+             [ Python Workers :8484 ]  (ML detectors, LLM analysis, dashboard)
+                    |
+              (optional) Navil Cloud  (anonymized threat intel)
+```
+
+The Rust proxy handles the hot path: sanitization, HMAC auth, O(1) threshold gates, and rate limiting. It publishes telemetry to a Redis queue. Python workers consume events, run the full anomaly detection suite, recompute thresholds, and sync them back to Redis for the proxy to read.
+
+For the full system design, see **[ARCHITECTURE.md](ARCHITECTURE.md)**.
 
 ## Dashboard
 
@@ -90,33 +108,18 @@ Navil ships with a full-featured security dashboard for visualizing and managing
 
 </details>
 
-## Architecture
-
-```mermaid
-graph TD
-    CLI["navil CLI"] --> Scanner["Scanner\n(7 detection methods)"]
-    CLI --> CredMgr["Credential Manager\n(JWT lifecycle)"]
-    CLI --> Policy["Policy Engine\n(YAML-driven)"]
-    CLI --> Anomaly["Anomaly Detector\n(12 detectors)"]
-    CLI --> Proxy["Security Proxy\n(JSON-RPC interception)"]
-    CLI --> Pentest["Pentest Engine\n(11 SAFE-MCP attacks)"]
-    CLI --> LLM["LLM Analysis\n(BYOK: Anthropic/OpenAI/Gemini/Ollama)"]
-
-    Proxy --> Anomaly
-    Anomaly -- "Adaptive baselines" --> Alerts["Alerts & Remediation"]
-    LLM --> Alerts
-
-    subgraph Cloud["Navil Cloud Dashboard"]
-        API["FastAPI Backend"] --> Dashboard["React Dashboard"]
-        Dashboard --> Fleet["Fleet Monitoring"]
-        Dashboard --> Gateway["Gateway Traffic"]
-        Dashboard --> PentestUI["Pentest UI"]
-    end
-
-    CLI --> API
-```
-
 ## Installation
+
+### Prerequisites
+
+| Component | Required | Version |
+|-----------|----------|---------|
+| Python | Yes | 3.10+ |
+| Redis | Yes (for proxy mode) | 5.0+ |
+| Rust | Optional (for Rust proxy) | stable |
+| Node.js | Optional (for dashboard dev) | 20+ |
+
+### Python packages
 
 ```bash
 pip install navil
@@ -127,7 +130,6 @@ With optional features:
 ```bash
 pip install navil[llm]         # + AI-powered analysis (Anthropic, OpenAI, Gemini)
 pip install navil[cloud]       # + Cloud dashboard (FastAPI + React)
-pip install navil[ml]          # + ML anomaly detection (Isolation Forest, clustering)
 pip install navil[all]         # Everything
 ```
 
@@ -139,9 +141,76 @@ cd navil
 pip install -e ".[dev]"
 ```
 
-Requires **Python 3.10+**.
+### Rust proxy (optional, for high-throughput deployments)
+
+```bash
+cd navil-proxy
+cargo build --release
+```
+
+The compiled binary is at `navil-proxy/target/release/navil-proxy`.
 
 ## Quick Start
+
+### 1. Start Redis
+
+```bash
+# macOS
+brew install redis && redis-server
+
+# Docker
+docker run -d -p 6379:6379 redis:7-alpine
+
+# Linux
+sudo apt install redis-server && sudo systemctl start redis
+```
+
+### 2. Start the Rust proxy (data plane)
+
+```bash
+cd navil-proxy
+
+# Point at your MCP server and Redis
+NAVIL_TARGET_URL=http://localhost:3000 \
+NAVIL_REDIS_URL=redis://127.0.0.1:6379 \
+NAVIL_PORT=8080 \
+cargo run --release
+```
+
+Your agents now connect to `http://localhost:8080/mcp` instead of directly to the MCP server.
+
+Optional: enable HMAC request signing:
+
+```bash
+NAVIL_HMAC_SECRET=your-secret-key cargo run --release
+```
+
+### 3. Start the Python control plane (dashboard + ML workers)
+
+```bash
+pip install navil[cloud]
+navil cloud serve    # Opens at http://localhost:8484
+```
+
+The Python control plane automatically connects to Redis, consumes telemetry from the Rust proxy, runs anomaly detection, and serves the dashboard.
+
+### 4. Seed ML baselines (recommended before first deployment)
+
+```bash
+navil seed-database                  # 10 scenarios x 1,000 iterations
+navil seed-database -n 5000          # More iterations for tighter baselines
+navil seed-database --json           # Machine-readable output
+```
+
+This populates the `BehavioralAnomalyDetector` with synthetic attack data so the statistical thresholds (mean + 5*std_dev) have historical baselines from day one.
+
+### Python-only mode (no Rust proxy)
+
+If you don't need the Rust data plane, the Python proxy works standalone:
+
+```bash
+navil proxy start --target http://localhost:3000
+```
 
 ### Scan an MCP configuration
 
@@ -155,26 +224,6 @@ navil scan config.json
 navil pentest                               # All 11 SAFE-MCP attack simulations
 navil pentest --scenario reconnaissance     # Single scenario
 navil pentest --json -o report.json         # JSON output for CI
-```
-
-### Start the security proxy
-
-```bash
-navil proxy start --target http://localhost:3000
-```
-
-### Launch the dashboard
-
-```bash
-pip install navil[cloud]
-navil cloud serve    # Opens at http://localhost:8484
-```
-
-The dashboard is open by default (no login required). To enable authentication:
-
-```bash
-VITE_NAVIL_AUTH=true navil cloud serve        # Local email auth
-VITE_CLERK_PUBLISHABLE_KEY=pk_... navil cloud serve  # Clerk SSO/OAuth
 ```
 
 ### AI-powered analysis (BYOK)
@@ -207,15 +256,27 @@ navil credential issue --agent my-agent --scope "read:tools" --ttl 3600
 navil policy check --tool file_system --agent my-agent --action read
 ```
 
+## Zero-Knowledge Telemetry
+
+When cloud sync is enabled, Navil enforces strict privacy guarantees at the transmission boundary:
+
+- **Agent identities** are replaced with one-way HMAC-SHA256 hashes using a per-deployment secret. Cannot be reversed.
+- **Only numeric aggregates and categorical labels** leave the deployment (severity, confidence, duration, bytes, anomaly type).
+- **Raw data is actively blocked** -- agent names, tool arguments, evidence, file paths, server URLs, IP addresses, and prompts are stripped. A runtime check raises `ValueError` if any banned field leaks through.
+- **Fully opt-out** with `NAVIL_DISABLE_CLOUD_SYNC=true`.
+
+See [ARCHITECTURE.md](ARCHITECTURE.md#zero-knowledge-telemetry) for the full field allowlist/blocklist.
+
 ## Commands
 
 | Command | Description |
 |---------|-------------|
 | `navil scan <config>` | Scan MCP config for vulnerabilities (0-100 score) |
 | `navil pentest` | Run SAFE-MCP penetration tests (11 attack scenarios) |
-| `navil proxy start` | Start MCP security proxy with live interception |
+| `navil proxy start` | Start Python MCP security proxy |
 | `navil proxy stop` | Stop the running proxy |
 | `navil cloud serve` | Launch Navil Cloud dashboard |
+| `navil seed-database` | Populate ML baselines with synthetic attack data |
 | `navil credential issue` | Issue a new JWT credential |
 | `navil credential revoke` | Revoke an active credential |
 | `navil credential list` | List credentials with filters |
@@ -227,13 +288,27 @@ navil policy check --tool file_system --agent my-agent --action read
 | `navil llm generate-policy` | Generate policy from natural language |
 | `navil llm suggest-healing` | AI-powered remediation suggestions |
 
+## Environment Variables
+
+| Variable | Default | Purpose |
+|----------|---------|---------|
+| `NAVIL_TARGET_URL` | `http://localhost:3000` | Upstream MCP server (Rust proxy) |
+| `NAVIL_REDIS_URL` | `redis://127.0.0.1:6379` | Redis connection (Rust proxy) |
+| `NAVIL_HMAC_SECRET` | *(none)* | HMAC signing key for request auth |
+| `NAVIL_PORT` | `8080` | Rust proxy listen port |
+| `NAVIL_DISABLE_CLOUD_SYNC` | `false` | Disable cloud telemetry sync |
+| `ANTHROPIC_API_KEY` | *(none)* | Anthropic API key for LLM features |
+| `OPENAI_API_KEY` | *(none)* | OpenAI API key for LLM features |
+| `GEMINI_API_KEY` | *(none)* | Google Gemini API key for LLM features |
+| `ALLOWED_ORIGINS` | `*` | CORS origins for dashboard API |
+
 ## Development
 
 ```bash
 # Install dev dependencies
 pip install -e ".[dev]"
 
-# Run tests
+# Run tests (324 tests)
 pytest
 
 # Lint
@@ -241,6 +316,9 @@ ruff check .
 
 # Type check
 mypy navil
+
+# Build Rust proxy
+cd navil-proxy && cargo build --release
 
 # Dashboard (requires Node.js 20+)
 cd dashboard && npm install && npm run dev
@@ -260,7 +338,7 @@ Navil uses a dual-license model:
 
 | Component | License |
 |-----------|---------|
-| Core CLI (`navil/scanner.py`, `navil/credential_manager.py`, `navil/policy_engine.py`, `navil/anomaly_detector.py`, `navil/pentest.py`, `navil/proxy.py`, `navil/cli.py`, `navil/adaptive/`, `navil/ml/`) | [Apache 2.0](LICENSE) |
+| Core CLI, anomaly detection, proxy, adaptive ML, Rust data plane (`navil/`, `navil/adaptive/`, `navil-proxy/`) | [Apache 2.0](LICENSE) |
 | Cloud dashboard, LLM features, API server (`navil/cloud/`, `navil/llm/`, `dashboard/`) | [Business Source License 1.1](LICENSE.cloud) |
 
 **Apache 2.0** — free to use, modify, and redistribute for any purpose.
