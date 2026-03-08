@@ -2,9 +2,7 @@ import { useEffect, useState } from 'react'
 import { api, LLMConfig } from '../api'
 import PageHeader from '../components/PageHeader'
 import Icon from '../components/Icon'
-import useBilling from '../hooks/useBilling'
 import useSessionState from '../hooks/useSessionState'
-import { isAnyAuthRequired } from '../auth/ClerkProviderWrapper'
 
 const providers = [
   { value: 'anthropic', label: 'Anthropic (Claude)', hint: 'ANTHROPIC_API_KEY' },
@@ -24,9 +22,6 @@ const compatibleExamples = [
 ]
 
 export default function Settings() {
-  const { plan, canUseLLM, hasByokKey, llmCallCount, stripeEnabled, setPlan, checkout, portal } = useBilling()
-  const [checkoutLoading, setCheckoutLoading] = useState(false)
-  const checkoutSuccess = new URLSearchParams(window.location.search).get('checkout') === 'success'
   const [config, setConfig] = useState<LLMConfig | null>(null)
   const [provider, setProvider] = useState('anthropic')
   const [apiKey, setApiKey] = useState('')
@@ -98,108 +93,6 @@ export default function Settings() {
   return (
     <div className="space-y-6">
       <PageHeader title="Settings" subtitle="Configure Navil preferences" />
-
-      {/* Checkout success banner */}
-      {checkoutSuccess && (
-        <div className="p-4 rounded-lg border bg-emerald-500/5 border-emerald-500/20 flex items-center gap-3 animate-fadeIn">
-          <Icon name="check" size={18} className="text-emerald-400 shrink-0" />
-          <div>
-            <p className="text-sm text-emerald-400 font-medium">Welcome to {plan === 'elite' ? 'Elite' : 'Lite'}!</p>
-            <p className="text-xs text-gray-400">Your subscription is active. {plan === 'elite' ? 'All features and analytics are now unlocked.' : 'All AI features are now unlocked.'}</p>
-          </div>
-        </div>
-      )}
-
-      {/* Subscription */}
-      <div className="glass-card p-6 animate-slideUp opacity-0 stagger-1">
-        <h3 className="text-sm font-medium text-gray-300 mb-5 flex items-center gap-2">
-          <Icon name="shield" size={16} className="text-violet-400" />
-          Subscription
-        </h3>
-
-        <div className="flex items-center justify-between mb-4">
-          <div className="flex items-center gap-3">
-            <span className={`px-3 py-1 text-xs font-semibold rounded-full border ${
-              plan === 'elite'
-                ? 'bg-cyan-500/15 text-cyan-400 border-cyan-500/30'
-                : plan === 'lite'
-                  ? 'bg-violet-500/15 text-violet-400 border-violet-500/30'
-                  : 'bg-gray-800 text-gray-400 border-gray-700'
-            }`}>
-              {plan === 'elite' ? 'Elite' : plan === 'lite' ? 'Lite' : 'Free'}
-            </span>
-            <div>
-              <p className="text-sm text-gray-300">
-                {plan === 'elite' ? 'Full analytics & trust scoring' : plan === 'lite' ? 'All AI features unlocked' : 'Core monitoring features'}
-              </p>
-              <p className="text-xs text-gray-600 mt-0.5">
-                {hasByokKey
-                  ? 'BYOK key configured — AI features available regardless of plan'
-                  : plan === 'free'
-                    ? 'Upgrade to Lite or add your own API key to unlock AI features'
-                    : `${llmCallCount} AI calls this session`
-                }
-              </p>
-            </div>
-          </div>
-
-          {stripeEnabled ? (
-            plan !== 'free' ? (
-              <button
-                onClick={() => portal()}
-                className="px-4 py-2 text-sm font-medium rounded-lg flex items-center gap-2 bg-gray-800 text-gray-400 border border-gray-700 hover:bg-gray-700"
-              >
-                <Icon name="settings" size={14} />
-                Manage Subscription
-              </button>
-            ) : (
-              <button
-                onClick={async () => { setCheckoutLoading(true); await checkout(); setCheckoutLoading(false) }}
-                disabled={checkoutLoading}
-                className="px-4 py-2 text-sm font-medium rounded-lg flex items-center gap-2 bg-violet-600 text-white hover:bg-violet-500 disabled:opacity-50"
-              >
-                <Icon name="sparkles" size={14} />
-                {checkoutLoading ? 'Redirecting...' : 'Upgrade'}
-              </button>
-            )
-          ) : (
-            <div className="flex items-center gap-2">
-              {(['free', 'lite', 'elite'] as const).map((p) => (
-                <button
-                  key={p}
-                  onClick={() => setPlan(p)}
-                  className={`px-3 py-1.5 text-xs font-medium rounded-lg ${
-                    plan === p
-                      ? 'bg-violet-600 text-white'
-                      : 'bg-gray-800 text-gray-400 border border-gray-700 hover:bg-gray-700'
-                  }`}
-                >
-                  {p.charAt(0).toUpperCase() + p.slice(1)}
-                </button>
-              ))}
-            </div>
-          )}
-        </div>
-
-        {/* AI access status */}
-        <div className={`p-3 rounded-lg border flex items-center gap-3 ${
-          canUseLLM
-            ? 'bg-emerald-500/5 border-emerald-500/20'
-            : 'bg-amber-500/5 border-amber-500/20'
-        }`}>
-          <div className={`w-2 h-2 rounded-full ${canUseLLM ? 'bg-emerald-400' : 'bg-amber-400'}`} />
-          <p className={`text-sm ${canUseLLM ? 'text-emerald-400' : 'text-amber-400'}`}>
-            {canUseLLM ? 'AI features enabled' : 'AI features locked'}
-          </p>
-        </div>
-
-        {!stripeEnabled && (
-          <p className="text-xs text-gray-600 mt-3 flex items-center gap-1">
-            <Icon name="info" size={10} className="text-gray-600" />
-            Subscription is session-only for demo. Configure Stripe for real billing.
-          </p>
-        )}
-      </div>
 
       {/* LLM Configuration */}
       <div className="glass-card p-6 animate-slideUp opacity-0 stagger-2">
@@ -368,35 +261,6 @@ export default function Settings() {
 
       {/* Community Threat Feed */}
       <TelemetryToggle />
-
-      {/* Authentication */}
-      {!isAnyAuthRequired() && (
-        <div className="glass-card p-6 animate-slideUp opacity-0 stagger-3">
-          <h3 className="text-sm font-medium text-gray-300 mb-4 flex items-center gap-2">
-            <Icon name="lock" size={16} className="text-amber-400" />
-            Authentication
-          </h3>
-          <div className="p-3 rounded-lg border bg-amber-500/5 border-amber-500/20 mb-4 flex items-start gap-3">
-            <Icon name="warning" size={14} className="text-amber-400 shrink-0 mt-0.5" />
-            <div>
-              <p className="text-sm text-amber-400">No authentication configured</p>
-              <p className="text-xs text-gray-500 mt-0.5">
-                Your dashboard is publicly accessible. Enable auth to require sign-in.
-              </p>
-            </div>
-          </div>
-          <div className="space-y-3 text-sm">
-            <p className="text-gray-400">To enable authentication, set the environment variable before starting the dashboard:</p>
-            <div className="bg-gray-900 rounded-lg p-3 font-mono text-xs text-gray-300 border border-gray-800">
-              <p className="text-gray-500"># Local auth (email-based, stored in browser)</p>
-              <p>VITE_NAVIL_AUTH=true npm run dev</p>
-            </div>
-            <p className="text-xs text-gray-500">
-              Users will be prompted to sign in with their email. Sessions are stored in localStorage.
-            </p>
-          </div>
-        </div>
-      )}
 
       {/* About */}
       <div className="glass-card p-6 animate-slideUp opacity-0 stagger-3">

@@ -9,11 +9,11 @@ import Icon from '../components/Icon'
 import { SkeletonTable } from '../components/Skeleton'
 import LLMErrorCard from '../components/LLMErrorCard'
 import UpgradePrompt from '../components/UpgradePrompt'
-import useBilling from '../hooks/useBilling'
+import useLLMAvailable from '../hooks/useLLMAvailable'
 import useSessionState from '../hooks/useSessionState'
 
 export default function Policy() {
-  const { canUseLLM, setPlan } = useBilling()
+  const { canUseLLM } = useLLMAvailable()
   const [decisions, setDecisions] = useState<PolicyDecision[]>([])
   const [loaded, setLoaded] = useState(false)
   const [error, setError] = useState('')
@@ -207,7 +207,7 @@ export default function Policy() {
           Generate Policy with AI
         </h3>
         {!canUseLLM ? (
-          <UpgradePrompt feature="AI Policy Generator" onUpgrade={() => setPlan('lite')} compact />
+          <UpgradePrompt feature="AI Policy Generator" compact />
         ) : (
         <div className="space-y-3">
           <div>

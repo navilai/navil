@@ -8,7 +8,7 @@ import MiniBar from '../components/MiniBar'
 import Icon from '../components/Icon'
 import LLMErrorCard from '../components/LLMErrorCard'
 import UpgradePrompt from '../components/UpgradePrompt'
-import useBilling from '../hooks/useBilling'
+import useLLMAvailable from '../hooks/useLLMAvailable'
 
 const actionTypeColors: Record<string, string> = {
   policy_update: 'bg-cyan-500/15 text-cyan-400 border-cyan-500/30',
@@ -30,7 +30,7 @@ const PHASES = ['analyzing', 'applying', 'verifying'] as const
 type Phase = typeof PHASES[number]
 
 export default function SelfHealing() {
-  const { canUseLLM, setPlan } = useBilling()
+  const { canUseLLM } = useLLMAvailable()
   const [llmConfig, setLlmConfig] = useState<LLMConfig | null>(null)
   const [error, setError] = useState<{ message: string; type: string } | null>(null)
 
@@ -200,7 +200,7 @@ export default function SelfHealing() {
         <LLMErrorCard message={error.message} errorType={error.type as any} onRetry={handleAnalyze} />
       )}
       {llmReady && !canUseLLM && !busy && !suggestion && !autoResult && (
-        <UpgradePrompt feature="Self-Healing AI" onUpgrade={() => setPlan('lite')} />
+        <UpgradePrompt feature="Self-Healing AI" />
       )}
 
       {/* Empty state */}

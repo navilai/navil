@@ -9,7 +9,7 @@ import MiniBar from '../components/MiniBar'
 import Icon from '../components/Icon'
 import LLMErrorCard from '../components/LLMErrorCard'
 import UpgradePrompt from '../components/UpgradePrompt'
-import useBilling from '../hooks/useBilling'
+import useLLMAvailable from '../hooks/useLLMAvailable'
 
 const SAMPLE_VULNERABLE = JSON.stringify({
   server: { name: "vulnerable-mcp", protocol: "http", host: "0.0.0.0", port: 8080 },
@@ -46,7 +46,7 @@ const levelBorderColor: Record<string, string> = {
 }
 
 export default function Scanner() {
-  const { canUseLLM, setPlan } = useBilling()
+  const { canUseLLM } = useLLMAvailable()
   const [config, setConfig] = useSessionState('scanner_config', '')
   const [result, setResult] = useSessionState<ScanResult | null>('scanner_result', null)
   const [loading, setLoading] = useState(false)
@@ -226,7 +226,7 @@ export default function Scanner() {
             </div>
 
             {!canUseLLM && !analysis && !analysisError && !stream.streaming && (
-              <UpgradePrompt feature="AI Deep Analysis" onUpgrade={() => setPlan('lite')} compact />
+              <UpgradePrompt feature="AI Deep Analysis" compact />
             )}
 
             {(analysisError || stream.error) && (
