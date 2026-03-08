@@ -34,9 +34,9 @@ from typing import Any
 
 import orjson
 
-logger = logging.getLogger(__name__)
+from navil.telemetry_event import TELEMETRY_QUEUE
 
-TELEMETRY_QUEUE = "navil:telemetry:queue"
+logger = logging.getLogger(__name__)
 BRPOP_TIMEOUT = 5  # seconds; short enough that shutdown is responsive
 
 
@@ -108,6 +108,17 @@ class TelemetryWorker:
 
         await self._process_event(event)
         self._processed += 1
+
+        # Periodic backpressure check
+        if self._processed % 1000 == 0:
+            try:
+                queue_len = await self.redis.llen(TELEMETRY_QUEUE)
+                if queue_len > 50_000:
+                    await self.redis.ltrim(TELEMETRY_QUEUE, -50_000, -1)
+                    logger.warning("Telemetry queue trimmed from %d to 50k", queue_len)
+            except Exception:
+                pass  # backpressure check is best-effort
+
         return True
 
     async def _process_event(self, event: dict[str, Any]) -> None:
@@ -120,6 +131,7 @@ class TelemetryWorker:
         response_bytes = event.get("response_bytes", 0)
         duration_ms = event.get("duration_ms", 0)
         target_server = event.get("target_server")
+        timestamp = event.get("timestamp")
 
         is_list_tools = method == "tools/list"
 
@@ -138,6 +150,7 @@ class TelemetryWorker:
                 arguments_size_bytes=payload_bytes,
                 response_size_bytes=response_bytes,
                 is_list_tools=is_list_tools,
+                timestamp=timestamp,
             )
         except Exception:
             logger.exception(
