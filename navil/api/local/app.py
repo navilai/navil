@@ -84,6 +84,8 @@ def create_app(with_demo: bool = True) -> FastAPI:
         worker = None
         threat_intel_task: asyncio.Task[None] | None = None
         consumer: ThreatIntelConsumer | None = None
+        cloud_sync_worker: CloudSyncWorker | None = None
+        cloud_sync_task: asyncio.Task[None] | None = None
         if redis_url:
             try:
                 import redis.asyncio as aioredis
@@ -110,6 +112,27 @@ def create_app(with_demo: bool = True) -> FastAPI:
                 )
                 if consumer.is_enabled():
                     threat_intel_task = asyncio.create_task(consumer.run())
+
+                # ── CloudSyncWorker (Give-to-Get outbound) ──────
+                from navil.cloud.telemetry_sync import CloudSyncWorker
+
+                cloud_sync_worker = CloudSyncWorker(
+                    detector=state.anomaly_detector,
+                    api_key=os.environ.get("NAVIL_API_KEY", ""),
+                    deployment_secret=(
+                        os.environ.get("NAVIL_DEPLOYMENT_SECRET", "").encode()
+                        or None
+                    ),
+                )
+                if cloud_sync_worker.enabled:
+                    cloud_sync_task = asyncio.create_task(
+                        cloud_sync_worker.run()
+                    )
+                    logger.info(
+                        "CloudSyncWorker started (mode=%s, interval=%ss)",
+                        "paid" if cloud_sync_worker.api_key else "community",
+                        cloud_sync_worker.sync_interval,
+                    )
             except Exception:
                 logger.warning(
                     "Redis unavailable (%s) — running in standalone mode",
@@ -126,6 +149,15 @@ def create_app(with_demo: bool = True) -> FastAPI:
             threat_intel_task.cancel()
             with contextlib.suppress(asyncio.CancelledError):
                 await threat_intel_task
+        if cloud_sync_worker is not None:
+            cloud_sync_worker.stop()
+        if cloud_sync_task is not None:
+            cloud_sync_task.cancel()
+            with contextlib.suppress(asyncio.CancelledError):
+                await cloud_sync_task
+        if cloud_sync_worker is not None:
+            with contextlib.suppress(Exception):
+                await cloud_sync_worker.close()
         if worker is not None:
             worker.stop()
         if worker_task is not None:
