@@ -1,3 +1,6 @@
+// Copyright (c) 2026 Pantheon Lab Limited
+// Licensed under the Apache License, Version 2.0 (see LICENSE)
+
 //! Navil MCP Security Proxy — Rust Data Plane
 //!
 //! Hot-path reverse proxy for MCP JSON-RPC 2.0.
