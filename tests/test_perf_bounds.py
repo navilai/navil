@@ -25,7 +25,7 @@ def detector() -> BehavioralAnomalyDetector:
 
 def test_per_agent_deque_bounds(detector: BehavioralAnomalyDetector) -> None:
     """Recording 600 invocations for one agent retains only the latest 500."""
-    for i in range(600):
+    for _i in range(600):
         detector.record_invocation(
             agent_name="agent-flood",
             tool_name="tool_x",

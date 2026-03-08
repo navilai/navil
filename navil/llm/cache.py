@@ -12,7 +12,6 @@ TTL defaults to 1 hour (3600 s).
 from __future__ import annotations
 
 import hashlib
-import json
 import logging
 import threading
 from collections import OrderedDict

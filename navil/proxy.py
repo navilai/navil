@@ -19,12 +19,12 @@ import asyncio
 import hashlib
 import logging
 import time
-
-import httpx
-import orjson
 from collections import deque
 from datetime import datetime, timezone
 from typing import Any
+
+import httpx
+import orjson
 
 from navil.telemetry_event import TELEMETRY_QUEUE, build_telemetry_event
 

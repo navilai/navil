@@ -917,7 +917,7 @@ Examples:
 
             print(_json.dumps(stats.to_dict(), indent=2))
         else:
-            print(f"\n  Seeding complete!")
+            print("\n  Seeding complete!")
             print(f"  {'Iterations:':<24} {stats.iterations:>10,}")
             print(f"  {'Total invocations:':<24} {stats.total_invocations:>10,}")
             print(f"  {'Total alerts fired:':<24} {stats.total_alerts:>10,}")

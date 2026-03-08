@@ -3,8 +3,6 @@
 from __future__ import annotations
 
 import json
-import threading
-import time
 from unittest.mock import patch
 
 import pytest
@@ -14,22 +12,20 @@ from navil.seed import (
     MockMCPServer,
     SeedStats,
     _fuzz_int,
-    _gen_normal_traffic,
-    _gen_reconnaissance,
-    _gen_persistence,
+    _gen_c2_beaconing,
+    _gen_data_exfiltration,
     _gen_defense_evasion,
     _gen_lateral_movement,
-    _gen_c2_beaconing,
-    _gen_supply_chain,
-    _gen_rug_pull,
-    _gen_data_exfiltration,
+    _gen_normal_traffic,
+    _gen_persistence,
     _gen_privilege_escalation,
     _gen_rate_spike,
+    _gen_reconnaissance,
+    _gen_rug_pull,
+    _gen_supply_chain,
     _inject_invocations,
-    _progress_bar,
     seed_database,
 )
-
 
 # ── Mock MCP Server ──────────────────────────────────────────────
 

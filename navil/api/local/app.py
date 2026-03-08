@@ -5,11 +5,13 @@
 from __future__ import annotations
 
 import asyncio
+import contextlib
 import logging
 import os
+from collections.abc import AsyncIterator
 from contextlib import asynccontextmanager
 from pathlib import Path
-from typing import Any, AsyncIterator
+from typing import Any
 
 from fastapi import FastAPI, Request, Response
 from fastapi.middleware.cors import CORSMiddleware
@@ -122,23 +124,17 @@ def create_app(with_demo: bool = True) -> FastAPI:
             consumer.stop()
         if threat_intel_task is not None:
             threat_intel_task.cancel()
-            try:
+            with contextlib.suppress(asyncio.CancelledError):
                 await threat_intel_task
-            except asyncio.CancelledError:
-                pass
         if worker is not None:
             worker.stop()
         if worker_task is not None:
             worker_task.cancel()
-            try:
+            with contextlib.suppress(asyncio.CancelledError):
                 await worker_task
-            except asyncio.CancelledError:
-                pass
         if state.redis_client is not None:
-            try:
+            with contextlib.suppress(Exception):
                 await state.redis_client.aclose()
-            except Exception:
-                pass
             state.redis_client = None
 
     app = FastAPI(
