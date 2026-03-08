@@ -16,7 +16,9 @@ from __future__ import annotations
 import logging
 import re
 import statistics
-from dataclasses import dataclass
+import threading
+import time as _time
+from dataclasses import dataclass, field
 from datetime import datetime, timedelta, timezone
 from enum import Enum
 from typing import Any
@@ -76,6 +78,15 @@ class AnomalyAlert:
     confidence: float = 0.0  # 0.0 for legacy binary alerts, 0.0-1.0 for scored alerts
 
 
+@dataclass
+class AgentThresholds:
+    """Pre-computed O(1) thresholds for the proxy hot path."""
+
+    max_payload_bytes: int = 10_000_000  # 10 MB default
+    rate_limit_per_min: int = 120  # generous default
+    blocked: bool = False  # hard kill-switch (set on CRITICAL alerts)
+
+
 class BehavioralAnomalyDetector:
     """
     Detects anomalies in agent behavior patterns.
@@ -88,11 +99,16 @@ class BehavioralAnomalyDetector:
     - Temporal and geographic anomaly detection
     """
 
+    # Redis key templates
+    _THRESHOLD_KEY = "navil:agent:{agent}:thresholds"
+    _RATE_KEY = "navil:agent:{agent}:rate:{bucket}"
+
     def __init__(
         self,
         baseline_window_hours: int = 24,
         feedback_loop: Any | None = None,
         pattern_store: Any | None = None,
+        redis_client: Any | None = None,
     ) -> None:
         """
         Initialize anomaly detector.
@@ -101,6 +117,7 @@ class BehavioralAnomalyDetector:
             baseline_window_hours: Hours of historical data to use for baseline
             feedback_loop: Optional FeedbackLoop for self-tuning thresholds
             pattern_store: Optional PatternStore for learned pattern matching
+            redis_client: Optional async Redis client for shared threshold storage
         """
         self.baseline_window_hours = baseline_window_hours
         self.invocations: list[ToolInvocation] = []
@@ -108,14 +125,100 @@ class BehavioralAnomalyDetector:
         self.baselines: dict[str, dict[str, Any]] = {}
         self.feedback_loop = feedback_loop
         self.pattern_store = pattern_store
+        self.redis: Any | None = redis_client
 
         # Adaptive baselines (Level 1 AI) — updated in O(1) per invocation
         from navil.adaptive.baselines import AgentAdaptiveBaseline
 
         self.adaptive_baselines: dict[str, AgentAdaptiveBaseline] = {}
 
+        # ── O(1) hot-path cache (local fallback when Redis is down) ──
+        self._agent_thresholds: dict[str, AgentThresholds] = {}
+        # Lock guards _agent_thresholds writes from the background task
+        self._threshold_lock = threading.Lock()
+
         # Proxy-mode tracking for SAFE-MCP detectors
         self.registered_tools: dict[str, set[str]] = {}  # server_url -> known tool names
+
+    # ── O(1) Fast-Path Gate ─────────────────────────────────
+
+    async def check_fast(self, agent_name: str, payload_bytes: int) -> tuple[bool, str]:
+        """Microsecond O(1) check against pre-computed thresholds.
+
+        Reads thresholds from Redis via an HMGET + INCR pipeline.
+        Falls back to local in-memory defaults if Redis is unavailable
+        (fail-open to preserve availability).
+
+        Returns (allowed, reason).
+        """
+        thresholds = await self._get_thresholds(agent_name)
+
+        # Hard block
+        if thresholds.blocked:
+            return False, "Agent is blocked due to critical anomaly"
+
+        # Payload size
+        if payload_bytes > thresholds.max_payload_bytes:
+            return False, (
+                f"Payload {payload_bytes} bytes exceeds limit "
+                f"{thresholds.max_payload_bytes} bytes"
+            )
+
+        # Rate limit via Redis INCR (1-minute bucket keyed by epoch minute)
+        count = await self._incr_rate(agent_name)
+        if count > thresholds.rate_limit_per_min:
+            return False, (
+                f"Rate limit exceeded: {count}/{thresholds.rate_limit_per_min} req/min"
+            )
+
+        return True, ""
+
+    async def _get_thresholds(self, agent_name: str) -> AgentThresholds:
+        """Read agent thresholds from Redis, falling back to local cache."""
+        if self.redis is not None:
+            try:
+                key = self._THRESHOLD_KEY.format(agent=agent_name)
+                vals = await self.redis.hmget(
+                    key, ["max_payload_bytes", "rate_limit_per_min", "blocked"]
+                )
+                if vals[0] is not None:
+                    t = AgentThresholds(
+                        max_payload_bytes=int(vals[0]),
+                        rate_limit_per_min=int(vals[1]),
+                        blocked=vals[2] == b"1",
+                    )
+                    # Update local cache
+                    self._agent_thresholds[agent_name] = t
+                    return t
+            except Exception:
+                logger.debug("Redis read failed for %s, using local fallback", agent_name)
+
+        # Local fallback
+        thresholds = self._agent_thresholds.get(agent_name)
+        if thresholds is None:
+            thresholds = AgentThresholds()
+            with self._threshold_lock:
+                self._agent_thresholds[agent_name] = thresholds
+        return thresholds
+
+    async def _incr_rate(self, agent_name: str) -> int:
+        """Increment the per-minute rate counter. Returns the new count."""
+        if self.redis is not None:
+            try:
+                import time as _t
+                bucket = int(_t.time()) // 60
+                rate_key = self._RATE_KEY.format(agent=agent_name, bucket=bucket)
+                pipe = self.redis.pipeline()
+                pipe.incr(rate_key)
+                pipe.expire(rate_key, 120)  # auto-cleanup after 2 minutes
+                results = await pipe.execute()
+                return int(results[0])
+            except Exception:
+                logger.debug("Redis INCR failed for %s, allowing request", agent_name)
+        # Fail-open: if Redis is down, don't rate-limit
+        return 0
+
+    # ── Record & Detect ───────────────────────────────────────
 
     def record_invocation(
         self,
@@ -170,14 +273,49 @@ class BehavioralAnomalyDetector:
         # Update adaptive baseline (O(1))
         self._update_adaptive_baseline(agent_name, invocation)
 
-        # Check for anomalies
-        self._check_anomalies(agent_name)
+        # Run detection methods (sync — heavy stats happen here)
+        self._run_detectors(agent_name)
 
-    def _check_anomalies(self, agent_name: str) -> None:
-        """Check for anomalies in agent behavior."""
+    async def record_invocation_async(
+        self,
+        agent_name: str,
+        tool_name: str,
+        action: str,
+        duration_ms: int,
+        data_accessed_bytes: int = 0,
+        success: bool = True,
+        location: str | None = None,
+        target_server: str | None = None,
+        arguments_hash: str | None = None,
+        arguments_size_bytes: int = 0,
+        response_size_bytes: int = 0,
+        is_list_tools: bool = False,
+    ) -> None:
+        """Async variant of record_invocation that writes thresholds to Redis."""
+        self.record_invocation(
+            agent_name=agent_name,
+            tool_name=tool_name,
+            action=action,
+            duration_ms=duration_ms,
+            data_accessed_bytes=data_accessed_bytes,
+            success=success,
+            location=location,
+            target_server=target_server,
+            arguments_hash=arguments_hash,
+            arguments_size_bytes=arguments_size_bytes,
+            response_size_bytes=response_size_bytes,
+            is_list_tools=is_list_tools,
+        )
+        # Sync detectors already ran; now push thresholds to Redis
+        await self._sync_thresholds_to_redis(agent_name)
+
+    def _run_detectors(self, agent_name: str) -> None:
+        """Run all anomaly detection methods and recompute local thresholds."""
         # Build baseline if needed
         if agent_name not in self.baselines:
             self._build_baseline(agent_name)
+
+        alert_count_before = len(self.alerts)
 
         # Run all detection methods
         self._detect_rug_pull(agent_name)
@@ -192,6 +330,52 @@ class BehavioralAnomalyDetector:
         self._detect_lateral_movement(agent_name)
         self._detect_command_and_control(agent_name)
         self._detect_supply_chain(agent_name)
+
+        # ── Recompute local thresholds ────────────────────────────
+        self._recompute_thresholds(agent_name, alert_count_before)
+
+    def _recompute_thresholds(self, agent_name: str, alert_count_before: int) -> None:
+        """Derive fast-path thresholds from baseline stats (local dict)."""
+        baseline = self.baselines.get(agent_name, self._get_default_baseline())
+
+        # Payload limit: mean + 5 * std_dev, floor 1 MB
+        avg_data = baseline.get("avg_data_accessed", 0)
+        std_data = baseline.get("std_dev_data", 0)
+        max_payload = max(1_000_000, int(avg_data + 5 * std_data))
+
+        # Rate limit: 3x baseline rate per 30-min, scaled to per-minute, floor 60
+        baseline_count = baseline.get("invocation_count", 0)
+        baseline_rate_per_min = (baseline_count / (24 * 60)) if baseline_count > 0 else 2.0
+        rate_limit = max(60, int(baseline_rate_per_min * 3 * 60))
+
+        # Hard block on new CRITICAL alerts
+        new_alerts = self.alerts[alert_count_before:]
+        blocked = any(a.severity == "CRITICAL" for a in new_alerts)
+
+        with self._threshold_lock:
+            existing = self._agent_thresholds.get(agent_name, AgentThresholds())
+            self._agent_thresholds[agent_name] = AgentThresholds(
+                max_payload_bytes=max_payload,
+                rate_limit_per_min=rate_limit,
+                blocked=existing.blocked or blocked,
+            )
+
+    async def _sync_thresholds_to_redis(self, agent_name: str) -> None:
+        """Push the locally computed thresholds to Redis."""
+        if self.redis is None:
+            return
+        thresholds = self._agent_thresholds.get(agent_name)
+        if thresholds is None:
+            return
+        try:
+            key = self._THRESHOLD_KEY.format(agent=agent_name)
+            await self.redis.hset(key, mapping={
+                "max_payload_bytes": str(thresholds.max_payload_bytes),
+                "rate_limit_per_min": str(thresholds.rate_limit_per_min),
+                "blocked": "1" if thresholds.blocked else "0",
+            })
+        except Exception:
+            logger.debug("Redis write failed for %s thresholds", agent_name)
 
     def _build_baseline(self, agent_name: str) -> None:
         """Build behavioral baseline for agent."""
