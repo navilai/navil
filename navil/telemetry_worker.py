@@ -1,3 +1,5 @@
+# Copyright (c) 2026 Pantheon Lab Limited
+# Licensed under the Apache License, Version 2.0 (see LICENSE)
 """Telemetry Bridge Worker — consumes events from the Rust data plane.
 
 The Rust proxy LPUSHes request metadata to ``navil:telemetry:queue`` in Redis.

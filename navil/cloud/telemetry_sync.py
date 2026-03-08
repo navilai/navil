@@ -1,3 +1,5 @@
+# Copyright (c) 2026 Pantheon Lab Limited
+# Licensed under the Business Source License 1.1 (see LICENSE.cloud)
 """Cloud Telemetry Sync — 'Give to Get' threat intelligence sharing.
 
 Periodically gathers local anomaly alerts and blocked-event metadata,
