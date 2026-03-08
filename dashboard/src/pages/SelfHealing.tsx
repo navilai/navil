@@ -1,6 +1,7 @@
 import { useEffect, useState, useRef } from 'react'
 import { api, RemediationSuggestion, RemediationAction, AutoRemediateResult, LLMConfig } from '../api'
 import useSessionState from '../hooks/useSessionState'
+import useNavilStream from '../hooks/useNavilStream'
 import PageHeader from '../components/PageHeader'
 import SeverityBadge from '../components/SeverityBadge'
 import MiniBar from '../components/MiniBar'
@@ -48,9 +49,10 @@ export default function SelfHealing() {
   const [autoApplied, setAutoApplied] = useState<Set<number>>(new Set())
 
   const phaseTimersRef = useRef<ReturnType<typeof setTimeout>[]>([])
+  const stream = useNavilStream<RemediationSuggestion>()
 
   const llmReady = llmConfig?.available && llmConfig?.api_key_set
-  const busy = analyzing || autoRemediating
+  const busy = analyzing || stream.streaming || autoRemediating
 
   const toggleExpand = (i: number) => {
     setExpanded(prev => {
@@ -65,23 +67,18 @@ export default function SelfHealing() {
   }, [])
 
   // --- Manual flow handlers ---
-  const handleAnalyze = async () => {
+  const handleAnalyze = () => {
     setAnalyzing(true)
     setError(null)
-    // Don't clear suggestion — let old results stay visible until replaced
     setAutoResult(null)
     setApplied(new Set())
     setExpanded(new Set())
-    try {
-      const res = await api.suggestRemediation()
-      setSuggestion(res)
-    } catch (e: unknown) {
-      const msg = e instanceof Error ? e.message : String(e)
-      const errType = e instanceof Error && 'errorType' in e ? (e as Error & { errorType?: string }).errorType || 'unknown' : 'unknown'
-      setError({ message: msg, type: errType })
-    } finally {
-      setAnalyzing(false)
-    }
+    stream.start({
+      endpoint: '/llm/suggest-remediation',
+      body: {},
+      onDone: (res) => { setSuggestion(res); setAnalyzing(false) },
+      onError: (msg) => { setError({ message: msg, type: 'unknown' }); setAnalyzing(false) },
+    })
   }
 
   const handleApply = async (action: RemediationAction, index: number) => {
@@ -217,13 +214,20 @@ export default function SelfHealing() {
       )}
 
       {/* Manual analyze spinner — hide once results arrive */}
-      {analyzing && !suggestion && (
+      {(analyzing || stream.streaming) && !suggestion && (
         <div className="text-center py-16 animate-fadeIn">
           <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-violet-500/10 mb-4">
             <Icon name="sparkles" size={32} className="text-violet-400 animate-spin" />
           </div>
           <p className="text-gray-400">Analyzing threats with AI...</p>
-          <p className="text-xs text-gray-600 mt-1">This may take a few seconds</p>
+          {stream.text ? (
+            <pre className="mt-3 mx-auto max-w-lg text-left text-xs text-gray-400 whitespace-pre-wrap font-mono bg-gray-900/50 rounded-lg p-3 max-h-40 overflow-y-auto">
+              {stream.text}
+              <span className="animate-pulse text-violet-400">|</span>
+            </pre>
+          ) : (
+            <p className="text-xs text-gray-600 mt-1">This may take a few seconds</p>
+          )}
         </div>
       )}
 

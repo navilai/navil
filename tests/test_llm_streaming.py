@@ -181,7 +181,7 @@ class TestLLMClientStream:
 
 class TestSSEFormatting:
     def test_sse_event_basic(self) -> None:
-        from navil.cloud.api import _sse_event
+        from navil.api.local.routes import _sse_event
 
         result = _sse_event('{"text": "hello"}', event="chunk")
         assert "event: chunk\n" in result
@@ -190,14 +190,14 @@ class TestSSEFormatting:
         assert result.endswith("\n\n")
 
     def test_sse_event_no_event_type(self) -> None:
-        from navil.cloud.api import _sse_event
+        from navil.api.local.routes import _sse_event
 
         result = _sse_event("simple data")
         assert "event:" not in result
         assert "data: simple data" in result
 
     def test_sse_event_multiline_data(self) -> None:
-        from navil.cloud.api import _sse_event
+        from navil.api.local.routes import _sse_event
 
         result = _sse_event("line1\nline2", event="chunk")
         assert "data: line1\n" in result
@@ -207,7 +207,7 @@ class TestSSEFormatting:
 class TestStreamLLMSSE:
     def test_stream_yields_chunks_and_done(self) -> None:
         """_stream_llm_sse should yield chunk events then a done event."""
-        from navil.cloud.api import _stream_llm_sse
+        from navil.api.local.routes import _stream_llm_sse
 
         mock_client = MagicMock()
         mock_client.stream.return_value = iter(["Hello", " World"])
@@ -227,7 +227,7 @@ class TestStreamLLMSSE:
 
     def test_stream_with_post_process(self) -> None:
         """Post-process function should transform the done payload."""
-        from navil.cloud.api import _stream_llm_sse
+        from navil.api.local.routes import _stream_llm_sse
 
         mock_client = MagicMock()
         mock_client.stream.return_value = iter(['{"result": "ok"}'])
@@ -244,7 +244,7 @@ class TestStreamLLMSSE:
 
     def test_stream_caches_result(self) -> None:
         """After streaming, the full text should be in the cache."""
-        from navil.cloud.api import _get_llm_cache, _stream_llm_sse
+        from navil.api.local.routes import _get_llm_cache, _stream_llm_sse
 
         cache = _get_llm_cache()
         cache.clear()
@@ -259,7 +259,7 @@ class TestStreamLLMSSE:
 
     def test_stream_error_yields_error_event(self) -> None:
         """If the LLM raises during streaming, yield an error SSE event."""
-        from navil.cloud.api import _stream_llm_sse
+        from navil.api.local.routes import _stream_llm_sse
 
         mock_client = MagicMock()
 
@@ -294,7 +294,7 @@ class TestSSEEndpoints:
     @pytest.fixture(autouse=True)
     def _reset_state(self) -> Iterator[None]:
         """Reset AppState singleton between tests."""
-        from navil.cloud.state import AppState
+        from navil.api.local.state import AppState
         AppState.reset()
         yield
         AppState.reset()
@@ -302,9 +302,9 @@ class TestSSEEndpoints:
     @pytest.fixture
     def app(self):
         """Create a test FastAPI app with mocked LLM components."""
-        from navil.cloud.api import _get_llm_cache
-        from navil.cloud.app import create_app
-        from navil.cloud.state import AppState
+        from navil.api.local.routes import _get_llm_cache
+        from navil.api.local.app import create_app
+        from navil.api.local.state import AppState
 
         # Clear cache between tests
         _get_llm_cache().clear()
@@ -344,7 +344,7 @@ class TestSSEEndpoints:
     def test_analyze_config_returns_sse(self, client) -> None:
         """POST /api/llm/analyze-config should return text/event-stream."""
         resp = client.post(
-            "/api/llm/analyze-config",
+            "/api/local/llm/analyze-config",
             json={"config": {"server": {"protocol": "http"}}},
         )
         assert resp.status_code == 200
@@ -357,7 +357,7 @@ class TestSSEEndpoints:
     def test_explain_anomaly_returns_sse(self, client) -> None:
         """POST /api/llm/explain-anomaly should return SSE stream."""
         resp = client.post(
-            "/api/llm/explain-anomaly",
+            "/api/local/llm/explain-anomaly",
             json={"anomaly_data": {"agent": "test", "type": "rate_spike"}},
         )
         assert resp.status_code == 200
@@ -366,7 +366,7 @@ class TestSSEEndpoints:
 
     def test_generate_policy_returns_sse(self, client) -> None:
         """POST /api/llm/generate-policy should return SSE stream."""
-        from navil.cloud.state import AppState
+        from navil.api.local.state import AppState
         s = AppState.get()
         # Return valid YAML from stream
         s.policy_generator.client.stream.return_value = iter([
@@ -374,7 +374,7 @@ class TestSSEEndpoints:
         ])
 
         resp = client.post(
-            "/api/llm/generate-policy",
+            "/api/local/llm/generate-policy",
             json={"description": "Allow read-only access to logs"},
         )
         assert resp.status_code == 200
@@ -382,8 +382,8 @@ class TestSSEEndpoints:
 
     def test_cache_hit_returns_instantly(self, client) -> None:
         """Second identical request should return from cache (no LLM call)."""
-        from navil.cloud.api import _get_llm_cache
-        from navil.cloud.state import AppState
+        from navil.api.local.routes import _get_llm_cache
+        from navil.api.local.state import AppState
 
         s = AppState.get()
         call_count = 0
@@ -399,12 +399,12 @@ class TestSSEEndpoints:
         payload = {"config": {"server": {"protocol": "https"}}}
 
         # First call — should hit LLM
-        resp1 = client.post("/api/llm/analyze-config", json=payload)
+        resp1 = client.post("/api/local/llm/analyze-config", json=payload)
         assert resp1.status_code == 200
         assert call_count == 1
 
         # Second call — should hit cache
-        resp2 = client.post("/api/llm/analyze-config", json=payload)
+        resp2 = client.post("/api/local/llm/analyze-config", json=payload)
         assert resp2.status_code == 200
         assert call_count == 1  # no additional LLM call
 
@@ -413,7 +413,7 @@ class TestSSEEndpoints:
 
     def test_suggest_remediation_no_alerts(self, client) -> None:
         """When no alerts exist, suggest-remediation returns done event immediately."""
-        resp = client.post("/api/llm/suggest-remediation")
+        resp = client.post("/api/local/llm/suggest-remediation")
         assert resp.status_code == 200
         assert "event: done" in resp.text
         # Parse the done event payload
@@ -427,12 +427,12 @@ class TestSSEEndpoints:
 
     def test_apply_action_not_streamed(self, client) -> None:
         """apply-action should return plain JSON, not SSE."""
-        from navil.cloud.state import AppState
+        from navil.api.local.state import AppState
         s = AppState.get()
         s.self_healing.apply_action.return_value = True
 
         resp = client.post(
-            "/api/llm/apply-action",
+            "/api/local/llm/apply-action",
             json={"action": {"type": "agent_block", "target": "bad-agent"}},
         )
         assert resp.status_code == 200
@@ -443,7 +443,7 @@ class TestSSEEndpoints:
     def test_auto_remediate_not_streamed(self, client) -> None:
         """auto-remediate returns plain JSON (applies actions server-side)."""
         resp = client.post(
-            "/api/llm/auto-remediate",
+            "/api/local/llm/auto-remediate",
             json={"confidence_threshold": 0.9},
         )
         assert resp.status_code == 200
@@ -454,7 +454,7 @@ class TestSSEEndpoints:
     def test_sse_headers(self, client) -> None:
         """SSE responses should include proper no-cache headers."""
         resp = client.post(
-            "/api/llm/analyze-config",
+            "/api/local/llm/analyze-config",
             json={"config": {"test": True}},
         )
         assert resp.headers.get("cache-control") == "no-cache"

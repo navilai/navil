@@ -1,5 +1,6 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useRef } from 'react'
 import { api, Alert, AnomalyExplanation } from '../api'
+import { streamOnce } from '../hooks/useNavilStream'
 import SeverityBadge from '../components/SeverityBadge'
 import PageHeader from '../components/PageHeader'
 import Icon from '../components/Icon'
@@ -19,8 +20,10 @@ export default function Alerts() {
   const [expanded, setExpanded] = useState<number | null>(null)
   const [error, setError] = useState('')
   const [explaining, setExplaining] = useState<number | null>(null)
+  const [streamingText, setStreamingText] = useState<Record<number, string>>({})
   const [explanations, setExplanations] = useState<Record<number, AnomalyExplanation>>({})
   const [llmError, setLlmError] = useState<Record<number, { message: string; type: string }>>({})
+  const abortRef = useRef<(() => void) | null>(null)
 
   const fetchAlerts = () => {
     setError('')
@@ -134,28 +137,44 @@ export default function Alerts() {
                   <div className="pt-2 border-t border-gray-800/30">
                     {!explanations[i] ? (
                       canUseLLM ? (
-                        <button
-                          onClick={async (e) => {
-                            e.stopPropagation()
-                            setExplaining(i)
-                            setLlmError(prev => { const next = { ...prev }; delete next[i]; return next })
-                            try {
-                              const result = await api.explainAnomaly(alert)
-                              setExplanations(prev => ({ ...prev, [i]: result }))
-                            } catch (err: unknown) {
-                              const msg = err instanceof Error ? err.message : String(err)
-                              const errType = err instanceof Error && 'errorType' in err ? (err as Error & { errorType?: string }).errorType || 'unknown' : 'unknown'
-                              setLlmError(prev => ({ ...prev, [i]: { message: msg, type: errType } }))
-                            } finally {
-                              setExplaining(null)
-                            }
-                          }}
-                          disabled={explaining === i}
-                          className="px-3 py-1.5 text-xs bg-violet-500/15 text-violet-400 border border-violet-500/30 rounded-lg hover:bg-violet-500/25 flex items-center gap-1.5 disabled:opacity-50"
-                        >
-                          <Icon name="sparkles" size={13} className={explaining === i ? 'animate-spin' : ''} />
-                          {explaining === i ? 'Analyzing...' : 'Explain with AI'}
-                        </button>
+                        <>
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation()
+                              setExplaining(i)
+                              setLlmError(prev => { const next = { ...prev }; delete next[i]; return next })
+                              setStreamingText(prev => ({ ...prev, [i]: '' }))
+                              abortRef.current?.()
+                              const { promise, abort } = streamOnce<AnomalyExplanation>(
+                                '/llm/explain-anomaly',
+                                { anomaly_data: alert },
+                                { onChunk: (_chunk, acc) => setStreamingText(prev => ({ ...prev, [i]: acc })) },
+                              )
+                              abortRef.current = abort
+                              promise
+                                .then(result => {
+                                  setExplanations(prev => ({ ...prev, [i]: result }))
+                                  setStreamingText(prev => { const next = { ...prev }; delete next[i]; return next })
+                                })
+                                .catch((err: Error) => {
+                                  setLlmError(prev => ({ ...prev, [i]: { message: err.message, type: 'unknown' } }))
+                                  setStreamingText(prev => { const next = { ...prev }; delete next[i]; return next })
+                                })
+                                .finally(() => setExplaining(null))
+                            }}
+                            disabled={explaining === i}
+                            className="px-3 py-1.5 text-xs bg-violet-500/15 text-violet-400 border border-violet-500/30 rounded-lg hover:bg-violet-500/25 flex items-center gap-1.5 disabled:opacity-50"
+                          >
+                            <Icon name="sparkles" size={13} className={explaining === i ? 'animate-spin' : ''} />
+                            {explaining === i ? 'Analyzing...' : 'Explain with AI'}
+                          </button>
+                          {explaining === i && streamingText[i] && (
+                            <pre className="mt-2 text-xs text-gray-400 whitespace-pre-wrap font-mono bg-gray-900/50 rounded-lg p-2 max-h-32 overflow-y-auto">
+                              {streamingText[i]}
+                              <span className="animate-pulse text-violet-400">|</span>
+                            </pre>
+                          )}
+                        </>
                       ) : (
                         <UpgradePrompt feature="AI-powered alert analysis" onUpgrade={() => setPlan('lite')} compact />
                       )
@@ -192,19 +211,27 @@ export default function Alerts() {
                       <LLMErrorCard
                         message={llmError[i].message}
                         errorType={llmError[i].type as any}
-                        onRetry={async () => {
+                        onRetry={() => {
                           setExplaining(i)
                           setLlmError(prev => { const next = { ...prev }; delete next[i]; return next })
-                          try {
-                            const result = await api.explainAnomaly(alert)
-                            setExplanations(prev => ({ ...prev, [i]: result }))
-                          } catch (err: unknown) {
-                            const msg = err instanceof Error ? err.message : String(err)
-                            const errType = err instanceof Error && 'errorType' in err ? (err as Error & { errorType?: string }).errorType || 'unknown' : 'unknown'
-                            setLlmError(prev => ({ ...prev, [i]: { message: msg, type: errType } }))
-                          } finally {
-                            setExplaining(null)
-                          }
+                          setStreamingText(prev => ({ ...prev, [i]: '' }))
+                          abortRef.current?.()
+                          const { promise, abort } = streamOnce<AnomalyExplanation>(
+                            '/llm/explain-anomaly',
+                            { anomaly_data: alert },
+                            { onChunk: (_chunk, acc) => setStreamingText(prev => ({ ...prev, [i]: acc })) },
+                          )
+                          abortRef.current = abort
+                          promise
+                            .then(result => {
+                              setExplanations(prev => ({ ...prev, [i]: result }))
+                              setStreamingText(prev => { const next = { ...prev }; delete next[i]; return next })
+                            })
+                            .catch((err: Error) => {
+                              setLlmError(prev => ({ ...prev, [i]: { message: err.message, type: 'unknown' } }))
+                              setStreamingText(prev => { const next = { ...prev }; delete next[i]; return next })
+                            })
+                            .finally(() => setExplaining(null))
                         }}
                         compact
                       />

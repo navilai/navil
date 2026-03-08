@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import { api, PolicyCheckResult, PolicyDecision, GeneratedPolicy } from '../api'
+import useNavilStream from '../hooks/useNavilStream'
 import PageHeader from '../components/PageHeader'
 import StatusBadge from '../components/StatusBadge'
 import SeverityBadge from '../components/SeverityBadge'
@@ -33,6 +34,8 @@ export default function Policy() {
   const [refining, setRefining] = useState(false)
   const [copied, setCopied] = useState(false)
   const [genError, setGenError] = useState<{ message: string; type: string } | null>(null)
+  const genStream = useNavilStream<GeneratedPolicy>()
+  const refineStream = useNavilStream<GeneratedPolicy>()
 
   const loadDecisions = () => {
     api.getPolicyDecisions()
@@ -223,51 +226,48 @@ export default function Policy() {
             )}
           </div>
           <button
-            onClick={async () => {
+            onClick={() => {
               if (!genDescription.trim()) return
               setGenerating(true)
               setGenError(null)
-              try {
-                const res = await api.generatePolicy(genDescription)
-                setGeneratedYaml(res.yaml)
-                setGeneratedPolicy(res.policy)
-              } catch (e: unknown) {
-                const msg = e instanceof Error ? e.message : String(e)
-                const errType = e instanceof Error && 'errorType' in e ? (e as Error & { errorType?: string }).errorType || 'unknown' : 'unknown'
-                setGenError({ message: msg, type: errType })
-              } finally {
-                setGenerating(false)
-              }
+              genStream.start({
+                endpoint: '/llm/generate-policy',
+                body: { description: genDescription },
+                onDone: (res) => { setGeneratedYaml(res.yaml); setGeneratedPolicy(res.policy as Record<string, unknown>); setGenerating(false) },
+                onError: (msg) => { setGenError({ message: msg, type: 'unknown' }); setGenerating(false) },
+              })
             }}
-            disabled={!genDescription.trim() || (generating && !generatedYaml)}
+            disabled={!genDescription.trim() || genStream.streaming}
             className="px-4 py-2.5 bg-violet-600 text-white rounded-lg text-sm font-medium hover:bg-violet-500 disabled:opacity-40 disabled:cursor-not-allowed flex items-center gap-2"
           >
-            <Icon name="sparkles" size={14} className={generating && !generatedYaml ? 'animate-spin' : ''} />
-            {generating && !generatedYaml ? 'Generating...' : 'Generate Policy'}
+            <Icon name="sparkles" size={14} className={genStream.streaming && !generatedYaml ? 'animate-spin' : ''} />
+            {genStream.streaming && !generatedYaml ? 'Generating...' : 'Generate Policy'}
           </button>
+          {/* Streaming text preview */}
+          {genStream.streaming && genStream.text && !generatedYaml && (
+            <pre className="mt-2 text-xs text-gray-400 whitespace-pre-wrap font-mono bg-gray-900/50 rounded-lg p-3 max-h-32 overflow-y-auto">
+              {genStream.text}
+              <span className="animate-pulse text-violet-400">|</span>
+            </pre>
+          )}
         </div>
         )}
 
-        {genError && (
+        {(genError || genStream.error) && (
           <div className="mt-3">
             <LLMErrorCard
-              message={genError.message}
-              errorType={genError.type as any}
-              onRetry={async () => {
+              message={(genError?.message || genStream.error)!}
+              errorType={(genError?.type || 'unknown') as any}
+              onRetry={() => {
                 if (!genDescription.trim()) return
                 setGenerating(true)
                 setGenError(null)
-                try {
-                  const res = await api.generatePolicy(genDescription)
-                  setGeneratedYaml(res.yaml)
-                  setGeneratedPolicy(res.policy)
-                } catch (e: unknown) {
-                  const msg = e instanceof Error ? e.message : String(e)
-                  const errType = e instanceof Error && 'errorType' in e ? (e as Error & { errorType?: string }).errorType || 'unknown' : 'unknown'
-                  setGenError({ message: msg, type: errType })
-                } finally {
-                  setGenerating(false)
-                }
+                genStream.start({
+                  endpoint: '/llm/generate-policy',
+                  body: { description: genDescription },
+                  onDone: (res) => { setGeneratedYaml(res.yaml); setGeneratedPolicy(res.policy as Record<string, unknown>); setGenerating(false) },
+                  onError: (msg) => { setGenError({ message: msg, type: 'unknown' }); setGenerating(false) },
+                })
               }}
             />
           </div>
@@ -289,7 +289,7 @@ export default function Policy() {
                 {copied ? 'Copied!' : 'Copy'}
               </button>
             </div>
-            <pre className={`bg-gray-900/80 border border-gray-800/60 rounded-lg p-4 text-sm text-gray-300 font-mono overflow-x-auto max-h-80 overflow-y-auto whitespace-pre-wrap transition-opacity ${generating ? 'opacity-30' : ''}`}>
+            <pre className={`bg-gray-900/80 border border-gray-800/60 rounded-lg p-4 text-sm text-gray-300 font-mono overflow-x-auto max-h-80 overflow-y-auto whitespace-pre-wrap transition-opacity ${generating || refineStream.streaming ? 'opacity-30' : ''}`}>
               {generatedYaml}
             </pre>
             <div className="flex gap-2">
@@ -300,31 +300,25 @@ export default function Policy() {
                 placeholder="Refine: e.g., Add a rate limit of 50/hr for deploy-agent"
               />
               <button
-                onClick={async () => {
+                onClick={() => {
                   if (!refineInput.trim() || !generatedPolicy) return
                   setRefining(true)
                   setGenError(null)
-                  try {
-                    const hasPolicy = generatedPolicy && Object.keys(generatedPolicy).length > 0
-                    const instruction = hasPolicy
-                      ? refineInput
-                      : `${genDescription}\n\nAdditional requirement: ${refineInput}`
-                    const res = await api.refinePolicy(generatedPolicy || {}, instruction)
-                    setGeneratedYaml(res.yaml)
-                    setGeneratedPolicy(res.policy)
-                    setRefineInput('')
-                  } catch (e: unknown) {
-                    const msg = e instanceof Error ? e.message : String(e)
-                    const errType = e instanceof Error && 'errorType' in e ? (e as Error & { errorType?: string }).errorType || 'unknown' : 'unknown'
-                    setGenError({ message: msg, type: errType })
-                  } finally {
-                    setRefining(false)
-                  }
+                  const hasPolicy = generatedPolicy && Object.keys(generatedPolicy).length > 0
+                  const instruction = hasPolicy
+                    ? refineInput
+                    : `${genDescription}\n\nAdditional requirement: ${refineInput}`
+                  refineStream.start({
+                    endpoint: '/llm/refine-policy',
+                    body: { existing_policy: generatedPolicy || {}, instruction },
+                    onDone: (res) => { setGeneratedYaml(res.yaml); setGeneratedPolicy(res.policy as Record<string, unknown>); setRefineInput(''); setRefining(false) },
+                    onError: (msg) => { setGenError({ message: msg, type: 'unknown' }); setRefining(false) },
+                  })
                 }}
-                disabled={!refineInput.trim() || refining}
+                disabled={!refineInput.trim() || refineStream.streaming}
                 className="px-4 py-2 bg-cyan-500 text-white rounded-lg text-sm hover:bg-cyan-400 disabled:opacity-40 disabled:cursor-not-allowed flex items-center gap-1.5"
               >
-                <Icon name="sparkles" size={13} className={refining ? 'animate-spin' : ''} />
+                <Icon name="sparkles" size={13} className={refineStream.streaming ? 'animate-spin' : ''} />
                 Refine
               </button>
             </div>

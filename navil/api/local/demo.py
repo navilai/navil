@@ -6,9 +6,10 @@ from __future__ import annotations
 
 import random
 from datetime import datetime, timezone
-from typing import Any
+from typing import Any, TYPE_CHECKING
 
-from navil.cloud.state import AppState
+if TYPE_CHECKING:
+    from navil.api.local.state import AppState
 
 
 def seed_demo_data(state: AppState) -> None:

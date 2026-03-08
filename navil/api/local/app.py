@@ -1,6 +1,6 @@
 # Copyright (c) 2026 Pantheon Lab Limited
 # Licensed under the Business Source License 1.1 (see LICENSE.cloud)
-"""Navil Cloud — FastAPI application."""
+"""Navil local dashboard — FastAPI application."""
 
 from __future__ import annotations
 
@@ -15,18 +15,16 @@ from fastapi.responses import FileResponse
 from fastapi.staticfiles import StaticFiles
 from starlette.middleware.base import BaseHTTPMiddleware
 
-from navil.cloud.admin_api import router as admin_router
-from navil.cloud.api import router
-from navil.cloud.auth import ClerkAuthMiddleware
-from navil.cloud.demo import seed_demo_data
-from navil.cloud.state import AppState
+from navil.api.local.demo import seed_demo_data
+from navil.api.local.routes import router
+from navil.api.local.state import AppState
 
 logger = logging.getLogger(__name__)
 
-DASHBOARD_DIR = Path(__file__).resolve().parent.parent.parent / "dashboard" / "dist"
+DASHBOARD_DIR = Path(__file__).resolve().parent.parent.parent.parent / "dashboard" / "dist"
 
 # ALLOWED_ORIGINS: comma-separated allowed origins.
-# Defaults to "*" when unset (local dev / no Clerk).
+# Defaults to "*" when unset (local dev).
 _origins_env = os.environ.get("ALLOWED_ORIGINS", "")
 _allow_origins: list[str] = (
     [o.strip() for o in _origins_env.split(",") if o.strip()] if _origins_env else ["*"]
@@ -58,7 +56,7 @@ class SecurityHeadersMiddleware(BaseHTTPMiddleware):
 def create_app(with_demo: bool = True) -> FastAPI:
     """Create the FastAPI application."""
     app = FastAPI(
-        title="Navil Cloud",
+        title="Navil",
         description="Security dashboard for AI agent fleet monitoring",
         version="0.1.0",
     )
@@ -74,11 +72,7 @@ def create_app(with_demo: bool = True) -> FastAPI:
         allow_headers=["*"],
     )
 
-    # Clerk auth — no-op when CLERK_SECRET_KEY is not set
-    app.add_middleware(ClerkAuthMiddleware)
-
     app.include_router(router)
-    app.include_router(admin_router)
 
     @app.on_event("startup")
     def on_startup() -> None:
@@ -94,24 +88,6 @@ def create_app(with_demo: bool = True) -> FastAPI:
         if with_demo:
             seed_demo_data(state)
             logger.info("Demo data seeded: 5 agents, ~150 invocations, 5 credentials")
-
-        # Start background scheduler
-        try:
-            from navil.cloud.scheduler import start_scheduler
-
-            start_scheduler()
-            logger.info("Background scheduler started")
-        except Exception:
-            logger.warning("Background scheduler failed to start", exc_info=True)
-
-    @app.on_event("shutdown")
-    def on_shutdown() -> None:
-        try:
-            from navil.cloud.scheduler import stop_scheduler
-
-            stop_scheduler()
-        except Exception:
-            pass
 
     # Serve frontend static files if built
     if DASHBOARD_DIR.exists():
@@ -133,7 +109,7 @@ def create_app(with_demo: bool = True) -> FastAPI:
         @app.get("/")
         def no_frontend() -> dict[str, str]:
             return {
-                "message": "Navil Cloud API is running. Frontend not built yet.",
+                "message": "Navil API is running. Frontend not built yet.",
                 "hint": "Run: cd dashboard && npm install && npm run build",
             }
 
@@ -141,9 +117,9 @@ def create_app(with_demo: bool = True) -> FastAPI:
 
 
 def serve(host: str = "0.0.0.0", port: int = 8484) -> None:
-    """Launch the Navil Cloud server."""
+    """Launch the Navil server."""
     import uvicorn
 
     app = create_app()
-    logger.info(f"Starting Navil Cloud at http://localhost:{port}")
+    logger.info(f"Starting Navil at http://localhost:{port}")
     uvicorn.run(app, host=host, port=port, log_level="info")
