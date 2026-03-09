@@ -88,7 +88,8 @@ class LLMClient:
             import json as _json
 
             req = urllib.request.Request(
-                f"{host}/api/tags", method="GET",
+                f"{host}/api/tags",
+                method="GET",
             )
             with urllib.request.urlopen(req, timeout=3) as resp:
                 data = _json.loads(resp.read())
@@ -163,8 +164,7 @@ class LLMClient:
                 system=system_prompt,
                 messages=[{"role": "user", "content": user_message}],
             ) as stream:
-                for text in stream.text_stream:
-                    yield text
+                yield from stream.text_stream
         elif self.provider == "gemini":
             model = self.client.GenerativeModel(
                 self.model,

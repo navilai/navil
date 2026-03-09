@@ -201,9 +201,7 @@ class BehavioralAnomalyDetector:
         # Rate limit via Redis INCR (1-minute bucket keyed by epoch minute)
         count = await self._incr_rate(agent_name)
         if count > thresholds.rate_limit_per_min:
-            return False, (
-                f"Rate limit exceeded: {count}/{thresholds.rate_limit_per_min} req/min"
-            )
+            return False, (f"Rate limit exceeded: {count}/{thresholds.rate_limit_per_min} req/min")
 
         return True, ""
 
@@ -240,6 +238,7 @@ class BehavioralAnomalyDetector:
         if self.redis is not None:
             try:
                 import time as _t
+
                 bucket = int(_t.time()) // 60
                 rate_key = self._RATE_KEY.format(agent=agent_name, bucket=bucket)
                 pipe = self.redis.pipeline()
@@ -434,11 +433,14 @@ class BehavioralAnomalyDetector:
             return
         try:
             key = self._THRESHOLD_KEY.format(agent=agent_name)
-            await self.redis.hset(key, mapping={
-                "max_payload_bytes": str(thresholds.max_payload_bytes),
-                "rate_limit_per_min": str(thresholds.rate_limit_per_min),
-                "blocked": "1" if thresholds.blocked else "0",
-            })
+            await self.redis.hset(
+                key,
+                mapping={
+                    "max_payload_bytes": str(thresholds.max_payload_bytes),
+                    "rate_limit_per_min": str(thresholds.rate_limit_per_min),
+                    "blocked": "1" if thresholds.blocked else "0",
+                },
+            )
         except Exception:
             logger.debug("Redis write failed for %s thresholds", agent_name)
 
@@ -448,9 +450,7 @@ class BehavioralAnomalyDetector:
 
         agent_dq = self._per_agent_invocations.get(agent_name, deque())
         agent_invocations = [
-            inv
-            for inv in agent_dq
-            if inv.timestamp_dt and inv.timestamp_dt > cutoff_time
+            inv for inv in agent_dq if inv.timestamp_dt and inv.timestamp_dt > cutoff_time
         ]
 
         if not agent_invocations:
@@ -495,11 +495,7 @@ class BehavioralAnomalyDetector:
         # Get recent invocations (last hour)
         cutoff_time = datetime.now(timezone.utc) - timedelta(hours=1)
         agent_dq = self._per_agent_invocations.get(agent_name, deque())
-        recent = [
-            inv
-            for inv in agent_dq
-            if inv.timestamp_dt and inv.timestamp_dt > cutoff_time
-        ]
+        recent = [inv for inv in agent_dq if inv.timestamp_dt and inv.timestamp_dt > cutoff_time]
 
         if not recent or len(recent) < 5:
             return
@@ -545,11 +541,7 @@ class BehavioralAnomalyDetector:
         # Get recent invocations (last hour)
         cutoff_time = datetime.now(timezone.utc) - timedelta(hours=1)
         agent_dq = self._per_agent_invocations.get(agent_name, deque())
-        recent = [
-            inv
-            for inv in agent_dq
-            if inv.timestamp_dt and inv.timestamp_dt > cutoff_time
-        ]
+        recent = [inv for inv in agent_dq if inv.timestamp_dt and inv.timestamp_dt > cutoff_time]
 
         if not recent:
             return
@@ -582,11 +574,7 @@ class BehavioralAnomalyDetector:
         # Get recent invocations (last 30 minutes)
         cutoff_time = datetime.now(timezone.utc) - timedelta(minutes=30)
         agent_dq = self._per_agent_invocations.get(agent_name, deque())
-        recent = [
-            inv
-            for inv in agent_dq
-            if inv.timestamp_dt and inv.timestamp_dt > cutoff_time
-        ]
+        recent = [inv for inv in agent_dq if inv.timestamp_dt and inv.timestamp_dt > cutoff_time]
 
         # Estimate baseline rate (invocations per 30 min)
         baseline_count = (baseline.get("invocation_count", 1) / 24) * 0.5
@@ -626,7 +614,8 @@ class BehavioralAnomalyDetector:
         recent = [
             inv
             for inv in agent_dq
-            if inv.timestamp_dt and inv.timestamp_dt > cutoff_time
+            if inv.timestamp_dt
+            and inv.timestamp_dt > cutoff_time
             and inv.tool_name in sensitive_tools
         ]
 
@@ -651,11 +640,7 @@ class BehavioralAnomalyDetector:
         """Detect access at unusual times."""
         cutoff_time = datetime.now(timezone.utc) - timedelta(hours=1)
         agent_dq = self._per_agent_invocations.get(agent_name, deque())
-        recent = [
-            inv
-            for inv in agent_dq
-            if inv.timestamp_dt and inv.timestamp_dt > cutoff_time
-        ]
+        recent = [inv for inv in agent_dq if inv.timestamp_dt and inv.timestamp_dt > cutoff_time]
 
         if not recent:
             return
@@ -688,8 +673,7 @@ class BehavioralAnomalyDetector:
         list_calls = [
             inv
             for inv in agent_dq
-            if inv.is_list_tools
-            and inv.timestamp_dt and inv.timestamp_dt > cutoff
+            if inv.is_list_tools and inv.timestamp_dt and inv.timestamp_dt > cutoff
         ]
 
         if len(list_calls) > 5:
@@ -712,11 +696,7 @@ class BehavioralAnomalyDetector:
         """Detect scheduled/bot-like reconnection patterns."""
         cutoff = datetime.now(timezone.utc) - timedelta(minutes=30)
         agent_dq = self._per_agent_invocations.get(agent_name, deque())
-        recent = [
-            inv
-            for inv in agent_dq
-            if inv.timestamp_dt and inv.timestamp_dt > cutoff
-        ]
+        recent = [inv for inv in agent_dq if inv.timestamp_dt and inv.timestamp_dt > cutoff]
 
         if len(recent) < 6:
             return
@@ -766,11 +746,7 @@ class BehavioralAnomalyDetector:
         """Detect encoding tricks and prompt injection in tool arguments."""
         cutoff = datetime.now(timezone.utc) - timedelta(minutes=10)
         agent_dq = self._per_agent_invocations.get(agent_name, deque())
-        recent = [
-            inv
-            for inv in agent_dq
-            if inv.timestamp_dt and inv.timestamp_dt > cutoff
-        ]
+        recent = [inv for inv in agent_dq if inv.timestamp_dt and inv.timestamp_dt > cutoff]
 
         for inv in recent:
             evidence: list[str] = []
@@ -805,8 +781,7 @@ class BehavioralAnomalyDetector:
         recent = [
             inv
             for inv in agent_dq
-            if inv.target_server
-            and inv.timestamp_dt and inv.timestamp_dt > cutoff
+            if inv.target_server and inv.timestamp_dt and inv.timestamp_dt > cutoff
         ]
 
         servers = set(inv.target_server for inv in recent if inv.target_server)
@@ -831,11 +806,7 @@ class BehavioralAnomalyDetector:
         """Detect beaconing patterns (periodic small data exfiltration)."""
         cutoff = datetime.now(timezone.utc) - timedelta(minutes=15)
         agent_dq = self._per_agent_invocations.get(agent_name, deque())
-        recent = [
-            inv
-            for inv in agent_dq
-            if inv.timestamp_dt and inv.timestamp_dt > cutoff
-        ]
+        recent = [inv for inv in agent_dq if inv.timestamp_dt and inv.timestamp_dt > cutoff]
 
         if len(recent) < 5:
             return
@@ -892,7 +863,8 @@ class BehavioralAnomalyDetector:
             for inv in agent_dq
             if not inv.is_list_tools
             and inv.target_server
-            and inv.timestamp_dt and inv.timestamp_dt > cutoff
+            and inv.timestamp_dt
+            and inv.timestamp_dt > cutoff
         ]
 
         for inv in recent:
@@ -1046,11 +1018,7 @@ class BehavioralAnomalyDetector:
         # Rate spike scoring
         cutoff = datetime.now(timezone.utc) - timedelta(minutes=30)
         agent_dq = self._per_agent_invocations.get(agent_name, deque())
-        recent_count = sum(
-            1
-            for inv in agent_dq
-            if inv.timestamp_dt and inv.timestamp_dt > cutoff
-        )
+        recent_count = sum(1 for inv in agent_dq if inv.timestamp_dt and inv.timestamp_dt > cutoff)
         if ab.rate_ema.count > 0 and ab.rate_ema.mean > 0:
             z = ab.rate_ema.z_score(float(recent_count))
             confidence = z_score_to_confidence(z)

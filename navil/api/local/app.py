@@ -51,9 +51,7 @@ class SecurityHeadersMiddleware(BaseHTTPMiddleware):
         response.headers["Referrer-Policy"] = "strict-origin-when-cross-origin"
         # HSTS only in production (when ALLOWED_ORIGINS is set)
         if _origins_env:
-            response.headers["Strict-Transport-Security"] = (
-                "max-age=31536000; includeSubDomains"
-            )
+            response.headers["Strict-Transport-Security"] = "max-age=31536000; includeSubDomains"
         return response
 
 
@@ -120,14 +118,11 @@ def create_app(with_demo: bool = True) -> FastAPI:
                     detector=state.anomaly_detector,
                     api_key=os.environ.get("NAVIL_API_KEY", ""),
                     deployment_secret=(
-                        os.environ.get("NAVIL_DEPLOYMENT_SECRET", "").encode()
-                        or None
+                        os.environ.get("NAVIL_DEPLOYMENT_SECRET", "").encode() or None
                     ),
                 )
                 if cloud_sync_worker.enabled:
-                    cloud_sync_task = asyncio.create_task(
-                        cloud_sync_worker.run()
-                    )
+                    cloud_sync_task = asyncio.create_task(cloud_sync_worker.run())
                     logger.info(
                         "CloudSyncWorker started (mode=%s, interval=%ss)",
                         "paid" if cloud_sync_worker.api_key else "community",

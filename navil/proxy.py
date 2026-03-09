@@ -102,8 +102,7 @@ class MCPSecurityProxy:
         # ── Byte limit ────────────────────────────────────────
         if len(body) > cls.MAX_PAYLOAD_BYTES:
             raise ValueError(
-                f"Payload too large: {len(body)} bytes "
-                f"(limit {cls.MAX_PAYLOAD_BYTES} bytes)"
+                f"Payload too large: {len(body)} bytes " f"(limit {cls.MAX_PAYLOAD_BYTES} bytes)"
             )
 
         # ── Parse & compact ───────────────────────────────────
@@ -115,9 +114,7 @@ class MCPSecurityProxy:
         # ── Depth check ───────────────────────────────────────
         depth = cls._json_depth(data)
         if depth > cls.MAX_JSON_DEPTH:
-            raise ValueError(
-                f"JSON nesting depth {depth} exceeds limit {cls.MAX_JSON_DEPTH}"
-            )
+            raise ValueError(f"JSON nesting depth {depth} exceeds limit {cls.MAX_JSON_DEPTH}")
 
         # Re-serialize tightly (no whitespace, no padding)
         return orjson.dumps(data)
@@ -264,7 +261,8 @@ class MCPSecurityProxy:
                 self.stats["blocked"] += 1
                 duration_ms = int((time.time() - start) * 1000)
                 self._log_traffic(agent_name, method, tool_name, "ANOMALY_BLOCKED", duration_ms, 0)
-                return self._jsonrpc_error(-32002, f"Blocked by anomaly detector: {reason}", req_id), {}
+                msg = f"Blocked by anomaly detector: {reason}"
+                return self._jsonrpc_error(-32002, msg, req_id), {}
 
             # Forward to upstream
             response_data, response_bytes, upstream_hdrs = await self._forward(body, headers)
@@ -448,7 +446,10 @@ class MCPSecurityProxy:
             if alert_count_after > alert_count_before:
                 self.stats["alerts_generated"] += alert_count_after - alert_count_before
         except Exception:
-            logger.exception("Background anomaly detection failed for tools/list agent=%s", agent_name)
+            logger.exception(
+                "Background anomaly detection failed for tools/list agent=%s",
+                agent_name,
+            )
 
     # ── Upstream Forwarding ───────────────────────────────────
 

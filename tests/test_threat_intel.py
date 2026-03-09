@@ -1,4 +1,5 @@
 """Tests for the community threat intelligence consumer."""
+
 from __future__ import annotations
 
 from typing import Any
@@ -122,32 +123,38 @@ def test_community_patterns_evicted_before_local() -> None:
 
     # Add 3 local patterns with high match_count
     for i in range(3):
-        store.add_pattern(LearnedPattern(
-            pattern_id=f"local_{i}",
-            anomaly_type="TEST",
-            description=f"local pattern {i}",
-            source="local",
-            match_count=100,
-        ))
+        store.add_pattern(
+            LearnedPattern(
+                pattern_id=f"local_{i}",
+                anomaly_type="TEST",
+                description=f"local pattern {i}",
+                source="local",
+                match_count=100,
+            )
+        )
 
     # Add 2 community patterns with low match_count
     for i in range(2):
-        store.add_pattern(LearnedPattern(
-            pattern_id=f"community_{i}",
-            anomaly_type="TEST",
-            description=f"community pattern {i}",
-            source="community",
-            match_count=1,
-        ))
+        store.add_pattern(
+            LearnedPattern(
+                pattern_id=f"community_{i}",
+                anomaly_type="TEST",
+                description=f"community pattern {i}",
+                source="community",
+                match_count=1,
+            )
+        )
 
     assert len(store.patterns) == 5
 
     # Add one more community pattern — should evict a community pattern, not local
-    store.add_community_pattern(LearnedPattern(
-        pattern_id="community_new",
-        anomaly_type="TEST",
-        description="new community pattern",
-    ))
+    store.add_community_pattern(
+        LearnedPattern(
+            pattern_id="community_new",
+            anomaly_type="TEST",
+            description="new community pattern",
+        )
+    )
 
     assert len(store.patterns) == 5
     local_ids = [p.pattern_id for p in store.patterns if p.source == "local"]
@@ -197,6 +204,7 @@ def test_get_intel_mode_community(monkeypatch: pytest.MonkeyPatch) -> None:
     """Without API key, mode is 'community'."""
     monkeypatch.delenv("NAVIL_API_KEY", raising=False)
     from navil.threat_intel import get_intel_mode
+
     assert get_intel_mode() == "community"
 
 
@@ -204,4 +212,5 @@ def test_get_intel_mode_paid(monkeypatch: pytest.MonkeyPatch) -> None:
     """With API key, mode is 'paid'."""
     monkeypatch.setenv("NAVIL_API_KEY", "nvl_test")
     from navil.threat_intel import get_intel_mode
+
     assert get_intel_mode() == "paid"

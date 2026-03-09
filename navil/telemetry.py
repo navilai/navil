@@ -96,14 +96,16 @@ class NavilCloudClient:
         success: bool = True,
     ) -> None:
         """Buffer an event for batch upload."""
-        self._event_buffer.append({
-            "agent_name": agent_name,
-            "tool_name": tool_name,
-            "action": action,
-            "duration_ms": duration_ms,
-            "data_accessed_bytes": data_accessed_bytes,
-            "success": success,
-        })
+        self._event_buffer.append(
+            {
+                "agent_name": agent_name,
+                "tool_name": tool_name,
+                "action": action,
+                "duration_ms": duration_ms,
+                "data_accessed_bytes": data_accessed_bytes,
+                "success": success,
+            }
+        )
 
         # Flush if buffer full
         if len(self._event_buffer) >= self.batch_size:

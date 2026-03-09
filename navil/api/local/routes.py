@@ -562,7 +562,9 @@ def get_telemetry_settings() -> dict[str, Any]:
     from navil.threat_intel import get_intel_mode
 
     enabled = os.environ.get("NAVIL_DISABLE_CLOUD_SYNC", "").lower() not in (
-        "1", "true", "yes",
+        "1",
+        "true",
+        "yes",
     )
     api_key_present = bool(os.environ.get("NAVIL_API_KEY", "").strip())
     return {
@@ -636,7 +638,11 @@ def explain_anomaly(req: ExplainAnomalyRequest) -> StreamingResponse:
         try:
             result = json.loads(extract_json(cached))
         except (json.JSONDecodeError, ValueError):
-            result = {"explanation": cached[:500], "likely_threat": False, "recommended_actions": []}
+            result = {
+                "explanation": cached[:500],
+                "likely_threat": False,
+                "recommended_actions": [],
+            }
 
         def _cached_sse() -> Iterator[str]:
             yield _sse_event(json.dumps({"text": cached, "cached": True}), event="chunk")
@@ -653,7 +659,13 @@ def explain_anomaly(req: ExplainAnomalyRequest) -> StreamingResponse:
             return {"explanation": text[:500], "likely_threat": False, "recommended_actions": []}
 
     return _make_sse_response(
-        _stream_llm_sse(ANOMALY_EXPLANATION_PROMPT, user_msg, s.llm_analyzer.client, ck, _post_process)
+        _stream_llm_sse(
+            ANOMALY_EXPLANATION_PROMPT,
+            user_msg,
+            s.llm_analyzer.client,
+            ck,
+            _post_process,
+        )
     )
 
 
@@ -676,7 +688,12 @@ def analyze_config_llm(req: AnalyzeConfigRequest) -> StreamingResponse:
         try:
             result = json.loads(extract_json(cached))
         except (json.JSONDecodeError, ValueError):
-            result = {"explanation": cached[:500], "risks": [], "remediations": [], "severity": "UNKNOWN"}
+            result = {
+                "explanation": cached[:500],
+                "risks": [],
+                "remediations": [],
+                "severity": "UNKNOWN",
+            }
 
         def _cached_sse() -> Iterator[str]:
             yield _sse_event(json.dumps({"text": cached, "cached": True}), event="chunk")
@@ -690,7 +707,12 @@ def analyze_config_llm(req: AnalyzeConfigRequest) -> StreamingResponse:
         try:
             return json.loads(extract_json(text))
         except (json.JSONDecodeError, ValueError):
-            return {"explanation": text[:500], "risks": [], "remediations": [], "severity": "UNKNOWN"}
+            return {
+                "explanation": text[:500],
+                "risks": [],
+                "remediations": [],
+                "severity": "UNKNOWN",
+            }
 
     return _make_sse_response(
         _stream_llm_sse(ANALYSIS_SYSTEM_PROMPT, user_msg, s.llm_analyzer.client, ck, _post_process)
@@ -729,7 +751,13 @@ def generate_policy(req: GeneratePolicyRequest) -> StreamingResponse:
         return {"policy": policy, "yaml": yaml.dump(policy, default_flow_style=False)}
 
     return _make_sse_response(
-        _stream_llm_sse(POLICY_GEN_SYSTEM_PROMPT, req.description, s.policy_generator.client, ck, _post_process)
+        _stream_llm_sse(
+            POLICY_GEN_SYSTEM_PROMPT,
+            req.description,
+            s.policy_generator.client,
+            ck,
+            _post_process,
+        )
     )
 
 
@@ -767,7 +795,13 @@ def refine_policy(req: RefinePolicyRequest) -> StreamingResponse:
         return {"policy": policy, "yaml": yaml.dump(policy, default_flow_style=False)}
 
     return _make_sse_response(
-        _stream_llm_sse(POLICY_GEN_SYSTEM_PROMPT, user_msg, s.policy_generator.client, ck, _post_process)
+        _stream_llm_sse(
+            POLICY_GEN_SYSTEM_PROMPT,
+            user_msg,
+            s.policy_generator.client,
+            ck,
+            _post_process,
+        )
     )
 
 
@@ -836,7 +870,13 @@ def suggest_remediation() -> StreamingResponse:
         s.self_healing.client.max_tokens = 4096
     try:
         return _make_sse_response(
-            _stream_llm_sse(SELF_HEALING_SYSTEM_PROMPT, user_msg, s.self_healing.client, ck, _post_process)
+            _stream_llm_sse(
+                SELF_HEALING_SYSTEM_PROMPT,
+                user_msg,
+                s.self_healing.client,
+                ck,
+                _post_process,
+            )
         )
     finally:
         s.self_healing.client.max_tokens = prev_max

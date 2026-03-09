@@ -872,7 +872,8 @@ Examples:
         help="Populate anomaly detector with synthetic SAFE-MCP attack baselines",
     )
     seed_parser.add_argument(
-        "-n", "--iterations",
+        "-n",
+        "--iterations",
         type=int,
         default=1000,
         help="Number of times to run each scenario (default: 1000)",

@@ -49,7 +49,7 @@ _MOCK_TOOLS = [
 class _MockMCPHandler(BaseHTTPRequestHandler):
     """Minimal MCP-over-HTTP handler for seeding."""
 
-    def do_POST(self) -> None:
+    def do_POST(self) -> None:  # noqa: N802
         import json
 
         content_len = int(self.headers.get("Content-Length", 0))
@@ -78,7 +78,7 @@ class _MockMCPHandler(BaseHTTPRequestHandler):
         self.end_headers()
         self.wfile.write(payload)
 
-    def log_message(self, format: str, *args: Any) -> None:
+    def log_message(self, format: str, *args: Any) -> None:  # noqa: A002
         """Suppress default stderr logging."""
         pass
 
@@ -146,6 +146,7 @@ def _random_hash() -> str:
 
 # ── Progress Bar ─────────────────────────────────────────────────
 
+
 def _progress_bar(current: int, total: int, width: int = 40, label: str = "") -> None:
     """Print a single-line progress bar to stderr."""
     pct = current / total if total else 1.0
@@ -167,32 +168,37 @@ def _gen_normal_traffic(agent: str, iteration: int) -> list[dict[str, Any]]:
     n_calls = _fuzz_int(15, 5, lo=5, hi=40)
     for _ in range(n_calls):
         tool = random.choice(_NORMAL_TOOLS)
-        invocations.append({
-            "agent_name": agent,
-            "tool_name": tool,
-            "action": random.choice(["read", "write", "list", "query"]),
-            "duration_ms": _fuzz_int(50, 20, lo=5),
-            "data_accessed_bytes": _fuzz_int(200, 100, lo=0),
-            "success": random.random() > 0.02,  # 98% success rate
-            "arguments_size_bytes": _fuzz_int(150, 80, lo=10),
-            "response_size_bytes": _fuzz_int(500, 200, lo=20),
-            "arguments_hash": _random_hash(),
-        })
+        invocations.append(
+            {
+                "agent_name": agent,
+                "tool_name": tool,
+                "action": random.choice(["read", "write", "list", "query"]),
+                "duration_ms": _fuzz_int(50, 20, lo=5),
+                "data_accessed_bytes": _fuzz_int(200, 100, lo=0),
+                "success": random.random() > 0.02,  # 98% success rate
+                "arguments_size_bytes": _fuzz_int(150, 80, lo=10),
+                "response_size_bytes": _fuzz_int(500, 200, lo=20),
+                "arguments_hash": _random_hash(),
+            }
+        )
     return invocations
 
 
 def _gen_reconnaissance(agent: str, iteration: int) -> list[dict[str, Any]]:
     """Excessive tools/list probing."""
     n_probes = _fuzz_int(8, 3, lo=6, hi=20)
-    return [{
-        "agent_name": agent,
-        "tool_name": "__tools_list__",
-        "action": "tools/list",
-        "duration_ms": _fuzz_int(10, 5, lo=2),
-        "is_list_tools": True,
-        "arguments_size_bytes": _fuzz_int(20, 10, lo=5),
-        "response_size_bytes": _fuzz_int(800, 200, lo=100),
-    } for _ in range(n_probes)]
+    return [
+        {
+            "agent_name": agent,
+            "tool_name": "__tools_list__",
+            "action": "tools/list",
+            "duration_ms": _fuzz_int(10, 5, lo=2),
+            "is_list_tools": True,
+            "arguments_size_bytes": _fuzz_int(20, 10, lo=5),
+            "response_size_bytes": _fuzz_int(800, 200, lo=100),
+        }
+        for _ in range(n_probes)
+    ]
 
 
 def _gen_persistence(agent: str, iteration: int) -> list[dict[str, Any]]:
@@ -203,28 +209,32 @@ def _gen_persistence(agent: str, iteration: int) -> list[dict[str, Any]]:
     invocations = []
     for i in range(n_beats):
         ts = base + timedelta(seconds=i * interval_s)
-        invocations.append({
-            "_raw_timestamp": ts.isoformat(),
-            "agent_name": agent,
-            "tool_name": "heartbeat",
-            "action": "ping",
-            "duration_ms": _fuzz_int(5, 2, lo=1),
-            "response_size_bytes": _fuzz_int(64, 20, lo=10),
-        })
+        invocations.append(
+            {
+                "_raw_timestamp": ts.isoformat(),
+                "agent_name": agent,
+                "tool_name": "heartbeat",
+                "action": "ping",
+                "duration_ms": _fuzz_int(5, 2, lo=1),
+                "response_size_bytes": _fuzz_int(64, 20, lo=10),
+            }
+        )
     return invocations
 
 
 def _gen_defense_evasion(agent: str, iteration: int) -> list[dict[str, Any]]:
     """Large encoded payload."""
-    return [{
-        "agent_name": agent,
-        "tool_name": random.choice(["execute", "eval", "run_script"]),
-        "action": "run",
-        "duration_ms": _fuzz_int(200, 80, lo=50),
-        "arguments_size_bytes": _fuzz_int(7000, 2000, lo=5001),
-        "response_size_bytes": _fuzz_int(300, 100, lo=50),
-        "arguments_hash": _random_hash(),
-    }]
+    return [
+        {
+            "agent_name": agent,
+            "tool_name": random.choice(["execute", "eval", "run_script"]),
+            "action": "run",
+            "duration_ms": _fuzz_int(200, 80, lo=50),
+            "arguments_size_bytes": _fuzz_int(7000, 2000, lo=5001),
+            "response_size_bytes": _fuzz_int(300, 100, lo=50),
+            "arguments_hash": _random_hash(),
+        }
+    ]
 
 
 def _gen_lateral_movement(agent: str, iteration: int) -> list[dict[str, Any]]:
@@ -234,16 +244,19 @@ def _gen_lateral_movement(agent: str, iteration: int) -> list[dict[str, Any]]:
     # Pad with extra fake servers if needed
     while len(servers) < n_servers:
         servers.append(f"http://mcp-extra-{random.randint(1,99)}:3000")
-    return [{
-        "agent_name": agent,
-        "tool_name": random.choice(["query", "fetch", "invoke"]),
-        "action": "tools/call",
-        "duration_ms": _fuzz_int(80, 30, lo=10),
-        "target_server": server,
-        "data_accessed_bytes": _fuzz_int(300, 100, lo=0),
-        "arguments_size_bytes": _fuzz_int(200, 80, lo=20),
-        "response_size_bytes": _fuzz_int(500, 200, lo=50),
-    } for server in servers]
+    return [
+        {
+            "agent_name": agent,
+            "tool_name": random.choice(["query", "fetch", "invoke"]),
+            "action": "tools/call",
+            "duration_ms": _fuzz_int(80, 30, lo=10),
+            "target_server": server,
+            "data_accessed_bytes": _fuzz_int(300, 100, lo=0),
+            "arguments_size_bytes": _fuzz_int(200, 80, lo=20),
+            "response_size_bytes": _fuzz_int(500, 200, lo=50),
+        }
+        for server in servers
+    ]
 
 
 def _gen_c2_beaconing(agent: str, iteration: int) -> list[dict[str, Any]]:
@@ -252,29 +265,34 @@ def _gen_c2_beaconing(agent: str, iteration: int) -> list[dict[str, Any]]:
     n_beacons = _fuzz_int(8, 2, lo=6, hi=15)
     resp_bytes = _fuzz_int(256, 30, lo=100, hi=500)
     base = datetime.now(timezone.utc) - timedelta(minutes=10)
-    return [{
-        "_raw_timestamp": (base + timedelta(seconds=i * interval_s)).isoformat(),
-        "agent_name": agent,
-        "tool_name": "status",
-        "action": "check",
-        "duration_ms": _fuzz_int(20, 5, lo=5),
-        "response_size_bytes": _fuzz_int(resp_bytes, 20, lo=50),
-    } for i in range(n_beacons)]
+    return [
+        {
+            "_raw_timestamp": (base + timedelta(seconds=i * interval_s)).isoformat(),
+            "agent_name": agent,
+            "tool_name": "status",
+            "action": "check",
+            "duration_ms": _fuzz_int(20, 5, lo=5),
+            "response_size_bytes": _fuzz_int(resp_bytes, 20, lo=50),
+        }
+        for i in range(n_beacons)
+    ]
 
 
 def _gen_supply_chain(agent: str, iteration: int) -> list[dict[str, Any]]:
     """Calling unregistered tools on a known server."""
     bad_tool = random.choice(["inject_backdoor", "shadow_deploy", "exfil_creds", "keylogger"])
-    return [{
-        "_register_server": ("http://mcp-server:3000", ["read", "write", "list"]),
-        "agent_name": agent,
-        "tool_name": bad_tool,
-        "action": "tools/call",
-        "duration_ms": _fuzz_int(100, 40, lo=20),
-        "target_server": "http://mcp-server:3000",
-        "arguments_size_bytes": _fuzz_int(300, 100, lo=50),
-        "response_size_bytes": _fuzz_int(200, 80, lo=20),
-    }]
+    return [
+        {
+            "_register_server": ("http://mcp-server:3000", ["read", "write", "list"]),
+            "agent_name": agent,
+            "tool_name": bad_tool,
+            "action": "tools/call",
+            "duration_ms": _fuzz_int(100, 40, lo=20),
+            "target_server": "http://mcp-server:3000",
+            "arguments_size_bytes": _fuzz_int(300, 100, lo=50),
+            "response_size_bytes": _fuzz_int(200, 80, lo=20),
+        }
+    ]
 
 
 def _gen_rug_pull(agent: str, iteration: int) -> list[dict[str, Any]]:
@@ -283,60 +301,70 @@ def _gen_rug_pull(agent: str, iteration: int) -> list[dict[str, Any]]:
         _SENSITIVE_TOOLS + ["shadow_api", "dump_memory", "proxy_chain"],
         k=_fuzz_int(4, 1, lo=3, hi=6),
     )
-    return [{
-        "_needs_baseline": True,
-        "agent_name": agent,
-        "tool_name": tool,
-        "action": "execute",
-        "duration_ms": _fuzz_int(100, 40, lo=20),
-        "data_accessed_bytes": _fuzz_int(500, 200, lo=50),
-        "arguments_size_bytes": _fuzz_int(250, 100, lo=30),
-        "response_size_bytes": _fuzz_int(400, 150, lo=50),
-    } for tool in new_tools]
+    return [
+        {
+            "_needs_baseline": True,
+            "agent_name": agent,
+            "tool_name": tool,
+            "action": "execute",
+            "duration_ms": _fuzz_int(100, 40, lo=20),
+            "data_accessed_bytes": _fuzz_int(500, 200, lo=50),
+            "arguments_size_bytes": _fuzz_int(250, 100, lo=30),
+            "response_size_bytes": _fuzz_int(400, 150, lo=50),
+        }
+        for tool in new_tools
+    ]
 
 
 def _gen_data_exfiltration(agent: str, iteration: int) -> list[dict[str, Any]]:
     """Data volume spike exceeding baseline."""
-    return [{
-        "_needs_baseline": True,
-        "agent_name": agent,
-        "tool_name": "read_data",
-        "action": "read",
-        "duration_ms": _fuzz_int(80, 30, lo=10),
-        "data_accessed_bytes": _fuzz_int(8000, 2000, lo=5500),
-        "arguments_size_bytes": _fuzz_int(100, 30, lo=20),
-        "response_size_bytes": _fuzz_int(8000, 2000, lo=5000),
-    }]
+    return [
+        {
+            "_needs_baseline": True,
+            "agent_name": agent,
+            "tool_name": "read_data",
+            "action": "read",
+            "duration_ms": _fuzz_int(80, 30, lo=10),
+            "data_accessed_bytes": _fuzz_int(8000, 2000, lo=5500),
+            "arguments_size_bytes": _fuzz_int(100, 30, lo=20),
+            "response_size_bytes": _fuzz_int(8000, 2000, lo=5000),
+        }
+    ]
 
 
 def _gen_privilege_escalation(agent: str, iteration: int) -> list[dict[str, Any]]:
     """First-time access to sensitive admin tools."""
     sensitive = random.choice(_SENSITIVE_TOOLS)
-    return [{
-        "_needs_baseline": True,
-        "agent_name": agent,
-        "tool_name": sensitive,
-        "action": "admin",
-        "duration_ms": _fuzz_int(60, 25, lo=10),
-        "data_accessed_bytes": _fuzz_int(200, 80, lo=0),
-        "arguments_size_bytes": _fuzz_int(150, 60, lo=20),
-        "response_size_bytes": _fuzz_int(300, 100, lo=50),
-    }]
+    return [
+        {
+            "_needs_baseline": True,
+            "agent_name": agent,
+            "tool_name": sensitive,
+            "action": "admin",
+            "duration_ms": _fuzz_int(60, 25, lo=10),
+            "data_accessed_bytes": _fuzz_int(200, 80, lo=0),
+            "arguments_size_bytes": _fuzz_int(150, 60, lo=20),
+            "response_size_bytes": _fuzz_int(300, 100, lo=50),
+        }
+    ]
 
 
 def _gen_rate_spike(agent: str, iteration: int) -> list[dict[str, Any]]:
     """Sudden burst of rapid calls."""
     n_calls = _fuzz_int(45, 10, lo=30, hi=80)
-    return [{
-        "_needs_baseline": True,
-        "agent_name": agent,
-        "tool_name": "query",
-        "action": "read",
-        "duration_ms": _fuzz_int(10, 5, lo=1),
-        "data_accessed_bytes": _fuzz_int(20, 10, lo=0),
-        "arguments_size_bytes": _fuzz_int(50, 20, lo=5),
-        "response_size_bytes": _fuzz_int(100, 40, lo=10),
-    } for _ in range(n_calls)]
+    return [
+        {
+            "_needs_baseline": True,
+            "agent_name": agent,
+            "tool_name": "query",
+            "action": "read",
+            "duration_ms": _fuzz_int(10, 5, lo=1),
+            "data_accessed_bytes": _fuzz_int(20, 10, lo=0),
+            "arguments_size_bytes": _fuzz_int(50, 20, lo=5),
+            "response_size_bytes": _fuzz_int(100, 40, lo=10),
+        }
+        for _ in range(n_calls)
+    ]
 
 
 # Map scenario names to their generators
@@ -360,6 +388,7 @@ _SCENARIO_GENERATORS: dict[str, Any] = {
 @dataclass
 class SeedStats:
     """Statistics from a seed run."""
+
     iterations: int = 0
     total_invocations: int = 0
     total_alerts: int = 0
@@ -537,10 +566,7 @@ def seed_database(
                 if i % 10 == 0:
                     for inv_kwargs in attack_invocations:
                         # Clean special keys
-                        clean = {
-                            k: v for k, v in inv_kwargs.items()
-                            if not k.startswith("_")
-                        }
+                        clean = {k: v for k, v in inv_kwargs.items() if not k.startswith("_")}
                         if clean.get("agent_name"):
                             detector.record_invocation(**clean)
 
