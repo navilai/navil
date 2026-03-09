@@ -138,7 +138,8 @@ jobs:
             --ignore=tests/test_ml_features.py \
             --ignore=tests/test_ml_isolation_forest.py \
             --ignore=tests/test_ml_clustering.py \
-            --ignore=tests/test_llm_client.py
+            --ignore=tests/test_llm_client.py \
+            --ignore=tests/test_llm_streaming.py
       - name: Check coverage threshold (80%)
         run: coverage report --fail-under=80
 
@@ -171,8 +172,8 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: "3.12"
-      - name: Install dependencies (with LLM)
-        run: pip install -e ".[dev,llm]"
+      - name: Install dependencies (with LLM + cloud)
+        run: pip install -e ".[dev,llm,cloud]"
       - name: Run LLM tests (all mocked)
         run: |
           pytest \
@@ -180,6 +181,7 @@ jobs:
             tests/test_llm_analyzer.py \
             tests/test_llm_policy_gen.py \
             tests/test_self_healing.py \
+            tests/test_llm_streaming.py \
             -v
 
   # ════════════════════════════════════════════════════════════════════════════
