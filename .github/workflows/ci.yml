@@ -1,3 +1,16 @@
+# ─── Navil CI Pipeline ────────────────────────────────────────────────────────
+#
+# Triggers on push to main and on all pull requests.
+# Three pillars run in parallel:
+#   • Rust Data Plane   — fmt, clippy, test
+#   • Python Control Plane — lint, typecheck, test (matrix), ML tests, LLM tests
+#   • React Dashboard   — type check, build
+#
+# Additional quality gates:
+#   • Docker Compose build smoke test
+#   • Dependency security audit (cargo audit + pip-audit + npm audit)
+# ──────────────────────────────────────────────────────────────────────────────
+
 name: CI
 
 on:
@@ -9,8 +22,74 @@ on:
 permissions:
   contents: read
 
+# Cancel in-progress runs for the same branch/PR (saves CI minutes)
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+# ─── Jobs ────────────────────────────────────────────────────────────────────
+
 jobs:
-  lint:
+  # ════════════════════════════════════════════════════════════════════════════
+  # 1. RUST DATA PLANE
+  # ════════════════════════════════════════════════════════════════════════════
+
+  rust-fmt:
+    name: "Rust · Format"
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: navil-proxy
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          components: rustfmt
+      - name: Check formatting
+        run: cargo fmt -- --check
+
+  rust-clippy:
+    name: "Rust · Clippy"
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: navil-proxy
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          components: clippy
+      - uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: navil-proxy
+      - name: Install system dependencies
+        run: sudo apt-get update && sudo apt-get install -y pkg-config libssl-dev
+      - name: Clippy (deny warnings)
+        run: cargo clippy -- -D warnings
+
+  rust-test:
+    name: "Rust · Test"
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: navil-proxy
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+      - uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: navil-proxy
+      - name: Install system dependencies
+        run: sudo apt-get update && sudo apt-get install -y pkg-config libssl-dev
+      - name: Run tests
+        run: cargo test
+
+  # ════════════════════════════════════════════════════════════════════════════
+  # 2. PYTHON CONTROL PLANE
+  # ════════════════════════════════════════════════════════════════════════════
+
+  python-lint:
+    name: "Python · Lint"
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -24,7 +103,8 @@ jobs:
       - name: Check formatting with ruff
         run: ruff format --check .
 
-  typecheck:
+  python-typecheck:
+    name: "Python · Type Check"
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -36,7 +116,8 @@ jobs:
       - name: Type check with mypy
         run: mypy navil/
 
-  test:
+  python-test:
+    name: "Python · Test (py${{ matrix.python-version }})"
     runs-on: ubuntu-latest
     strategy:
       matrix:
@@ -49,12 +130,20 @@ jobs:
       - name: Install dependencies
         run: pip install -e ".[dev]"
       - name: Run core tests with coverage
-        run: pytest --cov=navil --cov-report=xml --cov-report=term-missing --ignore=tests/test_ml_features.py --ignore=tests/test_ml_isolation_forest.py --ignore=tests/test_ml_clustering.py --ignore=tests/test_llm_client.py
-      - name: Check coverage threshold
         run: |
-          coverage report --fail-under=80
+          pytest \
+            --cov=navil \
+            --cov-report=xml \
+            --cov-report=term-missing \
+            --ignore=tests/test_ml_features.py \
+            --ignore=tests/test_ml_isolation_forest.py \
+            --ignore=tests/test_ml_clustering.py \
+            --ignore=tests/test_llm_client.py
+      - name: Check coverage threshold (80%)
+        run: coverage report --fail-under=80
 
-  test-ml:
+  python-test-ml:
+    name: "Python · ML Tests (py${{ matrix.python-version }})"
     runs-on: ubuntu-latest
     strategy:
       matrix:
@@ -67,9 +156,15 @@ jobs:
       - name: Install dependencies (with ML)
         run: pip install -e ".[dev,ml]"
       - name: Run ML tests
-        run: pytest tests/test_ml_features.py tests/test_ml_isolation_forest.py tests/test_ml_clustering.py -v
+        run: |
+          pytest \
+            tests/test_ml_features.py \
+            tests/test_ml_isolation_forest.py \
+            tests/test_ml_clustering.py \
+            -v
 
-  test-llm:
+  python-test-llm:
+    name: "Python · LLM Tests"
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -79,9 +174,20 @@ jobs:
       - name: Install dependencies (with LLM)
         run: pip install -e ".[dev,llm]"
       - name: Run LLM tests (all mocked)
-        run: pytest tests/test_llm_client.py tests/test_llm_analyzer.py tests/test_llm_policy_gen.py tests/test_self_healing.py -v
+        run: |
+          pytest \
+            tests/test_llm_client.py \
+            tests/test_llm_analyzer.py \
+            tests/test_llm_policy_gen.py \
+            tests/test_self_healing.py \
+            -v
 
-  dashboard-build:
+  # ════════════════════════════════════════════════════════════════════════════
+  # 3. REACT DASHBOARD
+  # ════════════════════════════════════════════════════════════════════════════
+
+  dashboard:
+    name: "Dashboard · Type Check & Build"
     runs-on: ubuntu-latest
     defaults:
       run:
@@ -95,7 +201,63 @@ jobs:
           cache-dependency-path: dashboard/package-lock.json
       - name: Install dependencies
         run: npm ci
-      - name: Type check
+      - name: Type check (tsc --noEmit)
         run: npx tsc --noEmit
-      - name: Build
+      - name: Build production bundle
         run: npm run build
+
+  # ════════════════════════════════════════════════════════════════════════════
+  # 4. DOCKER COMPOSE BUILD (smoke test)
+  # ════════════════════════════════════════════════════════════════════════════
+
+  docker-build:
+    name: "Docker · Compose Build"
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Build all images
+        run: docker compose build
+      - name: Verify images created
+        run: docker images --format "table {{.Repository}}\t{{.Tag}}\t{{.Size}}"
+
+  # ════════════════════════════════════════════════════════════════════════════
+  # 5. SECURITY AUDIT
+  # ════════════════════════════════════════════════════════════════════════════
+
+  security-audit:
+    name: "Security · Dependency Audit"
+    runs-on: ubuntu-latest
+    continue-on-error: true   # Advisory — don't block merges on upstream CVEs
+    steps:
+      - uses: actions/checkout@v4
+
+      # ── Rust audit ──
+      - uses: dtolnay/rust-toolchain@stable
+      - name: Install cargo-audit
+        run: cargo install cargo-audit
+      - name: Audit Rust dependencies
+        working-directory: navil-proxy
+        run: cargo audit
+
+      # ── Python audit ──
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Install pip-audit and project
+        run: |
+          pip install pip-audit
+          pip install -e ".[cloud,llm,ml]"
+      - name: Audit Python dependencies
+        run: pip-audit
+        continue-on-error: true
+
+      # ── Node audit ──
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+      - name: Audit npm dependencies
+        working-directory: dashboard
+        run: |
+          npm ci
+          npm audit --audit-level=high
+        continue-on-error: true
