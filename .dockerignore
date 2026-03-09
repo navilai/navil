@@ -1,0 +1,43 @@
+# Version control
+.git/
+.gitignore
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.egg-info/
+.eggs/
+*.egg
+.venv/
+venv/
+env/
+.mypy_cache/
+.ruff_cache/
+.pytest_cache/
+htmlcov/
+.coverage
+
+# Rust build artifacts
+navil-proxy/target/
+
+# Node
+dashboard/node_modules/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# CI / config
+.github/
+.claude/
+*.md
+!README.md
+!LICENSE*
+
+# Test / docs
+tests/
+docs/
+*.test.*

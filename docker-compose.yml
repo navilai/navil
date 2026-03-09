@@ -1,0 +1,78 @@
+# Navil — One-Click Deployment
+#
+# Usage:
+#   docker compose up -d          # Start all services
+#   docker compose logs -f        # Follow logs
+#   docker compose down            # Stop and remove
+#
+# The dashboard is available at http://localhost:8484
+# The Rust MCP proxy intercepts traffic at http://localhost:8080/mcp
+#
+# Point your AI agents at http://localhost:8080/mcp instead of
+# connecting directly to the MCP server.
+
+services:
+  # ── Redis: shared data plane ──────────────────────────────────────────────
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis-data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+    restart: unless-stopped
+
+  # ── Rust Data Plane: sub-millisecond MCP proxy ────────────────────────────
+  proxy:
+    build:
+      context: ./navil-proxy
+      dockerfile: Dockerfile
+    ports:
+      - "8080:8080"
+    environment:
+      NAVIL_TARGET_URL: ${NAVIL_TARGET_URL:-http://host.docker.internal:3000}
+      NAVIL_REDIS_URL: redis://redis:6379
+      NAVIL_PORT: "8080"
+      NAVIL_HMAC_SECRET: ${NAVIL_HMAC_SECRET:-}
+      RUST_LOG: ${RUST_LOG:-info}
+    depends_on:
+      redis:
+        condition: service_healthy
+    restart: unless-stopped
+
+  # ── Python Control Plane: ML workers + dashboard ──────────────────────────
+  control-plane:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        VITE_CLERK_PUBLISHABLE_KEY: ${VITE_CLERK_PUBLISHABLE_KEY:-}
+    ports:
+      - "8484:8484"
+    environment:
+      PORT: "8484"
+      NAVIL_REDIS_URL: redis://redis:6379
+      ALLOWED_ORIGINS: ${ALLOWED_ORIGINS:-*}
+      # Give-to-Get cloud sync
+      NAVIL_API_KEY: ${NAVIL_API_KEY:-}
+      NAVIL_DEPLOYMENT_SECRET: ${NAVIL_DEPLOYMENT_SECRET:-}
+      NAVIL_DISABLE_CLOUD_SYNC: ${NAVIL_DISABLE_CLOUD_SYNC:-}
+      NAVIL_INTEL_SYNC_INTERVAL: ${NAVIL_INTEL_SYNC_INTERVAL:-3600}
+      # LLM keys (optional — bring your own)
+      ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY:-}
+      OPENAI_API_KEY: ${OPENAI_API_KEY:-}
+      GEMINI_API_KEY: ${GEMINI_API_KEY:-}
+      # Auth (optional)
+      CLERK_SECRET_KEY: ${CLERK_SECRET_KEY:-}
+      CLERK_ISSUER_URL: ${CLERK_ISSUER_URL:-}
+    depends_on:
+      redis:
+        condition: service_healthy
+    restart: unless-stopped
+
+volumes:
+  redis-data:
