@@ -8,13 +8,13 @@ RUN npm ci --ignore-scripts
 COPY dashboard/ ./
 
 # Clerk publishable key is baked into the JS bundle at build time.
-# Set this as a Build Variable in Railway (not a runtime variable).
+# Pass as a build arg: docker build --build-arg VITE_CLERK_PUBLISHABLE_KEY=pk_...
 ARG VITE_CLERK_PUBLISHABLE_KEY
 ENV VITE_CLERK_PUBLISHABLE_KEY=$VITE_CLERK_PUBLISHABLE_KEY
 
 RUN npm run build
 
-# ── Stage 2: Python backend ───────────────────────────────────────────────────
+# ── Stage 2: Python control plane ────────────────────────────────────────────
 FROM python:3.12-slim AS runtime
 
 ENV PYTHONUNBUFFERED=1 \
@@ -42,5 +42,8 @@ COPY --from=dashboard-builder /app/dashboard/dist ./dashboard/dist
 
 EXPOSE 8484
 
-# Railway injects $PORT at runtime; fall back to 8484 locally.
+HEALTHCHECK --interval=15s --timeout=5s --retries=3 \
+    CMD python -c "import urllib.request; urllib.request.urlopen('http://localhost:${PORT:-8484}/api/local/health')" || exit 1
+
+# PORT env var allows override (Railway, Heroku, etc.); default 8484.
 CMD ["sh", "-c", "python -m navil cloud serve --host 0.0.0.0 --port ${PORT:-8484}"]
