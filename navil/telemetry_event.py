@@ -6,6 +6,7 @@ Canonical event format matching the Rust TelemetryEvent shape from
 navil-proxy/src/main.rs.  Both Python producers (proxy, REST API) and
 the TelemetryWorker consumer use this module to stay in sync.
 """
+
 from __future__ import annotations
 
 from datetime import datetime, timezone

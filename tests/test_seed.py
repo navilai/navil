@@ -65,10 +65,12 @@ class TestMockMCPServer:
         with MockMCPServer() as server:
             req = urllib.request.Request(
                 server.url,
-                data=json.dumps({
-                    "method": "tools/call",
-                    "params": {"name": "read_file", "args": {"path": "/tmp/test"}},
-                }).encode(),
+                data=json.dumps(
+                    {
+                        "method": "tools/call",
+                        "params": {"name": "read_file", "args": {"path": "/tmp/test"}},
+                    }
+                ).encode(),
                 headers={"Content-Type": "application/json"},
                 method="POST",
             )
@@ -306,7 +308,8 @@ class TestCLIIntegration:
         """Verify JSON output mode works."""
         from navil.cli import main
 
-        with patch("sys.argv", ["navil", "seed-database", "-n", "2", "--quiet", "--no-server", "--json"]):
+        seed_args = ["navil", "seed-database", "-n", "2", "--quiet", "--no-server", "--json"]
+        with patch("sys.argv", seed_args):
             exit_code = main()
         assert exit_code == 0
         captured = capsys.readouterr()

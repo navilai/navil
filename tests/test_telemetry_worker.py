@@ -30,17 +30,20 @@ def _push_event(fake_redis, event: dict) -> None:
 class TestTelemetryWorkerProcessing:
     async def test_run_once_processes_event(self, worker, fake_redis, detector):
         """A single FORWARDED event should be consumed and recorded."""
-        _push_event(fake_redis, {
-            "agent_name": "rust-agent",
-            "tool_name": "read_file",
-            "method": "tools/call",
-            "action": "FORWARDED",
-            "payload_bytes": 256,
-            "response_bytes": 1024,
-            "duration_ms": 5,
-            "timestamp": "2026-03-08T12:00:00Z",
-            "target_server": "http://localhost:3000",
-        })
+        _push_event(
+            fake_redis,
+            {
+                "agent_name": "rust-agent",
+                "tool_name": "read_file",
+                "method": "tools/call",
+                "action": "FORWARDED",
+                "payload_bytes": 256,
+                "response_bytes": 1024,
+                "duration_ms": 5,
+                "timestamp": "2026-03-08T12:00:00Z",
+                "target_server": "http://localhost:3000",
+            },
+        )
 
         processed = await worker.run_once()
 
@@ -64,17 +67,20 @@ class TestTelemetryWorkerProcessing:
 
     async def test_blocked_event_records_failure(self, worker, fake_redis, detector):
         """A BLOCKED event should record success=False."""
-        _push_event(fake_redis, {
-            "agent_name": "bad-agent",
-            "tool_name": "write_file",
-            "method": "tools/call",
-            "action": "BLOCKED_RATE",
-            "payload_bytes": 512,
-            "response_bytes": 0,
-            "duration_ms": 1,
-            "timestamp": "2026-03-08T12:00:01Z",
-            "target_server": "http://localhost:3000",
-        })
+        _push_event(
+            fake_redis,
+            {
+                "agent_name": "bad-agent",
+                "tool_name": "write_file",
+                "method": "tools/call",
+                "action": "BLOCKED_RATE",
+                "payload_bytes": 512,
+                "response_bytes": 0,
+                "duration_ms": 1,
+                "timestamp": "2026-03-08T12:00:01Z",
+                "target_server": "http://localhost:3000",
+            },
+        )
 
         await worker.run_once()
 
@@ -87,17 +93,20 @@ class TestTelemetryWorkerProcessing:
     async def test_multiple_events_processed_in_order(self, worker, fake_redis, detector):
         """Events should be processed FIFO (LPUSH + BRPOP = queue)."""
         for i in range(3):
-            _push_event(fake_redis, {
-                "agent_name": f"agent-{i}",
-                "tool_name": "tool",
-                "method": "tools/call",
-                "action": "FORWARDED",
-                "payload_bytes": 100,
-                "response_bytes": 200,
-                "duration_ms": 10,
-                "timestamp": f"2026-03-08T12:00:0{i}Z",
-                "target_server": "http://localhost:3000",
-            })
+            _push_event(
+                fake_redis,
+                {
+                    "agent_name": f"agent-{i}",
+                    "tool_name": "tool",
+                    "method": "tools/call",
+                    "action": "FORWARDED",
+                    "payload_bytes": 100,
+                    "response_bytes": 200,
+                    "duration_ms": 10,
+                    "timestamp": f"2026-03-08T12:00:0{i}Z",
+                    "target_server": "http://localhost:3000",
+                },
+            )
 
         for _ in range(3):
             await worker.run_once()
@@ -123,17 +132,20 @@ class TestTelemetryWorkerProcessing:
 class TestTelemetryWorkerThresholdSync:
     async def test_thresholds_written_to_redis(self, worker, fake_redis, detector):
         """After processing an event, thresholds should be synced to Redis."""
-        _push_event(fake_redis, {
-            "agent_name": "sync-agent",
-            "tool_name": "read_file",
-            "method": "tools/call",
-            "action": "FORWARDED",
-            "payload_bytes": 100,
-            "response_bytes": 500,
-            "duration_ms": 10,
-            "timestamp": "2026-03-08T12:00:00Z",
-            "target_server": "http://localhost:3000",
-        })
+        _push_event(
+            fake_redis,
+            {
+                "agent_name": "sync-agent",
+                "tool_name": "read_file",
+                "method": "tools/call",
+                "action": "FORWARDED",
+                "payload_bytes": 100,
+                "response_bytes": 500,
+                "duration_ms": 10,
+                "timestamp": "2026-03-08T12:00:00Z",
+                "target_server": "http://localhost:3000",
+            },
+        )
 
         await worker.run_once()
 
@@ -147,17 +159,20 @@ class TestTelemetryWorkerThresholdSync:
 
     async def test_tools_list_event(self, worker, fake_redis, detector):
         """tools/list events should be marked as is_list_tools=True."""
-        _push_event(fake_redis, {
-            "agent_name": "list-agent",
-            "tool_name": "",
-            "method": "tools/list",
-            "action": "FORWARDED",
-            "payload_bytes": 50,
-            "response_bytes": 300,
-            "duration_ms": 2,
-            "timestamp": "2026-03-08T12:00:00Z",
-            "target_server": "http://localhost:3000",
-        })
+        _push_event(
+            fake_redis,
+            {
+                "agent_name": "list-agent",
+                "tool_name": "",
+                "method": "tools/list",
+                "action": "FORWARDED",
+                "payload_bytes": 50,
+                "response_bytes": 300,
+                "duration_ms": 2,
+                "timestamp": "2026-03-08T12:00:00Z",
+                "target_server": "http://localhost:3000",
+            },
+        )
 
         await worker.run_once()
 

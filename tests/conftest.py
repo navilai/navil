@@ -93,7 +93,7 @@ class FakeRedis:
             if stop == -1:
                 self._data[name] = lst[start:]
             else:
-                self._data[name] = lst[start:stop + 1]
+                self._data[name] = lst[start : stop + 1]
         return True
 
     async def brpop(self, keys: str | list[str], timeout: int = 0) -> tuple[bytes, bytes] | None:
@@ -125,7 +125,10 @@ class FakeRedisPipeline:
         self._commands: list[tuple[str, tuple, dict]] = []
 
     def hset(
-        self, name: str, mapping: dict[str, Any] | None = None, **kw: Any,
+        self,
+        name: str,
+        mapping: dict[str, Any] | None = None,
+        **kw: Any,
     ) -> FakeRedisPipeline:
         self._commands.append(("hset", (name,), {"mapping": mapping, **kw}))
         return self

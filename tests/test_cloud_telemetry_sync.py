@@ -441,7 +441,10 @@ class TestDequeEviction:
         detector = BehavioralAnomalyDetector()
 
         w = CloudSyncWorker(
-            detector=detector, deployment_secret=SECRET, sync_interval=60, enabled=True,
+            detector=detector,
+            deployment_secret=SECRET,
+            sync_interval=60,
+            enabled=True,
         )
 
         # Mock HTTP client

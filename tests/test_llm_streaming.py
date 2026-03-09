@@ -158,12 +158,14 @@ class TestLLMClientStream:
                 c.choices = [MagicMock(delta=MagicMock(content=content))]
                 return c
 
-            mock_client.chat.completions.create.return_value = iter([
-                _make_chunk("chunk1"),
-                _make_chunk("chunk2"),
-                _make_chunk(None),  # empty delta
-                _make_chunk("chunk3"),
-            ])
+            mock_client.chat.completions.create.return_value = iter(
+                [
+                    _make_chunk("chunk1"),
+                    _make_chunk("chunk2"),
+                    _make_chunk(None),  # empty delta
+                    _make_chunk("chunk3"),
+                ]
+            )
 
             from navil.llm.client import LLMClient
 
@@ -295,6 +297,7 @@ class TestSSEEndpoints:
     def _reset_state(self) -> Iterator[None]:
         """Reset AppState singleton between tests."""
         from navil.api.local.state import AppState
+
         AppState.reset()
         yield
         AppState.reset()
@@ -317,7 +320,11 @@ class TestSSEEndpoints:
         s.llm_api_key_configured = True
 
         mock_client = MagicMock()
-        mock_client.stream.return_value = iter(['{"explanation": "test analysis", "risks": [], "remediations": [], "severity": "LOW", "confidence": 0.9}'])
+        mock_json = (
+            '{"explanation": "test analysis", "risks": [],'
+            ' "remediations": [], "severity": "LOW", "confidence": 0.9}'
+        )
+        mock_client.stream.return_value = iter([mock_json])
         mock_client.complete.return_value = '{"explanation": "test analysis"}'
         mock_client.max_tokens = 1024
 
@@ -339,6 +346,7 @@ class TestSSEEndpoints:
     @pytest.fixture
     def client(self, app):
         from starlette.testclient import TestClient
+
         return TestClient(app)
 
     def test_analyze_config_returns_sse(self, client) -> None:
@@ -367,11 +375,12 @@ class TestSSEEndpoints:
     def test_generate_policy_returns_sse(self, client) -> None:
         """POST /api/llm/generate-policy should return SSE stream."""
         from navil.api.local.state import AppState
+
         s = AppState.get()
         # Return valid YAML from stream
-        s.policy_generator.client.stream.return_value = iter([
-            'version: "1.0"\nagents: {}\ntools: {}'
-        ])
+        s.policy_generator.client.stream.return_value = iter(
+            ['version: "1.0"\nagents: {}\ntools: {}']
+        )
 
         resp = client.post(
             "/api/local/llm/generate-policy",
@@ -386,12 +395,14 @@ class TestSSEEndpoints:
 
         s = AppState.get()
         call_count = 0
-        original_stream = s.llm_analyzer.client.stream
 
         def counting_stream(*args, **kwargs):
             nonlocal call_count
             call_count += 1
-            return iter(['{"explanation": "fresh", "risks": [], "remediations": [], "severity": "LOW"}'])
+            fresh_json = (
+                '{"explanation": "fresh", "risks": [],' ' "remediations": [], "severity": "LOW"}'
+            )
+            return iter([fresh_json])
 
         s.llm_analyzer.client.stream = counting_stream
 
@@ -427,6 +438,7 @@ class TestSSEEndpoints:
     def test_apply_action_not_streamed(self, client) -> None:
         """apply-action should return plain JSON, not SSE."""
         from navil.api.local.state import AppState
+
         s = AppState.get()
         s.self_healing.apply_action.return_value = True
 

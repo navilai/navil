@@ -134,9 +134,7 @@ def sanitize_alert(
     # 4. Defence-in-depth: verify NO banned field leaked through
     leaked = BANNED_FIELDS & set(out.keys())
     if leaked:
-        raise ValueError(
-            f"Privacy violation: banned fields in sanitized output: {leaked}"
-        )
+        raise ValueError(f"Privacy violation: banned fields in sanitized output: {leaked}")
 
     # 5. Final allowlist gate: drop anything not explicitly allowed
     return {k: v for k, v in out.items() if k in ALLOWED_FIELDS}
@@ -258,7 +256,7 @@ class CloudSyncWorker:
         if self._last_sync_idx > current_len:
             self._last_sync_idx = 0
         alert_snapshot = list(alerts)
-        new_alerts = alert_snapshot[self._last_sync_idx:]
+        new_alerts = alert_snapshot[self._last_sync_idx :]
         if not new_alerts:
             return 0
 

@@ -117,7 +117,9 @@ class LLMResponseCache:
         if self._redis:
             try:
                 await self._redis.set(
-                    f"{REDIS_KEY_PREFIX}{key}", value, ex=self._ttl,
+                    f"{REDIS_KEY_PREFIX}{key}",
+                    value,
+                    ex=self._ttl,
                 )
             except Exception:
                 logger.debug("Redis cache put failed")

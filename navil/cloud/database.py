@@ -49,12 +49,14 @@ def _get_engine():  # type: ignore[no-untyped-def]
             connect_args["check_same_thread"] = False
         else:
             # PostgreSQL / production pool tuning
-            pool_kwargs.update({
-                "pool_size": 20,
-                "max_overflow": 10,
-                "pool_recycle": 300,
-                "pool_timeout": 30,
-            })
+            pool_kwargs.update(
+                {
+                    "pool_size": 20,
+                    "max_overflow": 10,
+                    "pool_recycle": 300,
+                    "pool_timeout": 30,
+                }
+            )
 
         _engine = create_engine(
             DATABASE_URL,

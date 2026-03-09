@@ -19,12 +19,12 @@ use std::sync::Arc;
 use std::time::{Instant, SystemTime, UNIX_EPOCH};
 
 use axum::{
-    Router,
     body::Bytes,
     extract::State,
     http::{HeaderMap, StatusCode},
     response::{IntoResponse, Json},
     routing::{get, post},
+    Router,
 };
 use hmac::{Hmac, Mac};
 use serde::{Deserialize, Serialize};
@@ -94,7 +94,11 @@ struct JsonRpcErrorBody {
     message: String,
 }
 
-fn jsonrpc_error(code: i32, message: impl Into<String>, id: Option<serde_json::Value>) -> Json<JsonRpcError> {
+fn jsonrpc_error(
+    code: i32,
+    message: impl Into<String>,
+    id: Option<serde_json::Value>,
+) -> Json<JsonRpcError> {
     Json(JsonRpcError {
         jsonrpc: "2.0",
         error: JsonRpcErrorBody {
@@ -110,7 +114,10 @@ fn jsonrpc_error(code: i32, message: impl Into<String>, id: Option<serde_json::V
 /// Check JSON nesting depth. Returns Err if depth exceeds limit.
 fn check_json_depth(value: &serde_json::Value, current: usize, limit: usize) -> Result<(), String> {
     if current > limit {
-        return Err(format!("JSON nesting depth {} exceeds limit {}", current, limit));
+        return Err(format!(
+            "JSON nesting depth {} exceeds limit {}",
+            current, limit
+        ));
     }
     match value {
         serde_json::Value::Object(map) => {
@@ -151,7 +158,8 @@ fn sanitize_request(body: &[u8]) -> Result<(serde_json::Value, Vec<u8>), (i32, S
     check_json_depth(&value, 1, MAX_JSON_DEPTH).map_err(|msg| (-32700, msg))?;
 
     // Re-serialize compact (strips whitespace padding)
-    let compact = serde_json::to_vec(&value).map_err(|e| (-32700, format!("JSON re-serialize failed: {e}")))?;
+    let compact = serde_json::to_vec(&value)
+        .map_err(|e| (-32700, format!("JSON re-serialize failed: {e}")))?;
 
     Ok((value, compact))
 }
@@ -176,7 +184,7 @@ fn verify_hmac(secret: &[u8], body: &[u8], signature: &str) -> bool {
 
 fn hex_decode(s: &str) -> Option<Vec<u8>> {
     let s = s.strip_prefix("sha256=").unwrap_or(s);
-    if s.len() % 2 != 0 {
+    if !s.len().is_multiple_of(2) {
         return None;
     }
     (0..s.len())
@@ -192,19 +200,18 @@ async fn get_thresholds(
     agent: &str,
 ) -> AgentThresholds {
     let key = format!("navil:agent:{}:thresholds", agent);
-    let result: Result<Vec<Option<String>>, _> =
-        redis::cmd("HMGET")
-            .arg(&key)
-            .arg("max_payload_bytes")
-            .arg("rate_limit_per_min")
-            .arg("blocked")
-            .query_async(conn)
-            .await;
+    let result: Result<Vec<Option<String>>, _> = redis::cmd("HMGET")
+        .arg(&key)
+        .arg("max_payload_bytes")
+        .arg("rate_limit_per_min")
+        .arg("blocked")
+        .query_async(conn)
+        .await;
 
     match result {
         Ok(fields) => {
             let max_payload = fields
-                .get(0)
+                .first()
                 .and_then(|v| v.as_ref())
                 .and_then(|s| s.parse::<usize>().ok())
                 .unwrap_or(10_000_000);
@@ -285,11 +292,11 @@ struct TelemetryEvent {
     agent_name: String,
     tool_name: String,
     method: String,
-    action: String,          // "FORWARDED", "BLOCKED_THRESHOLD", "BLOCKED_RATE", etc.
+    action: String, // "FORWARDED", "BLOCKED_THRESHOLD", "BLOCKED_RATE", etc.
     payload_bytes: usize,
     response_bytes: usize,
     duration_ms: u64,
-    timestamp: String,       // ISO 8601
+    timestamp: String, // ISO 8601
     target_server: String,
 }
 
@@ -417,14 +424,13 @@ async fn handle_mcp(
                 }
 
                 if compact_body.len() > thresholds.max_payload_bytes {
-                    return Err((
-                        -32002,
-                        "BLOCKED_THRESHOLD".to_string(),
-                    ));
+                    return Err((-32002, "BLOCKED_THRESHOLD".to_string()));
                 }
 
                 // Rate limit check
-                if let Err(_msg) = check_rate_limit(conn, &agent_name, thresholds.rate_limit_per_min).await {
+                if let Err(_msg) =
+                    check_rate_limit(conn, &agent_name, thresholds.rate_limit_per_min).await
+                {
                     return Err((-32002, "BLOCKED_RATE".to_string()));
                 }
             }
@@ -605,7 +611,16 @@ fn chrono_iso8601_now() -> String {
     let month_days: [i64; 12] = [
         31,
         if leap { 29 } else { 28 },
-        31, 30, 31, 30, 31, 31, 30, 31, 30, 31,
+        31,
+        30,
+        31,
+        30,
+        31,
+        31,
+        30,
+        31,
+        30,
+        31,
     ];
     let mut m = 0usize;
     for (i, &md) in month_days.iter().enumerate() {
@@ -650,11 +665,13 @@ async fn main() {
         )
         .init();
 
-    let target_url = std::env::var("NAVIL_TARGET_URL")
-        .unwrap_or_else(|_| "http://localhost:3000".to_string());
+    let target_url =
+        std::env::var("NAVIL_TARGET_URL").unwrap_or_else(|_| "http://localhost:3000".to_string());
     let redis_url =
         std::env::var("NAVIL_REDIS_URL").unwrap_or_else(|_| "redis://127.0.0.1:6379".to_string());
-    let hmac_secret = std::env::var("NAVIL_HMAC_SECRET").ok().map(|s| s.into_bytes());
+    let hmac_secret = std::env::var("NAVIL_HMAC_SECRET")
+        .ok()
+        .map(|s| s.into_bytes());
     let port: u16 = std::env::var("NAVIL_PORT")
         .ok()
         .and_then(|s| s.parse().ok())
@@ -682,10 +699,7 @@ async fn main() {
         .await
         .expect("Failed to bind");
 
-    info!(
-        "navil-proxy listening on 0.0.0.0:{} → {}",
-        port, target_url
-    );
+    info!("navil-proxy listening on 0.0.0.0:{} → {}", port, target_url);
 
     axum::serve(listener, app).await.expect("Server error");
 }

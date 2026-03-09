@@ -10,6 +10,7 @@ and applies it to the local detection system via two landing zones:
 
 Respects the ``NAVIL_DISABLE_CLOUD_SYNC`` opt-out flag.
 """
+
 from __future__ import annotations
 
 import asyncio
@@ -28,6 +29,7 @@ THREAT_INTEL_CHANNEL = "navil:threat_intel:inbound"
 @dataclass
 class ThreatIntelEntry:
     """A single inbound threat intelligence entry."""
+
     source: str  # "community", "navil-cloud", "manual"
     entry_type: str  # "blocklist" or "pattern"
     # For blocklist entries:
@@ -76,7 +78,8 @@ class ThreatIntelConsumer:
 
         # Community mode: must share to receive
         sync_disabled = os.environ.get(
-            "NAVIL_DISABLE_CLOUD_SYNC", "",
+            "NAVIL_DISABLE_CLOUD_SYNC",
+            "",
         ).lower() in ("1", "true", "yes")
         if sync_disabled:
             logger.warning(
@@ -105,7 +108,8 @@ class ThreatIntelConsumer:
             while self._running:
                 try:
                     message = await pubsub.get_message(
-                        ignore_subscribe_messages=True, timeout=5.0,
+                        ignore_subscribe_messages=True,
+                        timeout=5.0,
                     )
                     if message and message.get("type") == "message":
                         data = message.get("data", b"")
@@ -141,19 +145,22 @@ class ThreatIntelConsumer:
             await self.redis.hset(key, mapping={"blocked": "1"})
             logger.info(
                 "Blocklist applied: agent_hash=%s source=%s",
-                entry.agent_name_hash[:12], entry.source,
+                entry.agent_name_hash[:12],
+                entry.source,
             )
         elif entry.entry_type == "pattern" and entry.pattern_data:
             if self.pattern_store is None:
                 logger.warning("PatternStore not configured, skipping pattern entry")
                 return
             from navil.adaptive.pattern_store import LearnedPattern
+
             try:
                 pattern = LearnedPattern(**entry.pattern_data)
                 self.pattern_store.add_community_pattern(pattern)
                 logger.info(
                     "Community pattern applied: %s source=%s",
-                    pattern.pattern_id, entry.source,
+                    pattern.pattern_id,
+                    entry.source,
                 )
             except Exception:
                 logger.warning("Invalid pattern data in threat intel entry")
