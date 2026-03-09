@@ -62,6 +62,7 @@ class _MockMCPHandler(BaseHTTPRequestHandler):
 
         method = req.get("method", "")
 
+        resp: dict[str, Any]
         if method == "tools/list":
             resp = {"tools": _MOCK_TOOLS}
         elif method == "tools/call":
