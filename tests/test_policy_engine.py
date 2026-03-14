@@ -81,3 +81,41 @@ def test_decisions_log_populated(engine: PolicyEngine) -> None:
     decisions = engine.get_decisions_log()
     assert len(decisions) >= 1
     assert decisions[-1]["decision"] == PolicyDecision.ALLOW.value
+
+
+def test_rate_limit_atomic_under_concurrent_calls() -> None:
+    """Rate limit must not be exceeded under concurrent access."""
+    import os
+    import tempfile
+    import threading
+
+    policy_yaml = """
+agents:
+  concurrent-agent:
+    allowed_tools:
+      - "*"
+    rate_limit_per_hour: 5
+"""
+    with tempfile.NamedTemporaryFile(mode="w", suffix=".yaml", delete=False) as f:
+        f.write(policy_yaml)
+        policy_file = f.name
+    try:
+        engine = PolicyEngine(policy_file=policy_file)
+        results: list[bool] = []
+        lock = threading.Lock()
+
+        def check() -> None:
+            allowed, reason = engine.check_tool_call("concurrent-agent", "any_tool", "tools/call")
+            with lock:
+                results.append(allowed)
+
+        threads = [threading.Thread(target=check) for _ in range(20)]
+        for t in threads:
+            t.start()
+        for t in threads:
+            t.join()
+
+        allowed_count = sum(results)
+        assert allowed_count <= 5, f"Rate limit exceeded: {allowed_count} allowed (limit 5)"
+    finally:
+        os.unlink(policy_file)
