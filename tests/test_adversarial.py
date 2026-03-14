@@ -281,3 +281,106 @@ class TestJWTSecurity:
         cm = CredentialManager()
         with pytest.raises(Exception):
             cm.verify_credential("")
+
+
+# ---------------------------------------------------------------------------
+# 3. Rate limit bypass attacks
+# ---------------------------------------------------------------------------
+
+
+class TestRateLimitBypass:
+    """Attack PolicyEngine._check_rate_limit()."""
+
+    def _engine_with_limit(self, limit: int = 5) -> PolicyEngine:
+        """Build a PolicyEngine with a known rate limit for a test agent."""
+        engine = PolicyEngine()
+        engine.policy = {
+            "agents": {
+                "limited-agent": {
+                    "allowed_tools": ["*"],
+                    "rate_limit_per_hour": limit,
+                }
+            },
+            "tools": {
+                "any_tool": {"allowed_actions": ["*"]},
+                "tool": {"allowed_actions": ["*"]},
+            },
+        }
+        return engine
+
+    def test_concurrent_limit_holds(self) -> None:
+        """20 concurrent threads against limit=5 must not allow more than 5."""
+        engine = self._engine_with_limit(5)
+        results: list[bool] = []
+        lock = threading.Lock()
+
+        def check() -> None:
+            allowed, _reason = engine.check_tool_call("limited-agent", "any_tool", "tools/call")
+            with lock:
+                results.append(allowed)
+
+        threads = [threading.Thread(target=check) for _ in range(20)]
+        for t in threads:
+            t.start()
+        for t in threads:
+            t.join()
+
+        allowed_count = sum(results)
+        assert allowed_count <= 5, (
+            f"Rate limit exceeded under concurrent load: {allowed_count} allowed (limit 5)"
+        )
+
+    def test_key_collision_different_agents(self) -> None:
+        """FINDING (Medium): agent='a:b' + tool='c' produces key 'a:b:c',
+        same as agent='a' + tool='b:c'. These agents share a rate limit bucket.
+        """
+        engine = PolicyEngine()
+        engine.policy = {
+            "agents": {
+                "a:b": {"allowed_tools": ["*"], "rate_limit_per_hour": 3},
+                "a": {"allowed_tools": ["*"], "rate_limit_per_hour": 3},
+            },
+            "tools": {
+                "c": {"allowed_actions": ["*"]},
+                "b:c": {"allowed_actions": ["*"]},
+            },
+        }
+        # Exhaust agent "a:b"'s bucket with tool "c"
+        for _ in range(3):
+            engine.check_tool_call("a:b", "c", "tools/call")
+
+        # Now agent "a" calling tool "b:c" should have its OWN full bucket
+        # But due to key collision ("a:b:c" == "a:b:c"), it will be exhausted too
+        allowed, _ = engine.check_tool_call("a", "b:c", "tools/call")
+
+        # This assert WILL FAIL if the bug exists (shared bucket = finding)
+        assert allowed is True, (
+            "FINDING: rate limit key collision — agent 'a' + tool 'b:c' shares "
+            "bucket with agent 'a:b' + tool 'c' via key 'a:b:c'"
+        )
+
+    def test_limit_exact_boundary(self) -> None:
+        """Calls 1-5 must be allowed; call 6 must be the first rejection (limit=5)."""
+        engine = self._engine_with_limit(5)
+        results = [
+            engine.check_tool_call("limited-agent", "tool", "tools/call")[0]
+            for _ in range(6)
+        ]
+        assert all(results[:5]), "Calls 1-5 must all be allowed"
+        assert results[5] is False, "Call 6 must be rejected (limit=5, counter reaches 5)"
+
+    def test_limit_resets_after_hour(self) -> None:
+        """After the hour window, the counter must reset and allow calls again."""
+        engine = self._engine_with_limit(2)
+        # Exhaust the limit
+        engine.check_tool_call("limited-agent", "tool", "tools/call")
+        engine.check_tool_call("limited-agent", "tool", "tools/call")
+        blocked, _ = engine.check_tool_call("limited-agent", "tool", "tools/call")
+        assert blocked is False, "Must be blocked after exhausting limit"
+
+        # Wind back the reset_at to simulate an hour passing
+        key = "limited-agent:tool"
+        engine.rate_limits[key]["reset_at"] -= 3601
+
+        allowed, _ = engine.check_tool_call("limited-agent", "tool", "tools/call")
+        assert allowed is True, "Must be allowed after hour window resets"
