@@ -484,3 +484,146 @@ class TestInputValidation:
         from pydantic import ValidationError
         with pytest.raises(ValidationError):
             CredentialIssueRequest(agent_name="agent", scope="s" * 513)
+
+
+# ---------------------------------------------------------------------------
+# 5. JSON-RPC abuse attacks
+# ---------------------------------------------------------------------------
+
+
+class TestJSONRPCAbuse:
+    """Attack the proxy's JSON-RPC parsing and size-limiting pipeline."""
+
+    @pytest.fixture
+    def proxy(self, fake_redis: Any) -> MCPSecurityProxy:
+        detector = BehavioralAnomalyDetector(redis_client=fake_redis)
+        p = MCPSecurityProxy(
+            target_url="http://localhost:3000",
+            policy_engine=PolicyEngine(),
+            anomaly_detector=detector,
+            credential_manager=CredentialManager(),
+            require_auth=False,
+        )
+        # Pre-wire a mock http_client so _forward() doesn't assert
+        p.http_client = AsyncMock()
+        p.http_client.post = AsyncMock(return_value=MagicMock(
+            content=json.dumps({"jsonrpc": "2.0", "result": {}, "id": 1}).encode(),
+            headers={"content-type": "application/json"},
+            text='',
+        ))
+        return p
+
+    @pytest.mark.asyncio
+    async def test_null_method_does_not_crash(self, proxy: MCPSecurityProxy) -> None:
+        """method:null hits the else-branch and forwards — no crash."""
+        body = json.dumps({"jsonrpc": "2.0", "method": None, "id": 1}).encode()
+        result, _ = await proxy.handle_jsonrpc(body, {"x-agent-name": "agent"})
+        # Must return a dict (either forwarded response or error), never raise
+        assert isinstance(result, dict)
+
+    @pytest.mark.asyncio
+    async def test_non_string_method_does_not_crash(self, proxy: MCPSecurityProxy) -> None:
+        """method as a nested object hits the else-branch — no crash."""
+        body = json.dumps({"jsonrpc": "2.0", "method": {"k": "v"}, "id": 1}).encode()
+        result, _ = await proxy.handle_jsonrpc(body, {"x-agent-name": "agent"})
+        assert isinstance(result, dict)
+
+    def test_payload_at_size_limit_accepted(self) -> None:
+        """Body exactly MAX_PAYLOAD_BYTES must be accepted by sanitize_request."""
+        limit = MCPSecurityProxy.MAX_PAYLOAD_BYTES
+        # Build valid JSON that hits the byte limit
+        padding = "x" * (limit - 20)
+        body = json.dumps({"k": padding}).encode()
+        # Trim/pad to exactly limit
+        body = body[:limit]
+        # May be invalid JSON after truncation — sanitize_request should raise ValueError
+        # The key assertion is: size==limit is NOT rejected for size reason alone
+        try:
+            MCPSecurityProxy.sanitize_request(body)
+        except ValueError as e:
+            assert "too large" not in str(e), f"Should not be rejected for size: {e}"
+
+    def test_payload_over_size_limit_rejected(self) -> None:
+        """Body MAX_PAYLOAD_BYTES + 1 must raise ValueError with 'too large'."""
+        body = b"x" * (MCPSecurityProxy.MAX_PAYLOAD_BYTES + 1)
+        with pytest.raises(ValueError, match="too large"):
+            MCPSecurityProxy.sanitize_request(body)
+
+    def test_json_depth_at_limit_accepted(self) -> None:
+        """JSON nesting exactly at MAX_JSON_DEPTH must be accepted."""
+        def nest(depth: int) -> Any:
+            if depth == 0:
+                return "leaf"
+            return {"k": nest(depth - 1)}
+
+        # _json_depth starts counting at _current=1 and increments per level,
+        # so nest(N) produces a structure with _json_depth == N + 1.
+        # To hit exactly MAX_JSON_DEPTH we therefore nest MAX_JSON_DEPTH - 1 times.
+        data = nest(MCPSecurityProxy.MAX_JSON_DEPTH - 1)
+        body = json.dumps(data).encode()
+        result = MCPSecurityProxy.sanitize_request(body)
+        assert result  # non-empty bytes
+
+    def test_json_depth_over_limit_rejected(self) -> None:
+        """JSON nesting MAX_JSON_DEPTH + 1 must raise ValueError."""
+        def nest(depth: int) -> Any:
+            if depth == 0:
+                return "leaf"
+            return {"k": nest(depth - 1)}
+
+        # nest(MAX_JSON_DEPTH) produces _json_depth == MAX_JSON_DEPTH + 1, which exceeds the limit.
+        data = nest(MCPSecurityProxy.MAX_JSON_DEPTH)
+        body = json.dumps(data).encode()
+        with pytest.raises(ValueError, match="depth"):
+            MCPSecurityProxy.sanitize_request(body)
+
+    @pytest.mark.asyncio
+    async def test_sql_injection_in_tool_name_reaches_policy(
+        self, proxy: MCPSecurityProxy
+    ) -> None:
+        """SQL injection in tool_name is forwarded unchanged — proxy does not sanitize params.
+
+        This is documented behaviour (proxy is transport-layer, not WAF).
+        """
+        sqli_tool = "'; DROP TABLE agents; --"
+        body = json.dumps({
+            "jsonrpc": "2.0",
+            "method": "tools/call",
+            "params": {"name": sqli_tool, "arguments": {}},
+            "id": 1,
+        }).encode()
+        result, _ = await proxy.handle_jsonrpc(body, {"x-agent-name": "agent"})
+        # Should forward (or block via policy), not crash
+        assert isinstance(result, dict)
+
+    @pytest.mark.asyncio
+    async def test_path_traversal_in_tool_params_forwarded(
+        self, proxy: MCPSecurityProxy
+    ) -> None:
+        """Path traversal in params.arguments is forwarded to upstream — proxy does not sanitize.
+
+        Documented info finding: upstream MCP server must handle this.
+        """
+        body = json.dumps({
+            "jsonrpc": "2.0",
+            "method": "tools/call",
+            "params": {"name": "read_file", "arguments": {"path": "../../etc/passwd"}},
+            "id": 1,
+        }).encode()
+        result, _ = await proxy.handle_jsonrpc(body, {"x-agent-name": "agent"})
+        assert isinstance(result, dict)
+
+    def test_batch_request_rejected(self) -> None:
+        """JSON array (batch request) must be rejected — not a dict."""
+        body = json.dumps([
+            {"jsonrpc": "2.0", "method": "tools/call", "id": 1},
+        ]).encode()
+        with pytest.raises(ValueError, match="object"):
+            MCPSecurityProxy.parse_jsonrpc(body)
+
+    def test_huge_id_blocked_by_size_limit(self) -> None:
+        """A request whose id is a 6MB string must be blocked by MAX_PAYLOAD_BYTES."""
+        huge_id = "x" * (MCPSecurityProxy.MAX_PAYLOAD_BYTES + 1)
+        body = json.dumps({"jsonrpc": "2.0", "method": "tools/call", "id": huge_id}).encode()
+        with pytest.raises(ValueError, match="too large"):
+            MCPSecurityProxy.sanitize_request(body)
