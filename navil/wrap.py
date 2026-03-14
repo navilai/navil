@@ -158,9 +158,7 @@ def wrap_config(
             skipped_names.append(name)
             continue
 
-        servers[name] = _wrap_entry(
-            entry, name, policy_path=policy_path, agent_prefix=agent_prefix
-        )
+        servers[name] = _wrap_entry(entry, name, policy_path=policy_path, agent_prefix=agent_prefix)
         wrapped_names.append(name)
 
     config["mcpServers"] = servers

@@ -25,11 +25,10 @@ import statistics
 import sys
 import tempfile
 import time
-from pathlib import Path
 
 # —— Inline mock MCP server (same as test_shim.py) ———————————————
 
-MOCK_SERVER_CODE = r'''
+MOCK_SERVER_CODE = r"""
 import json, sys
 
 def read_msg():
@@ -66,12 +65,14 @@ while True:
     method = msg.get("method", "")
     if method == "tools/call":
         tool = msg.get("params", {}).get("name", "")
-        write_msg({"jsonrpc": "2.0", "id": rid, "result": {"content": [{"type": "text", "text": f"ok:{tool}"}]}})
+        r = {"content": [{"type": "text", "text": f"ok:{tool}"}]}
+        write_msg({"jsonrpc": "2.0", "id": rid, "result": r})
     elif method == "tools/list":
-        write_msg({"jsonrpc": "2.0", "id": rid, "result": {"tools": [{"name": "read_file"}, {"name": "write_file"}]}})
+        tools = [{"name": "read_file"}, {"name": "write_file"}]
+        write_msg({"jsonrpc": "2.0", "id": rid, "result": {"tools": tools}})
     else:
         write_msg({"jsonrpc": "2.0", "id": rid, "result": {}})
-'''
+"""
 
 
 def write_mock_server() -> str:
@@ -83,6 +84,7 @@ def write_mock_server() -> str:
 
 
 # —— Message framing helpers (duplicated to avoid import side effects) ——
+
 
 def write_message(pipe, data: bytes):
     header = f"Content-Length: {len(data)}\r\n\r\n".encode()
@@ -111,6 +113,7 @@ def read_message(pipe) -> bytes | None:
 
 # —— Benchmark payloads ———————————————————————————————————————
 
+
 def make_payloads(n: int) -> list[bytes]:
     """Generate N JSON-RPC payloads of varying types."""
     payloads = []
@@ -137,6 +140,7 @@ def make_payloads(n: int) -> list[bytes]:
 
 
 # —— Benchmark 1: Direct (no shim) ———————————————————————————
+
 
 def bench_direct(server_path: str, payloads: list[bytes]) -> list[float]:
     """Send messages directly to mock server, measure per-message RTT."""
@@ -165,18 +169,21 @@ def bench_direct(server_path: str, payloads: list[bytes]) -> list[float]:
 
 # —— Benchmark 2: Through shim ———————————————————————————————
 
+
 async def bench_shim(server_path: str, payloads: list[bytes]) -> list[float]:
     """Send messages through shim's security pipeline + subprocess, measure RTT."""
-    from navil.shim import StdioShim, _detect_and_read_message, _write_message
-
     # Use a permissive policy so tools/call isn't denied
     from navil.policy_engine import PolicyEngine
+    from navil.shim import StdioShim, _detect_and_read_message, _write_message
+
     pe = PolicyEngine()
     pe.policy = {
         "version": "1.0",
         "agents": {"bench-agent": {"tools_allowed": ["*"]}},
-        "tools": {"read_file": {"allowed_actions": ["tools/call", "read", "write", "list"]},
-                  "write_file": {"allowed_actions": ["tools/call", "read", "write", "list"]}},
+        "tools": {
+            "read_file": {"allowed_actions": ["tools/call", "read", "write", "list"]},
+            "write_file": {"allowed_actions": ["tools/call", "read", "write", "list"]},
+        },
     }
 
     shim = StdioShim(
@@ -212,11 +219,11 @@ async def bench_shim(server_path: str, payloads: list[bytes]) -> list[float]:
 
 # —— Benchmark 3: Security checks only (no I/O) ——————————————
 
+
 def bench_security_checks_only(payloads: list[bytes]) -> dict[str, list[float]]:
     """Microbenchmark each security check in isolation."""
     import orjson
 
-    from navil.anomaly_detector import BehavioralAnomalyDetector
     from navil.policy_engine import PolicyEngine
     from navil.proxy import MCPSecurityProxy
     from navil.shim import StdioShim
@@ -288,6 +295,7 @@ def bench_security_checks_only(payloads: list[bytes]) -> dict[str, list[float]]:
 
 # —— Main —————————————————————————————————————————————————————
 
+
 def fmt(values: list[float]) -> str:
     """Format stats for a list of microsecond measurements."""
     if not values:
@@ -302,38 +310,39 @@ def fmt(values: list[float]) -> str:
 def main():
     # Suppress noisy policy engine logging
     import logging
+
     logging.basicConfig(level=logging.CRITICAL)
 
-    N = 1000
-    WARMUP = 50
+    num_messages = 1000
+    warmup = 50
 
     print("=" * 72)
     print("  Navil Stdio Shim — Latency Benchmark")
     print("=" * 72)
-    print(f"  Messages: {N} (+ {WARMUP} warmup)")
-    print(f"  Payload mix: 1/3 tools/call, 1/3 tools/list, 1/3 initialize")
+    print(f"  Messages: {num_messages} (+ {warmup} warmup)")
+    print("  Payload mix: 1/3 tools/call, 1/3 tools/list, 1/3 initialize")
     print()
 
     server_path = write_mock_server()
-    payloads = make_payloads(N + WARMUP)
+    payloads = make_payloads(num_messages + warmup)
 
     # —— Warmup + Direct baseline ————————————————————————
     print("  [1/3] Direct baseline (no shim)...")
     all_direct = bench_direct(server_path, payloads)
-    direct = all_direct[WARMUP:]  # discard warmup
+    direct = all_direct[warmup:]  # discard warmup
 
     # —— Warmup + Shim path ——————————————————————————————
     print("  [2/3] Shim path (full security pipeline)...")
     all_shim = asyncio.run(bench_shim(server_path, payloads))
-    shim_latencies = all_shim[WARMUP:]
+    shim_latencies = all_shim[warmup:]
 
     # —— Security checks microbenchmark ——————————————————
     print("  [3/3] Security checks microbenchmark...")
-    payloads_for_micro = make_payloads(N)
+    payloads_for_micro = make_payloads(num_messages)
     check_timings = bench_security_checks_only(payloads_for_micro)
 
     # —— Results —————————————————————————————————————————
-    overhead = [s - d for s, d in zip(shim_latencies, direct)]
+    overhead = [s - d for s, d in zip(shim_latencies, direct, strict=False)]
 
     print()
     print("─" * 72)

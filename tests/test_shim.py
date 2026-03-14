@@ -111,6 +111,7 @@ def mock_server_path(tmp_path: Path) -> Path:
 
 # —— Unit tests: message framing ——————————————————————————————————
 
+
 @pytest.mark.asyncio
 async def test_detect_and_read_ndjson():
     """Test reading a newline-delimited JSON message."""
@@ -153,9 +154,11 @@ async def test_detect_and_read_eof():
 
 def test_write_message_format():
     """Test that _write_message uses Content-Length framing."""
+
     class FakeWriter:
         def __init__(self):
             self.data = b""
+
         def write(self, data):
             self.data += data
 
@@ -172,13 +175,14 @@ def test_write_message_format():
 
 # —— Unit tests: security checks ——————————————————————————————————
 
+
 def test_shim_blocks_oversized_payload():
     """Test that the shim rejects payloads exceeding size limit."""
     shim = StdioShim(cmd=["true"], agent_name="test-agent")
 
     # Create a massive payload
     prefix = b'{"jsonrpc":"2.0","method":"tools/call","id":1,"params":{"name":"x","arguments":'
-    big_payload = prefix + b'"' + b'A' * (6 * 1024 * 1024) + b'"' + b'}}'
+    big_payload = prefix + b'"' + b"A" * (6 * 1024 * 1024) + b'"' + b"}}"
 
     allowed, _, error = shim._check_request(big_payload)
     assert not allowed
@@ -191,7 +195,7 @@ def test_shim_blocks_oversized_payload():
 def test_shim_blocks_deep_json():
     """Test that the shim rejects deeply nested JSON."""
     # Build JSON with depth > 10
-    inner = '{"a":' * 15 + '1' + '}' * 15
+    inner = '{"a":' * 15 + "1" + "}" * 15
     payload = (
         f'{{"jsonrpc":"2.0","method":"tools/call","id":1,'
         f'"params":{{"name":"x","arguments":{inner}}}}}'
@@ -208,12 +212,14 @@ def test_shim_allows_valid_request():
     """Test that valid requests pass through security checks."""
     from navil.policy_engine import PolicyEngine
 
-    payload = json.dumps({
-        "jsonrpc": "2.0",
-        "method": "tools/call",
-        "id": 1,
-        "params": {"name": "read_file", "arguments": {"path": "/tmp/test.txt"}},
-    }).encode()
+    payload = json.dumps(
+        {
+            "jsonrpc": "2.0",
+            "method": "tools/call",
+            "id": 1,
+            "params": {"name": "read_file", "arguments": {"path": "/tmp/test.txt"}},
+        }
+    ).encode()
 
     pe = PolicyEngine()
     pe.policy = {
@@ -230,12 +236,14 @@ def test_shim_allows_valid_request():
 
 def test_shim_allows_non_tool_call():
     """Test that non-tools/call methods pass without policy checks."""
-    payload = json.dumps({
-        "jsonrpc": "2.0",
-        "method": "initialize",
-        "id": 1,
-        "params": {},
-    }).encode()
+    payload = json.dumps(
+        {
+            "jsonrpc": "2.0",
+            "method": "initialize",
+            "id": 1,
+            "params": {},
+        }
+    ).encode()
 
     shim = StdioShim(cmd=["true"], agent_name="test-agent")
     allowed, _, error = shim._check_request(payload)
@@ -244,6 +252,7 @@ def test_shim_allows_non_tool_call():
 
 
 # —— Integration test: end-to-end shim ————————————————————————————
+
 
 @pytest.mark.asyncio
 @pytest.mark.timeout(15)
@@ -260,12 +269,14 @@ async def test_shim_end_to_end(mock_server_path: Path):
     assert process.returncode is None  # still running
 
     # Send an initialize request
-    request = json.dumps({
-        "jsonrpc": "2.0",
-        "method": "initialize",
-        "id": 1,
-        "params": {},
-    }).encode()
+    request = json.dumps(
+        {
+            "jsonrpc": "2.0",
+            "method": "initialize",
+            "id": 1,
+            "params": {},
+        }
+    ).encode()
     _write_message(process.stdin, request)
     await process.stdin.drain()
 
@@ -278,12 +289,14 @@ async def test_shim_end_to_end(mock_server_path: Path):
     assert parsed["result"]["serverInfo"]["name"] == "mock-mcp"
 
     # Send a tools/call request
-    call_request = json.dumps({
-        "jsonrpc": "2.0",
-        "method": "tools/call",
-        "id": 2,
-        "params": {"name": "read_file", "arguments": {"path": "/tmp/test"}},
-    }).encode()
+    call_request = json.dumps(
+        {
+            "jsonrpc": "2.0",
+            "method": "tools/call",
+            "id": 2,
+            "params": {"name": "read_file", "arguments": {"path": "/tmp/test"}},
+        }
+    ).encode()
     _write_message(process.stdin, call_request)
     await process.stdin.drain()
 
@@ -318,12 +331,14 @@ async def test_shim_security_with_mock_server(mock_server_path: Path):
     )
 
     # Test that sanitization works on a valid request
-    valid_req = json.dumps({
-        "jsonrpc": "2.0",
-        "method": "tools/call",
-        "id": 1,
-        "params": {"name": "read_file", "arguments": {"path": "/tmp"}},
-    }).encode()
+    valid_req = json.dumps(
+        {
+            "jsonrpc": "2.0",
+            "method": "tools/call",
+            "id": 1,
+            "params": {"name": "read_file", "arguments": {"path": "/tmp"}},
+        }
+    ).encode()
 
     allowed, sanitized, error = shim._check_request(valid_req)
     assert allowed

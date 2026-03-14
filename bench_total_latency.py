@@ -10,7 +10,6 @@ Measures:
 import asyncio
 import json
 import os
-import statistics
 import subprocess
 import sys
 import tempfile
@@ -18,7 +17,7 @@ import time
 
 # —— Mock MCP server (same as bench_shim_latency.py) ———————————————
 
-MOCK_SERVER_CODE = r'''
+MOCK_SERVER_CODE = r"""
 import json, sys
 
 def read_msg():
@@ -55,12 +54,14 @@ while True:
     method = msg.get("method", "")
     if method == "tools/call":
         tool = msg.get("params", {}).get("name", "")
-        write_msg({"jsonrpc": "2.0", "id": rid, "result": {"content": [{"type": "text", "text": f"ok:{tool}"}]}})
+        r = {"content": [{"type": "text", "text": f"ok:{tool}"}]}
+        write_msg({"jsonrpc": "2.0", "id": rid, "result": r})
     elif method == "tools/list":
-        write_msg({"jsonrpc": "2.0", "id": rid, "result": {"tools": [{"name": "read_file"}, {"name": "write_file"}]}})
+        tools = [{"name": "read_file"}, {"name": "write_file"}]
+        write_msg({"jsonrpc": "2.0", "id": rid, "result": {"tools": tools}})
     else:
         write_msg({"jsonrpc": "2.0", "id": rid, "result": {}})
-'''
+"""
 
 
 def write_mock_server() -> str:
@@ -95,30 +96,54 @@ def read_msg_sync(pipe) -> bytes | None:
 
 # —— Session builder ——————————————————————————————————————————————
 
+
 def build_session(n_tool_calls: int) -> list[bytes]:
     """Build a realistic MCP session: initialize → tools/list → N tool calls."""
     msgs = []
     i = 1
 
     # initialize
-    msgs.append(json.dumps({
-        "jsonrpc": "2.0", "method": "initialize", "id": i,
-        "params": {"protocolVersion": "2024-11-05", "capabilities": {}, "clientInfo": {"name": "openclaw", "version": "1.0"}},
-    }).encode())
+    msgs.append(
+        json.dumps(
+            {
+                "jsonrpc": "2.0",
+                "method": "initialize",
+                "id": i,
+                "params": {
+                    "protocolVersion": "2024-11-05",
+                    "capabilities": {},
+                    "clientInfo": {"name": "openclaw", "version": "1.0"},
+                },
+            }
+        ).encode()
+    )
     i += 1
 
     # tools/list
-    msgs.append(json.dumps({
-        "jsonrpc": "2.0", "method": "tools/list", "id": i, "params": {},
-    }).encode())
+    msgs.append(
+        json.dumps(
+            {
+                "jsonrpc": "2.0",
+                "method": "tools/list",
+                "id": i,
+                "params": {},
+            }
+        ).encode()
+    )
     i += 1
 
     # tool calls
     for j in range(n_tool_calls):
-        msgs.append(json.dumps({
-            "jsonrpc": "2.0", "method": "tools/call", "id": i,
-            "params": {"name": "read_file", "arguments": {"path": f"/tmp/doc_{j}.txt"}},
-        }).encode())
+        msgs.append(
+            json.dumps(
+                {
+                    "jsonrpc": "2.0",
+                    "method": "tools/call",
+                    "id": i,
+                    "params": {"name": "read_file", "arguments": {"path": f"/tmp/doc_{j}.txt"}},
+                }
+            ).encode()
+        )
         i += 1
 
     return msgs
@@ -126,13 +151,16 @@ def build_session(n_tool_calls: int) -> list[bytes]:
 
 # —— Direct session ———————————————————————————————————————————————
 
+
 def run_direct_session(server_path: str, messages: list[bytes]) -> dict:
     """Run a full session directly against the MCP server."""
     t_start = time.perf_counter()
 
     proc = subprocess.Popen(
         [sys.executable, server_path],
-        stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE,
+        stdin=subprocess.PIPE,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
     )
     t_spawned = time.perf_counter()
 
@@ -158,6 +186,7 @@ def run_direct_session(server_path: str, messages: list[bytes]) -> dict:
 
 
 # —— Shim session ——————————————————————————————————————————————————
+
 
 async def run_shim_session(server_path: str, messages: list[bytes]) -> dict:
     """Run a full session through the Navil shim."""
@@ -220,8 +249,10 @@ async def run_shim_session(server_path: str, messages: list[bytes]) -> dict:
 
 # —— Main —————————————————————————————————————————————————————————
 
+
 def main():
     import logging
+
     logging.basicConfig(level=logging.CRITICAL)
 
     server_path = write_mock_server()
@@ -256,7 +287,8 @@ def main():
         overhead_ms = shim["total_ms"] - direct["total_ms"]
         overhead_pct = (overhead_ms / direct["total_ms"]) * 100 if direct["total_ms"] > 0 else 0
 
-        direct_throughput = total_msgs / (direct["session_ms"] / 1000) if direct["session_ms"] > 0 else 0
+        d_ms = direct["session_ms"]
+        direct_throughput = total_msgs / (d_ms / 1000) if d_ms > 0 else 0
         shim_throughput = total_msgs / (shim["session_ms"] / 1000) if shim["session_ms"] > 0 else 0
 
         print(f"  {label}")
