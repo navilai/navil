@@ -39,16 +39,11 @@ class PatternStore:
     when a known attack pattern is recognized.
     """
 
-    # Built-in starter threat patterns shipped with the package.
-    _SEED_PATH: Path = Path(__file__).parent.parent / "data" / "seed_patterns.json"
-
     def __init__(self, store_path: str | None = None, max_patterns: int = 200) -> None:
         self.store_path = Path(store_path) if store_path else None
         self.max_patterns = max_patterns
         self.patterns: list[LearnedPattern] = []
         self._load()
-        if not self.patterns:
-            self._load_seeds()
 
     def add_pattern(self, pattern: LearnedPattern) -> None:
         """Add a learned pattern to the store."""
@@ -163,21 +158,3 @@ class PatternStore:
             logger.warning(f"Could not load patterns from {self.store_path}")
             self.patterns = []
 
-    def _load_seeds(self) -> None:
-        """Load the built-in starter threat patterns when the store is otherwise empty.
-
-        Seed patterns cover all 11 SAFE-MCP attack types and provide a day-zero
-        baseline for pattern matching before operators have confirmed any local incidents.
-        They use source='seed' and are evicted last (after community patterns).
-        """
-        if not self._SEED_PATH.exists():
-            return
-        try:
-            with open(self._SEED_PATH) as f:
-                data = json.load(f)
-            self.patterns = [LearnedPattern(**d) for d in data]
-            logger.info(
-                "Loaded %d seed patterns from built-in threat database", len(self.patterns)
-            )
-        except (json.JSONDecodeError, TypeError) as exc:
-            logger.warning("Could not load seed patterns: %s", exc)
