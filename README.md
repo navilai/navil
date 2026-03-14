@@ -1,13 +1,155 @@
-# Navil
+<p align="center">
+  <h1 align="center">Navil</h1>
+  <p align="center">
+    <strong>The security gateway for AI agents.</strong>
+    <br />
+    Protect your MCP servers from prompt injection, data exfiltration, and autonomous drift — with sub-millisecond overhead.
+  </p>
+</p>
 
-[![CI](https://github.com/ivanlkf/navil/actions/workflows/ci.yml/badge.svg)](https://github.com/ivanlkf/navil/actions/workflows/ci.yml)
-[![Python 3.10+](https://img.shields.io/badge/python-3.10%2B-blue.svg)](https://www.python.org/downloads/)
-[![Rust](https://img.shields.io/badge/rust-stable-orange.svg)](https://www.rust-lang.org/)
-[![License: Apache 2.0](https://img.shields.io/badge/License-Apache_2.0-blue.svg)](LICENSE)
+<p align="center">
+  <a href="https://github.com/ivanlkf/navil/actions/workflows/ci.yml"><img src="https://github.com/ivanlkf/navil/actions/workflows/ci.yml/badge.svg" alt="CI" /></a>
+  <a href="https://www.python.org/downloads/"><img src="https://img.shields.io/badge/python-3.10%2B-blue.svg" alt="Python 3.10+" /></a>
+  <a href="https://www.rust-lang.org/"><img src="https://img.shields.io/badge/rust-stable-orange.svg" alt="Rust" /></a>
+  <a href="LICENSE"><img src="https://img.shields.io/badge/License-Apache_2.0-blue.svg" alt="License: Apache 2.0" /></a>
+</p>
 
-High-performance Rust/Python security gateway for [Model Context Protocol (MCP)](https://modelcontextprotocol.io/) servers. A Rust data plane handles live traffic with sub-millisecond O(1) threshold checks, while a Python control plane runs 12 statistical anomaly detectors, adaptive ML baselines, and LLM-powered analysis.
+<p align="center">
+  <a href="#quick-start">Quick Start</a> &bull;
+  <a href="#openclaw-integration">OpenClaw</a> &bull;
+  <a href="#performance">Performance</a> &bull;
+  <a href="#features">Features</a> &bull;
+  <a href="#dashboard">Dashboard</a> &bull;
+  <a href="#architecture">Architecture</a> &bull;
+  <a href="CONTRIBUTING.md">Contributing</a>
+</p>
+
+---
+
+## Why Navil?
+
+[MCP](https://modelcontextprotocol.io/) is becoming the standard for connecting AI agents to tools — but it has **no native permissions model**. Real attacks have already been demonstrated:
+
+- A malicious MCP server **exfiltrated an entire WhatsApp history** by poisoning tool definitions
+- Prompt injection via a GitHub issue made the official GitHub MCP server **leak private repo data**
+- MCP tool definitions can **mutate after installation** — a safe tool on day 1 becomes a backdoor by day 7
+
+Navil sits between your MCP clients and servers as a security proxy. It monitors, detects, and enforces — so your agents stay within bounds.
 
 > Developed by **[Pantheon Lab Limited](https://pantheonlab.ai)**.
+
+## Quick Start
+
+```bash
+pip install navil
+
+# Scan an MCP server config for vulnerabilities
+navil scan config.json
+
+# Run all 11 SAFE-MCP penetration tests
+navil pentest
+
+# Start the security proxy
+navil proxy start --target http://localhost:3000
+```
+
+That's it. Your agents now connect through Navil instead of directly to the MCP server.
+
+## OpenClaw Integration
+
+Using [OpenClaw](https://openclaw.ai)? Secure **every** MCP server in your config with one command:
+
+```bash
+pip install navil
+navil wrap openclaw.json
+```
+
+That's it. Navil backs up your original config, then wraps every MCP server with `navil shim` so all tool calls are monitored, policy-checked, and anomaly-detected — with [<3 µs overhead per message](#performance).
+
+Why this matters: OpenClaw's skill registry has had [824+ malicious skills](https://blog.cyberdesserts.com/openclaw-malicious-skills-security/) identified, and [135,000+ instances](https://www.darkreading.com/application-security/critical-openclaw-vulnerability-ai-agent-risks) are exposed to the public internet.
+
+### What `navil wrap` does
+
+```
+Before:                              After:
+┌─────────────────────┐              ┌─────────────────────┐
+│  "filesystem": {    │              │  "filesystem": {    │
+│    "command": "npx", │   navil     │    "command":"navil",│
+│    "args": [...]    │ ──wrap──►   │    "args": ["shim", │
+│  }                  │              │      "--cmd","npx …"]│
+└─────────────────────┘              └─────────────────────┘
+```
+
+Every server gets its own agent identity for per-server policy and telemetry. Your env vars, cwd, and other config keys pass through untouched.
+
+### Options
+
+```bash
+# Wrap only specific servers
+navil wrap openclaw.json --only filesystem,github
+
+# Attach a policy file to all servers
+navil wrap openclaw.json --policy policy.yaml
+
+# Preview changes without modifying anything
+navil wrap openclaw.json --dry-run
+
+# Undo: restore your original config
+navil wrap openclaw.json --undo
+```
+
+### Works with Claude Desktop too
+
+```bash
+navil wrap ~/Library/Application\ Support/Claude/claude_desktop_config.json
+```
+
+### Scan before you wrap
+
+```bash
+# Audit your MCP configs for vulnerabilities (0–100 score)
+navil scan openclaw.json
+```
+
+### HTTP transport (production deployments)
+
+For OpenClaw instances using MCP over Streamable HTTP, use Navil's HTTP proxy:
+
+```bash
+navil proxy start --target http://your-mcp-server:3000 --no-auth
+```
+
+Then point your OpenClaw MCP server URL at `http://localhost:9090/mcp` instead of the real server.
+
+## Performance
+
+Navil's security pipeline adds **negligible overhead** to real workloads. We benchmarked the stdio shim against a mock MCP server to isolate the cost of security checks from network/tool latency.
+
+### Per-message overhead
+
+| Component | Mean | p50 | p99 |
+|-----------|------|-----|-----|
+| Full security check (sanitize + parse + policy + anomaly) | **2.7 µs** | 2.4 µs | 6.1 µs |
+| `orjson` parse | 0.9 µs | 0.8 µs | 2.0 µs |
+| Policy engine lookup | 0.5 µs | 0.4 µs | 1.2 µs |
+| Anomaly gate scan | 0.3 µs | 0.3 µs | 0.8 µs |
+
+### Total session wall-clock
+
+| Session size | Direct | With Navil | Overhead |
+|--------------|--------|------------|----------|
+| Light (5 tool calls) | 11.5 ms | 12.0 ms | **+0.5 ms** (4.4%) |
+| Medium (50 tool calls) | 12.8 ms | 14.2 ms | **+1.4 ms** (10.8%) |
+| Heavy (500 tool calls) | 28.0 ms | 40.3 ms | **+12.3 ms** |
+
+> **Context:** These benchmarks use a mock server that responds in ~40 µs. Real MCP tools take 1–5,000 ms (file reads, API calls, LLM inference). On any real workload, Navil's overhead is **< 0.1%** of total session time.
+
+Run the benchmarks yourself:
+
+```bash
+python bench_shim_latency.py    # Per-message breakdown
+python bench_total_latency.py   # Full session wall-clock
+```
 
 <p align="center">
   <img src="docs/screenshots/dashboard.png" alt="Navil Dashboard — Fleet overview with agent health, alerts, credential status, and policy decisions" width="800" />
@@ -15,15 +157,29 @@ High-performance Rust/Python security gateway for [Model Context Protocol (MCP)]
 
 ## Features
 
-- **Rust Data Plane** — Axum-based reverse proxy with HMAC-SHA256 verification, JSON depth limiting, O(1) Redis threshold checks, and minute-bucketed rate limiting. Sub-millisecond overhead per request.
-- **Python Control Plane** — 12 statistical behavioral detectors with adaptive EMA baselines, operator feedback loops, and learned pattern matching. Runs off the hot path via Redis-bridged telemetry.
-- **Zero-Knowledge Telemetry** — Cloud sync anonymizes all agent identities with HMAC-SHA256, enforces a strict field allowlist, and actively blocks banned fields. Raw data never leaves your deployment. Fully opt-out. See [Privacy Guarantees](#zero-knowledge-telemetry).
-- **Configuration Scanning** — Detect plaintext credentials, over-privileged permissions, missing authentication, unverified sources, and malicious patterns. Produces a 0-100 security score.
-- **Credential Lifecycle** — Issue, rotate, and revoke JWT tokens with JIT provisioning, configurable TTL, usage tracking, and immutable audit logs.
-- **Policy Enforcement** — YAML-driven tool/action allow-lists, per-agent rate limiting, data-sensitivity gates, and suspicious-pattern detection.
-- **Penetration Testing** — 11 SAFE-MCP attack simulations that validate your detectors actually catch threats. No real network traffic generated.
-- **LLM Analysis** — AI-powered config analysis, anomaly explanation, policy generation, and self-healing with SSE streaming. Bring your own key (Anthropic, OpenAI, Gemini, Ollama).
-- **OSS Dashboard** — React-based fleet monitoring dashboard with alerting, gateway traffic visualization, credential management, and pentest UI. Serves at `/` via the Python control plane.
+### Rust Data Plane
+Axum-based reverse proxy with HMAC-SHA256 verification, JSON depth limiting, O(1) Redis threshold checks, and minute-bucketed rate limiting. Sub-millisecond overhead per request.
+
+### Behavioral Anomaly Detection
+12 statistical detectors with adaptive EMA baselines, operator feedback loops, and learned pattern matching. Runs off the hot path via Redis-bridged telemetry — security analysis never blocks your agents.
+
+### Configuration Scanning
+Detect plaintext credentials, over-privileged permissions, missing authentication, unverified sources, and malicious patterns. Produces a 0–100 security score.
+
+### Policy Enforcement
+YAML-driven tool/action allow-lists, per-agent rate limiting, data-sensitivity gates, and suspicious-pattern detection.
+
+### Penetration Testing
+11 SAFE-MCP attack simulations that validate your detectors actually catch threats. No real network traffic generated.
+
+### LLM-Powered Analysis
+AI-powered config analysis, anomaly explanation, policy generation, and self-healing. Bring your own key — supports Anthropic, OpenAI, Gemini, and Ollama (fully local).
+
+### Credential Lifecycle
+Issue, rotate, and revoke JWT tokens with JIT provisioning, configurable TTL, usage tracking, and immutable audit logs.
+
+### Zero-Knowledge Telemetry
+Cloud sync anonymizes all agent identities with HMAC-SHA256, enforces a strict field allowlist, and actively blocks banned fields. Raw data never leaves your deployment. Fully opt-out with `NAVIL_DISABLE_CLOUD_SYNC=true`. See [Privacy Guarantees](#zero-knowledge-telemetry-details).
 
 ## Architecture
 
@@ -119,7 +275,7 @@ Navil ships with a full-featured security dashboard for visualizing and managing
 | Rust | Optional (for Rust proxy) | stable |
 | Node.js | Optional (for dashboard dev) | 20+ |
 
-### Python packages
+### Install from PyPI
 
 ```bash
 pip install navil
@@ -133,7 +289,7 @@ pip install navil[cloud]       # + Cloud dashboard (FastAPI + React)
 pip install navil[all]         # Everything
 ```
 
-Or from source:
+### Install from source
 
 ```bash
 git clone https://github.com/ivanlkf/navil.git
@@ -150,7 +306,7 @@ cargo build --release
 
 The compiled binary is at `navil-proxy/target/release/navil-proxy`.
 
-## Quick Start
+## Full Setup Guide
 
 ### 1. Start Redis
 
@@ -212,20 +368,6 @@ If you don't need the Rust data plane, the Python proxy works standalone:
 navil proxy start --target http://localhost:3000
 ```
 
-### Scan an MCP configuration
-
-```bash
-navil scan config.json
-```
-
-### Run penetration tests
-
-```bash
-navil pentest                               # All 11 SAFE-MCP attack simulations
-navil pentest --scenario reconnaissance     # Single scenario
-navil pentest --json -o report.json         # JSON output for CI
-```
-
 ### AI-powered analysis (BYOK)
 
 ```bash
@@ -256,40 +398,72 @@ navil credential issue --agent my-agent --scope "read:tools" --ttl 3600
 navil policy check --tool file_system --agent my-agent --action read
 ```
 
-## Zero-Knowledge Telemetry
+## Commands
+
+| Command | Description |
+|---------|-------------|
+| `navil scan <config>` | Scan MCP config for vulnerabilities (0-100 score) |
+| `navil pentest` | Run SAFE-MCP penetration tests (11 attack scenarios) |
+| `navil proxy start` | Start Python MCP security proxy |
+| `navil proxy stop` | Stop the running proxy |
+| `navil cloud serve` | Launch Navil Cloud dashboard |
+| `navil seed-database` | Populate ML baselines with synthetic attack data |
+| `navil credential issue` | Issue a new JWT credential |
+| `navil credential revoke` | Revoke an active credential |
+| `navil credential list` | List credentials with filters |
+| `navil policy check` | Evaluate a tool call against policy |
+| `navil wrap <config>` | One-command setup: wrap all MCP servers in a config with navil shim |
+| `navil shim` | Wrap a single stdio MCP server with security checks |
+| `navil monitor start` | Start anomaly monitoring mode |
+| `navil report` | Generate security report |
+| `navil llm analyze-config` | AI-powered config analysis |
+| `navil llm explain-anomaly` | AI-powered anomaly explanation |
+| `navil llm generate-policy` | Generate policy from natural language |
+| `navil llm suggest-healing` | AI-powered remediation suggestions |
+
+## Environment Variables
+
+| Variable | Default | Purpose |
+|----------|---------|---------|
+| `NAVIL_TARGET_URL` | `http://localhost:3000` | Upstream MCP server (Rust proxy) |
+| `NAVIL_REDIS_URL` | `redis://127.0.0.1:6379` | Redis connection (Rust proxy) |
+| `NAVIL_HMAC_SECRET` | *(none)* | HMAC signing key for request auth |
+| `NAVIL_PORT` | `8080` | Rust proxy listen port |
+| `NAVIL_DISABLE_CLOUD_SYNC` | `false` | Disable cloud telemetry sync |
+| `NAVIL_API_KEY` | *(none)* | Navil Cloud API key (paid mode) |
+| `NAVIL_INTEL_SYNC_INTERVAL` | `3600` | Seconds between cloud sync cycles |
+| `NAVIL_DEPLOYMENT_SECRET` | *(auto-generated)* | Secret for HMAC agent anonymization |
+| `ANTHROPIC_API_KEY` | *(none)* | Anthropic API key for LLM features |
+| `OPENAI_API_KEY` | *(none)* | OpenAI API key for LLM features |
+| `GEMINI_API_KEY` | *(none)* | Google Gemini API key for LLM features |
+| `ALLOWED_ORIGINS` | `*` | CORS origins for dashboard API |
+
+## Zero-Knowledge Telemetry Details
 
 When cloud sync is enabled, Navil enforces strict privacy guarantees at the transmission boundary:
 
 - **Agent identities** are replaced with one-way HMAC-SHA256 hashes using a per-deployment secret. Cannot be reversed.
 - **Only numeric aggregates and categorical labels** leave the deployment (severity, confidence, duration, bytes, anomaly type).
-- **Raw data is actively blocked** -- agent names, tool arguments, evidence, file paths, server URLs, IP addresses, and prompts are stripped. A runtime check raises `ValueError` if any banned field leaks through.
+- **Raw data is actively blocked** — agent names, tool arguments, evidence, file paths, server URLs, IP addresses, and prompts are stripped. A runtime check raises `ValueError` if any banned field leaks through.
 - **Fully opt-out** with `NAVIL_DISABLE_CLOUD_SYNC=true`.
 
 See [ARCHITECTURE.md](ARCHITECTURE.md#zero-knowledge-telemetry) for the full field allowlist/blocklist.
 
 ## The Navil "Give-to-Get" Initiative
 
-Navil is an open-core security project. Our mission is to protect the world's AI agents from prompt injection, data exfiltration, and autonomous drift. To do this sustainably, we operate on a **Mutual Defense** model.
+Navil operates on a **Mutual Defense** model. AI threats evolve in minutes, not months. A prompt injection discovered on one machine should protect every other machine within seconds.
 
 ### How It Works
 
-AI threats evolve in minutes, not months. A prompt injection discovered on a hobbyist's laptop in Berlin should protect a startup's infrastructure in San Francisco within seconds. To make this possible, Navil instances across the globe share anonymous, sanitized threat signatures with the **Navil Global Brain**.
+**The Give:** Your local Navil instance detects a new attack pattern and sends a sanitized metadata snippet — anomaly type, severity, confidence score, tool name, and timing — to the central hub. Agent identities are HMAC-anonymized. Raw data never leaves your machine. You can audit exactly what is sent by inspecting [`navil/cloud/telemetry_sync.py`](navil/cloud/telemetry_sync.py).
 
-**The Give:** Your local Navil instance detects a new attack pattern and sends a sanitized metadata snippet — anomaly type, severity, confidence score, tool name, and timing — to our central hub. Agent identities are HMAC-anonymized. Raw data never leaves your machine. You can audit exactly what is sent by inspecting [`navil/cloud/telemetry_sync.py`](navil/cloud/telemetry_sync.py).
-
-**The Get:** In exchange for contributing to the network's herd immunity, your instance receives real-time updates from the **Global Threat Blocklist** — a curated feed of malicious patterns discovered by thousands of other Navil nodes, applied instantly to your local detectors and Rust proxy.
-
-### Why We Built It This Way
-
-Security is only as strong as its data. By sharing signals, every node strengthens every other node. This creates a **flywheel of protection** that makes everyone safer for free — the more deployments participate, the faster new threats are neutralized globally.
+**The Get:** In exchange, your instance receives real-time updates from the **Global Threat Blocklist** — a curated feed of malicious patterns discovered by thousands of other Navil nodes, applied instantly to your local detectors and Rust proxy.
 
 ### Privacy-First Architecture
 
-We are a security company; your data privacy is our absolute priority. The Give-to-Get handshake is designed with zero-knowledge principles:
-
-1. **Local Sanitization** — All telemetry is stripped of PII, secrets, and raw prompt content on your machine before it ever reaches our servers. An explicit field allowlist and banned-field blocklist are enforced at the transmission boundary.
-2. **No Raw Data** — We never see your AI's conversations. We only see the *shape* of the attack (anomaly type, severity, timing, tool name). Descriptions, evidence, file paths, server URLs, and IP addresses are actively blocked.
-3. **Full Transparency** — You can audit exactly what is being sent by inspecting [`navil/cloud/telemetry_sync.py`](navil/cloud/telemetry_sync.py). The sanitization logic is open source.
+1. **Local Sanitization** — All telemetry is stripped of PII, secrets, and raw prompt content on your machine before it ever reaches our servers.
+2. **No Raw Data** — We never see your AI's conversations. We only see the *shape* of the attack (anomaly type, severity, timing, tool name).
+3. **Full Transparency** — You can audit exactly what is being sent by inspecting [`navil/cloud/telemetry_sync.py`](navil/cloud/telemetry_sync.py).
 
 ### Tiered Participation
 
@@ -309,51 +483,13 @@ navil cloud serve
 NAVIL_API_KEY=nvl_your_key NAVIL_DISABLE_CLOUD_SYNC=true navil cloud serve
 ```
 
-## Commands
-
-| Command | Description |
-|---------|-------------|
-| `navil scan <config>` | Scan MCP config for vulnerabilities (0-100 score) |
-| `navil pentest` | Run SAFE-MCP penetration tests (11 attack scenarios) |
-| `navil proxy start` | Start Python MCP security proxy |
-| `navil proxy stop` | Stop the running proxy |
-| `navil cloud serve` | Launch Navil Cloud dashboard |
-| `navil seed-database` | Populate ML baselines with synthetic attack data |
-| `navil credential issue` | Issue a new JWT credential |
-| `navil credential revoke` | Revoke an active credential |
-| `navil credential list` | List credentials with filters |
-| `navil policy check` | Evaluate a tool call against policy |
-| `navil monitor start` | Start anomaly monitoring mode |
-| `navil report` | Generate security report |
-| `navil llm analyze-config` | AI-powered config analysis |
-| `navil llm explain-anomaly` | AI-powered anomaly explanation |
-| `navil llm generate-policy` | Generate policy from natural language |
-| `navil llm suggest-healing` | AI-powered remediation suggestions |
-
-## Environment Variables
-
-| Variable | Default | Purpose |
-|----------|---------|---------|
-| `NAVIL_TARGET_URL` | `http://localhost:3000` | Upstream MCP server (Rust proxy) |
-| `NAVIL_REDIS_URL` | `redis://127.0.0.1:6379` | Redis connection (Rust proxy) |
-| `NAVIL_HMAC_SECRET` | *(none)* | HMAC signing key for request auth |
-| `NAVIL_PORT` | `8080` | Rust proxy listen port |
-| `NAVIL_DISABLE_CLOUD_SYNC` | `false` | Disable cloud telemetry sync (community: loses intel; paid: privacy premium) |
-| `NAVIL_API_KEY` | *(none)* | Navil Cloud API key (enables paid mode / privacy premium) |
-| `NAVIL_INTEL_SYNC_INTERVAL` | `3600` | Seconds between cloud sync cycles |
-| `NAVIL_DEPLOYMENT_SECRET` | *(auto-generated)* | Secret for HMAC agent anonymization |
-| `ANTHROPIC_API_KEY` | *(none)* | Anthropic API key for LLM features |
-| `OPENAI_API_KEY` | *(none)* | OpenAI API key for LLM features |
-| `GEMINI_API_KEY` | *(none)* | Google Gemini API key for LLM features |
-| `ALLOWED_ORIGINS` | `*` | CORS origins for dashboard API |
-
 ## Development
 
 ```bash
 # Install dev dependencies
 pip install -e ".[dev]"
 
-# Run tests (348 tests)
+# Run tests (373 tests)
 pytest
 
 # Lint
@@ -371,7 +507,7 @@ cd dashboard && npm install && npm run dev
 
 ## Contributing
 
-See [CONTRIBUTING.md](CONTRIBUTING.md) for development setup, coding standards, and how to submit changes.
+We welcome contributions! See [CONTRIBUTING.md](CONTRIBUTING.md) for development setup, coding standards, and how to submit changes.
 
 ## Security
 
