@@ -213,8 +213,8 @@ class PolicyEngine:
         tools = self.policy.get("tools", {})
         tool_policy = tools.get(tool_name, {})
 
-        # Check allowed actions
-        allowed_actions = tool_policy.get("allowed_actions", ["read"])
+        # Check allowed actions (default includes standard MCP methods)
+        allowed_actions = tool_policy.get("allowed_actions", ["read", "tools/call", "tools/list"])
         if action not in allowed_actions and "*" not in allowed_actions:
             return False
 
@@ -228,7 +228,7 @@ class PolicyEngine:
         agent_policy = agents.get(agent_name, {})
         rate_limit = agent_policy.get("rate_limit_per_hour", 1000)
 
-        key = f"{agent_name}:{tool_name}"
+        key = (agent_name, tool_name)
         current_time = int(time.time())
 
         with self._rate_limit_lock:
@@ -241,6 +241,10 @@ class PolicyEngine:
             if current_time - limit_data["reset_at"] > 3600:
                 limit_data["count"] = 0
                 limit_data["reset_at"] = current_time
+
+            # rate_limit=0 means unlimited (no cap)
+            if rate_limit == 0:
+                return True
 
             # Atomic check-and-increment
             if limit_data["count"] >= rate_limit:

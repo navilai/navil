@@ -13,7 +13,7 @@ from pathlib import Path
 from typing import Any
 
 import yaml
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, Request
 from fastapi.responses import StreamingResponse
 from pydantic import BaseModel, Field
 
@@ -36,6 +36,27 @@ def _require_llm(s: AppState) -> None:
                 "error_type": "auth",
             },
         )
+
+
+def _require_dashboard_auth(request: Request) -> None:
+    """Verify dashboard bearer token for sensitive endpoints.
+
+    If NAVIL_DASHBOARD_TOKEN is set, all credential-management requests
+    must include ``Authorization: Bearer <token>``.  When the env var is
+    unset the guard is a no-op (local-only dev mode).
+    """
+    expected = os.environ.get("NAVIL_DASHBOARD_TOKEN", "").strip()
+    if not expected:
+        _logger.warning(
+            "NAVIL_DASHBOARD_TOKEN is not set — credential endpoints are unprotected. "
+            "Set this env var in production to require authentication."
+        )
+        return  # no token configured — allow (local dev mode)
+    auth_header = request.headers.get("authorization", "")
+    if not auth_header.startswith("Bearer "):
+        raise HTTPException(status_code=401, detail="Missing Authorization header")
+    if auth_header[7:] != expected:
+        raise HTTPException(status_code=401, detail="Invalid dashboard token")
 
 
 def _call_llm(fn: Any, *args: Any, **kwargs: Any) -> Any:
@@ -390,13 +411,13 @@ async def record_invocation(req: InvocationRequest) -> dict[str, str]:
 # ── Credentials ─────────────────────────────────────────────
 
 
-@router.get("/credentials")
+@router.get("/credentials", dependencies=[Depends(_require_dashboard_auth)])
 def list_credentials(agent: str | None = None) -> list[dict[str, Any]]:
     s = AppState.get()
     return s.credential_manager.list_credentials(agent_name=agent)
 
 
-@router.post("/credentials")
+@router.post("/credentials", dependencies=[Depends(_require_dashboard_auth)])
 def issue_credential(req: CredentialIssueRequest) -> dict[str, Any]:
     s = AppState.get()
     return s.credential_manager.issue_credential(
@@ -406,7 +427,7 @@ def issue_credential(req: CredentialIssueRequest) -> dict[str, Any]:
     )
 
 
-@router.delete("/credentials/{token_id}")
+@router.delete("/credentials/{token_id}", dependencies=[Depends(_require_dashboard_auth)])
 def revoke_credential(token_id: str) -> dict[str, str]:
     s = AppState.get()
     try:

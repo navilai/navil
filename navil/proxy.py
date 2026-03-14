@@ -256,18 +256,23 @@ class MCPSecurityProxy:
             # Policy check
             if hasattr(self.policy_engine, "check_tool_call"):
                 decision = self.policy_engine.check_tool_call(agent_name, tool_name, action)
-                if hasattr(decision, "decision"):
-                    decision_val = decision.decision.value
+                # check_tool_call returns tuple[bool, str] — (allowed, reason)
+                if isinstance(decision, tuple):
+                    allowed_by_policy, deny_reason = decision
+                elif hasattr(decision, "decision"):
+                    allowed_by_policy = decision.decision.value != "DENY"
+                    deny_reason = str(decision)
                 else:
-                    decision_val = str(decision)
+                    allowed_by_policy = str(decision) != "DENY"
+                    deny_reason = str(decision)
 
-                if decision_val == "DENY":
+                if not allowed_by_policy:
                     self.stats["blocked"] += 1
                     duration_ms = int((time.time() - start) * 1000)
                     self._log_traffic(agent_name, method, tool_name, "DENIED", duration_ms, 0)
                     return self._jsonrpc_error(
                         -32001,
-                        f"Blocked by policy: {tool_name}",
+                        f"Blocked by policy: {deny_reason}",
                         req_id,
                     ), {}
 

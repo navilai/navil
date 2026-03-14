@@ -890,12 +890,25 @@ class BehavioralAnomalyDetector:
                         ),
                     )
 
+    # Maximum tools registered per server to bound memory
+    MAX_TOOLS_PER_SERVER: int = 1000
+
     def register_server_tools(self, server_url: str, tool_names: list[str]) -> None:
         """Register known tools for a server (from tools/list response).
 
         Called by the proxy after a successful tools/list response to track
-        the legitimate tool set for supply chain detection.
+        the legitimate tool set for supply chain detection.  Capped at
+        MAX_TOOLS_PER_SERVER to prevent memory exhaustion from a malicious
+        tools/list response.
         """
+        if len(tool_names) > self.MAX_TOOLS_PER_SERVER:
+            logger.warning(
+                "Server %s reported %d tools (cap=%d) — truncating",
+                server_url,
+                len(tool_names),
+                self.MAX_TOOLS_PER_SERVER,
+            )
+            tool_names = tool_names[: self.MAX_TOOLS_PER_SERVER]
         self.registered_tools[server_url] = set(tool_names)
         logger.info(f"Registered {len(tool_names)} tools for server {server_url}")
 
