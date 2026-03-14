@@ -297,7 +297,7 @@ class TestRateLimitBypass:
         engine.policy = {
             "agents": {
                 "limited-agent": {
-                    "allowed_tools": ["*"],
+                    "tools_allowed": ["*"],
                     "rate_limit_per_hour": limit,
                 }
             },
@@ -337,8 +337,8 @@ class TestRateLimitBypass:
         engine = PolicyEngine()
         engine.policy = {
             "agents": {
-                "a:b": {"allowed_tools": ["*"], "rate_limit_per_hour": 3},
-                "a": {"allowed_tools": ["*"], "rate_limit_per_hour": 3},
+                "a:b": {"tools_allowed": ["*"], "rate_limit_per_hour": 3},
+                "a": {"tools_allowed": ["*"], "rate_limit_per_hour": 3},
             },
             "tools": {
                 "c": {"allowed_actions": ["*"]},
@@ -380,7 +380,7 @@ class TestRateLimitBypass:
 
         # Wind back the reset_at to simulate an hour passing
         key = "limited-agent:tool"
-        engine.rate_limits[key]["reset_at"] -= 3601
+        engine.rate_limits[key]["reset_at"] = int(time.time()) - 3601
 
         allowed, _ = engine.check_tool_call("limited-agent", "tool", "tools/call")
         assert allowed is True, "Must be allowed after hour window resets"
