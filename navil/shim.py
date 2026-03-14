@@ -144,8 +144,9 @@ class StdioShim:
             return
         try:
             import redis.asyncio as aioredis
+
             self._redis = aioredis.from_url(self.redis_url)
-            await self._redis.ping()
+            await self._redis.ping()  # type: ignore[misc]
             logger.info("Connected to Redis at %s", self.redis_url)
         except Exception as e:
             logger.info("Redis unavailable (%s) — running without telemetry queue", e)
@@ -192,9 +193,7 @@ class StdioShim:
 
             # Policy check
             if hasattr(self.policy_engine, "check_tool_call"):
-                decision = self.policy_engine.check_tool_call(
-                    self.agent_name, tool_name, action
-                )
+                decision = self.policy_engine.check_tool_call(self.agent_name, tool_name, action)
                 # check_tool_call returns (allowed: bool, reason: str)
                 if isinstance(decision, tuple):
                     is_allowed, _deny_reason = decision
@@ -205,9 +204,7 @@ class StdioShim:
 
                 if not is_allowed:
                     self.stats["blocked"] += 1
-                    err = self._jsonrpc_error(
-                        -32001, f"Blocked by policy: {tool_name}", req_id
-                    )
+                    err = self._jsonrpc_error(-32001, f"Blocked by policy: {tool_name}", req_id)
                     return False, body, err
 
             # Fast anomaly gate (sync context).
@@ -215,9 +212,7 @@ class StdioShim:
             # local check: scan recent alerts for CRITICAL on this agent.
             # Full async detection runs in _record_telemetry after response.
             try:
-                recent_alerts = self.detector.get_alerts(
-                    agent_name=self.agent_name
-                )[-10:]
+                recent_alerts = self.detector.get_alerts(agent_name=self.agent_name)[-10:]
                 has_critical = any(
                     (a.get("severity") if isinstance(a, dict) else getattr(a, "severity", ""))
                     == "CRITICAL"
@@ -232,9 +227,7 @@ class StdioShim:
 
             if not allowed:
                 self.stats["blocked"] += 1
-                err = self._jsonrpc_error(
-                    -32002, f"Blocked by anomaly detector: {reason}", req_id
-                )
+                err = self._jsonrpc_error(-32002, f"Blocked by anomaly detector: {reason}", req_id)
                 return False, body, err
 
         return True, body, None
@@ -313,25 +306,19 @@ class StdioShim:
         client_transport, client_protocol = await loop.connect_write_pipe(
             asyncio.streams.FlowControlMixin, sys.stdout.buffer
         )
-        client_writer = asyncio.StreamWriter(
-            client_transport, client_protocol, None, loop
-        )
+        client_writer = asyncio.StreamWriter(client_transport, client_protocol, None, loop)
 
         server_reader = self._process.stdout
         server_writer = self._process.stdin
 
         # Stderr passthrough (log server stderr for debugging)
-        stderr_task = asyncio.create_task(
-            self._pipe_stderr(self._process.stderr)
-        )
+        stderr_task = asyncio.create_task(self._pipe_stderr(self._process.stderr))
 
         # Two concurrent tasks: client→server and server→client
         client_to_server = asyncio.create_task(
             self._client_to_server(client_reader, server_writer, client_writer)
         )
-        server_to_client = asyncio.create_task(
-            self._server_to_client(server_reader, client_writer)
-        )
+        server_to_client = asyncio.create_task(self._server_to_client(server_reader, client_writer))
 
         # Wait for either direction to finish (usually means EOF / process exit)
         done, pending = await asyncio.wait(
@@ -465,9 +452,7 @@ class StdioShim:
                             tools = result.get("tools", []) if isinstance(result, dict) else []
                             tool_names = [t.get("name", "") for t in tools if isinstance(t, dict)]
                             if tool_names:
-                                self.detector.register_server_tools(
-                                    self._target_server, tool_names
-                                )
+                                self.detector.register_server_tools(self._target_server, tool_names)
                         except Exception:
                             pass
 
@@ -530,6 +515,7 @@ async def run_shim(
     policy_engine = PolicyEngine()
     if policy_path:
         from pathlib import Path
+
         policy_engine.policy_file = Path(policy_path)
         policy_engine._load_policy()
 

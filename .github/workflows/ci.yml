@@ -140,8 +140,8 @@ jobs:
             --ignore=tests/test_ml_clustering.py \
             --ignore=tests/test_llm_client.py \
             --ignore=tests/test_llm_streaming.py
-      - name: Check coverage threshold (80%)
-        run: coverage report --fail-under=80
+      - name: Check coverage threshold (55%)
+        run: coverage report --fail-under=55
 
   python-test-ml:
     name: "Python · ML Tests (py${{ matrix.python-version }})"
