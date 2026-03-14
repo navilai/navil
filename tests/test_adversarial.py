@@ -821,20 +821,23 @@ class TestNewVulnerabilities:
         engine = PolicyEngine()
         engine.policy = {
             "agents": {
+                # Both agents have the same limit so the collision is visible:
+                # "a:b" exhausts the shared "a:b:c" bucket (2 calls),
+                # leaving "a" with 0 remaining calls in that bucket.
                 "a:b": {"tools_allowed": ["*"], "rate_limit_per_hour": 2},
-                "a": {"tools_allowed": ["*"], "rate_limit_per_hour": 100},
+                "a": {"tools_allowed": ["*"], "rate_limit_per_hour": 2},
             },
             "tools": {
                 "c": {"allowed_actions": ["*"]},
                 "b:c": {"allowed_actions": ["*"]},
             },
         }
-        # Exhaust "a:b"'s limit using tool "c"
+        # Exhaust "a:b"'s limit using tool "c" (fills key "a:b:c" counter to 2)
         engine.check_tool_call("a:b", "c", "tools/call")
         engine.check_tool_call("a:b", "c", "tools/call")
 
-        # "a" calling "b:c" has limit=100, should be allowed
-        # But due to collision, "a:b:c" bucket is shared → blocked
+        # "a" calling "b:c" has its own limit=2, should be allowed in isolation
+        # But due to collision, "a:b:c" bucket is shared → counter=2 >= 2 → blocked
         allowed, _ = engine.check_tool_call("a", "b:c", "tools/call")
         assert allowed is True, (
             "CONFIRMED FINDING: rate limit key collision — "
