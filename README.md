@@ -152,7 +152,7 @@ python bench_total_latency.py   # Full session wall-clock
 ```
 
 <p align="center">
-  <img src="docs/screenshots/dashboard.png" alt="Navil Dashboard — Fleet overview with agent health, alerts, credential status, and policy decisions" width="800" />
+  <img src="docs/screenshots/dashboard.png" alt="Navil Dashboard — Fleet overview showing agent count, active alerts, invocations, credential status, agent health grid, and recent policy decisions" width="800" />
 </p>
 
 ## Features
@@ -174,6 +174,9 @@ YAML-driven tool/action allow-lists, per-agent rate limiting, data-sensitivity g
 
 ### LLM-Powered Analysis
 AI-powered config analysis, anomaly explanation, policy generation, and self-healing. Bring your own key — supports Anthropic, OpenAI, Gemini, and Ollama (fully local).
+
+### Analytics *(Navil Cloud)*
+Per-agent trust scores with behavioral profiling and anomaly trend analysis. Continuously scores every agent over time and surfaces risk trends before they become incidents.
 
 ### Credential Lifecycle
 Issue, rotate, and revoke JWT tokens with JIT provisioning, configurable TTL, usage tracking, and immutable audit logs.
@@ -199,54 +202,70 @@ For the full system design, see **[ARCHITECTURE.md](ARCHITECTURE.md)**.
 
 ## Dashboard
 
-Navil ships with a full-featured security dashboard for visualizing and managing your MCP fleet.
+Navil ships with a full-featured 12-page security dashboard for visualizing and managing your MCP fleet.
 
 <table>
 <tr>
 <td width="50%">
 
-**Penetration Testing** — Run all 11 SAFE-MCP attack scenarios and see which threats your detectors catch.
+**Dashboard** — Fleet overview: agent count, active alerts, invocations, credential status, agent health grid, and recent policy decisions at a glance.
+
+<img src="docs/screenshots/dashboard.png" alt="Dashboard — fleet overview with stats and agent health" />
+
+</td>
+<td width="50%">
+
+**Gateway** — Configure and start the MCP Security Proxy. Intercepts agent-to-tool traffic in real time, enforcing policies and blocking anomalies.
+
+<img src="docs/screenshots/gateway.png" alt="Gateway — proxy configuration and start" />
+
+</td>
+</tr>
+<tr>
+<td width="50%">
+
+**Penetration Testing** — Run all 11 SAFE-MCP attack scenarios (reconnaissance, supply chain, c2 beaconing, rug pull, and more) and see which threats your detectors catch.
 
 <img src="docs/screenshots/pentest.png" alt="Pentest — 11/11 attacks detected" />
 
 </td>
 <td width="50%">
 
-**Config Scanner** — Paste any MCP server config and get a security score with actionable findings.
+**Config Scanner** — Paste any MCP server config and get a 0–100 security score with CRITICAL/HIGH findings and actionable remediation steps.
 
-<img src="docs/screenshots/scanner.png" alt="Scanner — vulnerability scan results" />
-
-</td>
-</tr>
-<tr>
-<td width="50%">
-
-**Self-Healing AI** — LLM-powered threat analysis with one-click remediation actions.
-
-<img src="docs/screenshots/self-healing.png" alt="Self-Healing — AI remediation suggestions" />
-
-</td>
-<td width="50%">
-
-**Alerts** — Real-time anomaly alerts with severity filtering across your agent fleet.
-
-<img src="docs/screenshots/alerts.png" alt="Alerts — anomaly detection alerts" />
+<img src="docs/screenshots/scanner.png" alt="Config Scanner — vulnerability scan results" />
 
 </td>
 </tr>
 <tr>
 <td width="50%">
 
-**Policy Engine** — Check permissions, review decisions, and generate YAML policies with AI.
+**Self-Healing AI** — Analyze threats and apply AI-generated remediation actions (credential rotation, policy updates, alert escalation) with confidence scores.
 
-<img src="docs/screenshots/policy.png" alt="Policy — permission checks and AI generation" />
+<img src="docs/screenshots/self-healing.png" alt="Self-Healing — AI remediation actions with confidence scores" />
 
 </td>
 <td width="50%">
 
-**Gateway** — MCP security proxy with real-time traffic monitoring and interception.
+**Alerts** — Real-time anomaly alerts with CRITICAL / HIGH / MEDIUM / LOW severity filtering across your agent fleet.
 
-<img src="docs/screenshots/gateway.png" alt="Gateway — proxy configuration" />
+<img src="docs/screenshots/alerts.png" alt="Alerts — anomaly detection alerts with severity filters" />
+
+</td>
+</tr>
+<tr>
+<td width="50%">
+
+**Policy Engine** — Check permissions for any agent/tool/action pair, review the live decision log, and generate YAML policies from natural language.
+
+<img src="docs/screenshots/policy.png" alt="Policy — permission check form, decision log, AI policy generation" />
+
+</td>
+<td width="50%">
+
+**Analytics** *(Navil Cloud)* — Per-agent trust scores with behavioral profiling and anomaly trend analysis. Surfaces drift before it becomes an incident.
+
+<img src="docs/screenshots/analytics.png" alt="Analytics — Navil Cloud agent risk scoring upsell" />
 
 </td>
 </tr>
@@ -257,10 +276,9 @@ Navil ships with a full-featured security dashboard for visualizing and managing
 
 | Page | Screenshot |
 |------|-----------|
-| Agents | <img src="docs/screenshots/agents.png" alt="Agents" width="600" /> |
-| Credentials | <img src="docs/screenshots/credentials.png" alt="Credentials" width="600" /> |
-| Feedback | <img src="docs/screenshots/feedback.png" alt="Feedback" width="600" /> |
-| Settings | <img src="docs/screenshots/settings.png" alt="Settings" width="600" /> |
+| Agents | <img src="docs/screenshots/agents.png" alt="Agents — fleet table with observations, alerts, and tool usage" width="600" /> |
+| Credentials | <img src="docs/screenshots/credentials.png" alt="Credentials — issue and revoke JWT tokens" width="600" /> |
+| Settings | <img src="docs/screenshots/settings.png" alt="Settings — subscription tier, LLM config, authentication" width="600" /> |
 
 </details>
 
@@ -489,7 +507,7 @@ NAVIL_API_KEY=nvl_your_key NAVIL_DISABLE_CLOUD_SYNC=true navil cloud serve
 # Install dev dependencies
 pip install -e ".[dev]"
 
-# Run tests (373 tests)
+# Run tests (456 tests)
 pytest
 
 # Lint
