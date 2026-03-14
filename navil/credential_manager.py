@@ -12,6 +12,7 @@ import hashlib
 import json
 import logging
 import secrets
+import threading
 from dataclasses import asdict, dataclass
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
@@ -89,6 +90,10 @@ class CredentialManager:
         self.audit_log_path: Path | None = Path(audit_log_path) if audit_log_path else None
         self.credentials: dict[str, Credential] = {}
         self.rotation_policies: dict[str, dict[str, Any]] = {}
+        self._rotation_lock = threading.Lock()
+
+    # Maximum number of active credentials allowed globally
+    MAX_CREDENTIALS: int = 500
 
     def issue_credential(
         self,
@@ -108,7 +113,25 @@ class CredentialManager:
 
         Returns:
             Dictionary containing token and credential information
+
+        Raises:
+            ValueError: If TTL is not positive or credential cap is reached
         """
+        if ttl_seconds <= 0:
+            raise ValueError(f"TTL must be positive, got {ttl_seconds}")
+
+        # Purge expired credentials so they don't count toward the cap
+        self._purge_expired()
+
+        active_count = sum(
+            1 for c in self.credentials.values() if c.status == CredentialStatus.ACTIVE
+        )
+        if active_count >= self.MAX_CREDENTIALS:
+            raise ValueError(
+                f"Credential cap reached ({self.MAX_CREDENTIALS} active). "
+                "Revoke unused credentials before issuing new ones."
+            )
+
         token_id = self._generate_token_id()
         issued_at = datetime.now(timezone.utc)
         expires_at = issued_at + timedelta(seconds=ttl_seconds)
@@ -164,36 +187,52 @@ class CredentialManager:
         """
         Rotate an existing credential (issue new token, revoke old).
 
+        Thread-safe: acquires ``_rotation_lock`` so concurrent rotations
+        of the same credential are serialized (second caller sees EXPIRED
+        and raises ValueError instead of creating a duplicate).
+
         Args:
             token_id: ID of credential to rotate
 
         Returns:
             Dictionary containing new token information
         """
-        if token_id not in self.credentials:
-            raise ValueError(f"Credential not found: {token_id}")
+        with self._rotation_lock:
+            if token_id not in self.credentials:
+                raise ValueError(f"Credential not found: {token_id}")
 
-        old_credential = self.credentials[token_id]
+            old_credential = self.credentials[token_id]
 
-        if old_credential.status == CredentialStatus.REVOKED:
-            raise ValueError(f"Cannot rotate revoked credential: {token_id}")
+            if old_credential.status == CredentialStatus.REVOKED:
+                raise ValueError(f"Cannot rotate revoked credential: {token_id}")
 
-        # Issue new credential with same scope
-        new_cred_info = self.issue_credential(
-            agent_name=old_credential.agent_name,
-            scope=old_credential.scope,
-            ttl_seconds=int(
+            if old_credential.status != CredentialStatus.ACTIVE:
+                raise ValueError(
+                    f"Cannot rotate credential with status "
+                    f"{old_credential.status.value}: {token_id}"
+                )
+
+            # Mark old credential as expired BEFORE issuing new one
+            old_credential.status = CredentialStatus.EXPIRED
+            self.credentials[token_id] = old_credential
+
+            # Compute remaining TTL; if credential is expired, use a fresh 1-hour TTL
+            remaining = int(
                 (
-                    datetime.fromisoformat(old_credential.expires_at) - datetime.now(timezone.utc)
+                    datetime.fromisoformat(old_credential.expires_at)
+                    - datetime.now(timezone.utc)
                 ).total_seconds()
-            ),
-        )
+            )
+            ttl = remaining if remaining > 0 else 3600
 
-        # Update old credential status
-        old_credential.status = CredentialStatus.EXPIRED
-        self.credentials[token_id] = old_credential
+            # Issue new credential with same scope
+            new_cred_info = self.issue_credential(
+                agent_name=old_credential.agent_name,
+                scope=old_credential.scope,
+                ttl_seconds=ttl,
+            )
 
-        # Log rotation
+        # Log rotation (outside lock — no mutation)
         self._log_audit(
             token_id=token_id,
             agent_name=old_credential.agent_name,
@@ -232,6 +271,24 @@ class CredentialManager:
 
         logger.info(f"Revoked credential {token_id}: {reason}")
         return True
+
+    def _purge_expired(self) -> int:
+        """Remove credentials whose expires_at is in the past.
+
+        Returns the number of credentials purged.
+        """
+        now = datetime.now(timezone.utc)
+        expired_ids = [
+            tid
+            for tid, cred in self.credentials.items()
+            if cred.status == CredentialStatus.ACTIVE
+            and datetime.fromisoformat(cred.expires_at) < now
+        ]
+        for tid in expired_ids:
+            self.credentials[tid].status = CredentialStatus.EXPIRED
+        if expired_ids:
+            logger.debug("Purged %d expired credentials", len(expired_ids))
+        return len(expired_ids)
 
     def verify_credential(self, token: str) -> dict[str, Any]:
         """

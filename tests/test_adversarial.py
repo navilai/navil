@@ -376,7 +376,7 @@ class TestRateLimitBypass:
         assert blocked is False, "Must be blocked after exhausting limit"
 
         # Wind back the reset_at to simulate an hour passing
-        key = "limited-agent:tool"
+        key = ("limited-agent", "tool")
         engine.rate_limits[key]["reset_at"] = int(time.time()) - 3601
 
         allowed, _ = engine.check_tool_call("limited-agent", "tool", "tools/call")
@@ -989,7 +989,7 @@ class TestUnauthenticatedEndpoints:
 
     @pytest.fixture
     def local_api_app(self, tmp_path: Path, monkeypatch: Any) -> Any:
-        """Minimal local dashboard app with a fresh AppState."""
+        """Minimal local dashboard app with a fresh AppState and auth enabled."""
         import navil.api.local.app as app_module
         from navil.api.local.state import AppState
 
@@ -997,6 +997,7 @@ class TestUnauthenticatedEndpoints:
         (tmp_path / "assets").mkdir()
         (tmp_path / "index.html").write_text("<html>test</html>")
         monkeypatch.setattr(app_module, "DASHBOARD_DIR", tmp_path)
+        monkeypatch.setenv("NAVIL_DASHBOARD_TOKEN", "test-secret-token")
         app = app_module.create_app(with_demo=False)
         yield app
         AppState.reset()
@@ -1060,22 +1061,17 @@ class TestUnauthenticatedEndpoints:
 class TestResourceExhaustion:
     """High/Medium findings: unbounded resource growth and rate-limit edge cases."""
 
-    def test_unbounded_credential_issuance(self) -> None:
-        """FINDING (High): CredentialManager has no per-agent or global issuance cap.
+    def test_credential_issuance_capped(self) -> None:
+        """FIXED: CredentialManager enforces a global active credential cap.
 
-        An attacker or runaway agent can issue unlimited credentials, growing
-        in-process memory without bound.
-
-        Expected: some cap limits issuance before 1,000 credentials.
-        Actual:   all 1,000 succeed — no limit enforced.
+        Previously: unlimited credentials could be issued, growing memory unbounded.
+        Now: ValueError raised when cap (500) is reached.
         """
         cm = CredentialManager()
-        for i in range(1000):
+        for i in range(500):
             cm.issue_credential(f"agent-{i % 10}", "read:tools")
-        assert len(cm.credentials) < 1000, (
-            f"CONFIRMED HIGH FINDING: issued {len(cm.credentials)} credentials with no cap — "
-            "CredentialManager grows unbounded (no per-agent or global issuance limit)"
-        )
+        with pytest.raises(ValueError, match="Credential cap reached"):
+            cm.issue_credential("agent-overflow", "read:tools")
 
     def test_zero_rate_limit_blocks_first_call(self) -> None:
         """FINDING (Medium): rate_limit_per_hour=0 blocks every call, including the first.
