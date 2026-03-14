@@ -723,3 +723,80 @@ class TestPathTraversal:
             resp = await client.get("/assets/../../etc/passwd")
         assert resp.status_code == 200
         assert "<html>index</html>" in resp.text
+
+
+# ---------------------------------------------------------------------------
+# 7. CORS behavior attacks (ASGI layer)
+# ---------------------------------------------------------------------------
+
+
+class TestCORSBehavior:
+    """Verify CORS headers via real HTTP through the ASGI stack.
+
+    Module-level _allow_origins and _allow_credentials are monkeypatched
+    because they are evaluated at import time from os.environ.
+    """
+
+    def _make_cors_app(self, monkeypatch: Any, origins: list[str], credentials: bool) -> Any:
+        import navil.api.local.app as app_module
+        monkeypatch.setattr(app_module, "_allow_origins", origins)
+        monkeypatch.setattr(app_module, "_allow_credentials", credentials)
+        return app_module.create_app(with_demo=False)
+
+    @pytest.mark.asyncio
+    async def test_wildcard_origin_no_credentials_header(self, monkeypatch: Any) -> None:
+        """With allow_origins=['*'] and allow_credentials=False, response must not
+        include Access-Control-Allow-Credentials: true."""
+        app = self._make_cors_app(monkeypatch, ["*"], False)
+        async with httpx.AsyncClient(
+            transport=httpx.ASGITransport(app=app), base_url="http://test"
+        ) as client:
+            resp = await client.get("/api/local/overview", headers={"Origin": "http://evil.com"})
+        credentials_header = resp.headers.get("access-control-allow-credentials", "")
+        assert credentials_header.lower() != "true", (
+            "CORS: credentials must not be sent with wildcard origin"
+        )
+
+    @pytest.mark.asyncio
+    async def test_explicit_origin_sends_credentials(self, monkeypatch: Any) -> None:
+        """With explicit origin and allow_credentials=True, response includes credentials header."""
+        app = self._make_cors_app(monkeypatch, ["http://localhost:8484"], True)
+        async with httpx.AsyncClient(
+            transport=httpx.ASGITransport(app=app), base_url="http://test"
+        ) as client:
+            resp = await client.get(
+                "/api/local/overview", headers={"Origin": "http://localhost:8484"}
+            )
+        credentials_header = resp.headers.get("access-control-allow-credentials", "")
+        assert credentials_header.lower() == "true"
+
+    @pytest.mark.asyncio
+    async def test_wrong_origin_blocked(self, monkeypatch: Any) -> None:
+        """With explicit origin list, a different origin must not get CORS headers."""
+        app = self._make_cors_app(monkeypatch, ["http://localhost:8484"], True)
+        async with httpx.AsyncClient(
+            transport=httpx.ASGITransport(app=app), base_url="http://test"
+        ) as client:
+            resp = await client.get(
+                "/api/local/overview", headers={"Origin": "http://evil.com"}
+            )
+        # No Access-Control-Allow-Origin for an unrecognised origin
+        acao = resp.headers.get("access-control-allow-origin", "")
+        assert acao != "http://evil.com", "Evil origin must not be allowed"
+
+    @pytest.mark.asyncio
+    async def test_space_only_origins_edge_case(self, monkeypatch: Any) -> None:
+        """EDGE CASE: _allow_origins=[] (from ' ' env) + _allow_credentials=True.
+
+        Empty origins list blocks all cross-origin requests — credentials setting
+        is irrelevant. No CORS allow header should be present.
+        """
+        app = self._make_cors_app(monkeypatch, [], True)
+        async with httpx.AsyncClient(
+            transport=httpx.ASGITransport(app=app), base_url="http://test"
+        ) as client:
+            resp = await client.get(
+                "/api/local/overview", headers={"Origin": "http://any.com"}
+            )
+        acao = resp.headers.get("access-control-allow-origin", "")
+        assert not acao, "No origin should be allowed when origins list is empty"
