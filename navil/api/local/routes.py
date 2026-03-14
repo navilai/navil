@@ -15,7 +15,7 @@ from typing import Any
 import yaml
 from fastapi import APIRouter, HTTPException
 from fastapi.responses import StreamingResponse
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 
 from navil.api.local.state import AppState
 from navil.llm.cache import LLMResponseCache, cache_key
@@ -183,32 +183,32 @@ class ScanRequest(BaseModel):
 
 
 class InvocationRequest(BaseModel):
-    agent_name: str
-    tool_name: str
-    action: str
+    agent_name: str = Field(..., min_length=1, max_length=256)
+    tool_name: str = Field(..., min_length=1, max_length=256)
+    action: str = Field(..., min_length=1, max_length=128)
     duration_ms: int
     data_accessed_bytes: int = 0
     success: bool = True
 
 
 class CredentialIssueRequest(BaseModel):
-    agent_name: str
-    scope: str
-    ttl_seconds: int = 3600
+    agent_name: str = Field(..., min_length=1, max_length=256)
+    scope: str = Field(..., min_length=1, max_length=512)
+    ttl_seconds: int = Field(default=3600, ge=1, le=86400 * 365)
 
 
 class PolicyCheckRequest(BaseModel):
-    agent_name: str
-    tool_name: str
-    action: str
+    agent_name: str = Field(..., min_length=1, max_length=256)
+    tool_name: str = Field(..., min_length=1, max_length=256)
+    action: str = Field(..., min_length=1, max_length=128)
 
 
 class FeedbackRequest(BaseModel):
-    alert_timestamp: str
-    anomaly_type: str
-    agent_name: str
-    verdict: str
-    operator_notes: str = ""
+    alert_timestamp: str = Field(..., max_length=64)
+    anomaly_type: str = Field(..., max_length=128)
+    agent_name: str = Field(..., min_length=1, max_length=256)
+    verdict: str = Field(..., max_length=64)
+    operator_notes: str = Field(default="", max_length=2048)
 
 
 class ExplainAnomalyRequest(BaseModel):
@@ -220,12 +220,12 @@ class AnalyzeConfigRequest(BaseModel):
 
 
 class GeneratePolicyRequest(BaseModel):
-    description: str
+    description: str = Field(..., min_length=1, max_length=4096)
 
 
 class RefinePolicyRequest(BaseModel):
     existing_policy: dict[str, Any]
-    instruction: str
+    instruction: str = Field(..., min_length=1, max_length=4096)
 
 
 class ApplyActionRequest(BaseModel):
@@ -233,14 +233,14 @@ class ApplyActionRequest(BaseModel):
 
 
 class AutoRemediateRequest(BaseModel):
-    confidence_threshold: float = 0.9
+    confidence_threshold: float = Field(default=0.9, ge=0.0, le=1.0)
 
 
 class LLMConfigRequest(BaseModel):
-    provider: str
-    api_key: str
-    base_url: str = ""
-    model: str = ""
+    provider: str = Field(..., max_length=64)
+    api_key: str = Field(..., max_length=512)
+    base_url: str = Field(default="", max_length=512)
+    model: str = Field(default="", max_length=128)
 
 
 # ── Overview ────────────────────────────────────────────────
