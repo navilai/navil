@@ -384,3 +384,102 @@ class TestRateLimitBypass:
 
         allowed, _ = engine.check_tool_call("limited-agent", "tool", "tools/call")
         assert allowed is True, "Must be allowed after hour window resets"
+
+
+# ---------------------------------------------------------------------------
+# 4. Input validation boundary attacks
+# ---------------------------------------------------------------------------
+
+
+class TestInputValidation:
+    """Probe Pydantic model field constraints at and beyond their limits."""
+
+    def test_agent_name_at_max_length_valid(self) -> None:
+        """Exactly 256 chars must pass validation."""
+        req = PolicyCheckRequest(agent_name="a" * 256, tool_name="tool", action="tools/call")
+        assert len(req.agent_name) == 256
+
+    def test_agent_name_over_max_length_rejected(self) -> None:
+        """257 chars must fail validation."""
+        from pydantic import ValidationError
+        with pytest.raises(ValidationError):
+            PolicyCheckRequest(agent_name="a" * 257, tool_name="tool", action="tools/call")
+
+    def test_unicode_emoji_at_char_limit_valid(self) -> None:
+        """256 emoji chars (each 4 bytes = 1024 total bytes) must pass.
+
+        Pydantic counts characters, not bytes — this is documented behaviour.
+        """
+        emoji_str = "𝕳" * 256  # 256 chars, 1024 UTF-8 bytes
+        req = PolicyCheckRequest(agent_name=emoji_str, tool_name="tool", action="tools/call")
+        assert len(req.agent_name) == 256
+
+    def test_null_byte_passes_pydantic(self) -> None:
+        """FINDING (Low): Null bytes pass Pydantic string validation.
+
+        This means null bytes can appear in agent names stored in logs/telemetry.
+        """
+        from pydantic import ValidationError
+        try:
+            req = PolicyCheckRequest(
+                agent_name="hello\x00world", tool_name="tool", action="tools/call"
+            )
+            # If we reach here, null byte was accepted — this is the finding
+            assert "\x00" in req.agent_name, "FINDING: null byte accepted in agent_name"
+        except ValidationError:
+            pytest.skip("Pydantic rejected null byte — finding disproved, update spec")
+
+    def test_newline_passes_pydantic(self) -> None:
+        """FINDING (Low): Newlines pass Pydantic string validation.
+
+        Newlines in agent names enable log injection attacks.
+        """
+        from pydantic import ValidationError
+        try:
+            req = PolicyCheckRequest(
+                agent_name="hello\nworld", tool_name="tool", action="tools/call"
+            )
+            assert "\n" in req.agent_name, "FINDING: newline accepted in agent_name"
+        except ValidationError:
+            pytest.skip("Pydantic rejected newline — finding disproved, update spec")
+
+    def test_negative_ttl_rejected(self) -> None:
+        """Negative TTL must be rejected."""
+        from pydantic import ValidationError
+        with pytest.raises(ValidationError):
+            CredentialIssueRequest(agent_name="agent", scope="read:tools", ttl_seconds=-1)
+
+    def test_zero_ttl_rejected(self) -> None:
+        """Zero TTL must be rejected (ge=1)."""
+        from pydantic import ValidationError
+        with pytest.raises(ValidationError):
+            CredentialIssueRequest(agent_name="agent", scope="read:tools", ttl_seconds=0)
+
+    def test_confidence_over_one_rejected(self) -> None:
+        """confidence_threshold > 1.0 must be rejected."""
+        from pydantic import ValidationError
+        with pytest.raises(ValidationError):
+            AutoRemediateRequest(confidence_threshold=1.5)
+
+    def test_confidence_negative_rejected(self) -> None:
+        """confidence_threshold < 0.0 must be rejected."""
+        from pydantic import ValidationError
+        with pytest.raises(ValidationError):
+            AutoRemediateRequest(confidence_threshold=-0.1)
+
+    def test_empty_agent_name_rejected(self) -> None:
+        """Empty string must be rejected (min_length=1)."""
+        from pydantic import ValidationError
+        with pytest.raises(ValidationError):
+            PolicyCheckRequest(agent_name="", tool_name="tool", action="tools/call")
+
+    def test_scope_at_max_length_valid(self) -> None:
+        """Exactly 512-char scope must pass."""
+        req = CredentialIssueRequest(agent_name="agent", scope="s" * 512)
+        assert len(req.scope) == 512
+
+    def test_scope_over_max_length_rejected(self) -> None:
+        """513-char scope must be rejected."""
+        from pydantic import ValidationError
+        with pytest.raises(ValidationError):
+            CredentialIssueRequest(agent_name="agent", scope="s" * 513)
