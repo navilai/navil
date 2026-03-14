@@ -623,3 +623,94 @@ class TestJSONRPCAbuse:
         body = json.dumps({"jsonrpc": "2.0", "method": "tools/call", "id": huge_id}).encode()
         with pytest.raises(ValueError, match="too large"):
             MCPSecurityProxy.sanitize_request(body)
+
+
+# ---------------------------------------------------------------------------
+# 6. Path traversal attacks (ASGI layer)
+# ---------------------------------------------------------------------------
+
+
+class TestPathTraversal:
+    """Attack serve_frontend() via real HTTP through the ASGI stack.
+
+    Requires monkeypatching module-level DASHBOARD_DIR and re-creating the app
+    inside each test, because route registration happens at create_app() time.
+    """
+
+    @pytest.fixture
+    def dashboard_app(self, tmp_path: Path, monkeypatch: Any) -> Any:
+        """Create a minimal dashboard directory and a patched FastAPI app."""
+        import navil.api.local.app as app_module
+
+        (tmp_path / "index.html").write_text("<html>index</html>")
+        (tmp_path / "style.css").write_text("body{color:red}")
+        # create_app mounts DASHBOARD_DIR/assets as a StaticFiles directory
+        (tmp_path / "assets").mkdir()
+        monkeypatch.setattr(app_module, "DASHBOARD_DIR", tmp_path)
+        return app_module.create_app(with_demo=False)
+
+    @pytest.mark.asyncio
+    async def test_dotdot_slash_blocked(self, dashboard_app: Any) -> None:
+        """../../etc/passwd must serve index.html, not the actual file."""
+        import httpx
+        async with httpx.AsyncClient(
+            transport=httpx.ASGITransport(app=dashboard_app), base_url="http://test"
+        ) as client:
+            resp = await client.get("/../../etc/passwd")
+        assert resp.status_code == 200
+        assert "<html>index</html>" in resp.text, "Path traversal served non-index content"
+
+    @pytest.mark.asyncio
+    async def test_valid_file_served(self, dashboard_app: Any) -> None:
+        """A legitimate file inside DASHBOARD_DIR must be served normally."""
+        import httpx
+        async with httpx.AsyncClient(
+            transport=httpx.ASGITransport(app=dashboard_app), base_url="http://test"
+        ) as client:
+            resp = await client.get("/style.css")
+        assert resp.status_code == 200
+        assert "color:red" in resp.text
+
+    @pytest.mark.asyncio
+    async def test_nonexistent_file_spa_fallback(self, dashboard_app: Any) -> None:
+        """A non-existent path must fall back to index.html (SPA routing)."""
+        import httpx
+        async with httpx.AsyncClient(
+            transport=httpx.ASGITransport(app=dashboard_app), base_url="http://test"
+        ) as client:
+            resp = await client.get("/some/unknown/deep/route")
+        assert resp.status_code == 200
+        assert "<html>index</html>" in resp.text
+
+    @pytest.mark.asyncio
+    async def test_symlink_outside_root_blocked(
+        self, tmp_path: Path, dashboard_app: Any
+    ) -> None:
+        """A symlink from inside DASHBOARD_DIR pointing outside must be blocked."""
+        import httpx
+        import navil.api.local.app as app_module
+
+        # DASHBOARD_DIR is already tmp_path (monkeypatched in dashboard_app fixture)
+        dashboard_dir = app_module.DASHBOARD_DIR
+        evil_link = dashboard_dir / "evil_link"
+        evil_link.symlink_to("/etc")
+
+        async with httpx.AsyncClient(
+            transport=httpx.ASGITransport(app=dashboard_app), base_url="http://test"
+        ) as client:
+            resp = await client.get("/evil_link/passwd")
+        assert resp.status_code == 200
+        assert "<html>index</html>" in resp.text, (
+            "Symlink traversal outside root was not blocked"
+        )
+
+    @pytest.mark.asyncio
+    async def test_dotdot_in_middle_blocked(self, dashboard_app: Any) -> None:
+        """assets/../../etc/passwd must serve index.html."""
+        import httpx
+        async with httpx.AsyncClient(
+            transport=httpx.ASGITransport(app=dashboard_app), base_url="http://test"
+        ) as client:
+            resp = await client.get("/assets/../../etc/passwd")
+        assert resp.status_code == 200
+        assert "<html>index</html>" in resp.text
