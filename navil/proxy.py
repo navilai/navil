@@ -17,6 +17,7 @@ from __future__ import annotations
 
 import asyncio
 import hashlib
+import hmac
 import logging
 import time
 from collections import deque
@@ -174,8 +175,12 @@ class MCPSecurityProxy:
     def extract_agent_name(self, headers: dict[str, str]) -> str | None:
         """Extract agent identity from request headers.
 
-        Checks Authorization header (Bearer JWT) first, then falls back
-        to X-Agent-Name header.
+        Checks Authorization header (Bearer JWT) first. If a Bearer token is
+        present but fails verification, returns None — never falls back to
+        X-Agent-Name to prevent auth bypass.
+
+        X-Agent-Name is only honoured when no Bearer token was attempted and
+        require_auth is False.
         """
         auth = headers.get("authorization", "")
         if auth.startswith("Bearer "):
@@ -187,15 +192,26 @@ class MCPSecurityProxy:
                     return payload["agent_name"]
             except Exception:
                 pass
-            # Fallback: match token against stored credentials
+            # Fallback: match token against stored credentials (constant-time comparison)
             if hasattr(self.credential_manager, "credentials"):
                 for cred in self.credential_manager.credentials.values():
                     status = cred.status
                     status_str = status.value if hasattr(status, "value") else str(status)
-                    if cred.token == token and status_str == "ACTIVE":
+                    try:
+                        token_match = hmac.compare_digest(
+                            cred.token.encode(), token.encode()
+                        )
+                    except Exception:
+                        token_match = False
+                    if token_match and status_str == "ACTIVE":
                         return cred.agent_name
+            # Bearer was attempted but failed — do NOT fall through to X-Agent-Name
+            return None
 
-        return headers.get("x-agent-name")
+        # No Bearer token: only honour X-Agent-Name when auth is not required
+        if not self.require_auth:
+            return headers.get("x-agent-name")
+        return None
 
     # ── Core Request Handler ──────────────────────────────────
 
