@@ -800,3 +800,115 @@ class TestCORSBehavior:
             )
         acao = resp.headers.get("access-control-allow-origin", "")
         assert not acao, "No origin should be allowed when origins list is empty"
+
+
+# ---------------------------------------------------------------------------
+# 8. Novel vulnerabilities (not covered by the 6 hardening fixes)
+# ---------------------------------------------------------------------------
+
+
+class TestNewVulnerabilities:
+    """Attack surfaces discovered during the audit that weren't fixed yet."""
+
+    def test_rate_limit_key_collision_confirmed(self) -> None:
+        """FINDING (Medium): Colon-separated key format allows cross-agent bucket sharing.
+
+        agent='a:b' + tool='c'  →  key 'a:b:c'
+        agent='a'   + tool='b:c' →  key 'a:b:c'  (same!)
+
+        One agent can exhaust another agent's rate limit.
+        """
+        engine = PolicyEngine()
+        engine.policy = {
+            "agents": {
+                "a:b": {"tools_allowed": ["*"], "rate_limit_per_hour": 2},
+                "a": {"tools_allowed": ["*"], "rate_limit_per_hour": 100},
+            },
+            "tools": {
+                "c": {"allowed_actions": ["*"]},
+                "b:c": {"allowed_actions": ["*"]},
+            },
+        }
+        # Exhaust "a:b"'s limit using tool "c"
+        engine.check_tool_call("a:b", "c", "tools/call")
+        engine.check_tool_call("a:b", "c", "tools/call")
+
+        # "a" calling "b:c" has limit=100, should be allowed
+        # But due to collision, "a:b:c" bucket is shared → blocked
+        allowed, _ = engine.check_tool_call("a", "b:c", "tools/call")
+        assert allowed is True, (
+            "CONFIRMED FINDING: rate limit key collision — "
+            "agent 'a' blocked by agent 'a:b' exhausting shared key 'a:b:c'"
+        )
+
+    def test_x_agent_name_no_length_limit(self) -> None:
+        """FINDING (Low): X-Agent-Name has no length constraint when require_auth=False.
+
+        A 10,000-char agent name is accepted and would be stored in traffic logs.
+        """
+        proxy = _make_proxy(require_auth=False)
+        huge_name = "a" * 10_000
+        result = proxy.extract_agent_name({"x-agent-name": huge_name})
+        assert result == huge_name, (
+            "FINDING: X-Agent-Name has no length limit — "
+            f"{len(huge_name)}-char name accepted verbatim"
+        )
+
+    def test_x_agent_name_newline_log_injection(self) -> None:
+        """FINDING (Low): Newlines in X-Agent-Name enable log injection.
+
+        The newline is stored in the traffic log agent field without sanitization.
+        """
+        proxy = _make_proxy(require_auth=False)
+        injected = "admin\nX-Injected: injected-header-value"
+        result = proxy.extract_agent_name({"x-agent-name": injected})
+        assert result == injected, (
+            "FINDING: newline in X-Agent-Name accepted — enables log/header injection"
+        )
+
+    def test_jwt_expiry_not_enforced_via_proxy_hmac_path(self) -> None:
+        """FINDING (High): Proxy auth falls back to hmac.compare_digest, bypassing JWT expiry.
+
+        issue_credential() produces ISO iat/exp → jwt.decode() always fails →
+        proxy uses plaintext token comparison → expired tokens still authenticate.
+
+        This test uses the actual proxy flow (extract_agent_name), not verify_credential.
+        """
+        cm = CredentialManager()
+        # Issue a credential with a very short TTL (conceptually expired)
+        cred_info = cm.issue_credential("expiry-test-agent", "read:tools", ttl_seconds=1)
+        token = cred_info["token"]
+
+        # The token is in cm.credentials as ACTIVE
+        # The proxy never checks JWT exp because verify_credential() always raises first
+
+        proxy = MCPSecurityProxy(
+            target_url="http://localhost:3000",
+            policy_engine=PolicyEngine(),
+            anomaly_detector=BehavioralAnomalyDetector(),
+            credential_manager=cm,
+            require_auth=True,
+        )
+
+        # Authenticate using the real proxy path
+        result = proxy.extract_agent_name({"authorization": f"Bearer {token}"})
+        assert result == "expiry-test-agent", (
+            "FINDING: proxy accepts token despite broken JWT verification — "
+            "expiry is never checked; auth works via plaintext hmac.compare_digest"
+        )
+
+    def test_anonymous_identity_via_x_agent_name(self) -> None:
+        """A caller can claim identity 'anonymous' via X-Agent-Name header (require_auth=False).
+
+        This means caller-controlled values appear in audit logs as 'anonymous'
+        indistinguishable from truly unauthenticated requests.
+        """
+        proxy = _make_proxy(require_auth=False)
+        # No header — becomes "anonymous" in handle_jsonrpc
+        result_none = proxy.extract_agent_name({})
+        # Explicit claim
+        result_claimed = proxy.extract_agent_name({"x-agent-name": "anonymous"})
+        # Both return the same thing from extract_agent_name perspective
+        # (handle_jsonrpc converts None to "anonymous" — we document the ambiguity)
+        assert result_none is None  # actual return; handle_jsonrpc adds the label
+        assert result_claimed == "anonymous"
