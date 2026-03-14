@@ -33,6 +33,8 @@ _origins_env = os.environ.get("ALLOWED_ORIGINS", "")
 _allow_origins: list[str] = (
     [o.strip() for o in _origins_env.split(",") if o.strip()] if _origins_env else ["*"]
 )
+# Credentials only allowed when origins are explicitly restricted (not wildcard)
+_allow_credentials: bool = bool(_origins_env)
 
 
 # ---------------------------------------------------------------------------
@@ -175,7 +177,7 @@ def create_app(with_demo: bool = True) -> FastAPI:
     app.add_middleware(
         CORSMiddleware,
         allow_origins=_allow_origins,
-        allow_credentials=True,
+        allow_credentials=_allow_credentials,
         allow_methods=["*"],
         allow_headers=["*"],
     )
@@ -189,7 +191,14 @@ def create_app(with_demo: bool = True) -> FastAPI:
         @app.get("/{path:path}")
         def serve_frontend(path: str) -> FileResponse:
             """Serve the React SPA — all non-API routes go to index.html."""
-            file_path = DASHBOARD_DIR / path
+            _dashboard_root = DASHBOARD_DIR.resolve()
+            file_path = (DASHBOARD_DIR / path).resolve()
+            # Reject path traversal attempts (including symlinks outside root)
+            if not file_path.is_relative_to(_dashboard_root):
+                return FileResponse(
+                    str(DASHBOARD_DIR / "index.html"),
+                    headers={"Cache-Control": "no-cache, no-store, must-revalidate"},
+                )
             if file_path.exists() and file_path.is_file():
                 return FileResponse(str(file_path))
             # Never cache index.html so new builds are picked up immediately
