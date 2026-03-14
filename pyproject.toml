@@ -97,7 +97,7 @@ Changelog = "https://github.com/ivanlkf/navil/blob/main/CHANGELOG.md"
 include = ["navil*"]
 
 [tool.setuptools.package-data]
-navil = ["sample_configs/*.json", "sample_policies/*.yaml", "py.typed"]
+navil = ["sample_configs/*.json", "sample_policies/*.yaml", "py.typed", "data/*.json"]
 
 [tool.ruff]
 target-version = "py310"
