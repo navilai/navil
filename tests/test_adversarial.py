@@ -901,3 +901,294 @@ class TestNewVulnerabilities:
         # (handle_jsonrpc converts None to "anonymous" — we document the ambiguity)
         assert result_none is None  # actual return; handle_jsonrpc adds the label
         assert result_claimed == "anonymous"
+
+
+# ---------------------------------------------------------------------------
+# 9. Policy enforcement bypass (Critical Finding)
+# ---------------------------------------------------------------------------
+
+
+class TestPolicyBypass:
+    """Critical finding: the proxy's DENY check is structurally broken.
+
+    check_tool_call() returns tuple[bool, str].
+    proxy.handle_jsonrpc() checks hasattr(decision, "decision") — False for tuple.
+    Falls back to str(decision) which produces "(False, ...)", never equal to "DENY".
+    Every policy DENY is silently ignored; forbidden tools are forwarded.
+    """
+
+    @pytest.mark.asyncio
+    async def test_tools_denied_bypassed_in_proxy_hot_path(self, fake_redis: Any) -> None:
+        """FINDING (Critical): tools_denied not enforced in proxy hot path.
+
+        Expected: handle_jsonrpc returns JSON-RPC error code -32001 (Blocked by policy).
+        Actual:   request is forwarded to upstream; no error is returned.
+        """
+        engine = PolicyEngine()
+        engine.policy = {
+            "agents": {
+                "agent-x": {
+                    "tools_allowed": ["*"],
+                    "tools_denied": ["forbidden_tool"],
+                }
+            },
+            "tools": {"forbidden_tool": {"allowed_actions": ["*"]}},
+        }
+        detector = BehavioralAnomalyDetector(redis_client=fake_redis)
+        proxy = MCPSecurityProxy(
+            target_url="http://localhost:3000",
+            policy_engine=engine,
+            anomaly_detector=detector,
+            credential_manager=CredentialManager(),
+            require_auth=False,
+        )
+        upstream = {"jsonrpc": "2.0", "result": {"content": "secret"}, "id": 1}
+        proxy._forward = _mock_forward(upstream)
+
+        body = json.dumps({
+            "jsonrpc": "2.0",
+            "method": "tools/call",
+            "params": {"name": "forbidden_tool", "arguments": {}},
+            "id": 1,
+        }).encode()
+
+        result, _ = await proxy.handle_jsonrpc(body, {"x-agent-name": "agent-x"})
+        assert result.get("error", {}).get("code") == -32001, (
+            "CONFIRMED CRITICAL FINDING: tools_denied not enforced in proxy hot path — "
+            "forbidden_tool was forwarded to upstream instead of blocked. "
+            "Root cause: check_tool_call() returns tuple[bool, str]; "
+            "proxy checks hasattr(tuple, 'decision') == False; "
+            "falls back to str((False, ...)) which never equals 'DENY'."
+        )
+
+    def test_policy_deny_return_type_causes_bypass(self) -> None:
+        """Documents the root cause: str(tuple) != 'DENY' is always True."""
+        engine = PolicyEngine()
+        engine.policy = {
+            "agents": {"agent-x": {"tools_denied": ["forbidden_tool"]}},
+            "tools": {},
+        }
+        decision = engine.check_tool_call("agent-x", "forbidden_tool", "tools/call")
+        assert isinstance(decision, tuple)
+        allowed, _ = decision
+        assert allowed is False
+        # The proxy compares str(decision) to "DENY" — this is always False
+        assert str(decision) != "DENY"
+
+
+# ---------------------------------------------------------------------------
+# 10. Unauthenticated credential management endpoints (Critical Finding)
+# ---------------------------------------------------------------------------
+
+
+class TestUnauthenticatedEndpoints:
+    """Critical finding: /api/local/credentials has zero authentication guards.
+
+    Any caller on localhost can list, issue, and revoke agent credentials.
+    """
+
+    @pytest.fixture
+    def local_api_app(self, tmp_path: Path, monkeypatch: Any) -> Any:
+        """Minimal local dashboard app with a fresh AppState."""
+        import navil.api.local.app as app_module
+        from navil.api.local.state import AppState
+
+        AppState.reset()
+        (tmp_path / "assets").mkdir()
+        (tmp_path / "index.html").write_text("<html>test</html>")
+        monkeypatch.setattr(app_module, "DASHBOARD_DIR", tmp_path)
+        app = app_module.create_app(with_demo=False)
+        yield app
+        AppState.reset()
+
+    @pytest.mark.asyncio
+    async def test_list_credentials_no_auth(self, local_api_app: Any) -> None:
+        """FINDING (Critical): GET /api/local/credentials requires no authentication."""
+        async with httpx.AsyncClient(
+            transport=httpx.ASGITransport(app=local_api_app), base_url="http://test"
+        ) as client:
+            resp = await client.get("/api/local/credentials")
+        assert resp.status_code == 401, (
+            f"CONFIRMED CRITICAL FINDING: GET /api/local/credentials returned "
+            f"{resp.status_code} (expected 401) — "
+            "unauthenticated callers can enumerate all agent credentials"
+        )
+
+    @pytest.mark.asyncio
+    async def test_issue_credential_no_auth(self, local_api_app: Any) -> None:
+        """FINDING (Critical): POST /api/local/credentials issues credentials without auth."""
+        payload = {"agent_name": "attacker", "scope": "*", "ttl_seconds": 86400}
+        async with httpx.AsyncClient(
+            transport=httpx.ASGITransport(app=local_api_app), base_url="http://test"
+        ) as client:
+            resp = await client.post("/api/local/credentials", json=payload)
+        assert resp.status_code == 401, (
+            f"CONFIRMED CRITICAL FINDING: POST /api/local/credentials returned "
+            f"{resp.status_code} (expected 401) — "
+            "unauthenticated callers can issue credentials with arbitrary scope"
+        )
+
+    @pytest.mark.asyncio
+    async def test_revoke_credential_no_auth(self, local_api_app: Any) -> None:
+        """FINDING (Critical): DELETE /api/local/credentials/{id} needs no auth.
+
+        An unauthenticated attacker can perform a denial-of-service attack by
+        revoking all active agent credentials.
+        """
+        from navil.api.local.state import AppState
+
+        state = AppState.get()
+        cred = state.credential_manager.issue_credential("victim-agent", "*")
+        token_id = cred["token_id"]
+
+        async with httpx.AsyncClient(
+            transport=httpx.ASGITransport(app=local_api_app), base_url="http://test"
+        ) as client:
+            resp = await client.delete(f"/api/local/credentials/{token_id}")
+        assert resp.status_code == 401, (
+            f"CONFIRMED CRITICAL FINDING: DELETE /api/local/credentials/{token_id} "
+            f"returned {resp.status_code} (expected 401) — "
+            "unauthenticated attacker can revoke any agent credential (DoS)"
+        )
+
+
+# ---------------------------------------------------------------------------
+# 11. Resource exhaustion and rate-limit edge cases (High / Medium Findings)
+# ---------------------------------------------------------------------------
+
+
+class TestResourceExhaustion:
+    """High/Medium findings: unbounded resource growth and rate-limit edge cases."""
+
+    def test_unbounded_credential_issuance(self) -> None:
+        """FINDING (High): CredentialManager has no per-agent or global issuance cap.
+
+        An attacker or runaway agent can issue unlimited credentials, growing
+        in-process memory without bound.
+
+        Expected: some cap limits issuance before 1,000 credentials.
+        Actual:   all 1,000 succeed — no limit enforced.
+        """
+        cm = CredentialManager()
+        for i in range(1000):
+            cm.issue_credential(f"agent-{i % 10}", "read:tools")
+        assert len(cm.credentials) < 1000, (
+            f"CONFIRMED HIGH FINDING: issued {len(cm.credentials)} credentials with no cap — "
+            "CredentialManager grows unbounded (no per-agent or global issuance limit)"
+        )
+
+    def test_zero_rate_limit_blocks_first_call(self) -> None:
+        """FINDING (Medium): rate_limit_per_hour=0 blocks every call, including the first.
+
+        _check_rate_limit: count(0) >= rate_limit(0) → True on the very first call.
+        Operators expecting 0 = unlimited get the opposite: total traffic block.
+        """
+        engine = PolicyEngine()
+        engine.policy = {
+            "agents": {"agent": {"tools_allowed": ["*"], "rate_limit_per_hour": 0}},
+            "tools": {"tool": {"allowed_actions": ["*"]}},
+        }
+        allowed, _ = engine.check_tool_call("agent", "tool", "tools/call")
+        assert allowed is True, (
+            "CONFIRMED MEDIUM FINDING: rate_limit_per_hour=0 blocks the first call "
+            "(count=0 >= rate_limit=0 is True). "
+            "Setting rate_limit_per_hour=0 to mean 'unlimited' blocks all traffic."
+        )
+
+    def test_registered_tools_unbounded_growth(self) -> None:
+        """FINDING (Medium): register_server_tools() stores all tool names without a size cap.
+
+        A malicious tools/list response with 10,000 tool names stores all of them
+        in registered_tools, growing detector memory without bound.
+        """
+        detector = BehavioralAnomalyDetector()
+        large_toolset = [f"tool_{i}" for i in range(10_000)]
+        detector.register_server_tools("http://malicious:3000", large_toolset)
+        stored = detector.registered_tools.get("http://malicious:3000", set())
+        assert len(stored) <= 1_000, (
+            f"CONFIRMED MEDIUM FINDING: register_server_tools stored {len(stored)} tool names — "
+            "no size cap enforced on registered_tools (expected ≤ 1,000 to bound memory)"
+        )
+
+
+# ---------------------------------------------------------------------------
+# 12. Credential rotation edge cases (High Finding)
+# ---------------------------------------------------------------------------
+
+
+class TestRotationEdgeCases:
+    """High finding: rotate_credential has a negative-TTL bug and a TOCTOU race."""
+
+    def test_rotate_already_expired_credential_gets_negative_ttl(self) -> None:
+        """FINDING (High): rotating an expired credential passes negative TTL to issue_credential.
+
+        rotate_credential computes: ttl = int((expires_at - now).total_seconds())
+        If expires_at is in the past, ttl is negative.
+        issue_credential silently stores a credential born already expired.
+        """
+        from datetime import datetime, timedelta, timezone
+
+        cm = CredentialManager()
+        cred = cm.issue_credential("agent-a", "read:tools", ttl_seconds=3600)
+        token_id = cred["token_id"]
+
+        # Backdate expires_at by 7,200 s (expired 2 hours ago)
+        stored = cm.credentials[token_id]
+        past_expiry = (datetime.now(timezone.utc) - timedelta(seconds=7200)).isoformat()
+        stored.expires_at = past_expiry
+
+        try:
+            new_cred = cm.rotate_credential(token_id)
+            new_stored = cm.credentials[new_cred["token_id"]]
+            new_expires = datetime.fromisoformat(new_stored.expires_at)
+            now = datetime.now(timezone.utc)
+            assert new_expires > now, (
+                "CONFIRMED HIGH FINDING: rotating an expired credential creates a "
+                "new credential that is already expired at birth "
+                f"(expires_at={new_stored.expires_at})"
+            )
+        except ValueError:
+            pytest.skip("rotate_credential raised ValueError — finding partially mitigated")
+
+    def test_concurrent_rotation_creates_duplicate_active(self) -> None:
+        """FINDING (High): rotate_credential has a TOCTOU race.
+
+        Two concurrent threads can both read status=ACTIVE and both call
+        issue_credential, creating two simultaneously ACTIVE replacements.
+        The original credential is then marked EXPIRED twice (idempotent),
+        but both new credentials remain ACTIVE.
+        """
+        cm = CredentialManager()
+        cred = cm.issue_credential("agent-a", "read:tools", ttl_seconds=3600)
+        token_id = cred["token_id"]
+        results: list[dict[str, Any]] = []
+        errors: list[Exception] = []
+        lock = threading.Lock()
+
+        def rotate() -> None:
+            try:
+                result = cm.rotate_credential(token_id)
+                with lock:
+                    results.append(result)
+            except Exception as e:
+                with lock:
+                    errors.append(e)
+
+        t1 = threading.Thread(target=rotate)
+        t2 = threading.Thread(target=rotate)
+        t1.start()
+        t2.start()
+        t1.join()
+        t2.join()
+
+        if len(results) == 2:
+            # Both rotations succeeded — count ACTIVE credentials for agent-a
+            active = [
+                v for v in cm.credentials.values()
+                if v.agent_name == "agent-a" and v.status == CredentialStatus.ACTIVE
+            ]
+            assert len(active) <= 1, (
+                "CONFIRMED HIGH FINDING: concurrent rotation created "
+                f"{len(active)} ACTIVE credentials for the same agent — "
+                "TOCTOU race in rotate_credential"
+            )
