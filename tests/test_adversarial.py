@@ -14,6 +14,7 @@ from pathlib import Path
 from typing import Any
 from unittest.mock import AsyncMock, MagicMock
 
+import httpx
 import jwt
 import pytest
 from pydantic import ValidationError
@@ -647,7 +648,12 @@ class TestPathTraversal:
         # create_app mounts DASHBOARD_DIR/assets as a StaticFiles directory
         (tmp_path / "assets").mkdir()
         monkeypatch.setattr(app_module, "DASHBOARD_DIR", tmp_path)
-        return app_module.create_app(with_demo=False)
+        app = app_module.create_app(with_demo=False)
+        # Guard: verify serve_frontend catch-all route was actually registered
+        assert any("{path" in getattr(r, "path", "") for r in app.routes), (
+            "serve_frontend route not registered — DASHBOARD_DIR patch may have failed"
+        )
+        return app
 
     @pytest.mark.asyncio
     async def test_dotdot_slash_blocked(self, dashboard_app: Any) -> None:
@@ -683,14 +689,11 @@ class TestPathTraversal:
         assert "<html>index</html>" in resp.text
 
     @pytest.mark.asyncio
-    async def test_symlink_outside_root_blocked(
-        self, tmp_path: Path, dashboard_app: Any
-    ) -> None:
+    async def test_symlink_outside_root_blocked(self, dashboard_app: Any) -> None:
         """A symlink from inside DASHBOARD_DIR pointing outside must be blocked."""
-        import httpx
         import navil.api.local.app as app_module
 
-        # DASHBOARD_DIR is already tmp_path (monkeypatched in dashboard_app fixture)
+        # DASHBOARD_DIR is the monkeypatched tmp_path from the dashboard_app fixture
         dashboard_dir = app_module.DASHBOARD_DIR
         evil_link = dashboard_dir / "evil_link"
         evil_link.symlink_to("/etc")
@@ -706,7 +709,13 @@ class TestPathTraversal:
 
     @pytest.mark.asyncio
     async def test_dotdot_in_middle_blocked(self, dashboard_app: Any) -> None:
-        """assets/../../etc/passwd must serve index.html."""
+        """assets/../../etc/passwd must serve index.html.
+
+        Note: Starlette normalizes the URL path before routing, collapsing the
+        '..' segments into 'etc/passwd'. The traversal guard in serve_frontend
+        then also catches it, but this test primarily validates Starlette's
+        built-in normalization as the first line of defence.
+        """
         import httpx
         async with httpx.AsyncClient(
             transport=httpx.ASGITransport(app=dashboard_app), base_url="http://test"
