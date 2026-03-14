@@ -836,8 +836,9 @@ class TestNewVulnerabilities:
         engine.check_tool_call("a:b", "c", "tools/call")
         engine.check_tool_call("a:b", "c", "tools/call")
 
-        # "a" calling "b:c" has its own limit=2, should be allowed in isolation
-        # But due to collision, "a:b:c" bucket is shared → counter=2 >= 2 → blocked
+        # "a" calling "b:c" has its own limit=2 and should be allowed in isolation.
+        # But due to key collision ("a:b:c" == "a:b:c"), the shared counter=2 >= 2 → blocked.
+        # Per the file header: a pytest FAILURE here = CONFIRMED FINDING.
         allowed, _ = engine.check_tool_call("a", "b:c", "tools/call")
         assert allowed is True, (
             "CONFIRMED FINDING: rate limit key collision — "
@@ -853,8 +854,7 @@ class TestNewVulnerabilities:
         huge_name = "a" * 10_000
         result = proxy.extract_agent_name({"x-agent-name": huge_name})
         assert result == huge_name, (
-            "FINDING: X-Agent-Name has no length limit — "
-            f"{len(huge_name)}-char name accepted verbatim"
+            "FINDING: X-Agent-Name has no length limit — 10,000-char name accepted verbatim"
         )
 
     def test_x_agent_name_newline_log_injection(self) -> None:
@@ -888,7 +888,7 @@ class TestNewVulnerabilities:
         proxy = MCPSecurityProxy(
             target_url="http://localhost:3000",
             policy_engine=PolicyEngine(),
-            anomaly_detector=BehavioralAnomalyDetector(),
+            anomaly_detector=BehavioralAnomalyDetector(),  # redis_client=None is safe
             credential_manager=cm,
             require_auth=True,
         )
@@ -901,10 +901,10 @@ class TestNewVulnerabilities:
         )
 
     def test_anonymous_identity_via_x_agent_name(self) -> None:
-        """A caller can claim identity 'anonymous' via X-Agent-Name header (require_auth=False).
+        """FINDING (Medium): A caller can claim identity 'anonymous' via X-Agent-Name.
 
-        This means caller-controlled values appear in audit logs as 'anonymous'
-        indistinguishable from truly unauthenticated requests.
+        Caller-controlled values appear in audit logs as 'anonymous', indistinguishable
+        from truly unauthenticated requests — non-repudiation failure.
         """
         proxy = _make_proxy(require_auth=False)
         # No header — becomes "anonymous" in handle_jsonrpc
