@@ -107,6 +107,73 @@ class TestAnonymizeAgent:
 # ── Sanitization: Core Guarantees ─────────────────────────────────
 
 
+class TestEventUuid:
+    """Verify deterministic event_uuid generation."""
+
+    def test_event_uuid_present(self, sample_alert_dict):
+        """sanitize_alert always produces an event_uuid."""
+        result = sanitize_alert(sample_alert_dict, SECRET)
+        assert "event_uuid" in result
+
+    def test_event_uuid_is_valid_uuid(self, sample_alert_dict):
+        """event_uuid is a valid UUID string."""
+        import uuid
+
+        result = sanitize_alert(sample_alert_dict, SECRET)
+        parsed = uuid.UUID(result["event_uuid"])
+        assert parsed.version == 5
+
+    def test_event_uuid_deterministic(self, sample_alert_dict):
+        """Same input always produces the same event_uuid."""
+        a = sanitize_alert(sample_alert_dict, SECRET)
+        b = sanitize_alert(sample_alert_dict, SECRET)
+        assert a["event_uuid"] == b["event_uuid"]
+
+    def test_event_uuid_differs_for_different_alerts(self):
+        """Different alerts produce different event_uuids."""
+        alert_a = {"anomaly_type": "A", "agent_name": "x", "timestamp": "t1"}
+        alert_b = {"anomaly_type": "B", "agent_name": "x", "timestamp": "t1"}
+        a = sanitize_alert(alert_a, SECRET)
+        b = sanitize_alert(alert_b, SECRET)
+        assert a["event_uuid"] != b["event_uuid"]
+
+
+class TestToolSequenceHash:
+    """Verify tool_sequence_hash generation."""
+
+    def test_hash_present_when_tool_sequence_provided(self):
+        alert = {
+            "anomaly_type": "TEST",
+            "agent_name": "x",
+            "timestamp": "t",
+            "tool_sequence": ["read_file", "write_file", "execute"],
+        }
+        result = sanitize_alert(alert, SECRET)
+        assert "tool_sequence_hash" in result
+        assert len(result["tool_sequence_hash"]) == 64  # SHA-256 hex
+
+    def test_hash_absent_when_no_tool_sequence(self, sample_alert_dict):
+        result = sanitize_alert(sample_alert_dict, SECRET)
+        assert "tool_sequence_hash" not in result
+
+    def test_hash_deterministic(self):
+        alert = {
+            "anomaly_type": "TEST",
+            "agent_name": "x",
+            "timestamp": "t",
+            "tool_sequence": ["a", "b", "c"],
+        }
+        a = sanitize_alert(alert, SECRET)
+        b = sanitize_alert(alert, SECRET)
+        assert a["tool_sequence_hash"] == b["tool_sequence_hash"]
+
+    def test_hash_differs_for_different_sequences(self):
+        base = {"anomaly_type": "TEST", "agent_name": "x", "timestamp": "t"}
+        a = sanitize_alert({**base, "tool_sequence": ["a", "b"]}, SECRET)
+        b = sanitize_alert({**base, "tool_sequence": ["c", "d"]}, SECRET)
+        assert a["tool_sequence_hash"] != b["tool_sequence_hash"]
+
+
 class TestSanitizeAlert:
     def test_only_allowed_fields_in_output(self, sample_alert_dict):
         """PROOF: every key in output ⊆ ALLOWED_FIELDS."""

@@ -1,4 +1,4 @@
-# Copyright (c) 2026 Pantheon Lab Limited
+# Copyright (c) 2026 Pantheon Lab Pte Ltd
 # Licensed under the Business Source License 1.1 (see LICENSE.cloud)
 """Navil local dashboard — FastAPI application."""
 
@@ -86,6 +86,8 @@ def create_app(with_demo: bool = True) -> FastAPI:
         consumer: ThreatIntelConsumer | None = None
         cloud_sync_worker: CloudSyncWorker | None = None
         cloud_sync_task: asyncio.Task[None] | None = None
+        fetcher: ThreatIntelFetcher | None = None
+        fetcher_task: asyncio.Task[None] | None = None
         if redis_url:
             try:
                 import redis.asyncio as aioredis
@@ -128,6 +130,16 @@ def create_app(with_demo: bool = True) -> FastAPI:
                         "paid" if cloud_sync_worker.api_key else "community",
                         cloud_sync_worker.sync_interval,
                     )
+
+                # ── ThreatIntelFetcher (Get inbound patterns) ────
+                from navil.cloud.threat_intel_fetcher import ThreatIntelFetcher
+
+                fetcher = ThreatIntelFetcher(
+                    redis_client=state.redis_client,
+                    api_key=os.environ.get("NAVIL_API_KEY", ""),
+                )
+                if fetcher.is_enabled():
+                    fetcher_task = asyncio.create_task(fetcher.run())
             except Exception:
                 logger.warning(
                     "Redis unavailable (%s) — running in standalone mode",
@@ -144,6 +156,12 @@ def create_app(with_demo: bool = True) -> FastAPI:
             threat_intel_task.cancel()
             with contextlib.suppress(asyncio.CancelledError):
                 await threat_intel_task
+        if fetcher is not None:
+            await fetcher.stop()
+        if fetcher_task is not None:
+            fetcher_task.cancel()
+            with contextlib.suppress(asyncio.CancelledError):
+                await fetcher_task
         if cloud_sync_worker is not None:
             cloud_sync_worker.stop()
         if cloud_sync_task is not None:
