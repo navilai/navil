@@ -16,6 +16,7 @@ from unittest.mock import AsyncMock, MagicMock
 
 import jwt
 import pytest
+from pydantic import ValidationError
 
 from navil.anomaly_detector import BehavioralAnomalyDetector
 from navil.api.local.routes import (
