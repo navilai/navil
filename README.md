@@ -36,7 +36,7 @@
 
 Navil sits between your MCP clients and servers as a security proxy. It monitors, detects, and enforces — so your agents stay within bounds.
 
-> Developed by **[Pantheon Lab Limited](https://pantheonlab.ai)**.
+> Developed by **[Pantheon Lab Pte Ltd](https://github.com/ivanlkf/navil)**.
 
 ## Quick Start
 
@@ -544,4 +544,4 @@ Navil uses a dual-license model:
 
 **BSL 1.1** — free for internal use and self-hosting. You may not offer the Licensed Work as a competing hosted service. Each release converts to Apache 2.0 four years after its publication date.
 
-Commercial licensing enquiries: info@pantheonlab.ai
+Commercial licensing enquiries: https://github.com/ivanlkf/navil/issues

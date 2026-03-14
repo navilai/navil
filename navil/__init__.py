@@ -22,7 +22,7 @@ from navil.policy_engine import PolicyDecision, PolicyEngine, PolicyEvaluationRe
 from navil.scanner import MCPSecurityScanner, RiskLevel, Vulnerability
 
 __version__ = "0.1.0"
-__author__ = "Pantheon Lab Limited"
+__author__ = "Pantheon Lab Pte Ltd"
 __all__ = [
     # Core
     "MCPSecurityScanner",

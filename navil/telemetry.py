@@ -1,4 +1,4 @@
-# Copyright (c) 2026 Pantheon Lab Limited
+# Copyright (c) 2026 Pantheon Lab Pte Ltd
 # Licensed under the Apache License 2.0 (see LICENSE)
 """Navil Cloud telemetry client.
 
