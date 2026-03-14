@@ -85,7 +85,7 @@ class CredentialManager:
             secret_key: Secret key for JWT signing (if empty, generates secure key)
             audit_log_path: Path to write audit logs (None disables file logging)
         """
-        self.secret_key = secret_key or secrets.token_urlsafe(32)
+        self.secret_key = secret_key or secrets.token_urlsafe(64)
         self.audit_log_path: Path | None = Path(audit_log_path) if audit_log_path else None
         self.credentials: dict[str, Credential] = {}
         self.rotation_policies: dict[str, dict[str, Any]] = {}
@@ -445,7 +445,7 @@ class CredentialManager:
 
     def _generate_token_id(self) -> str:
         """Generate a unique token ID."""
-        return f"cred_{secrets.token_hex(12)}"
+        return f"cred_{secrets.token_hex(32)}"
 
     def _hash_token(self, token: str) -> str:
         """Hash a token for storage without plaintext."""
