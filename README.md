@@ -507,7 +507,7 @@ NAVIL_API_KEY=nvl_your_key NAVIL_DISABLE_CLOUD_SYNC=true navil cloud serve
 # Install dev dependencies
 pip install -e ".[dev]"
 
-# Run tests (456 tests)
+# Run tests (473 tests)
 pytest
 
 # Lint
