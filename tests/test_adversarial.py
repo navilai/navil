@@ -6,7 +6,6 @@ A pytest FAILURE = a confirmed security finding.
 from __future__ import annotations
 
 import base64
-import hmac
 import json
 import threading
 import time
@@ -23,15 +22,11 @@ from navil.anomaly_detector import BehavioralAnomalyDetector
 from navil.api.local.routes import (
     AutoRemediateRequest,
     CredentialIssueRequest,
-    FeedbackRequest,
-    InvocationRequest,
-    LLMConfigRequest,
     PolicyCheckRequest,
 )
 from navil.credential_manager import Credential, CredentialManager, CredentialStatus
 from navil.policy_engine import PolicyEngine
 from navil.proxy import MCPSecurityProxy
-
 
 # ---------------------------------------------------------------------------
 # Shared helpers
@@ -258,8 +253,8 @@ class TestJWTSecurity:
         cm = CredentialManager()
         # Attempt to create an RS256 token — will fail at creation or verification
         try:
-            from cryptography.hazmat.primitives.asymmetric import rsa
             from cryptography.hazmat.backends import default_backend
+            from cryptography.hazmat.primitives.asymmetric import rsa
             private_key = rsa.generate_private_key(
                 public_exponent=65537, key_size=2048, backend=default_backend()
             )
@@ -403,7 +398,6 @@ class TestInputValidation:
 
     def test_agent_name_over_max_length_rejected(self) -> None:
         """257 chars must fail validation."""
-        from pydantic import ValidationError
         with pytest.raises(ValidationError):
             PolicyCheckRequest(agent_name="a" * 257, tool_name="tool", action="tools/call")
 
@@ -421,7 +415,6 @@ class TestInputValidation:
 
         This means null bytes can appear in agent names stored in logs/telemetry.
         """
-        from pydantic import ValidationError
         try:
             req = PolicyCheckRequest(
                 agent_name="hello\x00world", tool_name="tool", action="tools/call"
@@ -436,7 +429,6 @@ class TestInputValidation:
 
         Newlines in agent names enable log injection attacks.
         """
-        from pydantic import ValidationError
         try:
             req = PolicyCheckRequest(
                 agent_name="hello\nworld", tool_name="tool", action="tools/call"
@@ -447,31 +439,26 @@ class TestInputValidation:
 
     def test_negative_ttl_rejected(self) -> None:
         """Negative TTL must be rejected."""
-        from pydantic import ValidationError
         with pytest.raises(ValidationError):
             CredentialIssueRequest(agent_name="agent", scope="read:tools", ttl_seconds=-1)
 
     def test_zero_ttl_rejected(self) -> None:
         """Zero TTL must be rejected (ge=1)."""
-        from pydantic import ValidationError
         with pytest.raises(ValidationError):
             CredentialIssueRequest(agent_name="agent", scope="read:tools", ttl_seconds=0)
 
     def test_confidence_over_one_rejected(self) -> None:
         """confidence_threshold > 1.0 must be rejected."""
-        from pydantic import ValidationError
         with pytest.raises(ValidationError):
             AutoRemediateRequest(confidence_threshold=1.5)
 
     def test_confidence_negative_rejected(self) -> None:
         """confidence_threshold < 0.0 must be rejected."""
-        from pydantic import ValidationError
         with pytest.raises(ValidationError):
             AutoRemediateRequest(confidence_threshold=-0.1)
 
     def test_empty_agent_name_rejected(self) -> None:
         """Empty string must be rejected (min_length=1)."""
-        from pydantic import ValidationError
         with pytest.raises(ValidationError):
             PolicyCheckRequest(agent_name="", tool_name="tool", action="tools/call")
 
@@ -482,7 +469,6 @@ class TestInputValidation:
 
     def test_scope_over_max_length_rejected(self) -> None:
         """513-char scope must be rejected."""
-        from pydantic import ValidationError
         with pytest.raises(ValidationError):
             CredentialIssueRequest(agent_name="agent", scope="s" * 513)
 
