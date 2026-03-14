@@ -531,17 +531,13 @@ class TestJSONRPCAbuse:
     def test_payload_at_size_limit_accepted(self) -> None:
         """Body exactly MAX_PAYLOAD_BYTES must be accepted by sanitize_request."""
         limit = MCPSecurityProxy.MAX_PAYLOAD_BYTES
-        # Build valid JSON that hits the byte limit
-        padding = "x" * (limit - 20)
-        body = json.dumps({"k": padding}).encode()
-        # Trim/pad to exactly limit
-        body = body[:limit]
-        # May be invalid JSON after truncation — sanitize_request should raise ValueError
-        # The key assertion is: size==limit is NOT rejected for size reason alone
-        try:
-            MCPSecurityProxy.sanitize_request(body)
-        except ValueError as e:
-            assert "too large" not in str(e), f"Should not be rejected for size: {e}"
+        # json.dumps({"k": "x" * N}) produces '{"k": "xxx..."}' = N + 9 bytes
+        # Set N so the encoded body is exactly limit bytes
+        overhead = len(b'{"k": ""}')  # 9 bytes
+        body = json.dumps({"k": "x" * (limit - overhead)}).encode()
+        assert len(body) == limit, f"Test setup error: body is {len(body)} bytes, expected {limit}"
+        result = MCPSecurityProxy.sanitize_request(body)
+        assert result, "At-limit payload must be accepted (non-empty result)"
 
     def test_payload_over_size_limit_rejected(self) -> None:
         """Body MAX_PAYLOAD_BYTES + 1 must raise ValueError with 'too large'."""
