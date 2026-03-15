@@ -160,6 +160,12 @@ export interface Vulnerability {
   remediation: string
 }
 
+export interface HumanContext {
+  sub: string
+  email: string
+  roles: string[]
+}
+
 export interface Credential {
   token_id: string
   agent_name: string
@@ -170,10 +176,22 @@ export interface Credential {
   rotation_count?: number
   last_used?: string | null
   used_count?: number
+  human_context?: HumanContext | null
+  parent_credential_id?: string | null
+  delegation_chain?: string[]
+  delegated_by?: string
+  max_delegation_depth?: number
 }
 
 export interface IssuedCredential extends Credential {
   token: string
+}
+
+export interface CredentialChain {
+  credential_id: string
+  chain_length: number
+  human_context: HumanContext | null
+  chain: Credential[]
 }
 
 export interface PolicyCheckResult {
@@ -320,7 +338,9 @@ export const api = {
   getCredentials: () => get<Credential[]>('/credentials'),
   issueCredential: (agent_name: string, scope: string, ttl_seconds = 3600) =>
     post<IssuedCredential>('/credentials', { agent_name, scope, ttl_seconds }),
-  revokeCredential: (id: string) => del<{ status: string }>(`/credentials/${id}`),
+  revokeCredential: (id: string, cascade = false) =>
+    del<{ status: string }>(`/credentials/${id}${cascade ? '?cascade=true' : ''}`),
+  getCredentialChain: (id: string) => get<CredentialChain>(`/credentials/${id}/chain`),
   checkPolicy: (agent_name: string, tool_name: string, action: string) =>
     post<PolicyCheckResult>('/policy/check', { agent_name, tool_name, action }),
   getPolicyDecisions: () => get<PolicyDecision[]>('/policy/decisions'),

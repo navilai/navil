@@ -7,26 +7,26 @@ import Icon from './Icon'
  */
 export default function UserProfile() {
   return (
-    <div className="relative border-t border-gray-800/60">
+    <div className="relative border-t border-[#2a3650]">
       <div className="p-3 flex items-center gap-3">
-        <div className="w-7 h-7 rounded-full bg-cyan-500/20 border border-cyan-500/30 flex items-center justify-center shrink-0 text-xs font-semibold text-cyan-400">
+        <div className="w-7 h-7 rounded-full bg-[#00e5c8]/15 border border-[#00e5c8]/30 flex items-center justify-center shrink-0 text-xs font-bold text-[#00e5c8]">
           N
         </div>
         <div className="flex-1 min-w-0">
-          <p className="text-xs text-gray-300 truncate">Navil OSS</p>
-          <p className="text-[10px] text-gray-600 truncate">Self-hosted</p>
+          <p className="text-xs font-medium text-[#f0f4fc] truncate">Navil OSS</p>
+          <p className="text-[10px] text-[#5a6a8a] truncate">Self-hosted</p>
         </div>
       </div>
       <div className="px-3 pb-3 flex items-center justify-end">
         <div className="flex items-center gap-2">
-          <span className="text-[10px] text-gray-600">v0.1.0</span>
+          <span className="text-[10px] text-[#5a6a8a] font-mono">v0.1.0</span>
           <NavLink
             to="/settings"
             className={({ isActive }) =>
-              `p-1 rounded transition-colors ${
+              `p-1 rounded transition-all duration-200 ${
                 isActive
-                  ? 'text-cyan-400 bg-cyan-500/10'
-                  : 'text-gray-600 hover:text-gray-400 hover:bg-gray-800/60'
+                  ? 'text-[#00e5c8] bg-[#00e5c8]/10'
+                  : 'text-[#5a6a8a] hover:text-[#8b9bc0] hover:bg-[#1a2235]'
               }`
             }
           >

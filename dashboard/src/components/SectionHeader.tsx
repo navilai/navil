@@ -14,11 +14,11 @@ export default function SectionHeader({
   return (
     <div className={centered ? 'text-center' : ''}>
       {eyebrow && (
-        <p className="text-sm font-medium text-cyan-400 mb-2">{eyebrow}</p>
+        <p className="uppercase tracking-[0.15em] text-xs font-semibold text-[#00e5c8] mb-3">{eyebrow}</p>
       )}
-      <h2 className="text-3xl font-bold text-white">{title}</h2>
+      <h2 className="text-3xl font-extrabold text-[#f0f4fc]">{title}</h2>
       {subtitle && (
-        <p className="text-gray-400 mt-3 max-w-2xl mx-auto">{subtitle}</p>
+        <p className="text-[#8b9bc0] mt-3 max-w-2xl mx-auto leading-relaxed">{subtitle}</p>
       )}
     </div>
   )

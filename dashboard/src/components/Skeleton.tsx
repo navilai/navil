@@ -30,13 +30,13 @@ export function SkeletonCard() {
 export function SkeletonTable({ rows = 5, cols = 4 }: { rows?: number; cols?: number }) {
   return (
     <div className="glass-card overflow-hidden">
-      <div className="px-4 py-3 border-b border-gray-800/60 flex gap-4">
+      <div className="px-4 py-3 border-b border-[#2a3650] bg-[#111827]/60 flex gap-4">
         {Array.from({ length: cols }).map((_, c) => (
           <Skeleton key={c} variant="text" width="w-24" height="h-3" />
         ))}
       </div>
       {Array.from({ length: rows }).map((_, r) => (
-        <div key={r} className="px-4 py-3 border-b border-gray-800/30 flex gap-4">
+        <div key={r} className="px-4 py-3 border-b border-[#2a3650]/50 flex gap-4">
           {Array.from({ length: cols }).map((_, c) => (
             <Skeleton key={c} variant="text" width={c === 0 ? 'w-32' : 'w-16'} height="h-3" />
           ))}
