@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import json
 from typing import Any
-from unittest.mock import AsyncMock, MagicMock, patch
+from unittest.mock import AsyncMock, MagicMock
 
 import pytest
 
@@ -26,7 +26,9 @@ class FakeRedis:
         return 1
 
 
-def _make_cloud_response(patterns: list[dict[str, Any]], as_of: str = "2026-03-14T00:00:00Z"):
+def _make_cloud_response(
+    patterns: list[dict[str, Any]], as_of: str = "2026-03-14T00:00:00Z"
+):
     """Build a mock httpx.Response for the patterns endpoint."""
     mock_resp = MagicMock()
     mock_resp.status_code = 200
@@ -37,6 +39,13 @@ def _make_cloud_response(patterns: list[dict[str, Any]], as_of: str = "2026-03-1
     }
     mock_resp.raise_for_status = MagicMock()
     return mock_resp
+
+
+def _mock_client(mock_resp: MagicMock) -> AsyncMock:
+    """Create a mock httpx.AsyncClient that returns the given response."""
+    client = AsyncMock()
+    client.get = AsyncMock(return_value=mock_resp)
+    return client
 
 
 # ---------------------------------------------------------------------------
@@ -89,17 +98,8 @@ class TestFetchAndPublish:
         ]
 
         mock_resp = _make_cloud_response(patterns, as_of="2026-03-14T12:00:00Z")
-
-        mock_client_instance = AsyncMock()
-        mock_client_instance.get = AsyncMock(return_value=mock_resp)
-        mock_client_instance.__aenter__ = AsyncMock(return_value=mock_client_instance)
-        mock_client_instance.__aexit__ = AsyncMock(return_value=False)
-
-        with patch(
-            "navil.cloud.threat_intel_fetcher.httpx.AsyncClient",
-            return_value=mock_client_instance,
-        ):
-            count = await fetcher._fetch_and_publish()
+        fetcher._http_client = _mock_client(mock_resp)
+        count = await fetcher._fetch_and_publish()
 
         assert count == 2
         assert len(redis.published) == 2
@@ -129,17 +129,8 @@ class TestFetchAndPublish:
         mock_resp.json.return_value = {
             "detail": "Community tier requires active threat sharing."
         }
-
-        mock_client_instance = AsyncMock()
-        mock_client_instance.get = AsyncMock(return_value=mock_resp)
-        mock_client_instance.__aenter__ = AsyncMock(return_value=mock_client_instance)
-        mock_client_instance.__aexit__ = AsyncMock(return_value=False)
-
-        with patch(
-            "navil.cloud.threat_intel_fetcher.httpx.AsyncClient",
-            return_value=mock_client_instance,
-        ):
-            count = await fetcher._fetch_and_publish()
+        fetcher._http_client = _mock_client(mock_resp)
+        count = await fetcher._fetch_and_publish()
 
         assert count == 0
         assert len(redis.published) == 0
@@ -157,17 +148,8 @@ class TestFetchAndPublish:
 
         patterns = [{"pattern_id": "p1", "anomaly_type": "TEST", "description": "t"}]
         mock_resp = _make_cloud_response(patterns, as_of="2026-03-14T15:00:00Z")
-
-        mock_client_instance = AsyncMock()
-        mock_client_instance.get = AsyncMock(return_value=mock_resp)
-        mock_client_instance.__aenter__ = AsyncMock(return_value=mock_client_instance)
-        mock_client_instance.__aexit__ = AsyncMock(return_value=False)
-
-        with patch(
-            "navil.cloud.threat_intel_fetcher.httpx.AsyncClient",
-            return_value=mock_client_instance,
-        ):
-            await fetcher._fetch_and_publish()
+        fetcher._http_client = _mock_client(mock_resp)
+        await fetcher._fetch_and_publish()
 
         assert fetcher._last_cursor == "2026-03-14T15:00:00Z"
 
@@ -181,24 +163,15 @@ class TestFetchAndPublish:
         )
 
         mock_resp = _make_cloud_response([], as_of="2026-03-14T15:00:00Z")
-
-        mock_client_instance = AsyncMock()
-        mock_client_instance.get = AsyncMock(return_value=mock_resp)
-        mock_client_instance.__aenter__ = AsyncMock(return_value=mock_client_instance)
-        mock_client_instance.__aexit__ = AsyncMock(return_value=False)
-
-        with patch(
-            "navil.cloud.threat_intel_fetcher.httpx.AsyncClient",
-            return_value=mock_client_instance,
-        ):
-            count = await fetcher._fetch_and_publish()
+        fetcher._http_client = _mock_client(mock_resp)
+        count = await fetcher._fetch_and_publish()
 
         assert count == 0
         assert len(redis.published) == 0
 
     @pytest.mark.asyncio
     async def test_filters_pattern_data_fields(self) -> None:
-        """Only allowed pattern fields are published — unexpected keys are stripped."""
+        """Only allowed pattern fields are published — unexpected keys stripped."""
         redis = FakeRedis()
         fetcher = ThreatIntelFetcher(
             redis_client=redis,
@@ -216,17 +189,8 @@ class TestFetchAndPublish:
             "internal_id": 12345,
         }]
         mock_resp = _make_cloud_response(patterns)
-
-        mock_client_instance = AsyncMock()
-        mock_client_instance.get = AsyncMock(return_value=mock_resp)
-        mock_client_instance.__aenter__ = AsyncMock(return_value=mock_client_instance)
-        mock_client_instance.__aexit__ = AsyncMock(return_value=False)
-
-        with patch(
-            "navil.cloud.threat_intel_fetcher.httpx.AsyncClient",
-            return_value=mock_client_instance,
-        ):
-            await fetcher._fetch_and_publish()
+        fetcher._http_client = _mock_client(mock_resp)
+        await fetcher._fetch_and_publish()
 
         entry = json.loads(redis.published[0][1])
         assert "unexpected_field" not in entry["pattern_data"]
@@ -249,16 +213,7 @@ class TestFetcherStats:
             {"pattern_id": "p2", "anomaly_type": "B", "description": "y"},
         ]
         mock_resp = _make_cloud_response(patterns)
-
-        mock_client_instance = AsyncMock()
-        mock_client_instance.get = AsyncMock(return_value=mock_resp)
-        mock_client_instance.__aenter__ = AsyncMock(return_value=mock_client_instance)
-        mock_client_instance.__aexit__ = AsyncMock(return_value=False)
-
-        with patch(
-            "navil.cloud.threat_intel_fetcher.httpx.AsyncClient",
-            return_value=mock_client_instance,
-        ):
-            await fetcher._fetch_and_publish()
+        fetcher._http_client = _mock_client(mock_resp)
+        await fetcher._fetch_and_publish()
 
         assert fetcher.stats["published_count"] == 2

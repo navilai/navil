@@ -4,6 +4,7 @@
 
 from __future__ import annotations
 
+import hmac
 import json
 import logging
 import os
@@ -55,7 +56,7 @@ def _require_dashboard_auth(request: Request) -> None:
     auth_header = request.headers.get("authorization", "")
     if not auth_header.startswith("Bearer "):
         raise HTTPException(status_code=401, detail="Missing Authorization header")
-    if auth_header[7:] != expected:
+    if not hmac.compare_digest(auth_header[7:], expected):
         raise HTTPException(status_code=401, detail="Invalid dashboard token")
 
 
