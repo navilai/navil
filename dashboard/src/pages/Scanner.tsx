@@ -32,17 +32,17 @@ const SAMPLE_SECURE = JSON.stringify({
 }, null, 2)
 
 const levelBarColor: Record<string, string> = {
-  CRITICAL: 'bg-red-500',
+  CRITICAL: 'bg-[#ff4d6a]',
   HIGH: 'bg-orange-500',
-  MEDIUM: 'bg-yellow-500',
-  LOW: 'bg-blue-500',
+  MEDIUM: 'bg-[#f59e0b]',
+  LOW: 'bg-[#3b82f6]',
 }
 
 const levelBorderColor: Record<string, string> = {
-  CRITICAL: 'border-l-red-500',
+  CRITICAL: 'border-l-[#ff4d6a]',
   HIGH: 'border-l-orange-500',
-  MEDIUM: 'border-l-yellow-500',
-  LOW: 'border-l-blue-500',
+  MEDIUM: 'border-l-[#f59e0b]',
+  LOW: 'border-l-[#3b82f6]',
 }
 
 export default function Scanner() {
@@ -59,7 +59,6 @@ export default function Scanner() {
     setError('')
     setAnalysis(null)
     setAnalysisError(null)
-    // Don't clear result — let old results stay visible until replaced
     setLoading(true)
     try {
       const parsed = JSON.parse(config)
@@ -79,14 +78,14 @@ export default function Scanner() {
       <div className="flex gap-2">
         <button
           onClick={() => setConfig(SAMPLE_VULNERABLE)}
-          className="px-3 py-1.5 text-xs bg-red-500/15 text-red-400 border border-red-500/30 rounded-lg hover:bg-red-500/25 flex items-center gap-1.5"
+          className="px-3 py-1.5 text-xs bg-[#ff4d6a]/15 text-[#ff4d6a] border border-[#ff4d6a]/30 rounded-lg hover:bg-[#ff4d6a]/25 flex items-center gap-1.5"
         >
           <Icon name="unlock" size={13} />
           Load Vulnerable Sample
         </button>
         <button
           onClick={() => setConfig(SAMPLE_SECURE)}
-          className="px-3 py-1.5 text-xs bg-emerald-500/15 text-emerald-400 border border-emerald-500/30 rounded-lg hover:bg-emerald-500/25 flex items-center gap-1.5"
+          className="px-3 py-1.5 text-xs bg-[#34d399]/15 text-[#34d399] border border-[#34d399]/30 rounded-lg hover:bg-[#34d399]/25 flex items-center gap-1.5"
         >
           <Icon name="lock" size={13} />
           Load Secure Sample
@@ -98,12 +97,12 @@ export default function Scanner() {
           value={config}
           onChange={e => setConfig(e.target.value)}
           placeholder="Paste your MCP server configuration JSON here..."
-          className="w-full h-64 bg-gray-900/60 backdrop-blur border border-gray-800/60 rounded-xl p-4 pr-10 font-mono text-sm text-gray-300 focus:border-cyan-500 focus:outline-none resize-y leading-6"
+          className="w-full h-64 bg-[#1a2235] border border-[#2a3650] rounded-[12px] p-4 pr-10 font-mono text-sm text-[#f0f4fc] focus:border-[#00e5c8] focus:outline-none resize-y leading-7 placeholder:text-[#5a6a8a] transition-colors"
         />
         {config && (
           <button
             onClick={() => { setConfig(''); setResult(null); setAnalysis(null); setAnalysisError(null); setError(''); stream.abort() }}
-            className="absolute top-3 right-3 w-7 h-7 rounded-lg bg-gray-700 border border-gray-600 hover:bg-red-500/20 hover:border-red-500/40 flex items-center justify-center text-gray-400 hover:text-red-400 transition-colors z-10"
+            className="absolute top-3 right-3 w-7 h-7 rounded-lg bg-[#2a3650] border border-[#5a6a8a]/30 hover:bg-[#ff4d6a]/20 hover:border-[#ff4d6a]/40 flex items-center justify-center text-[#8b9bc0] hover:text-[#ff4d6a] transition-colors z-10"
             title="Clear"
           >
             <Icon name="x" size={14} />
@@ -115,7 +114,7 @@ export default function Scanner() {
         <button
           onClick={doScan}
           disabled={loading || !config.trim()}
-          className="px-6 py-2.5 bg-cyan-500 text-white rounded-lg font-medium hover:bg-cyan-400 disabled:opacity-40 disabled:cursor-not-allowed flex items-center gap-2"
+          className="px-6 py-2.5 bg-[#00e5c8] text-[#0a0e17] rounded-lg font-semibold hover:bg-[#00b8a0] hover:-translate-y-0.5 disabled:opacity-40 disabled:cursor-not-allowed flex items-center gap-2 transition-all duration-200"
         >
           {loading && !result ? (
             <>
@@ -130,11 +129,11 @@ export default function Scanner() {
           )}
         </button>
         {loading && !result && (
-          <div className="absolute inset-0 rounded-lg bg-cyan-500/20 animate-pulseGlow pointer-events-none" />
+          <div className="absolute inset-0 rounded-lg bg-[#00e5c8]/20 animate-pulseGlow pointer-events-none" />
         )}
       </div>
 
-      {error && <p className="text-red-400 text-sm">{error}</p>}
+      {error && <p className="text-[#ff4d6a] text-sm">{error}</p>}
 
       {result && (
         <div className="space-y-6 animate-fadeIn">
@@ -142,10 +141,10 @@ export default function Scanner() {
           <div className="glass-card p-8 flex flex-col sm:flex-row items-center gap-8">
             <ScoreGauge score={result.security_score} size={160} />
             <div className="flex-1 space-y-3">
-              <p className="text-lg text-gray-300">
-                <span className="font-semibold text-white">{result.total_vulnerabilities}</span> vulnerabilities found
+              <p className="text-lg text-[#f0f4fc]">
+                <span className="font-bold">{result.total_vulnerabilities}</span> vulnerabilities found
               </p>
-              <p className="text-sm text-gray-500">{result.recommendation}</p>
+              <p className="text-sm text-[#5a6a8a] leading-relaxed">{result.recommendation}</p>
               {/* Severity breakdown bars */}
               <div className="space-y-2 mt-4">
                 {Object.entries(result.vulnerabilities_by_level).map(([level, count]) => (
@@ -155,10 +154,10 @@ export default function Scanner() {
                       <MiniBar
                         value={count as number}
                         max={result.total_vulnerabilities}
-                        color={levelBarColor[level] || 'bg-gray-500'}
+                        color={levelBarColor[level] || 'bg-[#5a6a8a]'}
                         className="flex-1"
                       />
-                      <span className="text-xs text-gray-500 w-6 text-right">{count as number}</span>
+                      <span className="text-xs text-[#5a6a8a] w-6 text-right">{count as number}</span>
                     </div>
                   )
                 ))}
@@ -172,19 +171,19 @@ export default function Scanner() {
               {result.vulnerabilities.map((vuln, i) => (
                 <div
                   key={vuln.id || `vuln-${i}`}
-                  className={`glass-card border-l-2 ${levelBorderColor[vuln.risk_level] || 'border-l-gray-500'} p-4 hover:-translate-y-0.5 hover:shadow-lg hover:shadow-black/20 animate-slideUp opacity-0`}
+                  className={`glass-card border-l-2 ${levelBorderColor[vuln.risk_level] || 'border-l-[#5a6a8a]'} p-4 hover:-translate-y-0.5 hover:shadow-lg hover:shadow-black/20 animate-slideUp opacity-0`}
                   style={{ animationDelay: `${i * 0.08}s` }}
                 >
                   <div className="flex items-start gap-3">
-                    <Icon name="warning" size={16} className="text-gray-500 mt-0.5 shrink-0" />
+                    <Icon name="warning" size={16} className="text-[#5a6a8a] mt-0.5 shrink-0" />
                     <div className="flex-1">
                       <div className="flex items-center gap-2 mb-1">
                         <SeverityBadge severity={vuln.risk_level} />
-                        <p className="font-medium text-gray-200">{vuln.title}</p>
+                        <p className="font-medium text-[#f0f4fc]">{vuln.title}</p>
                       </div>
-                      <p className="text-sm text-gray-400 mt-1">{vuln.description}</p>
-                      <p className="text-sm text-cyan-400 mt-2">
-                        <span className="text-gray-500">Remediation:</span> {vuln.remediation}
+                      <p className="text-sm text-[#8b9bc0] mt-1">{vuln.description}</p>
+                      <p className="text-sm text-[#00e5c8] mt-2">
+                        <span className="text-[#5a6a8a]">Remediation:</span> {vuln.remediation}
                       </p>
                     </div>
                   </div>
@@ -196,7 +195,7 @@ export default function Scanner() {
           {/* AI Deep Analysis */}
           <div className="glass-card p-6 animate-slideUp opacity-0" style={{ animationDelay: '0.3s' }}>
             <div className="flex items-center justify-between mb-4">
-              <h3 className="text-sm font-medium text-gray-300 flex items-center gap-2">
+              <h3 className="text-sm font-semibold text-[#f0f4fc] flex items-center gap-2">
                 <Icon name="sparkles" size={16} className="text-violet-400" />
                 AI Deep Analysis
               </h3>
@@ -248,10 +247,10 @@ export default function Scanner() {
               />
             )}
 
-            {/* Streaming text — shows LLM thinking in real-time */}
+            {/* Streaming text */}
             {stream.streaming && stream.text && !analysis && (
               <div className="animate-fadeIn">
-                <pre className="text-sm text-gray-400 whitespace-pre-wrap font-mono bg-gray-900/50 rounded-lg p-3 max-h-48 overflow-y-auto">
+                <pre className="text-sm text-[#8b9bc0] whitespace-pre-wrap font-mono bg-[#0d1117] rounded-lg p-3 max-h-48 overflow-y-auto">
                   {stream.text}
                   <span className="animate-pulse text-violet-400">|</span>
                 </pre>
@@ -267,17 +266,17 @@ export default function Scanner() {
                   {a.confidence !== undefined && (
                     <div className="flex items-center gap-2">
                       <MiniBar value={a.confidence * 100} max={100} color="bg-violet-500" height="h-1" className="w-20" />
-                      <span className="text-xs text-gray-500">{(a.confidence * 100).toFixed(0)}% confidence</span>
+                      <span className="text-xs text-[#5a6a8a]">{(a.confidence * 100).toFixed(0)}% confidence</span>
                     </div>
                   )}
                   {stream.cached && (
-                    <span className="text-[10px] text-gray-500 bg-gray-800 px-1.5 py-0.5 rounded">cached</span>
+                    <span className="text-[10px] text-[#5a6a8a] bg-[#111827] px-1.5 py-0.5 rounded">cached</span>
                   )}
                 </div>
-                <p className="text-sm text-gray-300">{a.explanation}</p>
+                <p className="text-sm text-[#f0f4fc]">{a.explanation}</p>
                 {a.risks.length > 0 && (
                   <div>
-                    <p className="text-xs text-gray-500 mb-2">Identified Risks</p>
+                    <p className="text-xs text-[#5a6a8a] mb-2">Identified Risks</p>
                     <ul className="space-y-1.5">
                       {a.risks.map((risk, j) => (
                         <li key={j} className="text-sm text-orange-400 flex items-start gap-2">
@@ -290,11 +289,11 @@ export default function Scanner() {
                 )}
                 {a.remediations.length > 0 && (
                   <div>
-                    <p className="text-xs text-gray-500 mb-2">Remediations</p>
+                    <p className="text-xs text-[#5a6a8a] mb-2">Remediations</p>
                     <ul className="space-y-1.5">
                       {a.remediations.map((rem, j) => (
-                        <li key={j} className="text-sm text-cyan-400 flex items-start gap-2">
-                          <Icon name="check" size={12} className="text-cyan-500 mt-0.5 shrink-0" />
+                        <li key={j} className="text-sm text-[#00e5c8] flex items-start gap-2">
+                          <Icon name="check" size={12} className="text-[#00e5c8] mt-0.5 shrink-0" />
                           {rem}
                         </li>
                       ))}

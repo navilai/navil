@@ -14,8 +14,8 @@ interface SparklineChartProps {
 export default function SparklineChart({
   data,
   height = 120,
-  color = 'rgb(129, 140, 248)',
-  fillColor = 'rgba(129, 140, 248, 0.1)',
+  color = '#00e5c8',
+  fillColor = 'rgba(0, 229, 200, 0.1)',
   className = '',
 }: SparklineChartProps) {
   if (data.length < 2) return null
@@ -67,8 +67,8 @@ export default function SparklineChart({
       </svg>
       {/* X-axis labels */}
       <div className="flex justify-between mt-1.5 px-0.5">
-        <span className="text-[10px] text-gray-600">{data[0].label}</span>
-        <span className="text-[10px] text-gray-600">{data[data.length - 1].label}</span>
+        <span className="text-[10px] text-[#5a6a8a] font-medium">{data[0].label}</span>
+        <span className="text-[10px] text-[#5a6a8a] font-medium">{data[data.length - 1].label}</span>
       </div>
     </div>
   )

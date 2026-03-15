@@ -15,6 +15,10 @@ import Policy from './pages/Policy'
 import Feedback from './pages/Feedback'
 import SelfHealing from './pages/SelfHealing'
 import Settings from './pages/Settings'
+import Analytics from './pages/Analytics'
+import Billing from './pages/Billing'
+import Webhooks from './pages/Webhooks'
+import ThreatRules from './pages/ThreatRules'
 
 export default function App() {
   return (
@@ -30,6 +34,11 @@ export default function App() {
         <Route path="feedback" element={<Feedback />} />
         <Route path="self-healing" element={<SelfHealing />} />
         <Route path="settings" element={<Settings />} />
+        {/* Cloud management pages */}
+        <Route path="analytics" element={<Analytics />} />
+        <Route path="billing" element={<Billing />} />
+        <Route path="webhooks" element={<Webhooks />} />
+        <Route path="threat-rules" element={<ThreatRules />} />
       </Route>
 
       {/* Catch-all: redirect old /dashboard/* deep links to root */}
