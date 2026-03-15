@@ -53,10 +53,20 @@ class ThreatIntelFetcher:
         self._last_cursor: str | None = None
         self._running = False
         self._published_count = 0
+        self._http_client: httpx.AsyncClient | None = None
 
     def is_enabled(self) -> bool:
         """Fetcher requires an API key to authenticate with the cloud."""
         return bool(self.api_key)
+
+    def _get_client(self) -> httpx.AsyncClient:
+        """Return a persistent httpx client (created once, reused across fetches)."""
+        if self._http_client is None:
+            self._http_client = httpx.AsyncClient(
+                headers={"Authorization": f"Bearer {self.api_key}"},
+                timeout=30,
+            )
+        return self._http_client
 
     @property
     def stats(self) -> dict[str, Any]:
@@ -92,8 +102,11 @@ class ThreatIntelFetcher:
             await self._fetch_and_publish()
 
     async def stop(self) -> None:
-        """Signal the run loop to stop."""
+        """Signal the run loop to stop and close the HTTP client."""
         self._running = False
+        if self._http_client is not None:
+            await self._http_client.aclose()
+            self._http_client = None
 
     async def _fetch_and_publish(self) -> int:
         """Fetch patterns from cloud and publish to Redis pubsub.
@@ -106,10 +119,8 @@ class ThreatIntelFetcher:
             if self._last_cursor:
                 params["since"] = self._last_cursor
 
-            headers = {"Authorization": f"Bearer {self.api_key}"}
-
-            async with httpx.AsyncClient(timeout=30) as client:
-                resp = await client.get(url, params=params, headers=headers)
+            client = self._get_client()
+            resp = await client.get(url, params=params)
 
             if resp.status_code == 403:
                 # Give-to-Get enforcement — log but don't crash
