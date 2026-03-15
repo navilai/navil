@@ -19,6 +19,7 @@
   <a href="#openclaw-integration">OpenClaw</a> &bull;
   <a href="#performance">Performance</a> &bull;
   <a href="#features">Features</a> &bull;
+  <a href="#cicd-integration">CI/CD</a> &bull;
   <a href="#dashboard">Dashboard</a> &bull;
   <a href="#architecture">Architecture</a> &bull;
   <a href="CONTRIBUTING.md">Contributing</a>
@@ -178,11 +179,36 @@ AI-powered config analysis, anomaly explanation, policy generation, and self-hea
 ### Analytics *(Navil Cloud)*
 Per-agent trust scores with behavioral profiling and anomaly trend analysis. Continuously scores every agent over time and surfaces risk trends before they become incidents.
 
+### Identity System
+OIDC token exchange converts external identity tokens into Navil credentials with human context attached (`navil credential exchange`). Delegation chains let parent credentials mint narrower child credentials for sub-agents (`navil credential delegate`), with full chain visualization (`navil credential chain <id>`) and cascade revocation that invalidates an entire delegation tree in one call (`navil credential revoke --cascade`). The proxy forwards `X-Human-Identity` and `X-Human-Email` headers to upstream MCP servers so tools can attribute actions back to a real person.
+
 ### Credential Lifecycle
 Issue, rotate, and revoke JWT tokens with JIT provisioning, configurable TTL, usage tracking, and immutable audit logs. Hardened with a global active-credential cap (500), auto-purge of expired credentials, thread-safe rotation (no TOCTOU races), and bearer-token auth on all credential endpoints (set `NAVIL_DASHBOARD_TOKEN`).
 
+### Threat Intelligence & Blocklist Engine
+Community-sourced threat intel via the [Give-to-Get initiative](#the-navil-give-to-get-initiative), backed by a local blocklist engine for pattern matching. Manage blocklists with `navil blocklist update`, `navil blocklist status`, `navil blocklist load`, and `navil blocklist search`. Ships with 28 curated patterns in `blocklist_v1.json`. The public attack catalog (`public_attacks.yaml`) contains 32 cataloged attack patterns across 10 categories, expanded to 200+ parameterized variants via the `AttackVariantGenerator` for comprehensive ML baseline training with `navil seed-database --full`.
+
+### Honeypot & Canary Kit
+Deploy decoy MCP servers to detect and study attackers in the wild. The MCP Canary Kit (`python -m navil.canary --profile dev-tools --port 8080`) ships with 3 profiles: `dev-tools`, `cloud-creds`, and `db-admin`. A built-in `SignatureExtractor` analyzes collected honeypot interactions and auto-generates blocklist entries from observed tool names, call sequences, and argument patterns. Production deployment uses Docker Compose with isolated networking — honeypot containers have no internet access, read-only filesystems, and resource limits (`docker compose -f docker-compose.honeypot.yaml up -d`).
+
+### Registry Scanning
+Discover and audit MCP servers at scale. `navil crawl registries` discovers servers from npm, PyPI, and awesome-mcp-servers lists. `navil scan-batch` bulk-scans crawl results and outputs JSONL. `navil report-mcp` generates a State of MCP security report from batch scan data.
+
+### State of MCP Security Report
+We scanned **1,000 public MCP servers** from awesome-mcp-servers, npm, and PyPI using `navil crawl registries` and `navil scan-batch`. Key findings:
+
+| Metric | Value |
+|--------|-------|
+| Servers scanned | 1,000 |
+| Average security score | 61.7 / 100 |
+| Missing authentication | 100% |
+| Unverified sources | 100% |
+| Unverified GitHub repos | 98.2% |
+
+The most common vulnerability is **AUTH-MISSING** (every server), followed by **SRC-UNVERIFIED** and **SUPPLY-GH-UNVERIFIED**. No server scored above 80. The full report is at [`state_of_mcp_security_v3.md`](state_of_mcp_security_v3.md). Generate your own with `navil report-mcp scan_results.jsonl`.
+
 ### Zero-Knowledge Telemetry
-Cloud sync anonymizes all agent identities with HMAC-SHA256, enforces a strict field allowlist, and actively blocks banned fields. Raw data never leaves your deployment. Fully opt-out with `NAVIL_DISABLE_CLOUD_SYNC=true`. See [Privacy Guarantees](#zero-knowledge-telemetry-details).
+Cloud sync anonymizes all agent identities with HMAC-SHA256, enforces a strict field allowlist, and actively blocks banned fields. Raw data never leaves your deployment. Fully opt-out with `NAVIL_DISABLE_CLOUD_SYNC=true`. See [Privacy Guarantees](#zero-knowledge-telemetry-details) and [DATA_COLLECTION.md](DATA_COLLECTION.md) for the full breakdown of exactly what data goes where.
 
 ## Architecture
 
@@ -372,11 +398,13 @@ The Python control plane automatically connects to Redis, consumes telemetry fro
 
 ```bash
 navil seed-database                  # 10 scenarios x 1,000 iterations
+navil seed-database --full           # All 32+ scenarios with 200+ parameterized variants
 navil seed-database -n 5000          # More iterations for tighter baselines
 navil seed-database --json           # Machine-readable output
+navil seed-database --export out.json  # Export scenario definitions
 ```
 
-This populates the `BehavioralAnomalyDetector` with synthetic attack data so the statistical thresholds (mean + 5*std_dev) have historical baselines from day one.
+This populates the `BehavioralAnomalyDetector` with synthetic attack data so the statistical thresholds (mean + 5*std_dev) have historical baselines from day one. The `--full` flag includes parameterized variants from the public attack catalog (`public_attacks.yaml`) for comprehensive coverage across all 10 attack categories.
 
 ### Python-only mode (no Rust proxy)
 
@@ -410,30 +438,157 @@ navil cloud serve
 navil credential issue --agent my-agent --scope "read:tools" --ttl 3600
 ```
 
+### OIDC token exchange (identity-linked credentials)
+
+```bash
+# Exchange an OIDC token for a Navil credential with human context
+navil credential exchange --oidc-token "$OIDC_JWT" --agent my-agent --scope "read:tools"
+
+# Delegate a credential to a sub-agent with narrowed scope
+navil credential delegate --parent cred_abc123 --agent sub-agent --scope "read:logs" --ttl 1800
+
+# Visualize the full delegation chain
+navil credential chain cred_xyz789
+
+# Revoke a credential and all its descendants
+navil credential revoke --token-id cred_abc123 --cascade
+```
+
+### Manage threat blocklists
+
+```bash
+# Fetch latest blocklist from Navil Cloud
+navil blocklist update
+
+# Check blocklist status
+navil blocklist status
+
+# Search for patterns matching a keyword
+navil blocklist search "exfiltration"
+
+# Load a custom blocklist from file
+navil blocklist load custom_blocklist.json
+```
+
+### Deploy a honeypot canary
+
+```bash
+# Start a canary MCP server with the dev-tools profile
+python -m navil.canary --profile dev-tools --port 8080
+
+# Or use cloud-creds or db-admin profiles
+python -m navil.canary --profile cloud-creds --port 8081 --contribute
+
+# Production deployment with Docker (isolated network, no internet for honeypots)
+docker compose -f docker-compose.honeypot.yaml up -d
+```
+
 ### Check a policy decision
 
 ```bash
 navil policy check --tool file_system --agent my-agent --action read
 ```
 
+## CI/CD Integration
+
+### GitHub Actions
+
+Add SARIF-based security scanning to any repository that uses MCP servers:
+
+```yaml
+name: Navil MCP Security Scan
+on:
+  push:
+    paths: ["**.mcp.json", ".mcp.json"]
+  pull_request:
+    paths: ["**.mcp.json", ".mcp.json"]
+
+jobs:
+  scan:
+    runs-on: ubuntu-latest
+    permissions:
+      security-events: write
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+      - uses: ./.github/actions/navil-scan
+        with:
+          config: .mcp.json
+          fail-on-score-below: "60"
+          format: sarif
+```
+
+Scan results appear in the GitHub **Security** tab under **Code scanning alerts**.
+
+You can also use the `--format` flag directly:
+
+```bash
+# SARIF output (for CI integration)
+navil scan config.json --format sarif --output results.sarif
+
+# JSON output (for programmatic consumption)
+navil scan config.json --format json
+
+# Human-readable text (default)
+navil scan config.json
+```
+
+### GitLab CI
+
+```yaml
+navil-scan:
+  image: python:3.12-slim
+  script:
+    - pip install navil
+    - navil scan .mcp.json --format sarif --output gl-code-quality-report.json
+  artifacts:
+    reports:
+      codequality: gl-code-quality-report.json
+  rules:
+    - changes:
+        - "**.mcp.json"
+        - ".mcp.json"
+```
+
+### Viewing Results in GitHub Security Tab
+
+1. The GitHub Action uploads SARIF output via `github/codeql-action/upload-sarif`.
+2. Navigate to your repository's **Security** tab > **Code scanning alerts**.
+3. Each Navil finding appears as a code scanning alert with severity, description, and remediation steps.
+
 ## Commands
 
 | Command | Description |
 |---------|-------------|
 | `navil scan <config>` | Scan MCP config for vulnerabilities (0-100 score) |
+| `navil scan --format sarif` | Output scan results in SARIF v2.1.0 format |
+| `navil scan-batch <dir>` | Batch-scan crawl results directory, output JSONL |
+| `navil crawl registries` | Discover MCP servers from npm, PyPI, and awesome-mcp-servers |
+| `navil report-mcp <jsonl>` | Generate State of MCP security report from batch scan results |
 | `navil pentest` | Run SAFE-MCP penetration tests (11 attack scenarios) |
 | `navil proxy start` | Start Python MCP security proxy |
 | `navil proxy stop` | Stop the running proxy |
 | `navil cloud serve` | Launch Navil Cloud dashboard |
 | `navil seed-database` | Populate ML baselines with synthetic attack data |
+| `navil seed-database --full` | Run all 32+ scenarios with 200+ parameterized variants |
+| `navil seed-database --export` | Export all scenario definitions to JSON |
 | `navil credential issue` | Issue a new JWT credential |
 | `navil credential revoke` | Revoke an active credential |
+| `navil credential revoke --cascade` | Cascade-revoke credential and all descendants |
 | `navil credential list` | List credentials with filters |
+| `navil credential exchange` | Exchange an OIDC token for a Navil credential |
+| `navil credential delegate` | Delegate credential to a child agent with narrowed scope |
+| `navil credential chain <id>` | Display full delegation chain for a credential |
+| `navil blocklist update` | Fetch and merge latest threat blocklist |
+| `navil blocklist status` | Show blocklist version, pattern count, and stats |
+| `navil blocklist load <file>` | Load blocklist from a local JSON file |
+| `navil blocklist search <pattern>` | Search for matching blocklist entries |
 | `navil policy check` | Evaluate a tool call against policy |
 | `navil wrap <config>` | One-command setup: wrap all MCP servers in a config with navil shim |
 | `navil shim` | Wrap a single stdio MCP server with security checks |
 | `navil monitor start` | Start anomaly monitoring mode |
 | `navil report` | Generate security report |
+| `navil feedback submit` | Submit operator feedback on an anomaly alert |
 | `navil llm analyze-config` | AI-powered config analysis |
 | `navil llm explain-anomaly` | AI-powered anomaly explanation |
 | `navil llm generate-policy` | Generate policy from natural language |
@@ -465,8 +620,41 @@ When cloud sync is enabled, Navil enforces strict privacy guarantees at the tran
 
 - **Agent identities** are replaced with one-way HMAC-SHA256 hashes using a per-deployment secret. Cannot be reversed.
 - **Only numeric aggregates and categorical labels** leave the deployment (severity, confidence, duration, bytes, anomaly type).
-- **Raw data is actively blocked** — agent names, tool arguments, evidence, file paths, server URLs, IP addresses, and prompts are stripped. A runtime check raises `ValueError` if any banned field leaks through.
+- **Raw data is actively blocked** — agent names, tool arguments, evidence, file paths, server URLs, IP addresses, emails, and prompts are stripped. A runtime check raises `ValueError` if any banned field leaks through.
+- **No PII is forwarded to MCP servers** — the proxy injects only a pseudonymous `x-human-identity` (OIDC `sub` claim) for audit trails. Email addresses are never forwarded upstream.
+- **IP addresses are never stored raw** — the cloud backend pseudonymizes all IP addresses via truncated SHA-256 before writing to the database.
 - **Fully opt-out** with `NAVIL_DISABLE_CLOUD_SYNC=true`.
+
+### Exactly What Data Leaves Your Machine
+
+When cloud sync sends data to Navil Cloud, the payload is validated against an **explicit allowlist** ([`navil/cloud/telemetry_sync.py`](navil/cloud/telemetry_sync.py)). Only these fields are permitted:
+
+| Field | Example | Purpose |
+|-------|---------|---------|
+| `agent_id` | `a3f8c1...` (HMAC hash) | Anonymized agent identifier |
+| `tool_name` | `read_file` | Which MCP tool was invoked |
+| `anomaly_type` | `payload_size_spike` | Type of anomaly detected |
+| `severity` | `HIGH` | Alert severity level |
+| `confidence` | `0.92` | Detection confidence score |
+| `statistical_deviation` | `3.7` | How far from the EMA baseline |
+| `payload_bytes` | `4096` | Request size (numeric only) |
+| `response_bytes` | `1024` | Response size (numeric only) |
+| `duration_ms` | `150` | Call duration |
+| `timestamp` | `2026-03-15T10:30:00Z` | When the event occurred |
+| `action` | `blocked` | What Navil did (forwarded/blocked) |
+| `event_uuid` | `550e8400-...` | Deterministic dedup key |
+| `tool_sequence_hash` | `b2a1f3...` (SHA-256) | Hash of tool call sequence |
+
+**Explicitly banned** (runtime `ValueError` if any leak through): `agent_name`, `description`, `evidence`, `recommended_action`, `target_server`, `location`, `arguments_hash`, `arguments`, `params`, `raw`, `content`, `prompt`, `ip_address`, `email`.
+
+### Data Retention (Cloud Backend)
+
+| Data Type | Retention | Deletion |
+|-----------|-----------|----------|
+| Telemetry events | 30 days (auto-deleted) | Or on-demand via data erasure |
+| Sync events (threat intel) | 7 days (auto-deleted) | Or on-demand via data erasure |
+| Account data | Duration of subscription | Immediate on erasure request |
+| IP addresses | Never stored raw | SHA-256 pseudonymized at ingest |
 
 See [ARCHITECTURE.md](ARCHITECTURE.md#zero-knowledge-telemetry) for the full field allowlist/blocklist.
 
@@ -489,11 +677,14 @@ Navil operates on a **Mutual Defense** model. AI threats evolve in minutes, not 
 
 ### Tiered Participation
 
-| Tier | Telemetry Sharing | Global Blocklist Access |
-|------|-------------------|------------------------|
-| **Community (OSS)** | Required (default) | Full access (crowdsourced feed) |
-| **Dark Site (OSS)** | Disabled | No global updates (local-only protection) |
-| **Pro / Team (Paid)** | Optional ("privacy premium") | Premium access (real-time + verified feed) |
+| Tier | Price | Telemetry Sharing | Blocklist Access |
+|------|-------|-------------------|------------------|
+| **Community (OSS)** | $0/mo | Required (anonymized) | Full access (48h delay) |
+| **Dark Site (OSS)** | $0/mo | Disabled | No global updates (local-only) |
+| **Pro** | $49/mo | Optional (privacy premium) | Real-time + verified feed |
+| **Growth** | $99/mo | Optional | Real-time + 5 custom rules |
+| **Team** | $249/mo | Optional | Real-time + unlimited rules |
+| **Enterprise** | Custom | Optional | Real-time + dedicated feed |
 
 **For enterprises** whose security policy prohibits outbound telemetry: provide a valid `NAVIL_API_KEY` to receive threat intelligence without sharing your own signals. Visit [navil.ai](https://navil.ai) to get a key.
 
@@ -511,7 +702,7 @@ NAVIL_API_KEY=nvl_your_key NAVIL_DISABLE_CLOUD_SYNC=true navil cloud serve
 # Install dev dependencies
 pip install -e ".[dev]"
 
-# Run tests (473 tests)
+# Run tests (946 tests)
 pytest
 
 # Lint
