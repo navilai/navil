@@ -10,7 +10,6 @@ import pytest
 
 from navil.cloud.threat_intel_fetcher import ThreatIntelFetcher
 
-
 # ---------------------------------------------------------------------------
 # Helpers
 # ---------------------------------------------------------------------------
@@ -96,7 +95,10 @@ class TestFetchAndPublish:
         mock_client_instance.__aenter__ = AsyncMock(return_value=mock_client_instance)
         mock_client_instance.__aexit__ = AsyncMock(return_value=False)
 
-        with patch("navil.cloud.threat_intel_fetcher.httpx.AsyncClient", return_value=mock_client_instance):
+        with patch(
+            "navil.cloud.threat_intel_fetcher.httpx.AsyncClient",
+            return_value=mock_client_instance,
+        ):
             count = await fetcher._fetch_and_publish()
 
         assert count == 2
@@ -133,7 +135,10 @@ class TestFetchAndPublish:
         mock_client_instance.__aenter__ = AsyncMock(return_value=mock_client_instance)
         mock_client_instance.__aexit__ = AsyncMock(return_value=False)
 
-        with patch("navil.cloud.threat_intel_fetcher.httpx.AsyncClient", return_value=mock_client_instance):
+        with patch(
+            "navil.cloud.threat_intel_fetcher.httpx.AsyncClient",
+            return_value=mock_client_instance,
+        ):
             count = await fetcher._fetch_and_publish()
 
         assert count == 0
@@ -158,7 +163,10 @@ class TestFetchAndPublish:
         mock_client_instance.__aenter__ = AsyncMock(return_value=mock_client_instance)
         mock_client_instance.__aexit__ = AsyncMock(return_value=False)
 
-        with patch("navil.cloud.threat_intel_fetcher.httpx.AsyncClient", return_value=mock_client_instance):
+        with patch(
+            "navil.cloud.threat_intel_fetcher.httpx.AsyncClient",
+            return_value=mock_client_instance,
+        ):
             await fetcher._fetch_and_publish()
 
         assert fetcher._last_cursor == "2026-03-14T15:00:00Z"
@@ -179,7 +187,10 @@ class TestFetchAndPublish:
         mock_client_instance.__aenter__ = AsyncMock(return_value=mock_client_instance)
         mock_client_instance.__aexit__ = AsyncMock(return_value=False)
 
-        with patch("navil.cloud.threat_intel_fetcher.httpx.AsyncClient", return_value=mock_client_instance):
+        with patch(
+            "navil.cloud.threat_intel_fetcher.httpx.AsyncClient",
+            return_value=mock_client_instance,
+        ):
             count = await fetcher._fetch_and_publish()
 
         assert count == 0
@@ -211,7 +222,10 @@ class TestFetchAndPublish:
         mock_client_instance.__aenter__ = AsyncMock(return_value=mock_client_instance)
         mock_client_instance.__aexit__ = AsyncMock(return_value=False)
 
-        with patch("navil.cloud.threat_intel_fetcher.httpx.AsyncClient", return_value=mock_client_instance):
+        with patch(
+            "navil.cloud.threat_intel_fetcher.httpx.AsyncClient",
+            return_value=mock_client_instance,
+        ):
             await fetcher._fetch_and_publish()
 
         entry = json.loads(redis.published[0][1])
@@ -241,7 +255,10 @@ class TestFetcherStats:
         mock_client_instance.__aenter__ = AsyncMock(return_value=mock_client_instance)
         mock_client_instance.__aexit__ = AsyncMock(return_value=False)
 
-        with patch("navil.cloud.threat_intel_fetcher.httpx.AsyncClient", return_value=mock_client_instance):
+        with patch(
+            "navil.cloud.threat_intel_fetcher.httpx.AsyncClient",
+            return_value=mock_client_instance,
+        ):
             await fetcher._fetch_and_publish()
 
         assert fetcher.stats["published_count"] == 2

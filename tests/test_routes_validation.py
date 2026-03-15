@@ -5,12 +5,12 @@ import pytest
 from pydantic import ValidationError
 
 from navil.api.local.routes import (
-    CredentialIssueRequest,
-    InvocationRequest,
-    PolicyCheckRequest,
-    FeedbackRequest,
     AutoRemediateRequest,
+    CredentialIssueRequest,
+    FeedbackRequest,
+    InvocationRequest,
     LLMConfigRequest,
+    PolicyCheckRequest,
 )
 
 
