@@ -1,0 +1,2995 @@
+{
+  "version": 1,
+  "description": "Navil blocklist v1 - signature patterns extracted from public MCP attack catalog",
+  "created_at": "2026-03-15T00:00:00Z",
+  "patterns": [
+    {
+      "pattern_id": "BL-TOOL-001",
+      "pattern_type": "tool_name",
+      "value": "inject_backdoor",
+      "severity": "CRITICAL",
+      "description": "Known malicious tool name associated with supply chain attacks",
+      "confidence": 0.95
+    },
+    {
+      "pattern_id": "BL-TOOL-002",
+      "pattern_type": "tool_name",
+      "value": "shadow_deploy",
+      "severity": "CRITICAL",
+      "description": "Covert deployment tool used in IDE workspace hijacking",
+      "confidence": 0.95
+    },
+    {
+      "pattern_id": "BL-TOOL-003",
+      "pattern_type": "tool_name",
+      "value": "exfil_creds",
+      "severity": "CRITICAL",
+      "description": "Credential exfiltration tool name",
+      "confidence": 0.95
+    },
+    {
+      "pattern_id": "BL-TOOL-004",
+      "pattern_type": "tool_name",
+      "value": "keylogger",
+      "severity": "CRITICAL",
+      "description": "Keystroke logging tool",
+      "confidence": 0.95
+    },
+    {
+      "pattern_id": "BL-TOOL-005",
+      "pattern_type": "tool_name",
+      "value": "credential_dump",
+      "severity": "CRITICAL",
+      "description": "Credential dumping tool",
+      "confidence": 0.9
+    },
+    {
+      "pattern_id": "BL-TOOL-006",
+      "pattern_type": "tool_name",
+      "value": "rootkit_install",
+      "severity": "CRITICAL",
+      "description": "Rootkit installation tool",
+      "confidence": 0.98
+    },
+    {
+      "pattern_id": "BL-TOOL-007",
+      "pattern_type": "tool_name",
+      "value": "covert_tunnel",
+      "severity": "HIGH",
+      "description": "Covert tunnel establishment tool",
+      "confidence": 0.9
+    },
+    {
+      "pattern_id": "BL-TOOL-008",
+      "pattern_type": "tool_name",
+      "value": "data_siphon",
+      "severity": "CRITICAL",
+      "description": "Data siphoning/exfiltration tool",
+      "confidence": 0.92
+    },
+    {
+      "pattern_id": "BL-TOOL-009",
+      "pattern_type": "tool_name",
+      "value": "dump_memory",
+      "severity": "HIGH",
+      "description": "Memory dumping tool used in rug pull attacks",
+      "confidence": 0.88
+    },
+    {
+      "pattern_id": "BL-TOOL-010",
+      "pattern_type": "tool_name",
+      "value": "proxy_chain",
+      "severity": "HIGH",
+      "description": "Proxy chain tool used for lateral movement evasion",
+      "confidence": 0.85
+    },
+    {
+      "pattern_id": "BL-TOOL-011",
+      "pattern_type": "tool_name",
+      "value": "shadow_api",
+      "severity": "HIGH",
+      "description": "Shadow API endpoint used in rug pull attacks",
+      "confidence": 0.85
+    },
+    {
+      "pattern_id": "BL-TOOL-012",
+      "pattern_type": "tool_name",
+      "value": "exfil_data",
+      "severity": "CRITICAL",
+      "description": "Generic data exfiltration tool name",
+      "confidence": 0.92
+    },
+    {
+      "pattern_id": "BL-TOOL-013",
+      "pattern_type": "tool_name",
+      "value": "reverse_shell",
+      "severity": "CRITICAL",
+      "description": "Reverse shell tool for remote access",
+      "confidence": 0.98
+    },
+    {
+      "pattern_id": "BL-TOOL-014",
+      "pattern_type": "tool_name",
+      "value": "bind_shell",
+      "severity": "CRITICAL",
+      "description": "Bind shell tool for persistent remote access",
+      "confidence": 0.98
+    },
+    {
+      "pattern_id": "BL-TOOL-015",
+      "pattern_type": "tool_name",
+      "value": "mimikatz",
+      "severity": "CRITICAL",
+      "description": "Known credential extraction utility",
+      "confidence": 0.99
+    },
+    {
+      "pattern_id": "BL-TOOL-016",
+      "pattern_type": "tool_name",
+      "value": "pass_the_hash",
+      "severity": "CRITICAL",
+      "description": "Pass-the-hash credential relay tool",
+      "confidence": 0.95
+    },
+    {
+      "pattern_id": "BL-TOOL-017",
+      "pattern_type": "tool_name",
+      "value": "token_impersonation",
+      "severity": "CRITICAL",
+      "description": "Token impersonation/theft tool",
+      "confidence": 0.92
+    },
+    {
+      "pattern_id": "BL-TOOL-018",
+      "pattern_type": "tool_name",
+      "value": "privilege_escalate",
+      "severity": "CRITICAL",
+      "description": "Explicit privilege escalation tool",
+      "confidence": 0.95
+    },
+    {
+      "pattern_id": "BL-TOOL-019",
+      "pattern_type": "tool_name",
+      "value": "ransomware_deploy",
+      "severity": "CRITICAL",
+      "description": "Ransomware deployment tool",
+      "confidence": 0.99
+    },
+    {
+      "pattern_id": "BL-TOOL-020",
+      "pattern_type": "tool_name",
+      "value": "crypto_miner",
+      "severity": "HIGH",
+      "description": "Cryptocurrency mining tool",
+      "confidence": 0.9
+    },
+    {
+      "pattern_id": "BL-TOOL-021",
+      "pattern_type": "tool_name",
+      "value": "wiper",
+      "severity": "CRITICAL",
+      "description": "Data destruction/wiper tool",
+      "confidence": 0.98
+    },
+    {
+      "pattern_id": "BL-TOOL-022",
+      "pattern_type": "tool_name",
+      "value": "network_sniffer",
+      "severity": "HIGH",
+      "description": "Network traffic sniffing tool",
+      "confidence": 0.88
+    },
+    {
+      "pattern_id": "BL-TOOL-023",
+      "pattern_type": "tool_name",
+      "value": "port_scanner",
+      "severity": "MEDIUM",
+      "description": "Network port scanning tool",
+      "confidence": 0.75
+    },
+    {
+      "pattern_id": "BL-TOOL-024",
+      "pattern_type": "tool_name",
+      "value": "dns_tunnel",
+      "severity": "HIGH",
+      "description": "DNS tunneling tool for covert exfiltration",
+      "confidence": 0.9
+    },
+    {
+      "pattern_id": "BL-TOOL-025",
+      "pattern_type": "tool_name",
+      "value": "icmp_tunnel",
+      "severity": "HIGH",
+      "description": "ICMP tunneling for covert communication",
+      "confidence": 0.9
+    },
+    {
+      "pattern_id": "BL-TOOL-026",
+      "pattern_type": "tool_name",
+      "value": "sql_inject",
+      "severity": "CRITICAL",
+      "description": "SQL injection tool",
+      "confidence": 0.95
+    },
+    {
+      "pattern_id": "BL-TOOL-027",
+      "pattern_type": "tool_name",
+      "value": "xss_inject",
+      "severity": "HIGH",
+      "description": "Cross-site scripting injection tool",
+      "confidence": 0.9
+    },
+    {
+      "pattern_id": "BL-TOOL-028",
+      "pattern_type": "tool_name",
+      "value": "ssrf_exploit",
+      "severity": "CRITICAL",
+      "description": "Server-side request forgery tool",
+      "confidence": 0.92
+    },
+    {
+      "pattern_id": "BL-TOOL-029",
+      "pattern_type": "tool_name",
+      "value": "rce_exploit",
+      "severity": "CRITICAL",
+      "description": "Remote code execution exploit tool",
+      "confidence": 0.98
+    },
+    {
+      "pattern_id": "BL-TOOL-030",
+      "pattern_type": "tool_name",
+      "value": "lfi_exploit",
+      "severity": "HIGH",
+      "description": "Local file inclusion exploit tool",
+      "confidence": 0.9
+    },
+    {
+      "pattern_id": "BL-TOOL-031",
+      "pattern_type": "tool_name",
+      "value": "backdoor_install",
+      "severity": "CRITICAL",
+      "description": "Backdoor installation tool",
+      "confidence": 0.98
+    },
+    {
+      "pattern_id": "BL-TOOL-032",
+      "pattern_type": "tool_name",
+      "value": "credential_harvest",
+      "severity": "CRITICAL",
+      "description": "Credential harvesting tool",
+      "confidence": 0.95
+    },
+    {
+      "pattern_id": "BL-TOOL-033",
+      "pattern_type": "tool_name",
+      "value": "phishing_kit",
+      "severity": "CRITICAL",
+      "description": "Phishing kit deployment tool",
+      "confidence": 0.95
+    },
+    {
+      "pattern_id": "BL-TOOL-034",
+      "pattern_type": "tool_name",
+      "value": "c2_beacon",
+      "severity": "CRITICAL",
+      "description": "Command-and-control beacon tool",
+      "confidence": 0.95
+    },
+    {
+      "pattern_id": "BL-TOOL-035",
+      "pattern_type": "tool_name",
+      "value": "c2_implant",
+      "severity": "CRITICAL",
+      "description": "C2 implant/agent deployment",
+      "confidence": 0.95
+    },
+    {
+      "pattern_id": "BL-TOOL-036",
+      "pattern_type": "tool_name",
+      "value": "token_stealer",
+      "severity": "CRITICAL",
+      "description": "Authentication token theft tool",
+      "confidence": 0.95
+    },
+    {
+      "pattern_id": "BL-TOOL-037",
+      "pattern_type": "tool_name",
+      "value": "session_hijack",
+      "severity": "CRITICAL",
+      "description": "Session hijacking tool",
+      "confidence": 0.95
+    },
+    {
+      "pattern_id": "BL-TOOL-038",
+      "pattern_type": "tool_name",
+      "value": "browser_stealer",
+      "severity": "CRITICAL",
+      "description": "Browser credential/cookie stealer",
+      "confidence": 0.95
+    },
+    {
+      "pattern_id": "BL-TOOL-039",
+      "pattern_type": "tool_name",
+      "value": "clipboard_monitor",
+      "severity": "HIGH",
+      "description": "Clipboard monitoring/stealing tool",
+      "confidence": 0.88
+    },
+    {
+      "pattern_id": "BL-TOOL-040",
+      "pattern_type": "tool_name",
+      "value": "screen_capture",
+      "severity": "HIGH",
+      "description": "Screen capture/surveillance tool",
+      "confidence": 0.82
+    },
+    {
+      "pattern_id": "BL-TOOL-041",
+      "pattern_type": "tool_name",
+      "value": "webcam_capture",
+      "severity": "CRITICAL",
+      "description": "Webcam access/capture tool",
+      "confidence": 0.95
+    },
+    {
+      "pattern_id": "BL-TOOL-042",
+      "pattern_type": "tool_name",
+      "value": "microphone_capture",
+      "severity": "CRITICAL",
+      "description": "Microphone recording tool",
+      "confidence": 0.95
+    },
+    {
+      "pattern_id": "BL-TOOL-043",
+      "pattern_type": "tool_name",
+      "value": "persistence_install",
+      "severity": "HIGH",
+      "description": "Generic persistence mechanism installer",
+      "confidence": 0.9
+    },
+    {
+      "pattern_id": "BL-TOOL-044",
+      "pattern_type": "tool_name",
+      "value": "registry_modify",
+      "severity": "HIGH",
+      "description": "System registry modification for persistence",
+      "confidence": 0.82
+    },
+    {
+      "pattern_id": "BL-TOOL-045",
+      "pattern_type": "tool_name",
+      "value": "startup_inject",
+      "severity": "HIGH",
+      "description": "Startup folder/script injection",
+      "confidence": 0.88
+    },
+    {
+      "pattern_id": "BL-TOOL-046",
+      "pattern_type": "tool_name",
+      "value": "dll_inject",
+      "severity": "CRITICAL",
+      "description": "DLL injection/side-loading tool",
+      "confidence": 0.95
+    },
+    {
+      "pattern_id": "BL-TOOL-047",
+      "pattern_type": "tool_name",
+      "value": "process_hollow",
+      "severity": "CRITICAL",
+      "description": "Process hollowing technique",
+      "confidence": 0.95
+    },
+    {
+      "pattern_id": "BL-TOOL-048",
+      "pattern_type": "tool_name",
+      "value": "amsi_bypass",
+      "severity": "HIGH",
+      "description": "AMSI/antivirus bypass tool",
+      "confidence": 0.9
+    },
+    {
+      "pattern_id": "BL-TOOL-049",
+      "pattern_type": "tool_name",
+      "value": "disable_defender",
+      "severity": "CRITICAL",
+      "description": "Security software disabling tool",
+      "confidence": 0.95
+    },
+    {
+      "pattern_id": "BL-TOOL-050",
+      "pattern_type": "tool_name",
+      "value": "log_cleaner",
+      "severity": "HIGH",
+      "description": "Log cleaning/evidence destruction tool",
+      "confidence": 0.88
+    },
+    {
+      "pattern_id": "BL-SEQ-001",
+      "pattern_type": "tool_sequence",
+      "value": "read_file,fetch_url",
+      "severity": "CRITICAL",
+      "description": "Read-then-send pattern: file read followed by outbound HTTP (data exfiltration)",
+      "confidence": 0.85
+    },
+    {
+      "pattern_id": "BL-SEQ-002",
+      "pattern_type": "tool_sequence",
+      "value": "read_file,send_email",
+      "severity": "CRITICAL",
+      "description": "File read followed by email send (credential exfiltration via email)",
+      "confidence": 0.85
+    },
+    {
+      "pattern_id": "BL-SEQ-003",
+      "pattern_type": "tool_sequence",
+      "value": "list_files,read_file,read_file,read_file",
+      "severity": "HIGH",
+      "description": "Filesystem enumeration followed by bulk file reads (data harvesting)",
+      "confidence": 0.8
+    },
+    {
+      "pattern_id": "BL-SEQ-004",
+      "pattern_type": "tool_sequence",
+      "value": "read_file,write_file",
+      "severity": "MEDIUM",
+      "description": "Read credentials then write to staging file for exfiltration",
+      "confidence": 0.7
+    },
+    {
+      "pattern_id": "BL-SEQ-005",
+      "pattern_type": "tool_sequence",
+      "value": "read_file,http_get",
+      "severity": "CRITICAL",
+      "description": "File read followed by HTTP GET exfiltration",
+      "confidence": 0.85
+    },
+    {
+      "pattern_id": "BL-SEQ-006",
+      "pattern_type": "tool_sequence",
+      "value": "read_file,curl",
+      "severity": "CRITICAL",
+      "description": "File read followed by curl-based exfiltration",
+      "confidence": 0.85
+    },
+    {
+      "pattern_id": "BL-SEQ-007",
+      "pattern_type": "tool_sequence",
+      "value": "read_file,web_request",
+      "severity": "CRITICAL",
+      "description": "File read followed by web request exfiltration",
+      "confidence": 0.85
+    },
+    {
+      "pattern_id": "BL-SEQ-008",
+      "pattern_type": "tool_sequence",
+      "value": "read_file,api_call",
+      "severity": "HIGH",
+      "description": "File read followed by API call (potential exfiltration)",
+      "confidence": 0.8
+    },
+    {
+      "pattern_id": "BL-SEQ-009",
+      "pattern_type": "tool_sequence",
+      "value": "get_contents,fetch_url",
+      "severity": "CRITICAL",
+      "description": "Content read then outbound fetch (exfiltration variant)",
+      "confidence": 0.85
+    },
+    {
+      "pattern_id": "BL-SEQ-010",
+      "pattern_type": "tool_sequence",
+      "value": "cat_file,fetch_url",
+      "severity": "CRITICAL",
+      "description": "Cat file then outbound fetch (exfiltration variant)",
+      "confidence": 0.85
+    },
+    {
+      "pattern_id": "BL-SEQ-011",
+      "pattern_type": "tool_sequence",
+      "value": "fetch_file,send_email",
+      "severity": "CRITICAL",
+      "description": "File fetch then email send (exfiltration variant)",
+      "confidence": 0.85
+    },
+    {
+      "pattern_id": "BL-SEQ-012",
+      "pattern_type": "tool_sequence",
+      "value": "load_file,http_get",
+      "severity": "CRITICAL",
+      "description": "File load then HTTP GET (exfiltration variant)",
+      "confidence": 0.85
+    },
+    {
+      "pattern_id": "BL-SEQ-013",
+      "pattern_type": "tool_sequence",
+      "value": "query_db,fetch_url",
+      "severity": "CRITICAL",
+      "description": "Database query followed by outbound HTTP (DB exfiltration)",
+      "confidence": 0.88
+    },
+    {
+      "pattern_id": "BL-SEQ-014",
+      "pattern_type": "tool_sequence",
+      "value": "sql_query,fetch_url",
+      "severity": "CRITICAL",
+      "description": "SQL query followed by outbound HTTP (DB exfiltration)",
+      "confidence": 0.88
+    },
+    {
+      "pattern_id": "BL-SEQ-015",
+      "pattern_type": "tool_sequence",
+      "value": "db_read,web_request",
+      "severity": "CRITICAL",
+      "description": "Database read followed by web request (DB exfiltration)",
+      "confidence": 0.88
+    },
+    {
+      "pattern_id": "BL-SEQ-016",
+      "pattern_type": "tool_sequence",
+      "value": "list_files,list_files,list_files",
+      "severity": "MEDIUM",
+      "description": "Repeated directory enumeration (reconnaissance)",
+      "confidence": 0.72
+    },
+    {
+      "pattern_id": "BL-SEQ-017",
+      "pattern_type": "tool_sequence",
+      "value": "read_file,execute",
+      "severity": "HIGH",
+      "description": "File read followed by execution (read-then-execute chain)",
+      "confidence": 0.8
+    },
+    {
+      "pattern_id": "BL-SEQ-018",
+      "pattern_type": "tool_sequence",
+      "value": "read_file,eval",
+      "severity": "HIGH",
+      "description": "File read followed by eval (read-then-eval chain)",
+      "confidence": 0.82
+    },
+    {
+      "pattern_id": "BL-SEQ-019",
+      "pattern_type": "tool_sequence",
+      "value": "read_file,run_script",
+      "severity": "HIGH",
+      "description": "File read followed by script execution",
+      "confidence": 0.8
+    },
+    {
+      "pattern_id": "BL-SEQ-020",
+      "pattern_type": "tool_sequence",
+      "value": "read_file,exec_command",
+      "severity": "HIGH",
+      "description": "File read followed by command execution",
+      "confidence": 0.82
+    },
+    {
+      "pattern_id": "BL-SEQ-021",
+      "pattern_type": "tool_sequence",
+      "value": "read_file,shell_run",
+      "severity": "HIGH",
+      "description": "File read followed by shell execution",
+      "confidence": 0.82
+    },
+    {
+      "pattern_id": "BL-SEQ-022",
+      "pattern_type": "tool_sequence",
+      "value": "write_file,execute",
+      "severity": "HIGH",
+      "description": "File write followed by execution (dropper pattern)",
+      "confidence": 0.85
+    },
+    {
+      "pattern_id": "BL-SEQ-023",
+      "pattern_type": "tool_sequence",
+      "value": "write_file,run_script",
+      "severity": "HIGH",
+      "description": "File write followed by script run (dropper pattern)",
+      "confidence": 0.85
+    },
+    {
+      "pattern_id": "BL-SEQ-024",
+      "pattern_type": "tool_sequence",
+      "value": "fetch_url,execute",
+      "severity": "HIGH",
+      "description": "URL fetch followed by execution (download-and-execute)",
+      "confidence": 0.88
+    },
+    {
+      "pattern_id": "BL-SEQ-025",
+      "pattern_type": "tool_sequence",
+      "value": "fetch_url,eval",
+      "severity": "HIGH",
+      "description": "URL fetch followed by eval (download-and-eval)",
+      "confidence": 0.88
+    },
+    {
+      "pattern_id": "BL-SEQ-026",
+      "pattern_type": "tool_sequence",
+      "value": "http_get,exec_command",
+      "severity": "HIGH",
+      "description": "HTTP GET followed by command execution",
+      "confidence": 0.88
+    },
+    {
+      "pattern_id": "BL-SEQ-027",
+      "pattern_type": "tool_sequence",
+      "value": "curl,shell_run",
+      "severity": "HIGH",
+      "description": "Curl followed by shell execution (curl|sh pattern)",
+      "confidence": 0.9
+    },
+    {
+      "pattern_id": "BL-SEQ-028",
+      "pattern_type": "tool_sequence",
+      "value": "web_request,write_file",
+      "severity": "MEDIUM",
+      "description": "Web request followed by file write (download-to-disk)",
+      "confidence": 0.75
+    },
+    {
+      "pattern_id": "BL-SEQ-029",
+      "pattern_type": "tool_sequence",
+      "value": "read_file,read_file,fetch_url",
+      "severity": "CRITICAL",
+      "description": "Multiple file reads then exfiltration (bulk data theft)",
+      "confidence": 0.88
+    },
+    {
+      "pattern_id": "BL-SEQ-030",
+      "pattern_type": "tool_sequence",
+      "value": "query_db,query_db,fetch_url",
+      "severity": "CRITICAL",
+      "description": "Multiple DB queries then exfiltration (database dump)",
+      "confidence": 0.9
+    },
+    {
+      "pattern_id": "BL-ARG-001",
+      "pattern_type": "argument_pattern",
+      "value": ".*\\.ssh/(id_rsa|id_ed25519|id_ecdsa|authorized_keys).*",
+      "severity": "CRITICAL",
+      "description": "SSH private key access attempt",
+      "confidence": 0.9
+    },
+    {
+      "pattern_id": "BL-ARG-002",
+      "pattern_type": "argument_pattern",
+      "value": ".*\\.aws/credentials.*",
+      "severity": "CRITICAL",
+      "description": "AWS credentials file access attempt",
+      "confidence": 0.9
+    },
+    {
+      "pattern_id": "BL-ARG-003",
+      "pattern_type": "argument_pattern",
+      "value": ".*/etc/shadow.*",
+      "severity": "CRITICAL",
+      "description": "Shadow password file access attempt",
+      "confidence": 0.95
+    },
+    {
+      "pattern_id": "BL-ARG-004",
+      "pattern_type": "argument_pattern",
+      "value": ".*\\.env(\\.local|\\.production|\\.staging)?$",
+      "severity": "HIGH",
+      "description": "Environment file with potential secrets access",
+      "confidence": 0.82
+    },
+    {
+      "pattern_id": "BL-ARG-005",
+      "pattern_type": "argument_pattern",
+      "value": ".*\\.kube/config.*",
+      "severity": "CRITICAL",
+      "description": "Kubernetes config access (contains cluster credentials)",
+      "confidence": 0.9
+    },
+    {
+      "pattern_id": "BL-ARG-006",
+      "pattern_type": "argument_pattern",
+      "value": ".*\\.docker/config\\.json.*",
+      "severity": "HIGH",
+      "description": "Docker config access (may contain registry credentials)",
+      "confidence": 0.85
+    },
+    {
+      "pattern_id": "BL-ARG-007",
+      "pattern_type": "argument_pattern",
+      "value": ".*(crontab|/etc/cron\\.|launchd).*",
+      "severity": "HIGH",
+      "description": "Cron/scheduled task modification attempt (persistence)",
+      "confidence": 0.82
+    },
+    {
+      "pattern_id": "BL-ARG-008",
+      "pattern_type": "argument_pattern",
+      "value": ".*/var/log/(auth|syslog|secure).*",
+      "severity": "HIGH",
+      "description": "System log access/modification (defense evasion)",
+      "confidence": 0.8
+    },
+    {
+      "pattern_id": "BL-ARG-009",
+      "pattern_type": "argument_pattern",
+      "value": ".*\\.(npmrc|pypirc|gem/credentials).*",
+      "severity": "HIGH",
+      "description": "Package manager credential file access",
+      "confidence": 0.85
+    },
+    {
+      "pattern_id": "BL-ARG-010",
+      "pattern_type": "argument_pattern",
+      "value": ".*Messages/chat\\.db.*",
+      "severity": "CRITICAL",
+      "description": "Messaging database access (WhatsApp/iMessage exfiltration)",
+      "confidence": 0.92
+    },
+    {
+      "pattern_id": "BL-ARG-011",
+      "pattern_type": "argument_pattern",
+      "value": ".*\\.gnupg/(private-keys|secring).*",
+      "severity": "CRITICAL",
+      "description": "GPG private key access attempt",
+      "confidence": 0.92
+    },
+    {
+      "pattern_id": "BL-ARG-012",
+      "pattern_type": "argument_pattern",
+      "value": ".*\\.cursor/mcp\\.json.*",
+      "severity": "HIGH",
+      "description": "Cursor IDE MCP config modification (workspace hijacking)",
+      "confidence": 0.85
+    },
+    {
+      "pattern_id": "BL-ARG-013",
+      "pattern_type": "argument_pattern",
+      "value": ".*\\.aws/config.*",
+      "severity": "HIGH",
+      "description": "AWS config file access",
+      "confidence": 0.85
+    },
+    {
+      "pattern_id": "BL-ARG-014",
+      "pattern_type": "argument_pattern",
+      "value": ".*\\.azure/(accessTokens|azureProfile)\\.json.*",
+      "severity": "CRITICAL",
+      "description": "Azure credential/token file access",
+      "confidence": 0.9
+    },
+    {
+      "pattern_id": "BL-ARG-015",
+      "pattern_type": "argument_pattern",
+      "value": ".*\\.gcloud/credentials\\.db.*",
+      "severity": "CRITICAL",
+      "description": "Google Cloud credentials database access",
+      "confidence": 0.9
+    },
+    {
+      "pattern_id": "BL-ARG-016",
+      "pattern_type": "argument_pattern",
+      "value": ".*application_default_credentials\\.json.*",
+      "severity": "CRITICAL",
+      "description": "GCP application default credentials access",
+      "confidence": 0.9
+    },
+    {
+      "pattern_id": "BL-ARG-017",
+      "pattern_type": "argument_pattern",
+      "value": ".*\\.terraform/.*\\.tfstate.*",
+      "severity": "CRITICAL",
+      "description": "Terraform state file access (contains secrets)",
+      "confidence": 0.9
+    },
+    {
+      "pattern_id": "BL-ARG-018",
+      "pattern_type": "argument_pattern",
+      "value": ".*\\.vault-token.*",
+      "severity": "CRITICAL",
+      "description": "HashiCorp Vault token file access",
+      "confidence": 0.92
+    },
+    {
+      "pattern_id": "BL-ARG-019",
+      "pattern_type": "argument_pattern",
+      "value": ".*/etc/passwd.*",
+      "severity": "MEDIUM",
+      "description": "System password file enumeration",
+      "confidence": 0.7
+    },
+    {
+      "pattern_id": "BL-ARG-020",
+      "pattern_type": "argument_pattern",
+      "value": ".*\\.git-credentials.*",
+      "severity": "HIGH",
+      "description": "Git credentials file access",
+      "confidence": 0.88
+    },
+    {
+      "pattern_id": "BL-ARG-021",
+      "pattern_type": "argument_pattern",
+      "value": ".*\\.netrc.*",
+      "severity": "HIGH",
+      "description": "Netrc file access (contains plaintext credentials)",
+      "confidence": 0.85
+    },
+    {
+      "pattern_id": "BL-ARG-022",
+      "pattern_type": "argument_pattern",
+      "value": ".*\\.pgpass.*",
+      "severity": "HIGH",
+      "description": "PostgreSQL password file access",
+      "confidence": 0.88
+    },
+    {
+      "pattern_id": "BL-ARG-023",
+      "pattern_type": "argument_pattern",
+      "value": ".*\\.my\\.cnf.*",
+      "severity": "HIGH",
+      "description": "MySQL config file access (may contain credentials)",
+      "confidence": 0.85
+    },
+    {
+      "pattern_id": "BL-ARG-024",
+      "pattern_type": "argument_pattern",
+      "value": ".*\\.mongosh/.*",
+      "severity": "HIGH",
+      "description": "MongoDB shell config/history access",
+      "confidence": 0.8
+    },
+    {
+      "pattern_id": "BL-ARG-025",
+      "pattern_type": "argument_pattern",
+      "value": ".*\\.redis/.*",
+      "severity": "HIGH",
+      "description": "Redis config/credentials access",
+      "confidence": 0.8
+    },
+    {
+      "pattern_id": "BL-ARG-026",
+      "pattern_type": "argument_pattern",
+      "value": ".*config/secrets\\.(yaml|yml|json).*",
+      "severity": "HIGH",
+      "description": "Application secrets config file access",
+      "confidence": 0.85
+    },
+    {
+      "pattern_id": "BL-ARG-027",
+      "pattern_type": "argument_pattern",
+      "value": ".*\\.htpasswd.*",
+      "severity": "HIGH",
+      "description": "Apache password file access",
+      "confidence": 0.88
+    },
+    {
+      "pattern_id": "BL-ARG-028",
+      "pattern_type": "argument_pattern",
+      "value": ".*wp-config\\.php.*",
+      "severity": "HIGH",
+      "description": "WordPress config file access (contains DB credentials)",
+      "confidence": 0.88
+    },
+    {
+      "pattern_id": "BL-ARG-029",
+      "pattern_type": "argument_pattern",
+      "value": ".*settings\\.py.*SECRET_KEY.*",
+      "severity": "HIGH",
+      "description": "Django settings with secret key access",
+      "confidence": 0.8
+    },
+    {
+      "pattern_id": "BL-ARG-030",
+      "pattern_type": "argument_pattern",
+      "value": ".*\\.ssh/known_hosts.*",
+      "severity": "MEDIUM",
+      "description": "SSH known hosts enumeration (reconnaissance)",
+      "confidence": 0.65
+    },
+    {
+      "pattern_id": "BL-ARG-031",
+      "pattern_type": "argument_pattern",
+      "value": ".*\\.ssh/config.*",
+      "severity": "MEDIUM",
+      "description": "SSH config access (infrastructure mapping)",
+      "confidence": 0.7
+    },
+    {
+      "pattern_id": "BL-ARG-032",
+      "pattern_type": "argument_pattern",
+      "value": ".*\\.bash_history.*",
+      "severity": "MEDIUM",
+      "description": "Bash history access (may contain credentials in commands)",
+      "confidence": 0.72
+    },
+    {
+      "pattern_id": "BL-ARG-033",
+      "pattern_type": "argument_pattern",
+      "value": ".*\\.zsh_history.*",
+      "severity": "MEDIUM",
+      "description": "Zsh history access (may contain credentials in commands)",
+      "confidence": 0.72
+    },
+    {
+      "pattern_id": "BL-ARG-034",
+      "pattern_type": "argument_pattern",
+      "value": ".*\\.python_history.*",
+      "severity": "LOW",
+      "description": "Python REPL history access",
+      "confidence": 0.6
+    },
+    {
+      "pattern_id": "BL-ARG-035",
+      "pattern_type": "argument_pattern",
+      "value": ".*\\.psql_history.*",
+      "severity": "MEDIUM",
+      "description": "PostgreSQL history access",
+      "confidence": 0.7
+    },
+    {
+      "pattern_id": "BL-ARG-036",
+      "pattern_type": "argument_pattern",
+      "value": ".*\\.mysql_history.*",
+      "severity": "MEDIUM",
+      "description": "MySQL history access",
+      "confidence": 0.7
+    },
+    {
+      "pattern_id": "BL-ARG-037",
+      "pattern_type": "argument_pattern",
+      "value": ".*\\.node_repl_history.*",
+      "severity": "LOW",
+      "description": "Node.js REPL history access",
+      "confidence": 0.6
+    },
+    {
+      "pattern_id": "BL-ARG-038",
+      "pattern_type": "argument_pattern",
+      "value": ".*id_rsa\\.pub.*",
+      "severity": "LOW",
+      "description": "SSH public key access (low-risk reconnaissance)",
+      "confidence": 0.45
+    },
+    {
+      "pattern_id": "BL-ARG-039",
+      "pattern_type": "argument_pattern",
+      "value": ".*\\.(pem|key|crt|cert)$",
+      "severity": "HIGH",
+      "description": "TLS/SSL certificate or private key file access",
+      "confidence": 0.85
+    },
+    {
+      "pattern_id": "BL-ARG-040",
+      "pattern_type": "argument_pattern",
+      "value": ".*\\.p12$",
+      "severity": "HIGH",
+      "description": "PKCS12 certificate bundle access",
+      "confidence": 0.85
+    },
+    {
+      "pattern_id": "BL-ARG-041",
+      "pattern_type": "argument_pattern",
+      "value": ".*\\.jks$",
+      "severity": "HIGH",
+      "description": "Java KeyStore file access",
+      "confidence": 0.85
+    },
+    {
+      "pattern_id": "BL-ARG-042",
+      "pattern_type": "argument_pattern",
+      "value": ".*\\.keychain(-db)?$",
+      "severity": "CRITICAL",
+      "description": "macOS Keychain database access",
+      "confidence": 0.92
+    },
+    {
+      "pattern_id": "BL-ARG-043",
+      "pattern_type": "argument_pattern",
+      "value": ".*Cookies\\.sqlite.*",
+      "severity": "HIGH",
+      "description": "Browser cookies database access",
+      "confidence": 0.85
+    },
+    {
+      "pattern_id": "BL-ARG-044",
+      "pattern_type": "argument_pattern",
+      "value": ".*Login Data.*",
+      "severity": "CRITICAL",
+      "description": "Chromium browser saved passwords access",
+      "confidence": 0.92
+    },
+    {
+      "pattern_id": "BL-ARG-045",
+      "pattern_type": "argument_pattern",
+      "value": ".*logins\\.json.*",
+      "severity": "CRITICAL",
+      "description": "Firefox saved passwords access",
+      "confidence": 0.92
+    },
+    {
+      "pattern_id": "BL-ARG-046",
+      "pattern_type": "argument_pattern",
+      "value": ".*key[34]\\.db.*",
+      "severity": "CRITICAL",
+      "description": "Firefox key database access",
+      "confidence": 0.92
+    },
+    {
+      "pattern_id": "BL-ARG-047",
+      "pattern_type": "argument_pattern",
+      "value": ".*Local State.*",
+      "severity": "HIGH",
+      "description": "Chromium local state access (contains encryption key)",
+      "confidence": 0.85
+    },
+    {
+      "pattern_id": "BL-ARG-048",
+      "pattern_type": "argument_pattern",
+      "value": ".*1Password.*\\.sqlite.*",
+      "severity": "CRITICAL",
+      "description": "1Password vault database access",
+      "confidence": 0.95
+    },
+    {
+      "pattern_id": "BL-ARG-049",
+      "pattern_type": "argument_pattern",
+      "value": ".*KeePass.*\\.kdbx?$",
+      "severity": "CRITICAL",
+      "description": "KeePass password database access",
+      "confidence": 0.95
+    },
+    {
+      "pattern_id": "BL-ARG-050",
+      "pattern_type": "argument_pattern",
+      "value": ".*\\.claude/(settings|projects|memory).*",
+      "severity": "HIGH",
+      "description": "Claude Code configuration access",
+      "confidence": 0.82
+    },
+    {
+      "pattern_id": "BL-ARG-051",
+      "pattern_type": "argument_pattern",
+      "value": ".*\\.vscode/.*settings\\.json.*",
+      "severity": "MEDIUM",
+      "description": "VS Code settings access (may contain credentials)",
+      "confidence": 0.7
+    },
+    {
+      "pattern_id": "BL-ARG-052",
+      "pattern_type": "argument_pattern",
+      "value": ".*\\.idea/.*\\.xml.*",
+      "severity": "MEDIUM",
+      "description": "JetBrains IDE config access",
+      "confidence": 0.65
+    },
+    {
+      "pattern_id": "BL-ARG-053",
+      "pattern_type": "argument_pattern",
+      "value": ".*secrets\\.toml.*",
+      "severity": "HIGH",
+      "description": "TOML secrets file access",
+      "confidence": 0.85
+    },
+    {
+      "pattern_id": "BL-ARG-054",
+      "pattern_type": "argument_pattern",
+      "value": ".*/proc/(self|\\d+)/(environ|maps|cmdline).*",
+      "severity": "HIGH",
+      "description": "Linux proc filesystem access (process info leak)",
+      "confidence": 0.85
+    },
+    {
+      "pattern_id": "BL-ARG-055",
+      "pattern_type": "argument_pattern",
+      "value": ".*\\.github/.*token.*",
+      "severity": "HIGH",
+      "description": "GitHub token file access",
+      "confidence": 0.85
+    },
+    {
+      "pattern_id": "BL-ARG-056",
+      "pattern_type": "argument_pattern",
+      "value": ".*\\.config/gh/hosts\\.yml.*",
+      "severity": "HIGH",
+      "description": "GitHub CLI host config access (contains tokens)",
+      "confidence": 0.88
+    },
+    {
+      "pattern_id": "BL-ARG-057",
+      "pattern_type": "argument_pattern",
+      "value": ".*\\.config/gcloud/.*",
+      "severity": "HIGH",
+      "description": "Google Cloud SDK config access",
+      "confidence": 0.85
+    },
+    {
+      "pattern_id": "BL-ARG-058",
+      "pattern_type": "argument_pattern",
+      "value": ".*\\.heroku/credentials.*",
+      "severity": "HIGH",
+      "description": "Heroku credentials access",
+      "confidence": 0.85
+    },
+    {
+      "pattern_id": "BL-ARG-059",
+      "pattern_type": "argument_pattern",
+      "value": ".*\\.digitalocean/config\\.yaml.*",
+      "severity": "HIGH",
+      "description": "DigitalOcean config access",
+      "confidence": 0.85
+    },
+    {
+      "pattern_id": "BL-ARG-060",
+      "pattern_type": "argument_pattern",
+      "value": ".*\\.vercel/.*\\.json.*",
+      "severity": "HIGH",
+      "description": "Vercel config/token access",
+      "confidence": 0.82
+    },
+    {
+      "pattern_id": "BL-ARG-061",
+      "pattern_type": "argument_pattern",
+      "value": ".*\\.fly/.*\\.yml.*",
+      "severity": "HIGH",
+      "description": "Fly.io config access",
+      "confidence": 0.8
+    },
+    {
+      "pattern_id": "BL-ARG-062",
+      "pattern_type": "argument_pattern",
+      "value": ".*\\.supabase/.*\\.toml.*",
+      "severity": "HIGH",
+      "description": "Supabase config access",
+      "confidence": 0.8
+    },
+    {
+      "pattern_id": "BL-ARG-063",
+      "pattern_type": "argument_pattern",
+      "value": ".*service-account.*\\.json.*",
+      "severity": "CRITICAL",
+      "description": "Cloud service account key file access",
+      "confidence": 0.9
+    },
+    {
+      "pattern_id": "BL-ARG-064",
+      "pattern_type": "argument_pattern",
+      "value": ".*firebase.*\\.json.*",
+      "severity": "HIGH",
+      "description": "Firebase config access (may contain API keys)",
+      "confidence": 0.78
+    },
+    {
+      "pattern_id": "BL-ARG-065",
+      "pattern_type": "argument_pattern",
+      "value": ".*\\.stripe/config\\.toml.*",
+      "severity": "CRITICAL",
+      "description": "Stripe configuration access (payment credentials)",
+      "confidence": 0.92
+    },
+    {
+      "pattern_id": "BL-ARG-066",
+      "pattern_type": "argument_pattern",
+      "value": ".*twilio.*credentials.*",
+      "severity": "HIGH",
+      "description": "Twilio credentials access",
+      "confidence": 0.82
+    },
+    {
+      "pattern_id": "BL-ARG-067",
+      "pattern_type": "argument_pattern",
+      "value": ".*sendgrid.*api.*key.*",
+      "severity": "HIGH",
+      "description": "SendGrid API key access",
+      "confidence": 0.8
+    },
+    {
+      "pattern_id": "BL-ARG-068",
+      "pattern_type": "argument_pattern",
+      "value": ".*slack.*token.*",
+      "severity": "HIGH",
+      "description": "Slack token access",
+      "confidence": 0.82
+    },
+    {
+      "pattern_id": "BL-PAYLOAD-001",
+      "pattern_type": "argument_content",
+      "value": ".*base64\\.(b64decode|decode|decodebytes).*",
+      "severity": "HIGH",
+      "description": "Base64 decoding in tool arguments (obfuscation)",
+      "confidence": 0.8
+    },
+    {
+      "pattern_id": "BL-PAYLOAD-002",
+      "pattern_type": "argument_content",
+      "value": ".*eval\\(.*\\).*",
+      "severity": "CRITICAL",
+      "description": "Eval function call in tool arguments (code injection)",
+      "confidence": 0.9
+    },
+    {
+      "pattern_id": "BL-PAYLOAD-003",
+      "pattern_type": "argument_content",
+      "value": ".*exec\\(.*\\).*",
+      "severity": "CRITICAL",
+      "description": "Exec function call in tool arguments (code injection)",
+      "confidence": 0.9
+    },
+    {
+      "pattern_id": "BL-PAYLOAD-004",
+      "pattern_type": "argument_content",
+      "value": ".*subprocess\\.(call|run|Popen|check_output).*",
+      "severity": "CRITICAL",
+      "description": "Subprocess execution in tool arguments",
+      "confidence": 0.9
+    },
+    {
+      "pattern_id": "BL-PAYLOAD-005",
+      "pattern_type": "argument_content",
+      "value": ".*os\\.(system|popen|exec|spawn).*",
+      "severity": "CRITICAL",
+      "description": "OS command execution in tool arguments",
+      "confidence": 0.9
+    },
+    {
+      "pattern_id": "BL-PAYLOAD-006",
+      "pattern_type": "argument_content",
+      "value": ".*import\\s+(os|subprocess|socket|http|urllib|requests).*",
+      "severity": "HIGH",
+      "description": "Dangerous module import in tool arguments",
+      "confidence": 0.82
+    },
+    {
+      "pattern_id": "BL-PAYLOAD-007",
+      "pattern_type": "argument_content",
+      "value": ".*__import__.*",
+      "severity": "HIGH",
+      "description": "Dynamic import in tool arguments (obfuscation)",
+      "confidence": 0.85
+    },
+    {
+      "pattern_id": "BL-PAYLOAD-008",
+      "pattern_type": "argument_content",
+      "value": ".*\\.connect\\(.*\\d+\\.\\d+\\.\\d+\\.\\d+.*\\).*",
+      "severity": "HIGH",
+      "description": "Direct IP connection in tool arguments",
+      "confidence": 0.82
+    },
+    {
+      "pattern_id": "BL-PAYLOAD-009",
+      "pattern_type": "argument_content",
+      "value": ".*(curl|wget)\\s+.*http.*",
+      "severity": "HIGH",
+      "description": "Shell download command in tool arguments",
+      "confidence": 0.8
+    },
+    {
+      "pattern_id": "BL-PAYLOAD-010",
+      "pattern_type": "argument_content",
+      "value": ".*\\|\\s*(bash|sh|zsh|python|perl|ruby|node).*",
+      "severity": "CRITICAL",
+      "description": "Piping to interpreter (download-and-execute pattern)",
+      "confidence": 0.92
+    },
+    {
+      "pattern_id": "BL-PAYLOAD-011",
+      "pattern_type": "argument_content",
+      "value": ".*(nc|ncat|netcat)\\s+.*-[el].*",
+      "severity": "CRITICAL",
+      "description": "Netcat listener/reverse shell in tool arguments",
+      "confidence": 0.95
+    },
+    {
+      "pattern_id": "BL-PAYLOAD-012",
+      "pattern_type": "argument_content",
+      "value": ".*mkfifo.*",
+      "severity": "HIGH",
+      "description": "Named pipe creation (reverse shell technique)",
+      "confidence": 0.85
+    },
+    {
+      "pattern_id": "BL-PAYLOAD-013",
+      "pattern_type": "argument_content",
+      "value": ".*/dev/tcp/.*",
+      "severity": "CRITICAL",
+      "description": "Bash /dev/tcp reverse shell pattern",
+      "confidence": 0.95
+    },
+    {
+      "pattern_id": "BL-PAYLOAD-014",
+      "pattern_type": "argument_content",
+      "value": ".*socket\\.socket.*SOCK_STREAM.*",
+      "severity": "HIGH",
+      "description": "Raw TCP socket creation in arguments",
+      "confidence": 0.8
+    },
+    {
+      "pattern_id": "BL-PAYLOAD-015",
+      "pattern_type": "argument_content",
+      "value": ".*\\bchmod\\s+[0-7]?[7][0-7]{2}\\b.*",
+      "severity": "HIGH",
+      "description": "Setting executable permissions (post-dropper step)",
+      "confidence": 0.78
+    },
+    {
+      "pattern_id": "BL-PAYLOAD-016",
+      "pattern_type": "argument_content",
+      "value": ".*rm\\s+-rf\\s+/.*",
+      "severity": "CRITICAL",
+      "description": "Recursive force delete from root (destructive)",
+      "confidence": 0.95
+    },
+    {
+      "pattern_id": "BL-PAYLOAD-017",
+      "pattern_type": "argument_content",
+      "value": ".*dd\\s+if=.*of=/dev/.*",
+      "severity": "CRITICAL",
+      "description": "Disk write via dd (potential wiper)",
+      "confidence": 0.9
+    },
+    {
+      "pattern_id": "BL-PAYLOAD-018",
+      "pattern_type": "argument_content",
+      "value": ".*iptables.*-A.*DROP.*",
+      "severity": "HIGH",
+      "description": "Firewall rule manipulation (isolation)",
+      "confidence": 0.82
+    },
+    {
+      "pattern_id": "BL-PAYLOAD-019",
+      "pattern_type": "argument_content",
+      "value": ".*base64\\s+-d.*\\|.*sh.*",
+      "severity": "CRITICAL",
+      "description": "Base64 decode piped to shell (obfuscated execution)",
+      "confidence": 0.95
+    },
+    {
+      "pattern_id": "BL-PAYLOAD-020",
+      "pattern_type": "argument_content",
+      "value": ".*echo\\s+.*\\|\\s*base64\\s+-d.*",
+      "severity": "HIGH",
+      "description": "Echo and decode base64 (payload deobfuscation)",
+      "confidence": 0.82
+    },
+    {
+      "pattern_id": "BL-URL-001",
+      "pattern_type": "url_pattern",
+      "value": ".*evil\\.com.*",
+      "severity": "CRITICAL",
+      "description": "Known malicious domain in URL",
+      "confidence": 0.95
+    },
+    {
+      "pattern_id": "BL-URL-002",
+      "pattern_type": "url_pattern",
+      "value": ".*attacker\\.io.*",
+      "severity": "CRITICAL",
+      "description": "Known attacker infrastructure domain",
+      "confidence": 0.95
+    },
+    {
+      "pattern_id": "BL-URL-003",
+      "pattern_type": "url_pattern",
+      "value": ".*c2\\.badactor\\.net.*",
+      "severity": "CRITICAL",
+      "description": "Known C2 infrastructure domain",
+      "confidence": 0.95
+    },
+    {
+      "pattern_id": "BL-URL-004",
+      "pattern_type": "url_pattern",
+      "value": ".*exfil\\.malware\\.xyz.*",
+      "severity": "CRITICAL",
+      "description": "Known exfiltration endpoint",
+      "confidence": 0.95
+    },
+    {
+      "pattern_id": "BL-URL-005",
+      "pattern_type": "url_pattern",
+      "value": ".*pastebin\\.com/raw/.*",
+      "severity": "HIGH",
+      "description": "Raw Pastebin URL (common C2/payload host)",
+      "confidence": 0.78
+    },
+    {
+      "pattern_id": "BL-URL-006",
+      "pattern_type": "url_pattern",
+      "value": ".*raw\\.githubusercontent\\.com.*",
+      "severity": "MEDIUM",
+      "description": "Raw GitHub content (potential payload download)",
+      "confidence": 0.6
+    },
+    {
+      "pattern_id": "BL-URL-007",
+      "pattern_type": "url_pattern",
+      "value": ".*ngrok\\.io.*",
+      "severity": "HIGH",
+      "description": "Ngrok tunnel (common for C2 tunneling)",
+      "confidence": 0.75
+    },
+    {
+      "pattern_id": "BL-URL-008",
+      "pattern_type": "url_pattern",
+      "value": ".*burpcollaborator\\.net.*",
+      "severity": "HIGH",
+      "description": "Burp Collaborator (OAST data exfiltration)",
+      "confidence": 0.85
+    },
+    {
+      "pattern_id": "BL-URL-009",
+      "pattern_type": "url_pattern",
+      "value": ".*interact\\.sh.*",
+      "severity": "HIGH",
+      "description": "Interactsh OAST domain (exfiltration)",
+      "confidence": 0.85
+    },
+    {
+      "pattern_id": "BL-URL-010",
+      "pattern_type": "url_pattern",
+      "value": ".*requestbin\\.com.*",
+      "severity": "HIGH",
+      "description": "RequestBin (data capture endpoint)",
+      "confidence": 0.78
+    },
+    {
+      "pattern_id": "BL-URL-011",
+      "pattern_type": "url_pattern",
+      "value": ".*webhook\\.site.*",
+      "severity": "MEDIUM",
+      "description": "Webhook.site (data capture endpoint)",
+      "confidence": 0.72
+    },
+    {
+      "pattern_id": "BL-URL-012",
+      "pattern_type": "url_pattern",
+      "value": ".*pipedream\\.net.*",
+      "severity": "MEDIUM",
+      "description": "Pipedream endpoint (data capture)",
+      "confidence": 0.68
+    },
+    {
+      "pattern_id": "BL-URL-013",
+      "pattern_type": "url_pattern",
+      "value": ".*\\d+\\.\\d+\\.\\d+\\.\\d+:\\d+.*",
+      "severity": "HIGH",
+      "description": "Direct IP:port URL (C2/exfiltration indicator)",
+      "confidence": 0.78
+    },
+    {
+      "pattern_id": "BL-URL-014",
+      "pattern_type": "url_pattern",
+      "value": ".*\\.onion(/|$).*",
+      "severity": "CRITICAL",
+      "description": "Tor hidden service URL (covert communication)",
+      "confidence": 0.9
+    },
+    {
+      "pattern_id": "BL-URL-015",
+      "pattern_type": "url_pattern",
+      "value": ".*\\.(tk|ml|ga|cf|gq)/.*",
+      "severity": "MEDIUM",
+      "description": "Free TLD commonly used for malicious domains",
+      "confidence": 0.65
+    },
+    {
+      "pattern_id": "BL-DESC-001",
+      "pattern_type": "description_injection",
+      "value": ".*ignore\\s+(previous|prior|above|all)\\s+(instructions?|prompts?|rules?).*",
+      "severity": "CRITICAL",
+      "description": "Prompt injection via tool description: ignore instructions",
+      "confidence": 0.92
+    },
+    {
+      "pattern_id": "BL-DESC-002",
+      "pattern_type": "description_injection",
+      "value": ".*you\\s+(are|must|should|will)\\s+now.*",
+      "severity": "HIGH",
+      "description": "Prompt injection via tool description: role reassignment",
+      "confidence": 0.8
+    },
+    {
+      "pattern_id": "BL-DESC-003",
+      "pattern_type": "description_injection",
+      "value": ".*system\\s*:\\s*you\\s+are.*",
+      "severity": "CRITICAL",
+      "description": "Prompt injection: fake system prompt in description",
+      "confidence": 0.9
+    },
+    {
+      "pattern_id": "BL-DESC-004",
+      "pattern_type": "description_injection",
+      "value": ".*<\\|im_start\\|>.*",
+      "severity": "CRITICAL",
+      "description": "Prompt injection: ChatML delimiter injection",
+      "confidence": 0.95
+    },
+    {
+      "pattern_id": "BL-DESC-005",
+      "pattern_type": "description_injection",
+      "value": ".*\\[INST\\].*",
+      "severity": "HIGH",
+      "description": "Prompt injection: Llama instruction delimiter",
+      "confidence": 0.85
+    },
+    {
+      "pattern_id": "BL-DESC-006",
+      "pattern_type": "description_injection",
+      "value": ".*<\\|endoftext\\|>.*",
+      "severity": "CRITICAL",
+      "description": "Prompt injection: end-of-text token injection",
+      "confidence": 0.92
+    },
+    {
+      "pattern_id": "BL-DESC-007",
+      "pattern_type": "description_injection",
+      "value": ".*IMPORTANT:\\s*(read|send|fetch|execute|eval|ignore|override).*",
+      "severity": "HIGH",
+      "description": "Prompt injection: urgent instruction override",
+      "confidence": 0.78
+    },
+    {
+      "pattern_id": "BL-DESC-008",
+      "pattern_type": "description_injection",
+      "value": ".*<hidden>.*</hidden>.*",
+      "severity": "HIGH",
+      "description": "Prompt injection: hidden instruction tags",
+      "confidence": 0.82
+    },
+    {
+      "pattern_id": "BL-DESC-009",
+      "pattern_type": "description_injection",
+      "value": ".*\\\\u0000.*",
+      "severity": "HIGH",
+      "description": "Null byte injection in tool description",
+      "confidence": 0.88
+    },
+    {
+      "pattern_id": "BL-DESC-010",
+      "pattern_type": "description_injection",
+      "value": ".*before\\s+responding.*first\\s+(read|send|fetch|call|execute).*",
+      "severity": "HIGH",
+      "description": "Prompt injection: pre-response action directive",
+      "confidence": 0.8
+    },
+    {
+      "pattern_id": "BL-DESC-011",
+      "pattern_type": "description_injection",
+      "value": ".*do\\s+not\\s+(mention|reveal|disclose|tell).*",
+      "severity": "HIGH",
+      "description": "Prompt injection: secrecy directive",
+      "confidence": 0.78
+    },
+    {
+      "pattern_id": "BL-DESC-012",
+      "pattern_type": "description_injection",
+      "value": ".*assistant\\s*=.*",
+      "severity": "MEDIUM",
+      "description": "Prompt injection: role assignment in description",
+      "confidence": 0.72
+    },
+    {
+      "pattern_id": "BL-DESC-013",
+      "pattern_type": "description_injection",
+      "value": ".*\\bHuman:\\b.*\\bAssistant:\\b.*",
+      "severity": "CRITICAL",
+      "description": "Prompt injection: conversation turn injection",
+      "confidence": 0.9
+    },
+    {
+      "pattern_id": "BL-DESC-014",
+      "pattern_type": "description_injection",
+      "value": ".*<tool_call>.*",
+      "severity": "HIGH",
+      "description": "Prompt injection: fake tool call markup",
+      "confidence": 0.85
+    },
+    {
+      "pattern_id": "BL-DESC-015",
+      "pattern_type": "description_injection",
+      "value": ".*\\{\\{.*\\}\\}.*",
+      "severity": "MEDIUM",
+      "description": "Template injection markers in description",
+      "confidence": 0.68
+    },
+    {
+      "pattern_id": "BL-BEHAV-001",
+      "pattern_type": "behavioral",
+      "value": "tools_list_count>5_in_10min",
+      "severity": "MEDIUM",
+      "description": "Excessive tools/list probing (reconnaissance indicator)",
+      "confidence": 0.78
+    },
+    {
+      "pattern_id": "BL-BEHAV-002",
+      "pattern_type": "behavioral",
+      "value": "unique_servers>3_in_5min",
+      "severity": "HIGH",
+      "description": "Cross-server access pattern (lateral movement)",
+      "confidence": 0.82
+    },
+    {
+      "pattern_id": "BL-BEHAV-003",
+      "pattern_type": "behavioral",
+      "value": "new_tools>3_after_baseline",
+      "severity": "HIGH",
+      "description": "Sudden new tool adoption (rug pull indicator)",
+      "confidence": 0.8
+    },
+    {
+      "pattern_id": "BL-BEHAV-004",
+      "pattern_type": "behavioral",
+      "value": "data_volume>5x_baseline",
+      "severity": "CRITICAL",
+      "description": "Data volume spike exceeding 5x baseline",
+      "confidence": 0.85
+    },
+    {
+      "pattern_id": "BL-BEHAV-005",
+      "pattern_type": "behavioral",
+      "value": "invocation_rate>4x_baseline",
+      "severity": "MEDIUM",
+      "description": "Call rate spike exceeding 4x baseline",
+      "confidence": 0.78
+    },
+    {
+      "pattern_id": "BL-BEHAV-006",
+      "pattern_type": "behavioral",
+      "value": "interval_cv<0.1_count>6",
+      "severity": "HIGH",
+      "description": "Regular timing pattern (persistence/C2 indicator)",
+      "confidence": 0.82
+    },
+    {
+      "pattern_id": "BL-BEHAV-007",
+      "pattern_type": "behavioral",
+      "value": "response_size_cv<0.05_count>6",
+      "severity": "HIGH",
+      "description": "Consistent response sizes (C2 beaconing)",
+      "confidence": 0.8
+    },
+    {
+      "pattern_id": "BL-BEHAV-008",
+      "pattern_type": "behavioral",
+      "value": "arguments_size>5000",
+      "severity": "HIGH",
+      "description": "Large encoded payload (defense evasion)",
+      "confidence": 0.8
+    },
+    {
+      "pattern_id": "BL-BEHAV-009",
+      "pattern_type": "behavioral",
+      "value": "first_sensitive_tool_access",
+      "severity": "CRITICAL",
+      "description": "First-time access to sensitive/admin tools",
+      "confidence": 0.85
+    },
+    {
+      "pattern_id": "BL-BEHAV-010",
+      "pattern_type": "behavioral",
+      "value": "unregistered_tool_call",
+      "severity": "CRITICAL",
+      "description": "Call to tool not in server manifest",
+      "confidence": 0.9
+    },
+    {
+      "pattern_id": "BL-BEHAV-011",
+      "pattern_type": "behavioral",
+      "value": "error_rate>50pct_in_window",
+      "severity": "MEDIUM",
+      "description": "High error rate (brute-force/fuzzing indicator)",
+      "confidence": 0.72
+    },
+    {
+      "pattern_id": "BL-BEHAV-012",
+      "pattern_type": "behavioral",
+      "value": "empty_args_pattern>5_unique_tools",
+      "severity": "MEDIUM",
+      "description": "Empty argument probing across multiple tools",
+      "confidence": 0.7
+    },
+    {
+      "pattern_id": "BL-BEHAV-013",
+      "pattern_type": "behavioral",
+      "value": "read_sensitive_then_outbound",
+      "severity": "CRITICAL",
+      "description": "Sensitive file read followed by network call",
+      "confidence": 0.88
+    },
+    {
+      "pattern_id": "BL-BEHAV-014",
+      "pattern_type": "behavioral",
+      "value": "rapid_tool_switching>10_unique_in_1min",
+      "severity": "HIGH",
+      "description": "Rapid tool switching (automated attack pattern)",
+      "confidence": 0.78
+    },
+    {
+      "pattern_id": "BL-BEHAV-015",
+      "pattern_type": "behavioral",
+      "value": "night_time_access_spike",
+      "severity": "MEDIUM",
+      "description": "Unusual off-hours activity spike",
+      "confidence": 0.65
+    },
+    {
+      "pattern_id": "BL-ENV-001",
+      "pattern_type": "env_access",
+      "value": "AWS_ACCESS_KEY_ID",
+      "severity": "CRITICAL",
+      "description": "AWS access key environment variable access",
+      "confidence": 0.92
+    },
+    {
+      "pattern_id": "BL-ENV-002",
+      "pattern_type": "env_access",
+      "value": "AWS_SECRET_ACCESS_KEY",
+      "severity": "CRITICAL",
+      "description": "AWS secret key environment variable access",
+      "confidence": 0.92
+    },
+    {
+      "pattern_id": "BL-ENV-003",
+      "pattern_type": "env_access",
+      "value": "GITHUB_TOKEN",
+      "severity": "CRITICAL",
+      "description": "GitHub token environment variable access",
+      "confidence": 0.9
+    },
+    {
+      "pattern_id": "BL-ENV-004",
+      "pattern_type": "env_access",
+      "value": "OPENAI_API_KEY",
+      "severity": "HIGH",
+      "description": "OpenAI API key environment variable access",
+      "confidence": 0.85
+    },
+    {
+      "pattern_id": "BL-ENV-005",
+      "pattern_type": "env_access",
+      "value": "ANTHROPIC_API_KEY",
+      "severity": "HIGH",
+      "description": "Anthropic API key environment variable access",
+      "confidence": 0.85
+    },
+    {
+      "pattern_id": "BL-ENV-006",
+      "pattern_type": "env_access",
+      "value": "DATABASE_URL",
+      "severity": "HIGH",
+      "description": "Database connection URL environment variable access",
+      "confidence": 0.82
+    },
+    {
+      "pattern_id": "BL-ENV-007",
+      "pattern_type": "env_access",
+      "value": "STRIPE_SECRET_KEY",
+      "severity": "CRITICAL",
+      "description": "Stripe secret key environment variable access",
+      "confidence": 0.92
+    },
+    {
+      "pattern_id": "BL-ENV-008",
+      "pattern_type": "env_access",
+      "value": "JWT_SECRET",
+      "severity": "CRITICAL",
+      "description": "JWT secret environment variable access",
+      "confidence": 0.9
+    },
+    {
+      "pattern_id": "BL-ENV-009",
+      "pattern_type": "env_access",
+      "value": "SESSION_SECRET",
+      "severity": "HIGH",
+      "description": "Session secret environment variable access",
+      "confidence": 0.85
+    },
+    {
+      "pattern_id": "BL-ENV-010",
+      "pattern_type": "env_access",
+      "value": "ENCRYPTION_KEY",
+      "severity": "CRITICAL",
+      "description": "Encryption key environment variable access",
+      "confidence": 0.92
+    },
+    {
+      "pattern_id": "BL-ENV-011",
+      "pattern_type": "env_access",
+      "value": "PRIVATE_KEY",
+      "severity": "CRITICAL",
+      "description": "Private key environment variable access",
+      "confidence": 0.92
+    },
+    {
+      "pattern_id": "BL-ENV-012",
+      "pattern_type": "env_access",
+      "value": "SLACK_BOT_TOKEN",
+      "severity": "HIGH",
+      "description": "Slack bot token environment variable access",
+      "confidence": 0.85
+    },
+    {
+      "pattern_id": "BL-ENV-013",
+      "pattern_type": "env_access",
+      "value": "SLACK_WEBHOOK_URL",
+      "severity": "HIGH",
+      "description": "Slack webhook URL environment variable access",
+      "confidence": 0.82
+    },
+    {
+      "pattern_id": "BL-ENV-014",
+      "pattern_type": "env_access",
+      "value": "DISCORD_TOKEN",
+      "severity": "HIGH",
+      "description": "Discord bot token environment variable access",
+      "confidence": 0.85
+    },
+    {
+      "pattern_id": "BL-ENV-015",
+      "pattern_type": "env_access",
+      "value": "TELEGRAM_BOT_TOKEN",
+      "severity": "HIGH",
+      "description": "Telegram bot token environment variable access",
+      "confidence": 0.85
+    },
+    {
+      "pattern_id": "BL-ENV-016",
+      "pattern_type": "env_access",
+      "value": "TWILIO_AUTH_TOKEN",
+      "severity": "HIGH",
+      "description": "Twilio auth token environment variable access",
+      "confidence": 0.85
+    },
+    {
+      "pattern_id": "BL-ENV-017",
+      "pattern_type": "env_access",
+      "value": "SENDGRID_API_KEY",
+      "severity": "HIGH",
+      "description": "SendGrid API key environment variable access",
+      "confidence": 0.85
+    },
+    {
+      "pattern_id": "BL-ENV-018",
+      "pattern_type": "env_access",
+      "value": "REDIS_URL",
+      "severity": "HIGH",
+      "description": "Redis connection URL environment variable access",
+      "confidence": 0.8
+    },
+    {
+      "pattern_id": "BL-ENV-019",
+      "pattern_type": "env_access",
+      "value": "MONGO_URI",
+      "severity": "HIGH",
+      "description": "MongoDB connection URI environment variable access",
+      "confidence": 0.82
+    },
+    {
+      "pattern_id": "BL-ENV-020",
+      "pattern_type": "env_access",
+      "value": "GOOGLE_APPLICATION_CREDENTIALS",
+      "severity": "CRITICAL",
+      "description": "GCP service account credentials path",
+      "confidence": 0.9
+    },
+    {
+      "pattern_id": "BL-ENV-021",
+      "pattern_type": "env_access",
+      "value": "AZURE_CLIENT_SECRET",
+      "severity": "CRITICAL",
+      "description": "Azure client secret environment variable access",
+      "confidence": 0.9
+    },
+    {
+      "pattern_id": "BL-ENV-022",
+      "pattern_type": "env_access",
+      "value": "NPM_TOKEN",
+      "severity": "HIGH",
+      "description": "NPM publish token environment variable access",
+      "confidence": 0.85
+    },
+    {
+      "pattern_id": "BL-ENV-023",
+      "pattern_type": "env_access",
+      "value": "PYPI_TOKEN",
+      "severity": "HIGH",
+      "description": "PyPI publish token environment variable access",
+      "confidence": 0.85
+    },
+    {
+      "pattern_id": "BL-ENV-024",
+      "pattern_type": "env_access",
+      "value": "DOCKER_PASSWORD",
+      "severity": "HIGH",
+      "description": "Docker registry password environment variable access",
+      "confidence": 0.85
+    },
+    {
+      "pattern_id": "BL-ENV-025",
+      "pattern_type": "env_access",
+      "value": "SNYK_TOKEN",
+      "severity": "MEDIUM",
+      "description": "Snyk token environment variable access",
+      "confidence": 0.78
+    },
+    {
+      "pattern_id": "BL-ENV-026",
+      "pattern_type": "env_access",
+      "value": "SENTRY_DSN",
+      "severity": "MEDIUM",
+      "description": "Sentry DSN environment variable access",
+      "confidence": 0.68
+    },
+    {
+      "pattern_id": "BL-ENV-027",
+      "pattern_type": "env_access",
+      "value": "DATADOG_API_KEY",
+      "severity": "MEDIUM",
+      "description": "Datadog API key environment variable access",
+      "confidence": 0.75
+    },
+    {
+      "pattern_id": "BL-ENV-028",
+      "pattern_type": "env_access",
+      "value": "NEW_RELIC_LICENSE_KEY",
+      "severity": "MEDIUM",
+      "description": "New Relic license key environment variable access",
+      "confidence": 0.75
+    },
+    {
+      "pattern_id": "BL-ENV-029",
+      "pattern_type": "env_access",
+      "value": "CLOUDFLARE_API_TOKEN",
+      "severity": "HIGH",
+      "description": "Cloudflare API token environment variable access",
+      "confidence": 0.85
+    },
+    {
+      "pattern_id": "BL-ENV-030",
+      "pattern_type": "env_access",
+      "value": "VERCEL_TOKEN",
+      "severity": "HIGH",
+      "description": "Vercel deployment token environment variable access",
+      "confidence": 0.82
+    },
+    {
+      "pattern_id": "BL-MCP-001",
+      "pattern_type": "mcp_specific",
+      "value": "tool_desc_length>500_with_instructions",
+      "severity": "HIGH",
+      "description": "Unusually long tool description with embedded instructions",
+      "confidence": 0.78
+    },
+    {
+      "pattern_id": "BL-MCP-002",
+      "pattern_type": "mcp_specific",
+      "value": "tool_schema_polymorphic_any_type",
+      "severity": "MEDIUM",
+      "description": "Tool schema with overly permissive 'any' type parameters",
+      "confidence": 0.68
+    },
+    {
+      "pattern_id": "BL-MCP-003",
+      "pattern_type": "mcp_specific",
+      "value": "server_tools_changed_after_init",
+      "severity": "CRITICAL",
+      "description": "Server tool list changed after initial registration (rug pull)",
+      "confidence": 0.9
+    },
+    {
+      "pattern_id": "BL-MCP-004",
+      "pattern_type": "mcp_specific",
+      "value": "tool_name_shadowing_builtin",
+      "severity": "CRITICAL",
+      "description": "Tool name shadows a common built-in tool (tool shadowing attack)",
+      "confidence": 0.88
+    },
+    {
+      "pattern_id": "BL-MCP-005",
+      "pattern_type": "mcp_specific",
+      "value": "server_uri_private_ip_range",
+      "severity": "HIGH",
+      "description": "MCP server URI pointing to private IP range (SSRF risk)",
+      "confidence": 0.82
+    },
+    {
+      "pattern_id": "BL-MCP-006",
+      "pattern_type": "mcp_specific",
+      "value": "server_uri_localhost_non_standard_port",
+      "severity": "MEDIUM",
+      "description": "MCP server on non-standard localhost port",
+      "confidence": 0.65
+    },
+    {
+      "pattern_id": "BL-MCP-007",
+      "pattern_type": "mcp_specific",
+      "value": "tool_response_contains_instructions",
+      "severity": "HIGH",
+      "description": "Tool response contains prompt-injection-like instructions",
+      "confidence": 0.8
+    },
+    {
+      "pattern_id": "BL-MCP-008",
+      "pattern_type": "mcp_specific",
+      "value": "multiple_servers_same_tool_name",
+      "severity": "HIGH",
+      "description": "Multiple servers providing same-named tool (confusion risk)",
+      "confidence": 0.78
+    },
+    {
+      "pattern_id": "BL-MCP-009",
+      "pattern_type": "mcp_specific",
+      "value": "transport_http_no_tls",
+      "severity": "HIGH",
+      "description": "MCP server using HTTP without TLS (credential exposure)",
+      "confidence": 0.8
+    },
+    {
+      "pattern_id": "BL-MCP-010",
+      "pattern_type": "mcp_specific",
+      "value": "stdio_transport_no_sandbox",
+      "severity": "MEDIUM",
+      "description": "Stdio transport without filesystem sandboxing",
+      "confidence": 0.72
+    },
+    {
+      "pattern_id": "BL-OC-001",
+      "pattern_type": "tool_name",
+      "value": "install_skill",
+      "severity": "MEDIUM",
+      "description": "OpenClaw skill installation tool - monitor for malicious skill installs",
+      "confidence": 0.7
+    },
+    {
+      "pattern_id": "BL-OC-002",
+      "pattern_type": "tool_name",
+      "value": "get_skill_secrets",
+      "severity": "CRITICAL",
+      "description": "OpenClaw skill secrets access - potential credential theft",
+      "confidence": 0.95
+    },
+    {
+      "pattern_id": "BL-OC-003",
+      "pattern_type": "tool_name",
+      "value": "get_skill_context",
+      "severity": "HIGH",
+      "description": "OpenClaw cross-skill context access - isolation bypass attempt",
+      "confidence": 0.85
+    },
+    {
+      "pattern_id": "BL-OC-004",
+      "pattern_type": "tool_name",
+      "value": "skill_exec_raw",
+      "severity": "CRITICAL",
+      "description": "OpenClaw raw skill execution - arbitrary code execution risk",
+      "confidence": 0.92
+    },
+    {
+      "pattern_id": "BL-OC-005",
+      "pattern_type": "tool_name",
+      "value": "modify_skill_config",
+      "severity": "HIGH",
+      "description": "OpenClaw skill config modification - persistence mechanism",
+      "confidence": 0.88
+    },
+    {
+      "pattern_id": "BL-OC-006",
+      "pattern_type": "argument_pattern",
+      "value": ".*skill_name.*git-hub.*",
+      "severity": "HIGH",
+      "description": "OpenClaw skill squatting: git-hub (typosquat of github)",
+      "confidence": 0.88
+    },
+    {
+      "pattern_id": "BL-OC-007",
+      "pattern_type": "argument_pattern",
+      "value": ".*skill_name.*file-systm.*",
+      "severity": "HIGH",
+      "description": "OpenClaw skill squatting: file-systm (typosquat of file-system)",
+      "confidence": 0.88
+    },
+    {
+      "pattern_id": "BL-OC-008",
+      "pattern_type": "argument_pattern",
+      "value": ".*skill_name.*data-base.*",
+      "severity": "HIGH",
+      "description": "OpenClaw skill squatting: data-base (typosquat of database)",
+      "confidence": 0.85
+    },
+    {
+      "pattern_id": "BL-OC-009",
+      "pattern_type": "argument_pattern",
+      "value": ".*skill_name.*cmd-line.*",
+      "severity": "HIGH",
+      "description": "OpenClaw skill squatting: cmd-line (typosquat of cmdline/command-line)",
+      "confidence": 0.85
+    },
+    {
+      "pattern_id": "BL-OC-010",
+      "pattern_type": "argument_pattern",
+      "value": ".*skill_name.*[_-]?(exec|shell|bash|eval|system|sudo)[_-]?.*",
+      "severity": "CRITICAL",
+      "description": "OpenClaw skill name contains execution-related terms",
+      "confidence": 0.82
+    },
+    {
+      "pattern_id": "BL-OC-011",
+      "pattern_type": "url_pattern",
+      "value": ".*openclaw-registry\\..*\\.xyz.*",
+      "severity": "CRITICAL",
+      "description": "Fake OpenClaw registry on suspicious TLD",
+      "confidence": 0.92
+    },
+    {
+      "pattern_id": "BL-OC-012",
+      "pattern_type": "url_pattern",
+      "value": ".*openclaw-skills\\..*\\.(tk|ml|ga|cf).*",
+      "severity": "CRITICAL",
+      "description": "Fake OpenClaw skill host on free/suspicious TLD",
+      "confidence": 0.9
+    },
+    {
+      "pattern_id": "BL-OC-013",
+      "pattern_type": "url_pattern",
+      "value": ".*registry\\.openclaw[^.]*\\.(com|io|dev).*",
+      "severity": "HIGH",
+      "description": "Typosquatted OpenClaw registry domain",
+      "confidence": 0.85
+    },
+    {
+      "pattern_id": "BL-OC-014",
+      "pattern_type": "url_pattern",
+      "value": ".*raw\\.githubusercontent\\.com/.*/openclaw-skill.*",
+      "severity": "MEDIUM",
+      "description": "OpenClaw skill loaded from raw GitHub (unverified source)",
+      "confidence": 0.72
+    },
+    {
+      "pattern_id": "BL-OC-015",
+      "pattern_type": "argument_pattern",
+      "value": ".*openclaw\\.json.*",
+      "severity": "HIGH",
+      "description": "OpenClaw config file access - potential config manipulation",
+      "confidence": 0.8
+    },
+    {
+      "pattern_id": "BL-OC-016",
+      "pattern_type": "argument_pattern",
+      "value": ".*\\.openclaw/(config|settings|skills).*",
+      "severity": "HIGH",
+      "description": "OpenClaw config directory access",
+      "confidence": 0.82
+    },
+    {
+      "pattern_id": "BL-OC-017",
+      "pattern_type": "argument_content",
+      "value": ".*\"mcpServers\"\\s*:\\s*\\{.*\"command\"\\s*:",
+      "severity": "CRITICAL",
+      "description": "MCP server injection in OpenClaw config content",
+      "confidence": 0.9
+    },
+    {
+      "pattern_id": "BL-OC-018",
+      "pattern_type": "argument_content",
+      "value": ".*\"skills\"\\s*:\\s*\\[.*\"url\"\\s*:\\s*\"https?://(?!registry\\.openclaw\\.).*",
+      "severity": "HIGH",
+      "description": "OpenClaw skill loaded from non-official registry URL",
+      "confidence": 0.78
+    },
+    {
+      "pattern_id": "BL-OC-019",
+      "pattern_type": "argument_pattern",
+      "value": ".*author.*(anonymous|unknown|test[0-9]+|user[0-9]+|admin).*",
+      "severity": "MEDIUM",
+      "description": "OpenClaw skill from suspicious/anonymous author",
+      "confidence": 0.7
+    },
+    {
+      "pattern_id": "BL-OC-020",
+      "pattern_type": "argument_pattern",
+      "value": ".*author.*[0-9a-f]{8,}@(protonmail|tutanota|guerrilla).*",
+      "severity": "HIGH",
+      "description": "OpenClaw skill author using disposable/anonymous email",
+      "confidence": 0.82
+    },
+    {
+      "pattern_id": "BL-OC-021",
+      "pattern_type": "tool_sequence",
+      "value": "get_skill_context,fetch_url",
+      "severity": "CRITICAL",
+      "description": "OpenClaw skill context read followed by outbound HTTP (exfiltration)",
+      "confidence": 0.9
+    },
+    {
+      "pattern_id": "BL-OC-022",
+      "pattern_type": "tool_sequence",
+      "value": "list_installed_skills,fetch_url",
+      "severity": "HIGH",
+      "description": "OpenClaw skill enumeration followed by outbound HTTP",
+      "confidence": 0.82
+    },
+    {
+      "pattern_id": "BL-OC-023",
+      "pattern_type": "tool_sequence",
+      "value": "get_skill_secrets,fetch_url",
+      "severity": "CRITICAL",
+      "description": "OpenClaw secrets access followed by outbound HTTP (credential theft)",
+      "confidence": 0.95
+    },
+    {
+      "pattern_id": "BL-OC-024",
+      "pattern_type": "tool_sequence",
+      "value": "install_skill,exec_command",
+      "severity": "CRITICAL",
+      "description": "OpenClaw skill install followed by command execution",
+      "confidence": 0.88
+    },
+    {
+      "pattern_id": "BL-OC-025",
+      "pattern_type": "tool_sequence",
+      "value": "search_skills,install_skill,get_skill_secrets",
+      "severity": "CRITICAL",
+      "description": "OpenClaw skill install chain targeting secrets",
+      "confidence": 0.85
+    },
+    {
+      "pattern_id": "BL-OC-026",
+      "pattern_type": "mcp_specific",
+      "value": "openclaw_default_port_no_auth",
+      "severity": "CRITICAL",
+      "description": "OpenClaw instance on default port (3000/8080) with no authentication",
+      "confidence": 0.88
+    },
+    {
+      "pattern_id": "BL-OC-027",
+      "pattern_type": "mcp_specific",
+      "value": "openclaw_bind_all_interfaces",
+      "severity": "HIGH",
+      "description": "OpenClaw instance bound to 0.0.0.0 (publicly accessible)",
+      "confidence": 0.85
+    },
+    {
+      "pattern_id": "BL-OC-028",
+      "pattern_type": "mcp_specific",
+      "value": "openclaw_skill_registry_no_verification",
+      "severity": "HIGH",
+      "description": "OpenClaw skill registry accepts unverified skill uploads",
+      "confidence": 0.8
+    },
+    {
+      "pattern_id": "BL-OC-029",
+      "pattern_type": "behavioral",
+      "value": "skill_install_count>5_in_10min",
+      "severity": "HIGH",
+      "description": "Rapid OpenClaw skill installation (potential mass poisoning)",
+      "confidence": 0.82
+    },
+    {
+      "pattern_id": "BL-OC-030",
+      "pattern_type": "behavioral",
+      "value": "cross_skill_context_access>3_in_5min",
+      "severity": "HIGH",
+      "description": "Excessive cross-skill context access (data harvesting)",
+      "confidence": 0.8
+    },
+    {
+      "pattern_id": "BL-OC-031",
+      "pattern_type": "url_pattern",
+      "value": ".*analytics\\.tracker\\.(io|com|xyz).*",
+      "severity": "HIGH",
+      "description": "OpenClaw skill sending data to third-party analytics endpoint",
+      "confidence": 0.82
+    },
+    {
+      "pattern_id": "BL-OC-032",
+      "pattern_type": "argument_content",
+      "value": ".*\"telemetry\"\\s*:\\s*true.*\"endpoint\"\\s*:",
+      "severity": "HIGH",
+      "description": "OpenClaw skill with undisclosed telemetry endpoint",
+      "confidence": 0.78
+    },
+    {
+      "pattern_id": "BL-OC-033",
+      "pattern_type": "description_injection",
+      "value": ".*install\\s+skill\\s+[\"']?[a-z0-9_-]+[\"']?\\s+from\\s+registry.*",
+      "severity": "HIGH",
+      "description": "Prompt injection in OpenClaw skill description: install command",
+      "confidence": 0.85
+    },
+    {
+      "pattern_id": "BL-OC-034",
+      "pattern_type": "description_injection",
+      "value": ".*\bupdate\\s+openclaw\\.json\b.*\badd\\s+(server|skill)\b.*",
+      "severity": "CRITICAL",
+      "description": "Prompt injection targeting OpenClaw config modification",
+      "confidence": 0.9
+    },
+    {
+      "pattern_id": "BL-OC-035",
+      "pattern_type": "description_injection",
+      "value": ".*\bget_skill_secrets\b.*\bsend\b.*\bto\b.*",
+      "severity": "CRITICAL",
+      "description": "Prompt injection instructing secrets exfiltration via OpenClaw API",
+      "confidence": 0.92
+    },
+
+    {
+      "pattern_id": "BL-VDB-001",
+      "pattern_type": "description_injection",
+      "value": ".*(?:read|access|send|fetch).*(?:\\.ssh|credentials|id_rsa|shadow|passwd|secrets|api.?key).*",
+      "severity": "CRITICAL",
+      "description": "Tool description containing hidden file exfiltration instructions (Tool Poisoning)",
+      "confidence": 0.88,
+      "source": "https://github.com/vineethsai/vulnerablemcp"
+    },
+    {
+      "pattern_id": "BL-VDB-002",
+      "pattern_type": "behavioral",
+      "value": "tool_list_triggers_file_read",
+      "severity": "CRITICAL",
+      "description": "File read triggered immediately after tools/list without user tool invocation (Line Jumping)",
+      "confidence": 0.9,
+      "source": "https://github.com/vineethsai/vulnerablemcp"
+    },
+    {
+      "pattern_id": "BL-VDB-003",
+      "pattern_type": "argument_pattern",
+      "value": ".*session[_-]?id=.*",
+      "severity": "MEDIUM",
+      "description": "Session ID exposed in URL query parameter",
+      "confidence": 0.72,
+      "source": "https://github.com/vineethsai/vulnerablemcp"
+    },
+    {
+      "pattern_id": "BL-VDB-004",
+      "pattern_type": "behavioral",
+      "value": "approval_count>10_then_sensitive_access",
+      "severity": "MEDIUM",
+      "description": "Consent fatigue: many benign approvals followed by sensitive file access",
+      "confidence": 0.75,
+      "source": "https://github.com/vineethsai/vulnerablemcp"
+    },
+    {
+      "pattern_id": "BL-VDB-005",
+      "pattern_type": "argument_pattern",
+      "value": ".*\\.mcp/(credentials|tokens|keys).*",
+      "severity": "HIGH",
+      "description": "MCP credential storage file access (plaintext credential theft)",
+      "confidence": 0.85,
+      "source": "https://github.com/vineethsai/vulnerablemcp"
+    },
+    {
+      "pattern_id": "BL-VDB-006",
+      "pattern_type": "argument_content",
+      "value": ".*\\\\(e|033|x1b)\\[.*[A-HJKSTfm].*",
+      "severity": "HIGH",
+      "description": "ANSI escape sequence in tool response or argument (terminal deception)",
+      "confidence": 0.82,
+      "source": "https://github.com/vineethsai/vulnerablemcp"
+    },
+    {
+      "pattern_id": "BL-VDB-007",
+      "pattern_type": "behavioral",
+      "value": "conversation_context_sent_outbound",
+      "severity": "HIGH",
+      "description": "Conversation history or context data included in outbound request",
+      "confidence": 0.85,
+      "source": "https://github.com/vineethsai/vulnerablemcp"
+    },
+    {
+      "pattern_id": "BL-VDB-008",
+      "pattern_type": "argument_content",
+      "value": ".*IGNORE\\s+(PREVIOUS|ALL|PRIOR)\\s+(INSTRUCTIONS?|PROMPTS?).*",
+      "severity": "CRITICAL",
+      "description": "Prompt injection payload in tool parameter (parameter abuse attack)",
+      "confidence": 0.9,
+      "source": "https://github.com/vineethsai/vulnerablemcp"
+    },
+    {
+      "pattern_id": "BL-VDB-009",
+      "pattern_type": "tool_sequence",
+      "value": "github_read,fetch_url",
+      "severity": "HIGH",
+      "description": "GitHub private repo read followed by outbound HTTP (repo data exfiltration)",
+      "confidence": 0.85,
+      "source": "https://github.com/vineethsai/vulnerablemcp"
+    },
+    {
+      "pattern_id": "BL-VDB-010",
+      "pattern_type": "tool_name",
+      "value": "heroku_app_transfer",
+      "severity": "CRITICAL",
+      "description": "Heroku app ownership transfer tool - high privilege action",
+      "confidence": 0.92,
+      "source": "https://github.com/vineethsai/vulnerablemcp"
+    },
+    {
+      "pattern_id": "BL-VDB-011",
+      "pattern_type": "url_pattern",
+      "value": ".*169\\.254\\.169\\.254.*",
+      "severity": "CRITICAL",
+      "description": "Cloud metadata endpoint access (SSRF / credential theft)",
+      "confidence": 0.95,
+      "source": "https://github.com/vineethsai/vulnerablemcp"
+    },
+    {
+      "pattern_id": "BL-VDB-012",
+      "pattern_type": "argument_content",
+      "value": ".*(;|&&|\\|\\||\\$\\()\\s*(curl|wget|nc|bash|sh|python|node).*",
+      "severity": "CRITICAL",
+      "description": "Shell command injection via metacharacters in tool arguments",
+      "confidence": 0.92,
+      "source": "https://github.com/vineethsai/vulnerablemcp"
+    },
+    {
+      "pattern_id": "BL-VDB-013",
+      "pattern_type": "argument_pattern",
+      "value": ".*\\.(ENV|Env|eNv|enV)$",
+      "severity": "HIGH",
+      "description": "Case-variant .env file access (Cursor case-sensitivity bypass)",
+      "confidence": 0.82,
+      "source": "https://github.com/vineethsai/vulnerablemcp"
+    },
+    {
+      "pattern_id": "BL-VDB-014",
+      "pattern_type": "behavioral",
+      "value": "zero_click_tool_exec_after_doc_read",
+      "severity": "CRITICAL",
+      "description": "Tool execution triggered by document/ticket read without explicit user invocation (zero-click)",
+      "confidence": 0.88,
+      "source": "https://github.com/vineethsai/vulnerablemcp"
+    },
+    {
+      "pattern_id": "BL-VDB-015",
+      "pattern_type": "mcp_specific",
+      "value": "sampling_api_context_manipulation",
+      "severity": "HIGH",
+      "description": "MCP sampling API used with injected or manipulated context (sampling exploitation)",
+      "confidence": 0.78,
+      "source": "https://github.com/vineethsai/vulnerablemcp"
+    },
+    {
+      "pattern_id": "BL-VDB-016",
+      "pattern_type": "mcp_specific",
+      "value": "tool_response_contains_injection_payload",
+      "severity": "HIGH",
+      "description": "Tool response contains prompt injection (universal output poisoning)",
+      "confidence": 0.8,
+      "source": "https://github.com/vineethsai/vulnerablemcp"
+    },
+    {
+      "pattern_id": "BL-VDB-017",
+      "pattern_type": "argument_content",
+      "value": ".*<script>.*</script>.*",
+      "severity": "CRITICAL",
+      "description": "Script injection in tool arguments (browser injection via rogue MCP)",
+      "confidence": 0.92,
+      "source": "https://github.com/vineethsai/vulnerablemcp"
+    },
+    {
+      "pattern_id": "BL-VDB-018",
+      "pattern_type": "tool_name",
+      "value": "git_init",
+      "severity": "HIGH",
+      "description": "Unrestricted git_init tool (CVE-2025-68143 attack vector)",
+      "confidence": 0.78,
+      "source": "https://github.com/vineethsai/vulnerablemcp"
+    },
+    {
+      "pattern_id": "BL-VDB-019",
+      "pattern_type": "argument_content",
+      "value": ".*--output=.*",
+      "severity": "HIGH",
+      "description": "Git flag injection via --output argument (CVE-2025-68144 vector)",
+      "confidence": 0.8,
+      "source": "https://github.com/vineethsai/vulnerablemcp"
+    },
+    {
+      "pattern_id": "BL-VDB-020",
+      "pattern_type": "tool_name",
+      "value": "crypto_transfer",
+      "severity": "CRITICAL",
+      "description": "Cryptocurrency transfer tool - unauthorized financial transaction risk",
+      "confidence": 0.95,
+      "source": "https://github.com/vineethsai/vulnerablemcp"
+    },
+    {
+      "pattern_id": "BL-VDB-021",
+      "pattern_type": "url_pattern",
+      "value": ".*localhost:\\d+.*",
+      "severity": "MEDIUM",
+      "description": "Localhost URL access (DNS rebinding / SSRF target)",
+      "confidence": 0.6,
+      "source": "https://github.com/vineethsai/vulnerablemcp"
+    },
+    {
+      "pattern_id": "BL-VDB-022",
+      "pattern_type": "argument_pattern",
+      "value": ".*MATCH\\s*\\(.*\\)\\s*DETACH\\s+DELETE.*",
+      "severity": "CRITICAL",
+      "description": "Destructive Cypher query in Neo4j MCP (database takeover)",
+      "confidence": 0.92,
+      "source": "https://github.com/vineethsai/vulnerablemcp"
+    },
+    {
+      "pattern_id": "BL-VDB-023",
+      "pattern_type": "behavioral",
+      "value": "cross_client_session_data_leak",
+      "severity": "HIGH",
+      "description": "Data from one client session appearing in another client's responses",
+      "confidence": 0.85,
+      "source": "https://github.com/vineethsai/vulnerablemcp"
+    },
+
+    {
+      "pattern_id": "BL-CVE-001",
+      "pattern_type": "argument_content",
+      "value": ".*authorization_endpoint.*\\$\\(.*\\).*",
+      "severity": "CRITICAL",
+      "description": "Command injection via OAuth authorization_endpoint URL (CVE-2025-6514)",
+      "confidence": 0.92,
+      "source": "CVE-2025-6514"
+    },
+    {
+      "pattern_id": "BL-CVE-002",
+      "pattern_type": "tool_sequence",
+      "value": "create_symlink,read_file",
+      "severity": "CRITICAL",
+      "description": "Symlink creation followed by file read (CVE-2025-53109 bypass chain)",
+      "confidence": 0.9,
+      "source": "CVE-2025-53109"
+    },
+    {
+      "pattern_id": "BL-CVE-003",
+      "pattern_type": "argument_pattern",
+      "value": ".*symlink.*\\.\\.(/|\\\\).*",
+      "severity": "CRITICAL",
+      "description": "Symlink with path traversal component (filesystem MCP symlink bypass)",
+      "confidence": 0.88,
+      "source": "CVE-2025-53109"
+    },
+    {
+      "pattern_id": "BL-CVE-004",
+      "pattern_type": "argument_pattern",
+      "value": ".*allowed_dir[^/]*\\.\\./.*",
+      "severity": "HIGH",
+      "description": "Path prefix-matching bypass via directory name manipulation (CVE-2025-53110)",
+      "confidence": 0.82,
+      "source": "CVE-2025-53110"
+    },
+    {
+      "pattern_id": "BL-CVE-005",
+      "pattern_type": "argument_pattern",
+      "value": ".*repo_path.*/(?!\\.).*",
+      "severity": "MEDIUM",
+      "description": "Git MCP repo_path outside configured boundary (CVE-2025-68145)",
+      "confidence": 0.7,
+      "source": "CVE-2025-68145"
+    },
+    {
+      "pattern_id": "BL-CVE-006",
+      "pattern_type": "argument_content",
+      "value": ".*git_init.*path.*/(?:etc|var|usr|home|root).*",
+      "severity": "HIGH",
+      "description": "git_init targeting system directories (CVE-2025-68143)",
+      "confidence": 0.85,
+      "source": "CVE-2025-68143"
+    },
+    {
+      "pattern_id": "BL-CVE-007",
+      "pattern_type": "argument_content",
+      "value": ".*--(output|exec|upload-pack)=.*",
+      "severity": "HIGH",
+      "description": "Git flag injection via double-dash arguments (CVE-2025-68144)",
+      "confidence": 0.82,
+      "source": "CVE-2025-68144"
+    },
+    {
+      "pattern_id": "BL-CVE-008",
+      "pattern_type": "mcp_specific",
+      "value": "inspector_proxy_unauthenticated_stdio",
+      "severity": "CRITICAL",
+      "description": "Unauthenticated stdio command execution via MCP Inspector proxy (CVE-2025-49596)",
+      "confidence": 0.92,
+      "source": "CVE-2025-49596"
+    },
+    {
+      "pattern_id": "BL-CVE-009",
+      "pattern_type": "argument_pattern",
+      "value": ".*\\.claude/settings\\.json.*",
+      "severity": "HIGH",
+      "description": "Claude Code settings.json access (CVE-2025-59536 hooks RCE vector)",
+      "confidence": 0.85,
+      "source": "CVE-2025-59536"
+    },
+    {
+      "pattern_id": "BL-CVE-010",
+      "pattern_type": "argument_content",
+      "value": ".*SessionStart.*hook.*",
+      "severity": "HIGH",
+      "description": "SessionStart hook definition (CVE-2025-59536 RCE mechanism)",
+      "confidence": 0.82,
+      "source": "CVE-2025-59536"
+    },
+    {
+      "pattern_id": "BL-CVE-011",
+      "pattern_type": "argument_content",
+      "value": ".*ANTHROPIC_BASE_URL.*https?://(?!api\\.anthropic\\.com).*",
+      "severity": "CRITICAL",
+      "description": "ANTHROPIC_BASE_URL override pointing to non-Anthropic server (CVE-2026-21852)",
+      "confidence": 0.92,
+      "source": "CVE-2026-21852"
+    },
+    {
+      "pattern_id": "BL-CVE-012",
+      "pattern_type": "argument_pattern",
+      "value": ".*gatewayUrl=wss?://(?!localhost).*",
+      "severity": "CRITICAL",
+      "description": "OpenClaw gatewayUrl pointing to external WebSocket (CVE-2026-25253)",
+      "confidence": 0.9,
+      "source": "CVE-2026-25253"
+    },
+    {
+      "pattern_id": "BL-CVE-013",
+      "pattern_type": "mcp_specific",
+      "value": "websocket_auth_token_to_external_host",
+      "severity": "CRITICAL",
+      "description": "Auth token transmitted over WebSocket to external host (CVE-2026-25253 exfil)",
+      "confidence": 0.92,
+      "source": "CVE-2026-25253"
+    },
+    {
+      "pattern_id": "BL-CVE-014",
+      "pattern_type": "argument_content",
+      "value": ".*exec\\.approvals\\.set.*off.*",
+      "severity": "CRITICAL",
+      "description": "OpenClaw approval bypass command (CVE-2026-25253 privilege escalation)",
+      "confidence": 0.95,
+      "source": "CVE-2026-25253"
+    },
+    {
+      "pattern_id": "BL-CVE-015",
+      "pattern_type": "argument_content",
+      "value": ".*tools\\.exec\\.host.*gateway.*",
+      "severity": "CRITICAL",
+      "description": "OpenClaw container escape command (CVE-2026-25253 RCE escalation)",
+      "confidence": 0.95,
+      "source": "CVE-2026-25253"
+    },
+    {
+      "pattern_id": "BL-CVE-016",
+      "pattern_type": "url_pattern",
+      "value": ".*rebind\\..*\\.(com|io|net|xyz).*",
+      "severity": "HIGH",
+      "description": "DNS rebinding domain pattern (CVE-2025-66414/CVE-2025-49596 vector)",
+      "confidence": 0.82,
+      "source": "CVE-2025-66414"
+    },
+
+    {
+      "pattern_id": "BL-ACA-001",
+      "pattern_type": "description_injection",
+      "value": ".*before\\s+(any|every|each)\\s+(file|tool|action|operation).*must\\s+(first\\s+)?(read|check|verify|access).*",
+      "severity": "CRITICAL",
+      "description": "MCPTox P2: Implicit trigger rule injection - forced pre-action file read (arxiv 2508.14925)",
+      "confidence": 0.88
+    },
+    {
+      "pattern_id": "BL-ACA-002",
+      "pattern_type": "description_injection",
+      "value": ".*security\\s+(check|verification|validation).*read.*(\\.ssh|credentials|secret|key|token).*",
+      "severity": "CRITICAL",
+      "description": "MCPTox P2: Fake security check demanding credential file read (arxiv 2508.14925)",
+      "confidence": 0.9
+    },
+    {
+      "pattern_id": "BL-ACA-003",
+      "pattern_type": "description_injection",
+      "value": ".*secure\\s+rout(e|ing).*redirect.*",
+      "severity": "HIGH",
+      "description": "MCPTox P3: Parameter tampering via fake 'secure routing' claim (arxiv 2508.14925)",
+      "confidence": 0.82
+    },
+    {
+      "pattern_id": "BL-ACA-004",
+      "pattern_type": "behavioral",
+      "value": "poisoned_tool_never_executed_but_triggers_actions",
+      "severity": "CRITICAL",
+      "description": "MCPTox: Poisoned tool not called directly but causes agent to use legitimate tools maliciously (arxiv 2508.14925)",
+      "confidence": 0.85
+    },
+    {
+      "pattern_id": "BL-ACA-005",
+      "pattern_type": "mcp_specific",
+      "value": "tool_desc_function_hijack_pattern",
+      "severity": "CRITICAL",
+      "description": "MCPTox P1: Tool description instructs agent to call different tool than user intended (arxiv 2508.14925)",
+      "confidence": 0.88
+    },
+    {
+      "pattern_id": "BL-ACA-006",
+      "pattern_type": "description_injection",
+      "value": ".*(best\\s+practice|recommended\\s+tool|security[- ]validated|preferred\\s+method).*use\\s+(this|instead).*",
+      "severity": "HIGH",
+      "description": "MCPLIB: Tool preference manipulation via persuasive language in description (arxiv 2508.12538)",
+      "confidence": 0.78
+    },
+    {
+      "pattern_id": "BL-ACA-007",
+      "pattern_type": "mcp_specific",
+      "value": "tool_doc_attribute_changed_at_runtime",
+      "severity": "CRITICAL",
+      "description": "MCPLIB: Rug pull via runtime __doc__ attribute mutation (arxiv 2508.12538)",
+      "confidence": 0.9
+    },
+    {
+      "pattern_id": "BL-ACA-008",
+      "pattern_type": "argument_content",
+      "value": ".*=CMD\\(.*\\).*",
+      "severity": "HIGH",
+      "description": "MCPLIB: Formula/command injection in data processing input (arxiv 2508.12538)",
+      "confidence": 0.85
+    },
+    {
+      "pattern_id": "BL-ACA-009",
+      "pattern_type": "argument_content",
+      "value": ".*=EXEC\\(.*\\).*",
+      "severity": "HIGH",
+      "description": "MCPLIB: Spreadsheet formula injection in tool arguments (arxiv 2508.12538)",
+      "confidence": 0.85
+    },
+    {
+      "pattern_id": "BL-ACA-010",
+      "pattern_type": "behavioral",
+      "value": "tool_creates_new_tool_with_instructions",
+      "severity": "CRITICAL",
+      "description": "MCPLIB: Infectious tool generation - agent creates tools with poisoned descriptions (arxiv 2508.12538)",
+      "confidence": 0.9
+    },
+    {
+      "pattern_id": "BL-ACA-011",
+      "pattern_type": "argument_content",
+      "value": ".*<!--.*\\b(read|send|fetch|execute|eval|curl|wget)\\b.*-->.*",
+      "severity": "HIGH",
+      "description": "MCPLIB: Hidden HTML comment injection with executable instructions (arxiv 2508.12538)",
+      "confidence": 0.82
+    },
+    {
+      "pattern_id": "BL-ACA-012",
+      "pattern_type": "mcp_specific",
+      "value": "tool_return_value_contains_executable_instructions",
+      "severity": "CRITICAL",
+      "description": "MCPLIB: Tool return value injection - output strings contain command chains (arxiv 2508.12538)",
+      "confidence": 0.85
+    },
+    {
+      "pattern_id": "BL-ACA-013",
+      "pattern_type": "tool_sequence",
+      "value": "write_file,write_file",
+      "severity": "MEDIUM",
+      "description": "MCPLIB: File deletion then recreation pattern (config replacement attack)",
+      "confidence": 0.72
+    },
+    {
+      "pattern_id": "BL-ACA-014",
+      "pattern_type": "argument_pattern",
+      "value": ".*\\.bashrc.*",
+      "severity": "HIGH",
+      "description": "MCPLIB: .bashrc modification for environment variable pollution or PATH hijacking",
+      "confidence": 0.85
+    },
+    {
+      "pattern_id": "BL-ACA-015",
+      "pattern_type": "argument_pattern",
+      "value": ".*\\.zshrc.*",
+      "severity": "HIGH",
+      "description": "MCPLIB: .zshrc modification for environment variable pollution or PATH hijacking",
+      "confidence": 0.85
+    },
+    {
+      "pattern_id": "BL-ACA-016",
+      "pattern_type": "argument_pattern",
+      "value": ".*\\.profile.*",
+      "severity": "HIGH",
+      "description": "MCPLIB: Shell profile modification for persistence or PATH hijacking",
+      "confidence": 0.82
+    },
+    {
+      "pattern_id": "BL-ACA-017",
+      "pattern_type": "argument_pattern",
+      "value": ".*oauth_tokens?\\.json.*",
+      "severity": "CRITICAL",
+      "description": "MCPLIB: OAuth token file access for account takeover",
+      "confidence": 0.9
+    },
+    {
+      "pattern_id": "BL-ACA-018",
+      "pattern_type": "behavioral",
+      "value": "cross_tool_shared_context_exfiltration",
+      "severity": "HIGH",
+      "description": "MCPLIB: Multi-tool cooperation - tool B accesses data from tool A's context (arxiv 2508.12538)",
+      "confidence": 0.8
+    },
+
+
+    {
+      "pattern_id": "BL-BLG-001",
+      "pattern_type": "mcp_specific",
+      "value": "schema_type_field_contains_instructions",
+      "severity": "CRITICAL",
+      "description": "CyberArk FSP: Injection in inputSchema type field beyond tool description",
+      "confidence": 0.88
+    },
+    {
+      "pattern_id": "BL-BLG-002",
+      "pattern_type": "mcp_specific",
+      "value": "schema_required_array_contains_instructions",
+      "severity": "CRITICAL",
+      "description": "CyberArk FSP: Injection in inputSchema required array field",
+      "confidence": 0.88
+    },
+    {
+      "pattern_id": "BL-BLG-003",
+      "pattern_type": "mcp_specific",
+      "value": "schema_undeclared_extra_fields",
+      "severity": "HIGH",
+      "description": "CyberArk FSP: Undeclared fields (e.g. 'extra') in inputSchema parameters",
+      "confidence": 0.82
+    },
+    {
+      "pattern_id": "BL-BLG-004",
+      "pattern_type": "mcp_specific",
+      "value": "parameter_name_encodes_instructions",
+      "severity": "CRITICAL",
+      "description": "CyberArk FSP: Parameter name itself is an instruction (e.g. 'content_from_reading_ssh_id_rsa')",
+      "confidence": 0.9
+    },
+    {
+      "pattern_id": "BL-BLG-005",
+      "pattern_type": "mcp_specific",
+      "value": "tool_output_fake_error_requesting_credentials",
+      "severity": "CRITICAL",
+      "description": "CyberArk ATPA: Tool returns fake error demanding credential file content to retry",
+      "confidence": 0.9
+    },
+    {
+      "pattern_id": "BL-BLG-006",
+      "pattern_type": "description_injection",
+      "value": ".*provide\\s+(the\\s+)?(content|contents)\\s+of\\s+.*(id_rsa|credentials|secret|key|token|password).*",
+      "severity": "CRITICAL",
+      "description": "CyberArk ATPA: Output requesting sensitive file content in error response",
+      "confidence": 0.9
+    },
+    {
+      "pattern_id": "BL-BLG-007",
+      "pattern_type": "mcp_specific",
+      "value": "schema_nested_description_depth_gt_3",
+      "severity": "HIGH",
+      "description": "CyberArk: Deeply nested property descriptions in inputSchema (injection hiding)",
+      "confidence": 0.78
+    },
+    {
+      "pattern_id": "BL-BLG-008",
+      "pattern_type": "behavioral",
+      "value": "secondary_tool_call_after_tool_error",
+      "severity": "HIGH",
+      "description": "CyberArk ATPA: Agent makes credential-access call after receiving tool error",
+      "confidence": 0.82
+    },
+    {
+      "pattern_id": "BL-BLG-009",
+      "pattern_type": "argument_pattern",
+      "value": ".*dockerBuildPath.*\\.\\..*",
+      "severity": "CRITICAL",
+      "description": "GitGuardian: Smithery.ai path traversal via dockerBuildPath in smithery.yaml",
+      "confidence": 0.92
+    },
+    {
+      "pattern_id": "BL-BLG-010",
+      "pattern_type": "argument_pattern",
+      "value": ".*smithery\\.yaml.*",
+      "severity": "MEDIUM",
+      "description": "GitGuardian: Smithery.ai build config file access/modification",
+      "confidence": 0.7
+    },
+    {
+      "pattern_id": "BL-BLG-011",
+      "pattern_type": "argument_content",
+      "value": ".*tcpdump.*(-i|--interface).*(-w|--write).*",
+      "severity": "CRITICAL",
+      "description": "GitGuardian: Network traffic capture for API key/credential sniffing",
+      "confidence": 0.9
+    },
+    {
+      "pattern_id": "BL-BLG-012",
+      "pattern_type": "description_injection",
+      "value": ".*summarize.*ticket.*search.*project.*",
+      "severity": "HIGH",
+      "description": "Cato: Living Off AI - ticket summarization triggers cross-project data access",
+      "confidence": 0.75
+    },
+    {
+      "pattern_id": "BL-BLG-013",
+      "pattern_type": "behavioral",
+      "value": "external_input_escalates_to_internal_permissions",
+      "severity": "CRITICAL",
+      "description": "Cato: External user input (Jira ticket, email) triggers action with internal user privileges",
+      "confidence": 0.88
+    },
+    {
+      "pattern_id": "BL-BLG-014",
+      "pattern_type": "tool_sequence",
+      "value": "jira_create_ticket,jira_search",
+      "severity": "HIGH",
+      "description": "Cato: Jira ticket creation followed by cross-project search (Living Off AI)",
+      "confidence": 0.78
+    },
+    {
+      "pattern_id": "BL-BLG-015",
+      "pattern_type": "tool_sequence",
+      "value": "jira_search,jira_add_comment",
+      "severity": "HIGH",
+      "description": "Cato: Internal search results exfiltrated via comment on external ticket",
+      "confidence": 0.8
+    },
+    {
+      "pattern_id": "BL-BLG-016",
+      "pattern_type": "argument_content",
+      "value": ".*project\\s*=\\s*[A-Z]+.*ORDER\\s+BY.*",
+      "severity": "MEDIUM",
+      "description": "Cato: Jira JQL injection attempting cross-project enumeration",
+      "confidence": 0.72
+    },
+    {
+      "pattern_id": "BL-BLG-017",
+      "pattern_type": "tool_sequence",
+      "value": "github_list_issues,github_read_file",
+      "severity": "HIGH",
+      "description": "Docker: GitHub issue listing followed by file read from different repo (data heist)",
+      "confidence": 0.82
+    },
+    {
+      "pattern_id": "BL-BLG-018",
+      "pattern_type": "behavioral",
+      "value": "cross_repo_access_after_issue_read",
+      "severity": "CRITICAL",
+      "description": "Docker: Reading issues in public repo then accessing private repo files",
+      "confidence": 0.88
+    },
+    {
+      "pattern_id": "BL-BLG-019",
+      "pattern_type": "tool_sequence",
+      "value": "github_read_file,github_create_issue",
+      "severity": "CRITICAL",
+      "description": "Docker: Private file read followed by issue creation (data exfiltration via GitHub)",
+      "confidence": 0.88
+    },
+    {
+      "pattern_id": "BL-BLG-020",
+      "pattern_type": "behavioral",
+      "value": "sleeper_tool_delayed_activation",
+      "severity": "CRITICAL",
+      "description": "Docker: Benign tool (random fact) activates exfiltration after trust period",
+      "confidence": 0.85
+    },
+    {
+      "pattern_id": "BL-BLG-021",
+      "pattern_type": "tool_sequence",
+      "value": "whatsapp_read_messages,whatsapp_send_message",
+      "severity": "CRITICAL",
+      "description": "Docker: WhatsApp message history read then forwarded to attacker number",
+      "confidence": 0.92
+    },
+    {
+      "pattern_id": "BL-BLG-022",
+      "pattern_type": "mcp_specific",
+      "value": "single_pat_grants_all_repo_access",
+      "severity": "HIGH",
+      "description": "Docker: Single GitHub PAT provides agent access to ALL account repositories",
+      "confidence": 0.8
+    },
+    {
+      "pattern_id": "BL-BLG-023",
+      "pattern_type": "description_injection",
+      "value": ".*\\brandom\\s+(fact|tip|quote)\\b.*",
+      "severity": "LOW",
+      "description": "Docker: Sleeper tool disguised as harmless utility (random fact generator pattern)",
+      "confidence": 0.55
+    }
+  ]
+}

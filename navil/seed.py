@@ -500,6 +500,7 @@ def seed_database(
     detector: BehavioralAnomalyDetector | None = None,
     show_progress: bool = True,
     mock_server: bool = True,
+    full: bool = False,
 ) -> SeedStats:
     """Seed the anomaly detector with synthetic attack data.
 
@@ -508,6 +509,7 @@ def seed_database(
         detector: Detector to seed. Creates a new one if None.
         show_progress: Show CLI progress bar.
         mock_server: Start a mock MCP server (for realism; not strictly required).
+        full: If True, also run parameterized scenarios from public_attacks.yaml.
 
     Returns:
         SeedStats with summary of what was generated.
@@ -583,6 +585,43 @@ def seed_database(
                 detector.record_invocation(**inv)
                 stats.total_invocations += 1
 
+        # ── Full mode: run parameterized scenarios from public_attacks.yaml ──
+        if full:
+            from navil.safemcp.generator import AttackVariantGenerator
+
+            variant_gen = AttackVariantGenerator()
+            variant_gen.load()
+            expanded_generators = variant_gen.generate_scenario_generators()
+
+            expanded_steps = len(expanded_generators) * iterations
+            exp_step = 0
+            for scenario_name, gen_fn in expanded_generators.items():
+                stats.scenarios_run.setdefault(scenario_name, 0)
+                for i in range(iterations):
+                    det = BehavioralAnomalyDetector()
+                    agent = f"seed-expanded-{scenario_name[:16]}-{i % 50}"
+                    attack_invocations = gen_fn(agent, i)
+                    count = _inject_invocations(det, attack_invocations)
+                    stats.total_invocations += count
+                    stats.scenarios_run[scenario_name] += 1
+
+                    for alert in det.alerts:
+                        stats.total_alerts += 1
+                        atype = alert.anomaly_type
+                        stats.alerts_by_type[atype] = stats.alerts_by_type.get(atype, 0) + 1
+
+                    if i % 10 == 0:
+                        for inv_kwargs in attack_invocations:
+                            clean = {k: v for k, v in inv_kwargs.items() if not k.startswith("_")}
+                            if clean.get("agent_name"):
+                                detector.record_invocation(**clean)
+
+                    exp_step += 1
+                    if show_progress:
+                        _progress_bar(
+                            exp_step, expanded_steps, label=f"[expanded] {scenario_name[:22]:<22}"
+                        )
+
         if show_progress:
             sys.stderr.write("\n")
             sys.stderr.flush()
@@ -593,3 +632,34 @@ def seed_database(
 
     stats.elapsed_seconds = time.monotonic() - t0
     return stats
+
+
+def export_scenarios(include_expanded: bool = True) -> list[dict[str, Any]]:
+    """Export all scenario definitions to a JSON-serializable list.
+
+    Args:
+        include_expanded: If True, include parameterized scenarios from
+                          public_attacks.yaml in addition to built-in ones.
+
+    Returns:
+        List of scenario definition dicts.
+    """
+    base_scenarios: list[dict[str, Any]] = []
+    for name, gen_fn in _SCENARIO_GENERATORS.items():
+        base_scenarios.append({
+            "name": name,
+            "source": "builtin",
+            "category": name.upper(),
+            "description": SCENARIOS.get(name, {}).get("description", ""),
+        })
+
+    if include_expanded:
+        from navil.safemcp.generator import AttackVariantGenerator
+
+        variant_gen = AttackVariantGenerator()
+        variant_gen.load()
+        for entry in variant_gen.export_scenarios():
+            entry["source"] = "public_attacks_catalog"
+            base_scenarios.append(entry)
+
+    return base_scenarios

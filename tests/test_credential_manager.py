@@ -8,17 +8,46 @@ import pytest
 
 from navil.credential_manager import CredentialManager, CredentialStatus
 
+# ---------------------------------------------------------------------------
+# Try to use fakeredis so tests exercise the real Redis-hash code path
+# rather than the _InMemoryStore fallback.
+# ---------------------------------------------------------------------------
+try:
+    import fakeredis
+
+    _FAKEREDIS_AVAILABLE = True
+except ImportError:
+    _FAKEREDIS_AVAILABLE = False
+
+
+def _make_manager(
+    audit_log_path: str | None = None,
+    secret_key: str = "",
+    redis_client: object | None = None,
+) -> CredentialManager:
+    """Create a CredentialManager backed by fakeredis (if available) or in-memory."""
+    cm = CredentialManager(
+        secret_key=secret_key,
+        audit_log_path=audit_log_path,
+    )
+    # Inject a fakeredis client so we get full Redis-hash coverage without a server
+    if redis_client is not None:
+        cm._redis = redis_client
+    elif _FAKEREDIS_AVAILABLE:
+        cm._redis = fakeredis.FakeRedis(decode_responses=True)
+    return cm
+
 
 @pytest.fixture
 def cm(tmp_path) -> CredentialManager:
     """CredentialManager with audit log in tmp dir."""
-    return CredentialManager(audit_log_path=str(tmp_path / "audit.log"))
+    return _make_manager(audit_log_path=str(tmp_path / "audit.log"))
 
 
 @pytest.fixture
 def cm_no_log() -> CredentialManager:
     """CredentialManager with no audit log (in-memory only)."""
-    return CredentialManager()
+    return _make_manager()
 
 
 def test_issue_credential(cm: CredentialManager) -> None:
@@ -105,6 +134,8 @@ def test_cleanup_expired(cm: CredentialManager) -> None:
     stored = cm.credentials[cred["token_id"]]
     old_time = (datetime.now(timezone.utc) - timedelta(days=91)).isoformat()
     stored.issued_at = old_time
+    # Write the modified credential back to the store
+    cm._store_credential(stored)
     removed = cm.cleanup_expired()
     assert removed == 1
 
@@ -124,22 +155,59 @@ def test_default_secret_key_has_sufficient_entropy() -> None:
     """Auto-generated secret key must have at least 64 bytes of entropy.
 
     secrets.token_urlsafe(n) produces a base64url string of length ceil(n * 4/3).
-    64 bytes → at least 86 characters.
+    64 bytes -> at least 86 characters.
     """
-    cm = CredentialManager()
+    cm = _make_manager()
     assert len(cm.secret_key) >= 86, (
-        f"Secret key too short: {len(cm.secret_key)} chars (need ≥86 for 64 bytes entropy)"
+        f"Secret key too short: {len(cm.secret_key)} chars (need >=86 for 64 bytes entropy)"
     )
 
 
 def test_token_id_has_sufficient_entropy() -> None:
     """Token IDs must be long enough to prevent collision attacks at scale."""
-    cm = CredentialManager()
+    cm = _make_manager()
     cred = cm.issue_credential("agent-x", "read:tools")
     token_id = cred["token_id"]
     # cred_{32 hex bytes} = "cred_" (5 chars) + 64 hex chars
     assert token_id.startswith("cred_")
-    hex_part = token_id[len("cred_") :]
+    hex_part = token_id[len("cred_"):]
     assert len(hex_part) == 64, (
         f"Token ID hex part too short: {len(hex_part)} chars (need 64 for 256-bit)"
     )
+
+
+def test_credentials_survive_reinitialization() -> None:
+    """Credentials stored in Redis persist across CredentialManager instances.
+
+    This verifies the core motivation for the Redis migration: data survives
+    a process restart (simulated by creating a second CredentialManager that
+    shares the same backing store).
+    """
+    if _FAKEREDIS_AVAILABLE:
+        # Both managers share the same fakeredis server instance
+        shared_redis = fakeredis.FakeRedis(decode_responses=True)
+    else:
+        # Fallback: share the same _InMemoryStore instance
+        from navil.credential_manager import _InMemoryStore
+
+        shared_redis = _InMemoryStore()
+
+    secret = "shared-secret-for-test"
+
+    cm1 = _make_manager(secret_key=secret, redis_client=shared_redis)
+    cred = cm1.issue_credential("agent-persist", "read:tools", ttl_seconds=7200)
+    token_id = cred["token_id"]
+
+    # Simulate restart — new manager, same store
+    cm2 = _make_manager(secret_key=secret, redis_client=shared_redis)
+
+    info = cm2.get_credential_info(token_id)
+    assert info != {}, "Credential should survive re-initialization"
+    assert info["agent_name"] == "agent-persist"
+    assert info["scope"] == "read:tools"
+    assert info["status"] == CredentialStatus.ACTIVE
+
+    # Operations on the "new" manager should work against the persisted credential
+    cm2.record_usage(token_id)
+    info2 = cm2.get_credential_info(token_id)
+    assert info2["used_count"] == 1

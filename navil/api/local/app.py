@@ -22,6 +22,7 @@ from starlette.middleware.base import BaseHTTPMiddleware
 from navil.api.local.demo import seed_demo_data
 from navil.api.local.routes import router
 from navil.api.local.state import AppState
+from navil.api.v1.routes import router as v1_router
 
 logger = logging.getLogger(__name__)
 
@@ -201,6 +202,7 @@ def create_app(with_demo: bool = True) -> FastAPI:
     )
 
     app.include_router(router)
+    app.include_router(v1_router)
 
     # Serve frontend static files if built
     if DASHBOARD_DIR.exists():

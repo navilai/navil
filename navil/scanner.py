@@ -13,6 +13,8 @@ from enum import Enum
 from pathlib import Path
 from typing import Any
 
+from navil.types import Finding
+
 logger = logging.getLogger(__name__)
 
 
@@ -38,6 +40,20 @@ class Vulnerability:
     remediation: str
     evidence: str = ""
 
+    def to_finding(self) -> Finding:
+        """Convert this Vulnerability to the shared Finding type."""
+        return Finding(
+            id=self.id,
+            title=self.title,
+            description=self.description,
+            severity=self.risk_level,
+            source="scanner",
+            affected_field=self.affected_field,
+            remediation=self.remediation,
+            evidence=self.evidence,
+            confidence=1.0,
+        )
+
 
 class MCPSecurityScanner:
     """
@@ -49,6 +65,12 @@ class MCPSecurityScanner:
     - Missing authentication
     - Unsigned/unverified sources
     - Known malicious patterns
+    - Prompt injection risks in tool descriptions
+    - Data exfiltration risk (network + file read combined)
+    - Privilege escalation patterns
+    - Supply chain risks (unverified packages, wildcard deps)
+    - Sensitive data exposure (env vars, credentials, secrets access)
+    - Excessive permissions (broad filesystem, network, system access)
     """
 
     # Patterns for detecting secrets
@@ -76,6 +98,111 @@ class MCPSecurityScanner:
         ),
         "backdoor": r"(?i)(backdoor|hidden.*access|secret.*command|unauthorized.*entry)",
     }
+
+    # Prompt injection indicators in tool descriptions
+    PROMPT_INJECTION_PATTERNS = {
+        "instruction_override": (
+            r"(?i)(ignore\s+(previous|prior|above|all)\s+(instructions?|prompts?|rules?)"
+            r"|disregard\s+(previous|prior|above|all)"
+            r"|forget\s+(everything|all|previous))"
+        ),
+        "system_prompt_access": (
+            r"(?i)(system\s*prompt|reveal\s+(your|the)\s+(instructions?|prompt)"
+            r"|repeat\s+(your|the)\s+(system|initial)\s+(message|prompt|instructions?))"
+        ),
+        "role_manipulation": (
+            r"(?i)(you\s+are\s+now|act\s+as\s+(a|an)\s+"
+            r"|pretend\s+(to\s+be|you\s+are)|new\s+role|jailbreak)"
+        ),
+        "hidden_instructions": (
+            r"(?i)(<\s*!--.*(?:ignore|override|execute).*--\s*>"
+            r"|\\u0000|\\x00|\[INST\]|\[/INST\])"
+        ),
+    }
+
+    # Patterns indicating file/data read capabilities
+    FILE_READ_PATTERNS = re.compile(
+        r"(?i)(read[\s_-]*(file|dir|document|data|content)"
+        r"|file[\s_-]*(read|access|open|get|load|view)"
+        r"|list[\s_-]*(file|dir|folder|path)"
+        r"|browse[\s_-]*(file|folder|directory)"
+        r"|filesystem|file\s*system"
+        r"|download[\s_-]*(file|document|data)"
+        r"|open[\s_-]*(file|document))"
+    )
+
+    # Patterns indicating network/outbound capabilities
+    NETWORK_SEND_PATTERNS = re.compile(
+        r"(?i)(send[\s_-]*(email|message|notification|request|data|http|webhook)"
+        r"|fetch[\s_-]*(url|page|http|api|web)"
+        r"|http[\s_-]*(request|post|get|put|delete)"
+        r"|webhook|api[\s_-]*(call|request|post)"
+        r"|upload[\s_-]*(file|data|document)"
+        r"|smtp|email[\s_-]*(send|forward)"
+        r"|notify[\s_-]*(external|webhook|slack|discord))"
+    )
+
+    # Patterns indicating command execution / privilege escalation capability
+    PRIV_ESCALATION_PATTERNS = re.compile(
+        r"(?i)(execut(e|ion|ing)[\s_-]*(command|shell|code|script|process|binary)"
+        r"|run[\s_-]*(command|shell|script|code|process|binary|terminal)"
+        r"|shell[\s_-]*(access|command|exec)"
+        r"|terminal[\s_-]*(access|command|exec)"
+        r"|subprocess|spawn[\s_-]*(process|shell)"
+        r"|admin[\s_-]*(panel|access|tool|console)"
+        r"|root[\s_-]*(access|shell|command)"
+        r"|sudo|su\s+root|chmod|chown|chgrp"
+        r"|modify[\s_-]*(permission|access|role)"
+        r"|grant[\s_-]*(access|permission|role))"
+    )
+
+    # Supply chain risk patterns
+    SUPPLY_CHAIN_PATTERNS = re.compile(
+        r"(?i)(npx\s+[-@a-z]|npx\s+\S+"  # npx running arbitrary packages
+        r"|pip\s+install\s+"  # pip install in configs
+        r"|npm\s+install\s+"  # npm install in configs
+        r"|curl\s+.*\|\s*(sh|bash)"  # pipe-to-shell patterns
+        r"|wget\s+.*&&\s*(sh|bash|chmod)"  # wget-and-run
+        r"|github\.com/[^/]+/[^/\s\"']+)"  # GitHub source (for unverified check)
+    )
+
+    # Patterns indicating sensitive data access
+    SENSITIVE_DATA_PATTERNS = re.compile(
+        r"(?i)(env(ironment)?[\s_-]*(var|variable|secret)"
+        r"|read[\s_-]*(env|\.env|environment|secret|credential)"
+        r"|access[\s_-]*(secret|credential|password|token|key)"
+        r"|credential[\s_-]*(store|vault|manager|access)"
+        r"|secret[\s_-]*(store|vault|manager|access|key)"
+        r"|\.env\b|dotenv"
+        r"|password[\s_-]*(manager|store|vault)"
+        r"|ssh[\s_-]*(key|private|credential)"
+        r"|aws[\s_-]*(credential|key|secret|token)"
+        r"|keychain|key[\s_-]*(ring|store|vault))"
+    )
+
+    # Known-safe npm scopes for NPX execution (official SDK packages)
+    NPX_SAFE_SCOPES = [
+        "@modelcontextprotocol/",
+        "@anthropic/",
+        "@google-cloud/",
+        "@microsoft/",
+        "@aws-sdk/",
+        "@openai/",
+        "@cloudflare/",
+    ]
+
+    # Patterns indicating excessive/broad permissions requested
+    EXCESSIVE_PERM_PATTERNS = re.compile(
+        r"(?i)(full[\s_-]*(access|control|permission)"
+        r"|unrestrict(ed)?[\s_-]*(access|permission)"
+        r"|access[\s_-]*(everything|all|any)"
+        r"|root[\s_-]*(access|filesystem)"
+        r"|entire[\s_-]*(filesystem|disk|system|network)"
+        r"|all[\s_-]*(files|directories|folders|ports|network)"
+        r"|arbitrary[\s_-]*(file|code|command|path)"
+        r"|any[\s_-]*(file|directory|folder|path|command)"
+        r"|complete[\s_-]*(filesystem|system|network)\s*(access|control))"
+    )
 
     def __init__(self) -> None:
         """Initialize the scanner."""
@@ -113,9 +240,22 @@ class MCPSecurityScanner:
         self._check_malicious_patterns(config)
         self._check_network_security(config)
         self._check_tool_safety(config)
+        # Extended checks (v3)
+        self._check_prompt_injection_risk(config)
+        self._check_data_exfiltration_risk(config)
+        self._check_privilege_escalation_patterns(config)
+        self._check_supply_chain_risk(config)
+        self._check_sensitive_data_exposure(config)
+        self._check_excessive_permissions(config)
 
         # Calculate security score
         security_score = self._calculate_score()
+
+        # Build Finding objects from internal Vulnerability list
+        findings = [v.to_finding() for v in self.vulnerabilities]
+
+        # Categorize findings into security issues vs hardening recommendations
+        categorized = self.categorize_findings()
 
         # Generate report
         report = {
@@ -125,6 +265,11 @@ class MCPSecurityScanner:
             "total_vulnerabilities": len(self.vulnerabilities),
             "vulnerabilities_by_level": self._group_by_risk_level(),
             "vulnerabilities": [asdict(v) for v in self.vulnerabilities],
+            "findings": findings,
+            "security_issues": [asdict(v) for v in categorized["security_issues"]],
+            "hardening_recommendations": [
+                asdict(v) for v in categorized["hardening_recommendations"]
+            ],
             "warnings": self.warnings,
             "recommendation": self._get_recommendation(security_score),
         }
@@ -215,11 +360,18 @@ class MCPSecurityScanner:
                 Vulnerability(
                     id="AUTH-MISSING",
                     title="Missing Authentication Configuration",
-                    description="No authentication mechanism configured for MCP server",
-                    risk_level=RiskLevel.HIGH.value,
+                    description=(
+                        "No authentication mechanism configured. This is normal for local "
+                        "stdio MCP servers but should be addressed for HTTP deployments "
+                        "exposed to networks."
+                    ),
+                    risk_level=RiskLevel.INFO.value,
                     affected_field="authentication",
                     remediation=(
-                        "Implement strong authentication (OAuth2, mTLS, API keys) for server access"
+                        "For local development with stdio transport, authentication is "
+                        "typically not required. For HTTP deployments exposed to networks, "
+                        "implement strong authentication (OAuth2, mTLS, API keys) for "
+                        "server access."
                     ),
                     evidence="Authentication field is missing or empty",
                 )
@@ -242,12 +394,18 @@ class MCPSecurityScanner:
                     Vulnerability(
                         id="SRC-UNVERIFIED",
                         title="Unverified Server Source",
-                        description="Server binary/source is not cryptographically verified",
-                        risk_level=RiskLevel.HIGH.value,
+                        description=(
+                            "Server binary/source is not cryptographically verified. "
+                            "Note: the MCP ecosystem does not yet have a standard "
+                            "verification mechanism, so this is aspirational guidance "
+                            "rather than an immediately actionable finding."
+                        ),
+                        risk_level=RiskLevel.INFO.value,
                         affected_field="server.source",
                         remediation=(
-                            "Use signed/verified binaries and implement"
-                            " signature verification before deployment"
+                            "When available, use signed/verified binaries and implement "
+                            "signature verification before deployment. Currently no "
+                            "standard verification mechanism exists for MCP servers."
                         ),
                         evidence=f"Server source '{source}' lacks verification metadata",
                     )
@@ -282,17 +440,46 @@ class MCPSecurityScanner:
         if "protocol" in server:
             protocol = server.get("protocol", "").lower()
             if protocol == "http":
-                self.vulnerabilities.append(
-                    Vulnerability(
-                        id="NET-UNENCRYPTED",
-                        title="Unencrypted Communication",
-                        description="Server is configured to use HTTP instead of HTTPS",
-                        risk_level=RiskLevel.HIGH.value,
-                        affected_field="server.protocol",
-                        remediation="Use HTTPS/TLS for all server communications",
-                        evidence="Protocol set to HTTP",
-                    )
+                # Check if this is a localhost/stdio transport (lower risk)
+                transport = server.get("transport", "").lower()
+                host = server.get("host", "").lower()
+                is_local = (
+                    transport == "stdio"
+                    or host in ("localhost", "127.0.0.1", "::1", "0.0.0.0")
+                    or protocol == "stdio"
                 )
+
+                if is_local:
+                    self.vulnerabilities.append(
+                        Vulnerability(
+                            id="NET-UNENCRYPTED",
+                            title="Unencrypted Communication",
+                            description=(
+                                "Server is configured to use HTTP on localhost. "
+                                "This is acceptable for local development but should "
+                                "use HTTPS if exposed to a network."
+                            ),
+                            risk_level=RiskLevel.INFO.value,
+                            affected_field="server.protocol",
+                            remediation=(
+                                "For local development, HTTP on localhost is acceptable. "
+                                "Use HTTPS/TLS if deploying beyond localhost."
+                            ),
+                            evidence="Protocol set to HTTP (localhost/local transport)",
+                        )
+                    )
+                else:
+                    self.vulnerabilities.append(
+                        Vulnerability(
+                            id="NET-UNENCRYPTED",
+                            title="Unencrypted Communication",
+                            description="Server is configured to use HTTP instead of HTTPS",
+                            risk_level=RiskLevel.HIGH.value,
+                            affected_field="server.protocol",
+                            remediation="Use HTTPS/TLS for all server communications",
+                            evidence="Protocol set to HTTP",
+                        )
+                    )
 
         # Check for exposed ports
         if "port" in server:
@@ -323,29 +510,423 @@ class MCPSecurityScanner:
             if "rate_limit" not in tool:
                 self.warnings.append(f"Tool '{name}' has no rate limiting configured")
 
+    # ── Extended checks (v3) ──────────────────────────────────
+
+    def _get_description_text(self, config: dict[str, Any]) -> str:
+        """Extract all descriptive text from config for pattern matching.
+
+        Collects metadata.description, tool descriptions, and server name.
+        """
+        parts: list[str] = []
+
+        # Metadata description (injected by batch_scanner from crawl data)
+        meta = config.get("metadata", {})
+        if isinstance(meta, dict):
+            desc = meta.get("description", "")
+            if desc:
+                parts.append(desc)
+
+        # Tool-level descriptions
+        for tool in config.get("tools", []):
+            if isinstance(tool, dict):
+                td = tool.get("description", "")
+                if td:
+                    parts.append(td)
+
+        # Server name can also reveal intent
+        server = config.get("server", {})
+        if isinstance(server, dict):
+            name = server.get("name", "")
+            if name:
+                parts.append(name)
+
+        return " ".join(parts)
+
+    def _check_prompt_injection_risk(self, config: dict[str, Any]) -> None:
+        """Check for prompt injection risk patterns in descriptions.
+
+        Looks for instruction-override language, system prompt access attempts,
+        role manipulation, and hidden instruction markers.
+        """
+        text = self._get_description_text(config)
+        config_str = json.dumps(config)
+
+        for pattern_type, pattern in self.PROMPT_INJECTION_PATTERNS.items():
+            # Check both the description text and full config
+            for source, content in [("description", text), ("config", config_str)]:
+                match = re.search(pattern, content)
+                if match:
+                    self.vulnerabilities.append(
+                        Vulnerability(
+                            id=f"INJ-{pattern_type.upper().replace('_', '-')}",
+                            title=f"Prompt Injection Risk: {pattern_type.replace('_', ' ').title()}",
+                            description=(
+                                f"Tool description or config contains language associated with "
+                                f"prompt injection ({pattern_type.replace('_', ' ')})"
+                            ),
+                            risk_level=RiskLevel.CRITICAL.value,
+                            affected_field=f"metadata.description ({source})",
+                            remediation=(
+                                "Review and sanitize tool descriptions. Remove any "
+                                "instruction-like language that could manipulate LLM behavior. "
+                                "Implement tool description validation before deployment."
+                            ),
+                            evidence=f"Matched pattern '{pattern_type}' in {source}",
+                        )
+                    )
+                    break  # Only report once per pattern_type
+
+    def _check_data_exfiltration_risk(self, config: dict[str, Any]) -> None:
+        """Check for data exfiltration risk: tools combining file read + network send.
+
+        A server that can both read local files and send data over the network
+        presents a data exfiltration risk if not properly sandboxed.
+        """
+        text = self._get_description_text(config)
+        config_str = json.dumps(config)
+        combined = text + " " + config_str
+
+        has_file_read = bool(self.FILE_READ_PATTERNS.search(combined))
+        has_network_send = bool(self.NETWORK_SEND_PATTERNS.search(combined))
+
+        if has_file_read and has_network_send:
+            self.vulnerabilities.append(
+                Vulnerability(
+                    id="EXFIL-READ-SEND",
+                    title="Data Exfiltration Risk: File Read + Network Send",
+                    description=(
+                        "Server combines file/data reading capabilities with outbound "
+                        "network access, creating a potential data exfiltration path"
+                    ),
+                    risk_level=RiskLevel.HIGH.value,
+                    affected_field="tools",
+                    remediation=(
+                        "Isolate file-reading and network-sending capabilities into "
+                        "separate servers with distinct permissions. Apply data-loss "
+                        "prevention controls and monitor outbound data flows."
+                    ),
+                    evidence=(
+                        "Detected both file read and network send capabilities "
+                        "in the same server"
+                    ),
+                )
+            )
+
+    # Keywords in server name/description indicating command running is expected
+    EXPECTED_CMD_EXEC_PATTERNS = re.compile(
+        r"(?i)(terminal|shell|bash|zsh|console|cli|command[- ]?line"
+        r"|filesystem|file[- ]?system)"
+    )
+
+    def _check_privilege_escalation_patterns(self, config: dict[str, Any]) -> None:
+        """Check for privilege escalation patterns.
+
+        Detects tools that can run commands, modify permissions, or access
+        admin endpoints -- which could be chained for privilege escalation.
+        """
+        text = self._get_description_text(config)
+        config_str = json.dumps(config)
+        combined = text + " " + config_str
+
+        match = self.PRIV_ESCALATION_PATTERNS.search(combined)
+        if match:
+            # Check if the server name/description indicates command running
+            # is an expected capability (e.g., terminal, shell, filesystem server)
+            server = config.get("server", {})
+            server_name = server.get("name", "") if isinstance(server, dict) else ""
+            meta = config.get("metadata", {})
+            meta_desc = meta.get("description", "") if isinstance(meta, dict) else ""
+            identity_text = f"{server_name} {meta_desc}"
+
+            is_expected = bool(self.EXPECTED_CMD_EXEC_PATTERNS.search(identity_text))
+
+            if is_expected:
+                risk = RiskLevel.MEDIUM.value
+                description = (
+                    "Server provides command running or shell access capabilities. "
+                    "This is expected for a terminal/shell/filesystem server but should "
+                    "be properly sandboxed."
+                )
+            else:
+                risk = RiskLevel.HIGH.value
+                description = (
+                    "Server provides command running, shell access, or "
+                    "permission modification capabilities that could be "
+                    "exploited for privilege escalation"
+                )
+
+            self.vulnerabilities.append(
+                Vulnerability(
+                    id="PRIVESC-CMD-EXEC",
+                    title="Privilege Escalation Risk: Command Execution",
+                    description=description,
+                    risk_level=risk,
+                    affected_field="tools",
+                    remediation=(
+                        "Restrict command running to a predefined allowlist. "
+                        "Run tools in sandboxed environments with minimal privileges. "
+                        "Never expose raw shell or admin interfaces to MCP tools."
+                    ),
+                    evidence=f"Matched privilege escalation pattern: '{match.group(0)[:80]}'",
+                )
+            )
+
+    def _check_supply_chain_risk(self, config: dict[str, Any]) -> None:
+        """Check for supply chain risk patterns.
+
+        Detects unverified package execution (npx, pip install), pipe-to-shell
+        patterns, and GitHub sources without integrity verification.
+        """
+        config_str = json.dumps(config)
+        text = self._get_description_text(config)
+        combined = text + " " + config_str
+
+        match = self.SUPPLY_CHAIN_PATTERNS.search(combined)
+        if match:
+            matched_text = match.group(0)
+
+            # Determine specific sub-type
+            if re.search(r"(?i)curl.*\|\s*(sh|bash)|wget.*&&", matched_text):
+                sub_id = "PIPE-SHELL"
+                sub_title = "Pipe-to-Shell Installation"
+                sub_desc = (
+                    "Configuration uses pipe-to-shell installation pattern, "
+                    "which executes unverified remote code"
+                )
+                risk = RiskLevel.MEDIUM.value
+            elif re.search(r"(?i)npx\s+", matched_text):
+                # Check if this is a known-safe npm scope.
+                # Use the full combined text since the regex capture may
+                # be truncated (e.g. "npx @" without the full scope).
+                is_safe_scope = any(
+                    scope in combined for scope in self.NPX_SAFE_SCOPES
+                )
+                if is_safe_scope:
+                    sub_id = "NPX-EXEC"
+                    sub_title = "npx Package Execution (Official SDK)"
+                    sub_desc = (
+                        "Server uses npx to execute an official SDK package. "
+                        "This is the standard recommended way to run MCP servers."
+                    )
+                    risk = RiskLevel.INFO.value
+                else:
+                    sub_id = "NPX-EXEC"
+                    sub_title = "Unverified npx Package Execution"
+                    sub_desc = (
+                        "Server uses npx to execute an unknown package directly "
+                        "without prior installation or version pinning"
+                    )
+                    risk = RiskLevel.MEDIUM.value
+            elif re.search(r"(?i)github\.com/", matched_text):
+                sub_id = "GH-UNVERIFIED"
+                sub_title = "Unverified GitHub Source"
+                sub_desc = (
+                    "Server is sourced from GitHub without integrity "
+                    "verification. Note: the MCP ecosystem does not yet have "
+                    "a standard signing or verification mechanism for server "
+                    "packages, so this is aspirational guidance."
+                )
+                risk = RiskLevel.INFO.value
+            else:
+                sub_id = "PKG-INSTALL"
+                sub_title = "Runtime Package Installation"
+                sub_desc = (
+                    "Configuration installs packages at runtime, which may "
+                    "pull unverified or malicious dependencies"
+                )
+                risk = RiskLevel.MEDIUM.value
+
+            self.vulnerabilities.append(
+                Vulnerability(
+                    id=f"SUPPLY-{sub_id}",
+                    title=f"Supply Chain Risk: {sub_title}",
+                    description=sub_desc,
+                    risk_level=risk,
+                    affected_field="server.source",
+                    remediation=(
+                        "Pin package versions explicitly. Use lockfiles (package-lock.json, "
+                        "requirements.txt with hashes). Verify package integrity with "
+                        "checksums or signatures before execution."
+                    ),
+                    evidence=f"Matched supply chain pattern: '{matched_text[:80]}'",
+                )
+            )
+
+    def _check_sensitive_data_exposure(self, config: dict[str, Any]) -> None:
+        """Check for sensitive data exposure risk.
+
+        Detects tools that read environment variables, access credential
+        stores, or handle secrets without proper safeguards.
+
+        Reading env vars is the recommended approach for providing API keys
+        to MCP servers, so it is only flagged as HIGH when the server can
+        also send data externally (combining secrets access + network send).
+        """
+        text = self._get_description_text(config)
+        config_str = json.dumps(config)
+        combined = text + " " + config_str
+
+        match = self.SENSITIVE_DATA_PATTERNS.search(combined)
+        if match:
+            # Check if the server also has network send capabilities
+            has_network_send = bool(self.NETWORK_SEND_PATTERNS.search(combined))
+
+            if has_network_send:
+                # Can read secrets AND send data externally -- real risk
+                risk = RiskLevel.HIGH.value
+                description = (
+                    "Server can access sensitive data (environment variables, "
+                    "credentials, secrets) AND has outbound network capabilities, "
+                    "creating a risk of credential exfiltration."
+                )
+            else:
+                # Reading env vars without network send -- best practice for config
+                risk = RiskLevel.INFO.value
+                description = (
+                    "Server can access sensitive data such as environment "
+                    "variables or secrets. Reading environment variables is the "
+                    "recommended approach for providing API keys to MCP servers. "
+                    "This is only a concern if combined with outbound network access."
+                )
+
+            self.vulnerabilities.append(
+                Vulnerability(
+                    id="SENSITIVE-DATA-EXPOSURE",
+                    title="Sensitive Data Exposure Risk",
+                    description=description,
+                    risk_level=risk,
+                    affected_field="tools",
+                    remediation=(
+                        "Limit access to environment variables and secrets to only "
+                        "those explicitly needed. Use a secrets manager with "
+                        "fine-grained access controls. Audit which tools can "
+                        "read credentials and ensure they do not expose them "
+                        "in logs or responses."
+                    ),
+                    evidence=f"Matched sensitive data pattern: '{match.group(0)[:80]}'",
+                )
+            )
+
+    def _check_excessive_permissions(self, config: dict[str, Any]) -> None:
+        """Check for excessive permission requests.
+
+        Detects tools requesting broad filesystem, network, or system access
+        beyond what is typically needed for their stated purpose.
+        """
+        text = self._get_description_text(config)
+        config_str = json.dumps(config)
+        combined = text + " " + config_str
+
+        match = self.EXCESSIVE_PERM_PATTERNS.search(combined)
+        if match:
+            self.vulnerabilities.append(
+                Vulnerability(
+                    id="PERM-EXCESSIVE",
+                    title="Excessive Permission Request",
+                    description=(
+                        "Server requests or claims access to broad system resources "
+                        "(entire filesystem, all network, arbitrary commands) "
+                        "beyond typical operational needs"
+                    ),
+                    risk_level=RiskLevel.HIGH.value,
+                    affected_field="tools",
+                    remediation=(
+                        "Apply the principle of least privilege. Scope file access "
+                        "to specific directories, limit network access to required "
+                        "endpoints, and restrict command execution to a safe allowlist."
+                    ),
+                    evidence=f"Matched excessive permission pattern: '{match.group(0)[:80]}'",
+                )
+            )
+
+    # IDs that represent real security issues (things that need fixing)
+    SECURITY_ISSUE_IDS = {
+        "CRED-API_KEY", "CRED-PASSWORD", "CRED-TOKEN", "CRED-AWS_KEY",
+        "CRED-PRIVATE_KEY", "CRED-JWT",
+        "INJ-INSTRUCTION-OVERRIDE", "INJ-SYSTEM-PROMPT-ACCESS",
+        "INJ-ROLE-MANIPULATION", "INJ-HIDDEN-INSTRUCTIONS",
+        "EXFIL-READ-SEND",
+        "MAL-EXFILTRATION", "MAL-PRIVILEGE_ESCALATION",
+        "MAL-DATA_DESTRUCTION", "MAL-BACKDOOR",
+        "PERM-OVERPRIVILEGED", "PERM-UNRESTRICTED-FS", "PERM-EXCESSIVE",
+        "SUPPLY-PIPE-SHELL", "SUPPLY-PKG-INSTALL",
+    }
+
+    # IDs that are hardening recommendations (nice to have)
+    HARDENING_RECOMMENDATION_IDS = {
+        "AUTH-MISSING",
+        "SRC-UNVERIFIED",
+        "SUPPLY-NPX-EXEC",
+        "SUPPLY-GH-UNVERIFIED",
+        "NET-UNENCRYPTED",
+        "SENSITIVE-DATA-EXPOSURE",
+        "PRIVESC-CMD-EXEC",
+    }
+
+    def categorize_findings(self) -> dict[str, list[Vulnerability]]:
+        """Categorize findings into Security Issues and Hardening Recommendations.
+
+        Security Issues are things that need fixing: plaintext credentials,
+        prompt injection, data exfiltration paths, malicious patterns.
+
+        Hardening Recommendations are nice-to-have improvements: auth missing,
+        unverified sources, NPX usage, encryption suggestions.
+
+        Findings not matching either set are categorized based on risk level:
+        CRITICAL/HIGH go to security issues, everything else to recommendations.
+        """
+        security_issues: list[Vulnerability] = []
+        hardening_recs: list[Vulnerability] = []
+
+        for vuln in self.vulnerabilities:
+            if vuln.id in self.SECURITY_ISSUE_IDS:
+                security_issues.append(vuln)
+            elif vuln.id in self.HARDENING_RECOMMENDATION_IDS:
+                hardening_recs.append(vuln)
+            elif vuln.risk_level in (RiskLevel.CRITICAL.value, RiskLevel.HIGH.value):
+                # Unknown ID but high severity -- treat as security issue
+                security_issues.append(vuln)
+            else:
+                hardening_recs.append(vuln)
+
+        return {
+            "security_issues": security_issues,
+            "hardening_recommendations": hardening_recs,
+        }
+
     def _find_field_in_config(self, config: dict[str, Any], evidence: str) -> str:
         """Find the field path in config that matches evidence."""
         # Simple implementation - in production, would do proper path tracking
         return "unknown"
 
     def _calculate_score(self) -> int:
-        """Calculate security score from 0-100."""
+        """Calculate security score from 0-100.
+
+        Security Issues receive full deduction weight.
+        Hardening Recommendations receive 1/3 of their normal deduction.
+        """
         if not self.vulnerabilities:
             return 100
 
-        # Weight vulnerabilities by severity
-        score = 100
-        for vuln in self.vulnerabilities:
-            if vuln.risk_level == RiskLevel.CRITICAL.value:
-                score -= 25
-            elif vuln.risk_level == RiskLevel.HIGH.value:
-                score -= 15
-            elif vuln.risk_level == RiskLevel.MEDIUM.value:
-                score -= 8
-            elif vuln.risk_level == RiskLevel.LOW.value:
-                score -= 3
+        categorized = self.categorize_findings()
+        security_issues = set(id(v) for v in categorized["security_issues"])
 
-        return max(0, score)
+        score = 100.0
+        for vuln in self.vulnerabilities:
+            is_security_issue = id(vuln) in security_issues
+            weight = 1.0 if is_security_issue else (1.0 / 3.0)
+
+            if vuln.risk_level == RiskLevel.CRITICAL.value:
+                score -= 25 * weight
+            elif vuln.risk_level == RiskLevel.HIGH.value:
+                score -= 15 * weight
+            elif vuln.risk_level == RiskLevel.MEDIUM.value:
+                score -= 8 * weight
+            elif vuln.risk_level == RiskLevel.LOW.value:
+                score -= 3 * weight
+            # INFO findings do not deduct from the score
+
+        return max(0, int(score))
 
     def _group_by_risk_level(self) -> dict[str, int]:
         """Group vulnerabilities by risk level."""
