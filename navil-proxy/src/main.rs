@@ -5,15 +5,21 @@
 //!
 //! Hot-path reverse proxy for MCP JSON-RPC 2.0.
 //! Reads pre-computed thresholds from Redis (written by the Python control plane)
-//! and enforces payload limits, rate limits, and HMAC signature verification
+//! and enforces payload limits, rate limits, JWT/HMAC authentication,
+//! delegation chain verification, and identity header injection
 //! before forwarding to the upstream MCP server.
 //!
 //! Architecture:
 //!     Agent → POST /mcp → navil-proxy (Rust) → reqwest → MCP Server
 //!                              ↓
-//!                     Pre-execution:  HMAC verify, payload limit,
+//!                     Pre-execution:  JWT/HMAC verify, payload limit,
+//!                                     delegation chain check,
 //!                                     Redis threshold + rate check
-//!                     Post-execution: forward response as-is
+//!                     Post-execution: header injection, telemetry
+
+mod auth;
+mod proxy;
+mod telemetry;
 
 use std::sync::Arc;
 use std::time::{Instant, SystemTime, UNIX_EPOCH};
@@ -26,17 +32,16 @@ use axum::{
     routing::{get, post},
     Router,
 };
-use hmac::{Hmac, Mac};
 use serde::{Deserialize, Serialize};
-use sha2::Sha256;
 use tracing::{error, info, warn};
+
+use auth::{AuthResult, HumanContext};
+use telemetry::{iso8601_now, publish_telemetry, TelemetryEvent};
 
 // ── Constants (match Python proxy) ───────────────────────────────
 
 const MAX_PAYLOAD_BYTES: usize = 5 * 1024 * 1024; // 5 MB
 const MAX_JSON_DEPTH: usize = 10;
-
-type HmacSha256 = Hmac<Sha256>;
 
 // ── App State ────────────────────────────────────────────────────
 
@@ -46,12 +51,10 @@ struct AppState {
     http_client: reqwest::Client,
     redis_client: redis::Client,
     hmac_secret: Option<Vec<u8>>,
+    jwt_secret: Vec<u8>, // Same as HMAC secret for HS256 signing
 }
 
 // ── Redis Threshold Schema ───────────────────────────────────────
-// Keys match the Python control plane:
-//   navil:agent:{agent}:thresholds  → hash { max_payload_bytes, rate_limit_per_min, blocked }
-//   navil:agent:{agent}:rate:{bucket} → integer counter (INCR, 120s TTL)
 
 #[derive(Debug, Clone)]
 struct AgentThresholds {
@@ -63,7 +66,7 @@ struct AgentThresholds {
 impl Default for AgentThresholds {
     fn default() -> Self {
         Self {
-            max_payload_bytes: 10_000_000, // 10 MB
+            max_payload_bytes: 10_000_000,
             rate_limit_per_min: 120,
             blocked: false,
         }
@@ -111,7 +114,6 @@ fn jsonrpc_error(
 
 // ── Sanitization ─────────────────────────────────────────────────
 
-/// Check JSON nesting depth. Returns Err if depth exceeds limit.
 fn check_json_depth(value: &serde_json::Value, current: usize, limit: usize) -> Result<(), String> {
     if current > limit {
         return Err(format!(
@@ -135,10 +137,7 @@ fn check_json_depth(value: &serde_json::Value, current: usize, limit: usize) -> 
     Ok(())
 }
 
-/// Sanitize request bytes: size limit, JSON parse+compact, depth limit.
-/// Returns the parsed JSON value and compacted bytes on success.
 fn sanitize_request(body: &[u8]) -> Result<(serde_json::Value, Vec<u8>), (i32, String)> {
-    // Byte limit
     if body.len() > MAX_PAYLOAD_BYTES {
         return Err((
             -32700,
@@ -150,47 +149,15 @@ fn sanitize_request(body: &[u8]) -> Result<(serde_json::Value, Vec<u8>), (i32, S
         ));
     }
 
-    // Parse
     let value: serde_json::Value =
         serde_json::from_slice(body).map_err(|e| (-32700, format!("Invalid JSON: {e}")))?;
 
-    // Depth check
     check_json_depth(&value, 1, MAX_JSON_DEPTH).map_err(|msg| (-32700, msg))?;
 
-    // Re-serialize compact (strips whitespace padding)
     let compact = serde_json::to_vec(&value)
         .map_err(|e| (-32700, format!("JSON re-serialize failed: {e}")))?;
 
     Ok((value, compact))
-}
-
-// ── HMAC Verification ────────────────────────────────────────────
-
-fn verify_hmac(secret: &[u8], body: &[u8], signature: &str) -> bool {
-    let mut mac = match HmacSha256::new_from_slice(secret) {
-        Ok(m) => m,
-        Err(_) => return false,
-    };
-    mac.update(body);
-
-    // Signature is hex-encoded
-    let expected = match hex_decode(signature) {
-        Some(bytes) => bytes,
-        None => return false,
-    };
-
-    mac.verify_slice(&expected).is_ok()
-}
-
-fn hex_decode(s: &str) -> Option<Vec<u8>> {
-    let s = s.strip_prefix("sha256=").unwrap_or(s);
-    if !s.len().is_multiple_of(2) {
-        return None;
-    }
-    (0..s.len())
-        .step_by(2)
-        .map(|i| u8::from_str_radix(&s[i..i + 2], 16).ok())
-        .collect()
 }
 
 // ── Redis Threshold Lookup ───────────────────────────────────────
@@ -233,7 +200,6 @@ async fn get_thresholds(
             }
         }
         Err(e) => {
-            // Fail-open: use defaults on Redis error
             warn!("Redis HMGET failed for {}: {}", agent, e);
             AgentThresholds::default()
         }
@@ -249,10 +215,9 @@ async fn check_rate_limit(
         .duration_since(UNIX_EPOCH)
         .unwrap_or_default()
         .as_secs();
-    let bucket = now / 60; // minute bucket
+    let bucket = now / 60;
     let key = format!("navil:agent:{}:rate:{}", agent, bucket);
 
-    // INCR + EXPIRE via pipeline
     let result: Result<(u64,), _> = redis::pipe()
         .atomic()
         .cmd("INCR")
@@ -276,64 +241,10 @@ async fn check_rate_limit(
             }
         }
         Err(e) => {
-            // Fail-open: allow on Redis error
             warn!("Redis rate limit check failed for {}: {}", agent, e);
             Ok(())
         }
     }
-}
-
-// ── Telemetry Event ──────────────────────────────────────────────
-
-const TELEMETRY_QUEUE: &str = "navil:telemetry:queue";
-
-#[derive(Serialize)]
-struct TelemetryEvent {
-    agent_name: String,
-    tool_name: String,
-    method: String,
-    action: String, // "FORWARDED", "BLOCKED_THRESHOLD", "BLOCKED_RATE", etc.
-    payload_bytes: usize,
-    response_bytes: usize,
-    duration_ms: u64,
-    timestamp: String, // ISO 8601
-    target_server: String,
-}
-
-/// Fire-and-forget: serialize event and LPUSH to Redis telemetry queue.
-async fn publish_telemetry(redis_client: &redis::Client, event: TelemetryEvent) {
-    let json = match serde_json::to_string(&event) {
-        Ok(j) => j,
-        Err(e) => {
-            warn!("Failed to serialize telemetry event: {}", e);
-            return;
-        }
-    };
-    match redis_client.get_multiplexed_async_connection().await {
-        Ok(mut conn) => {
-            let result: Result<(), _> = redis::cmd("LPUSH")
-                .arg(TELEMETRY_QUEUE)
-                .arg(&json)
-                .query_async(&mut conn)
-                .await;
-            if let Err(e) = result {
-                warn!("Failed to LPUSH telemetry: {}", e);
-            }
-        }
-        Err(e) => {
-            warn!("Redis connection failed for telemetry: {}", e);
-        }
-    }
-}
-
-// ── Extract agent identity ───────────────────────────────────────
-
-fn extract_agent_name(headers: &HeaderMap) -> Option<String> {
-    // Check X-Agent-Name header first
-    if let Some(name) = headers.get("x-agent-name") {
-        return name.to_str().ok().map(String::from);
-    }
-    None
 }
 
 // ── Handler ──────────────────────────────────────────────────────
@@ -368,7 +279,6 @@ async fn handle_mcp(
     let method = rpc.method.as_deref().unwrap_or("").to_string();
     let req_id = rpc.id.clone();
 
-    // Extract tool_name from params if available
     let tool_name = rpc
         .params
         .as_ref()
@@ -377,33 +287,82 @@ async fn handle_mcp(
         .unwrap_or("")
         .to_string();
 
-    // 3. Extract agent identity
-    let agent_name = extract_agent_name(&headers).unwrap_or_else(|| "anonymous".to_string());
+    // 3. Authenticate: JWT → HMAC → Anonymous
+    let auth_result = auth::authenticate(
+        &headers,
+        &compact_body,
+        state.hmac_secret.as_deref(),
+        &state.jwt_secret,
+    );
+
+    let (agent_name, human_context, delegation_chain, is_jwt_auth): (
+        String,
+        Option<HumanContext>,
+        Vec<String>,
+        bool,
+    ) = match auth_result {
+        AuthResult::Jwt(claims) => {
+            let chain = claims.delegation_chain.clone().unwrap_or_default();
+            let hc = claims.human_context.clone();
+            (claims.agent_name.clone(), hc, chain, true)
+        }
+        AuthResult::Hmac { agent_name } => (agent_name, None, vec![], false),
+        AuthResult::Anonymous => ("anonymous".to_string(), None, vec![], false),
+        AuthResult::Failed(msg) => {
+            let duration_ms = start.elapsed().as_millis() as u64;
+            let payload_bytes = compact_body.len();
+
+            // Emit BLOCKED_AUTH telemetry
+            let tele_state = state.clone();
+            let tele_target = state.target_url.clone();
+            let tele_tool = tool_name.clone();
+            let tele_method = method.clone();
+            tokio::spawn(async move {
+                publish_telemetry(
+                    &tele_state.redis_client,
+                    TelemetryEvent {
+                        agent_name: "unknown".to_string(),
+                        tool_name: tele_tool,
+                        method: tele_method,
+                        action: "BLOCKED_AUTH".to_string(),
+                        payload_bytes,
+                        response_bytes: 0,
+                        duration_ms,
+                        timestamp: iso8601_now(),
+                        target_server: tele_target,
+                        human_email: None,
+                        delegation_depth: None,
+                    },
+                )
+                .await;
+            });
+
+            return (
+                StatusCode::UNAUTHORIZED,
+                jsonrpc_error(-32003, msg, req_id),
+            )
+                .into_response();
+        }
+    };
+
     let payload_bytes = compact_body.len();
 
-    // 4. HMAC signature verification (if configured)
-    if let Some(ref secret) = state.hmac_secret {
-        if let Some(sig) = headers.get("x-navil-signature") {
-            let sig_str = sig.to_str().unwrap_or("");
-            if !verify_hmac(secret, &compact_body, sig_str) {
+    // 4. Delegation chain verification (JWT path only)
+    if is_jwt_auth && !delegation_chain.is_empty() {
+        match auth::verify_delegation_chain(&state.redis_client, &delegation_chain).await {
+            Ok(()) => {}
+            Err(msg) => {
                 return (
                     StatusCode::UNAUTHORIZED,
-                    jsonrpc_error(-32003, "Invalid HMAC signature", req_id),
+                    jsonrpc_error(-32003, msg, req_id),
                 )
                     .into_response();
             }
-        } else {
-            return (
-                StatusCode::UNAUTHORIZED,
-                jsonrpc_error(-32003, "Missing HMAC signature", req_id),
-            )
-                .into_response();
         }
     }
 
     // 5. For tools/call: Redis threshold + rate check
     if method == "tools/call" {
-        // Get Redis connection (fail-open on error)
         let redis_check = async {
             let mut conn = state
                 .redis_client
@@ -416,7 +375,6 @@ async fn handle_mcp(
                 .ok();
 
             if let Some(ref mut conn) = conn {
-                // Threshold check
                 let thresholds = get_thresholds(conn, &agent_name).await;
 
                 if thresholds.blocked {
@@ -427,14 +385,12 @@ async fn handle_mcp(
                     return Err((-32002, "BLOCKED_THRESHOLD".to_string()));
                 }
 
-                // Rate limit check
                 if let Err(_msg) =
                     check_rate_limit(conn, &agent_name, thresholds.rate_limit_per_min).await
                 {
                     return Err((-32002, "BLOCKED_RATE".to_string()));
                 }
             }
-            // Fail-open: if no Redis connection, allow through
             Ok(())
         }
         .await;
@@ -442,15 +398,19 @@ async fn handle_mcp(
         if let Err((_code, action)) = redis_check {
             let duration_ms = start.elapsed().as_millis() as u64;
 
-            // Emit telemetry for blocked request
             let tele_state = state.clone();
             let tele_agent = agent_name.clone();
             let tele_tool = tool_name.clone();
             let tele_method = method.clone();
             let tele_action = action.clone();
             let tele_target = state.target_url.clone();
+            let tele_email = human_context.as_ref().map(|hc| hc.email.clone());
+            let tele_depth = if is_jwt_auth {
+                Some(delegation_chain.len())
+            } else {
+                None
+            };
             tokio::spawn(async move {
-                let ts = chrono_iso8601_now();
                 publish_telemetry(
                     &tele_state.redis_client,
                     TelemetryEvent {
@@ -461,8 +421,10 @@ async fn handle_mcp(
                         payload_bytes,
                         response_bytes: 0,
                         duration_ms,
-                        timestamp: ts,
+                        timestamp: iso8601_now(),
                         target_server: tele_target,
+                        human_email: tele_email,
+                        delegation_depth: tele_depth,
                     },
                 )
                 .await;
@@ -481,69 +443,50 @@ async fn handle_mcp(
         }
     }
 
-    // 6. Forward to upstream MCP server
-    let mut forward_headers = reqwest::header::HeaderMap::new();
-    forward_headers.insert(
-        reqwest::header::CONTENT_TYPE,
-        "application/json".parse().unwrap(),
-    );
-    forward_headers.insert(
-        reqwest::header::ACCEPT,
-        "application/json, text/event-stream".parse().unwrap(),
-    );
-    // Forward x-agent-name
-    if let Some(name) = headers.get("x-agent-name") {
-        if let Ok(val) = reqwest::header::HeaderValue::from_bytes(name.as_bytes()) {
-            forward_headers.insert("x-agent-name", val);
-        }
-    }
-
-    let upstream_resp = match state
-        .http_client
-        .post(&state.target_url)
-        .headers(forward_headers)
-        .body(compact_body)
-        .send()
-        .await
+    // 6. Forward to upstream MCP server with identity headers
+    let delegation_depth = delegation_chain.len();
+    let forward_result = match proxy::forward_request(
+        &state.http_client,
+        &state.target_url,
+        compact_body,
+        &agent_name,
+        human_context.as_ref(),
+        delegation_depth,
+        is_jwt_auth,
+    )
+    .await
     {
-        Ok(resp) => resp,
+        Ok(result) => result,
         Err(e) => {
             error!("Upstream request failed: {}", e);
             return (
                 StatusCode::BAD_GATEWAY,
-                jsonrpc_error(-32603, format!("Upstream error: {e}"), req_id),
+                jsonrpc_error(-32603, e, req_id),
             )
                 .into_response();
         }
     };
 
-    // 7. Return upstream response
-    let status = upstream_resp.status();
-    let resp_headers = upstream_resp.headers().clone();
-    let resp_body = match upstream_resp.bytes().await {
-        Ok(b) => b,
-        Err(e) => {
-            error!("Failed to read upstream response: {}", e);
-            return (
-                StatusCode::BAD_GATEWAY,
-                jsonrpc_error(-32603, format!("Upstream read error: {e}"), req_id),
-            )
-                .into_response();
-        }
-    };
+    let response_bytes = forward_result.response_bytes;
+    let upstream_headers = forward_result.headers;
+    let resp_body = forward_result.body;
 
     let duration_ms = start.elapsed().as_millis() as u64;
-    let response_bytes = resp_body.len();
 
-    // 8. Emit telemetry for forwarded request (background)
+    // 7. Emit telemetry for forwarded request (background)
     {
         let tele_state = state.clone();
         let tele_agent = agent_name.clone();
         let tele_tool = tool_name.clone();
         let tele_method = method.clone();
         let tele_target = state.target_url.clone();
+        let tele_email = human_context.as_ref().map(|hc| hc.email.clone());
+        let tele_depth = if is_jwt_auth {
+            Some(delegation_depth)
+        } else {
+            None
+        };
         tokio::spawn(async move {
-            let ts = chrono_iso8601_now();
             publish_telemetry(
                 &tele_state.redis_client,
                 TelemetryEvent {
@@ -554,96 +497,18 @@ async fn handle_mcp(
                     payload_bytes,
                     response_bytes,
                     duration_ms,
-                    timestamp: ts,
+                    timestamp: iso8601_now(),
                     target_server: tele_target,
+                    human_email: tele_email,
+                    delegation_depth: tele_depth,
                 },
             )
             .await;
         });
     }
 
-    // Build response with selected upstream headers (e.g. mcp-session-id)
-    let mut response_headers = HeaderMap::new();
-    response_headers.insert(
-        axum::http::header::CONTENT_TYPE,
-        "application/json".parse().unwrap(),
-    );
-    if let Some(session_id) = resp_headers.get("mcp-session-id") {
-        if let Ok(val) = axum::http::HeaderValue::from_bytes(session_id.as_bytes()) {
-            response_headers.insert("mcp-session-id", val);
-        }
-    }
-
-    (
-        StatusCode::from_u16(status.as_u16()).unwrap_or(StatusCode::OK),
-        response_headers,
-        resp_body,
-    )
-        .into_response()
-}
-
-/// Generate an ISO 8601 timestamp (no chrono crate needed).
-fn chrono_iso8601_now() -> String {
-    let dur = SystemTime::now()
-        .duration_since(UNIX_EPOCH)
-        .unwrap_or_default();
-    let secs = dur.as_secs();
-    // Simple UTC timestamp: YYYY-MM-DDTHH:MM:SSZ
-    // Calculate from epoch seconds
-    let days = secs / 86400;
-    let time_of_day = secs % 86400;
-    let hours = time_of_day / 3600;
-    let minutes = (time_of_day % 3600) / 60;
-    let seconds = time_of_day % 60;
-
-    // Days since epoch to date (simplified Gregorian)
-    let mut y = 1970i64;
-    let mut remaining_days = days as i64;
-    loop {
-        let year_days = if is_leap_year(y) { 366 } else { 365 };
-        if remaining_days < year_days {
-            break;
-        }
-        remaining_days -= year_days;
-        y += 1;
-    }
-    let leap = is_leap_year(y);
-    let month_days: [i64; 12] = [
-        31,
-        if leap { 29 } else { 28 },
-        31,
-        30,
-        31,
-        30,
-        31,
-        31,
-        30,
-        31,
-        30,
-        31,
-    ];
-    let mut m = 0usize;
-    for (i, &md) in month_days.iter().enumerate() {
-        if remaining_days < md {
-            m = i;
-            break;
-        }
-        remaining_days -= md;
-    }
-    let d = remaining_days + 1;
-    format!(
-        "{:04}-{:02}-{:02}T{:02}:{:02}:{:02}Z",
-        y,
-        m + 1,
-        d,
-        hours,
-        minutes,
-        seconds
-    )
-}
-
-fn is_leap_year(y: i64) -> bool {
-    (y % 4 == 0 && y % 100 != 0) || y % 400 == 0
+    // Build response
+    (StatusCode::OK, upstream_headers, resp_body).into_response()
 }
 
 async fn health() -> Json<serde_json::Value> {
@@ -677,6 +542,15 @@ async fn main() {
         .and_then(|s| s.parse().ok())
         .unwrap_or(8080);
 
+    // JWT secret = HMAC secret (both use HS256)
+    let jwt_secret = hmac_secret
+        .clone()
+        .unwrap_or_else(|| {
+            std::env::var("NAVIL_JWT_SECRET")
+                .unwrap_or_default()
+                .into_bytes()
+        });
+
     let redis_client = redis::Client::open(redis_url.as_str()).expect("Invalid Redis URL");
     let http_client = reqwest::Client::builder()
         .timeout(std::time::Duration::from_secs(30))
@@ -688,6 +562,7 @@ async fn main() {
         http_client,
         redis_client,
         hmac_secret,
+        jwt_secret,
     });
 
     let app = Router::new()
