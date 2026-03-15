@@ -390,7 +390,7 @@ def main():
     if mean_check < 1000:
         print(f"  ✓ Security checks add <1ms per message ({mean_check:.0f}µs)")
     else:
-        print(f"  Security checks add {mean_check/1000:.1f}ms per message")
+        print(f"  Security checks add {mean_check / 1000:.1f}ms per message")
 
     # Cleanup
     os.unlink(server_path)

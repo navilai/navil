@@ -103,7 +103,7 @@ class MCPSecurityProxy:
         # ── Byte limit ────────────────────────────────────────
         if len(body) > cls.MAX_PAYLOAD_BYTES:
             raise ValueError(
-                f"Payload too large: {len(body)} bytes " f"(limit {cls.MAX_PAYLOAD_BYTES} bytes)"
+                f"Payload too large: {len(body)} bytes (limit {cls.MAX_PAYLOAD_BYTES} bytes)"
             )
 
         # ── Parse & compact ───────────────────────────────────
@@ -198,9 +198,7 @@ class MCPSecurityProxy:
                     status = cred.status
                     status_str = status.value if hasattr(status, "value") else str(status)
                     try:
-                        token_match = hmac.compare_digest(
-                            cred.token.encode(), token.encode()
-                        )
+                        token_match = hmac.compare_digest(cred.token.encode(), token.encode())
                     except Exception:
                         token_match = False
                     if token_match and status_str == "ACTIVE":

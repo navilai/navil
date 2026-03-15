@@ -26,9 +26,7 @@ class FakeRedis:
         return 1
 
 
-def _make_cloud_response(
-    patterns: list[dict[str, Any]], as_of: str = "2026-03-14T00:00:00Z"
-):
+def _make_cloud_response(patterns: list[dict[str, Any]], as_of: str = "2026-03-14T00:00:00Z"):
     """Build a mock httpx.Response for the patterns endpoint."""
     mock_resp = MagicMock()
     mock_resp.status_code = 200
@@ -126,9 +124,7 @@ class TestFetchAndPublish:
 
         mock_resp = MagicMock()
         mock_resp.status_code = 403
-        mock_resp.json.return_value = {
-            "detail": "Community tier requires active threat sharing."
-        }
+        mock_resp.json.return_value = {"detail": "Community tier requires active threat sharing."}
         fetcher._http_client = _mock_client(mock_resp)
         count = await fetcher._fetch_and_publish()
 
@@ -179,15 +175,17 @@ class TestFetchAndPublish:
             cloud_url="https://test.navil.ai",
         )
 
-        patterns = [{
-            "pattern_id": "p1",
-            "anomaly_type": "TEST",
-            "description": "test",
-            "features": {},
-            "source": "community",
-            "unexpected_field": "should_be_stripped",
-            "internal_id": 12345,
-        }]
+        patterns = [
+            {
+                "pattern_id": "p1",
+                "anomaly_type": "TEST",
+                "description": "test",
+                "features": {},
+                "source": "community",
+                "unexpected_field": "should_be_stripped",
+                "internal_id": 12345,
+            }
+        ]
         mock_resp = _make_cloud_response(patterns)
         fetcher._http_client = _mock_client(mock_resp)
         await fetcher._fetch_and_publish()

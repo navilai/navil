@@ -194,8 +194,7 @@ class BehavioralAnomalyDetector:
         # Payload size
         if payload_bytes > thresholds.max_payload_bytes:
             return False, (
-                f"Payload {payload_bytes} bytes exceeds limit "
-                f"{thresholds.max_payload_bytes} bytes"
+                f"Payload {payload_bytes} bytes exceeds limit {thresholds.max_payload_bytes} bytes"
             )
 
         # Rate limit via Redis INCR (1-minute bucket keyed by epoch minute)

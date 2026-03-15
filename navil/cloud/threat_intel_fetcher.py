@@ -20,10 +20,18 @@ _DEFAULT_CLOUD_URL = "https://api.navil.ai"
 THREAT_INTEL_CHANNEL = "navil:threat_intel:inbound"
 
 # Fields allowed in pattern_data to prevent unexpected keys from leaking through
-_PATTERN_FIELDS = frozenset({
-    "pattern_id", "anomaly_type", "description", "features",
-    "created_at", "match_count", "confidence_boost", "source",
-})
+_PATTERN_FIELDS = frozenset(
+    {
+        "pattern_id",
+        "anomaly_type",
+        "description",
+        "features",
+        "created_at",
+        "match_count",
+        "confidence_boost",
+        "source",
+    }
+)
 
 
 class ThreatIntelFetcher:
@@ -151,9 +159,7 @@ class ThreatIntelFetcher:
                     "entry_type": "pattern",
                     "agent_name_hash": None,
                     "tool_name": None,
-                    "pattern_data": {
-                        k: v for k, v in pattern.items() if k in _PATTERN_FIELDS
-                    },
+                    "pattern_data": {k: v for k, v in pattern.items() if k in _PATTERN_FIELDS},
                 }
                 await self.redis.publish(
                     THREAT_INTEL_CHANNEL,
