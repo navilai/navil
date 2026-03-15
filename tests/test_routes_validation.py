@@ -1,10 +1,13 @@
 """Tests for Pydantic request model field validation."""
+
 from __future__ import annotations
 
 import pytest
-from pydantic import ValidationError
 
-from navil.api.local.routes import (
+pydantic = pytest.importorskip("pydantic")
+ValidationError = pydantic.ValidationError
+
+from navil.api.local.routes import (  # noqa: E402
     AutoRemediateRequest,
     CredentialIssueRequest,
     FeedbackRequest,

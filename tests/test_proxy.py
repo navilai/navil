@@ -139,6 +139,7 @@ class TestIdentity:
     ) -> None:
         """When require_auth=True, X-Agent-Name alone must not authenticate."""
         from navil.policy_engine import PolicyEngine
+
         strict_proxy = MCPSecurityProxy(
             target_url="http://localhost:3000",
             policy_engine=PolicyEngine(),
