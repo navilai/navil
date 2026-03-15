@@ -66,7 +66,7 @@ class PolicyEngine:
         self.policy_file = Path(policy_file)
         self.policy: dict[str, Any] = {}
         self.decisions_log: list[PolicyEvaluationResult] = []
-        self.rate_limits: dict[str, dict[str, int]] = {}
+        self.rate_limits: dict[tuple[str, str], dict[str, int]] = {}
         self._rate_limit_lock = threading.Lock()
         self._load_policy()
 

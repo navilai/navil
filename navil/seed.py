@@ -244,7 +244,7 @@ def _gen_lateral_movement(agent: str, iteration: int) -> list[dict[str, Any]]:
     servers = random.sample(_MCP_SERVERS, min(n_servers, len(_MCP_SERVERS)))
     # Pad with extra fake servers if needed
     while len(servers) < n_servers:
-        servers.append(f"http://mcp-extra-{random.randint(1,99)}:3000")
+        servers.append(f"http://mcp-extra-{random.randint(1, 99)}:3000")
     return [
         {
             "agent_name": agent,

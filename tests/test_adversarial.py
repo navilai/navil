@@ -3,6 +3,7 @@
 Each test is written to EXPECT the security control to hold.
 A pytest FAILURE = a confirmed security finding.
 """
+
 from __future__ import annotations
 
 import base64
@@ -16,7 +17,9 @@ from unittest.mock import AsyncMock, MagicMock
 import httpx
 import jwt
 import pytest
-from pydantic import ValidationError
+
+pydantic = pytest.importorskip("pydantic")
+ValidationError = pydantic.ValidationError
 
 from navil.anomaly_detector import BehavioralAnomalyDetector
 from navil.api.local.routes import (
@@ -96,29 +99,35 @@ class TestAuthBypass:
         """Lowercase 'bearer' is not matched by startswith('Bearer ') — documented behaviour."""
         proxy = _make_proxy(require_auth=False)
         # Falls through to x-agent-name path (no Bearer check)
-        result = proxy.extract_agent_name({
-            "authorization": "bearer some_token",
-            "x-agent-name": "fallback-agent",
-        })
+        result = proxy.extract_agent_name(
+            {
+                "authorization": "bearer some_token",
+                "x-agent-name": "fallback-agent",
+            }
+        )
         # With require_auth=False and no Bearer match, x-agent-name is honoured
         assert result == "fallback-agent"
 
     def test_bearer_failure_does_not_fall_through_to_x_agent_name_auth_false(self) -> None:
         """Bad Bearer + X-Agent-Name with require_auth=False: Bearer was attempted, must return None."""
         proxy = _make_proxy(require_auth=False)
-        result = proxy.extract_agent_name({
-            "authorization": "Bearer invalid_token_xyz",
-            "x-agent-name": "attacker",
-        })
+        result = proxy.extract_agent_name(
+            {
+                "authorization": "Bearer invalid_token_xyz",
+                "x-agent-name": "attacker",
+            }
+        )
         assert result is None, "Auth bypass: failed Bearer fell through to X-Agent-Name"
 
     def test_bearer_failure_does_not_fall_through_to_x_agent_name_auth_true(self) -> None:
         """Bad Bearer + X-Agent-Name with require_auth=True: must also return None."""
         proxy = _make_proxy(require_auth=True)
-        result = proxy.extract_agent_name({
-            "authorization": "Bearer invalid",
-            "x-agent-name": "attacker",
-        })
+        result = proxy.extract_agent_name(
+            {
+                "authorization": "Bearer invalid",
+                "x-agent-name": "attacker",
+            }
+        )
         assert result is None
 
     def test_require_auth_blocks_x_agent_name_only(self) -> None:
@@ -179,10 +188,15 @@ class TestJWTSecurity:
         cm = CredentialManager()
         # Craft alg:none token manually (base64 imported at top level)
         header = base64.urlsafe_b64encode(b'{"alg":"none","typ":"JWT"}').rstrip(b"=").decode()
-        payload_data = json.dumps({
-            "token_id": "cred_x", "agent_name": "evil", "scope": "*",
-            "iat": int(time.time()), "exp": int(time.time()) + 3600,
-        })
+        payload_data = json.dumps(
+            {
+                "token_id": "cred_x",
+                "agent_name": "evil",
+                "scope": "*",
+                "iat": int(time.time()),
+                "exp": int(time.time()) + 3600,
+            }
+        )
         payload = base64.urlsafe_b64encode(payload_data.encode()).rstrip(b"=").decode()
         none_token = f"{header}.{payload}."
         with pytest.raises(Exception):
@@ -197,9 +211,7 @@ class TestJWTSecurity:
         padded = parts[1] + "=" * (4 - len(parts[1]) % 4)
         decoded = json.loads(base64.urlsafe_b64decode(padded))
         decoded["agent_name"] = "evil-agent"
-        new_payload = base64.urlsafe_b64encode(
-            json.dumps(decoded).encode()
-        ).rstrip(b"=").decode()
+        new_payload = base64.urlsafe_b64encode(json.dumps(decoded).encode()).rstrip(b"=").decode()
         tampered = f"{parts[0]}.{new_payload}.{parts[2]}"
         with pytest.raises(Exception):
             cm.verify_credential(tampered)
@@ -207,9 +219,12 @@ class TestJWTSecurity:
     def test_expired_token_rejected(self) -> None:
         """A JWT with exp in the past must be rejected."""
         cm = CredentialManager()
-        expired_token = _make_jwt(cm.secret_key, {
-            "exp": int(time.time()) - 3600,  # 1 hour ago
-        })
+        expired_token = _make_jwt(
+            cm.secret_key,
+            {
+                "exp": int(time.time()) - 3600,  # 1 hour ago
+            },
+        )
         with pytest.raises(Exception):
             cm.verify_credential(expired_token)
 
@@ -255,6 +270,7 @@ class TestJWTSecurity:
         try:
             from cryptography.hazmat.backends import default_backend
             from cryptography.hazmat.primitives.asymmetric import rsa
+
             private_key = rsa.generate_private_key(
                 public_exponent=65537, key_size=2048, backend=default_backend()
             )
@@ -360,8 +376,7 @@ class TestRateLimitBypass:
         """Calls 1-5 must be allowed; call 6 must be the first rejection (limit=5)."""
         engine = self._engine_with_limit(5)
         results = [
-            engine.check_tool_call("limited-agent", "tool", "tools/call")[0]
-            for _ in range(6)
+            engine.check_tool_call("limited-agent", "tool", "tools/call")[0] for _ in range(6)
         ]
         assert all(results[:5]), "Calls 1-5 must all be allowed"
         assert results[5] is False, "Call 6 must be rejected (limit=5, counter reaches 5)"
@@ -493,11 +508,13 @@ class TestJSONRPCAbuse:
         )
         # Pre-wire a mock http_client so _forward() doesn't assert
         p.http_client = AsyncMock()
-        p.http_client.post = AsyncMock(return_value=MagicMock(
-            content=json.dumps({"jsonrpc": "2.0", "result": {}, "id": 1}).encode(),
-            headers={"content-type": "application/json"},
-            text='',
-        ))
+        p.http_client.post = AsyncMock(
+            return_value=MagicMock(
+                content=json.dumps({"jsonrpc": "2.0", "result": {}, "id": 1}).encode(),
+                headers={"content-type": "application/json"},
+                text="",
+            )
+        )
         return p
 
     @pytest.mark.asyncio
@@ -534,6 +551,7 @@ class TestJSONRPCAbuse:
 
     def test_json_depth_at_limit_accepted(self) -> None:
         """JSON nesting exactly at MAX_JSON_DEPTH must be accepted."""
+
         def nest(depth: int) -> Any:
             if depth == 0:
                 return "leaf"
@@ -549,6 +567,7 @@ class TestJSONRPCAbuse:
 
     def test_json_depth_over_limit_rejected(self) -> None:
         """JSON nesting MAX_JSON_DEPTH + 1 must raise ValueError."""
+
         def nest(depth: int) -> Any:
             if depth == 0:
                 return "leaf"
@@ -561,46 +580,48 @@ class TestJSONRPCAbuse:
             MCPSecurityProxy.sanitize_request(body)
 
     @pytest.mark.asyncio
-    async def test_sql_injection_in_tool_name_reaches_policy(
-        self, proxy: MCPSecurityProxy
-    ) -> None:
+    async def test_sql_injection_in_tool_name_reaches_policy(self, proxy: MCPSecurityProxy) -> None:
         """SQL injection in tool_name is forwarded unchanged — proxy does not sanitize params.
 
         This is documented behaviour (proxy is transport-layer, not WAF).
         """
         sqli_tool = "'; DROP TABLE agents; --"
-        body = json.dumps({
-            "jsonrpc": "2.0",
-            "method": "tools/call",
-            "params": {"name": sqli_tool, "arguments": {}},
-            "id": 1,
-        }).encode()
+        body = json.dumps(
+            {
+                "jsonrpc": "2.0",
+                "method": "tools/call",
+                "params": {"name": sqli_tool, "arguments": {}},
+                "id": 1,
+            }
+        ).encode()
         result, _ = await proxy.handle_jsonrpc(body, {"x-agent-name": "agent"})
         # Should forward (or block via policy), not crash
         assert isinstance(result, dict)
 
     @pytest.mark.asyncio
-    async def test_path_traversal_in_tool_params_forwarded(
-        self, proxy: MCPSecurityProxy
-    ) -> None:
+    async def test_path_traversal_in_tool_params_forwarded(self, proxy: MCPSecurityProxy) -> None:
         """Path traversal in params.arguments is forwarded to upstream — proxy does not sanitize.
 
         Documented info finding: upstream MCP server must handle this.
         """
-        body = json.dumps({
-            "jsonrpc": "2.0",
-            "method": "tools/call",
-            "params": {"name": "read_file", "arguments": {"path": "../../etc/passwd"}},
-            "id": 1,
-        }).encode()
+        body = json.dumps(
+            {
+                "jsonrpc": "2.0",
+                "method": "tools/call",
+                "params": {"name": "read_file", "arguments": {"path": "../../etc/passwd"}},
+                "id": 1,
+            }
+        ).encode()
         result, _ = await proxy.handle_jsonrpc(body, {"x-agent-name": "agent"})
         assert isinstance(result, dict)
 
     def test_batch_request_rejected(self) -> None:
         """JSON array (batch request) must be rejected — not a dict."""
-        body = json.dumps([
-            {"jsonrpc": "2.0", "method": "tools/call", "id": 1},
-        ]).encode()
+        body = json.dumps(
+            [
+                {"jsonrpc": "2.0", "method": "tools/call", "id": 1},
+            ]
+        ).encode()
         with pytest.raises(ValueError, match="object"):
             MCPSecurityProxy.parse_jsonrpc(body)
 
@@ -645,6 +666,7 @@ class TestPathTraversal:
     async def test_dotdot_slash_blocked(self, dashboard_app: Any) -> None:
         """../../etc/passwd must serve index.html, not the actual file."""
         import httpx
+
         async with httpx.AsyncClient(
             transport=httpx.ASGITransport(app=dashboard_app), base_url="http://test"
         ) as client:
@@ -656,6 +678,7 @@ class TestPathTraversal:
     async def test_valid_file_served(self, dashboard_app: Any) -> None:
         """A legitimate file inside DASHBOARD_DIR must be served normally."""
         import httpx
+
         async with httpx.AsyncClient(
             transport=httpx.ASGITransport(app=dashboard_app), base_url="http://test"
         ) as client:
@@ -667,6 +690,7 @@ class TestPathTraversal:
     async def test_nonexistent_file_spa_fallback(self, dashboard_app: Any) -> None:
         """A non-existent path must fall back to index.html (SPA routing)."""
         import httpx
+
         async with httpx.AsyncClient(
             transport=httpx.ASGITransport(app=dashboard_app), base_url="http://test"
         ) as client:
@@ -689,9 +713,7 @@ class TestPathTraversal:
         ) as client:
             resp = await client.get("/evil_link/passwd")
         assert resp.status_code == 200
-        assert "<html>index</html>" in resp.text, (
-            "Symlink traversal outside root was not blocked"
-        )
+        assert "<html>index</html>" in resp.text, "Symlink traversal outside root was not blocked"
 
     @pytest.mark.asyncio
     async def test_dotdot_in_middle_blocked(self, dashboard_app: Any) -> None:
@@ -703,6 +725,7 @@ class TestPathTraversal:
         built-in normalization as the first line of defence.
         """
         import httpx
+
         async with httpx.AsyncClient(
             transport=httpx.ASGITransport(app=dashboard_app), base_url="http://test"
         ) as client:
@@ -725,6 +748,7 @@ class TestCORSBehavior:
 
     def _make_cors_app(self, monkeypatch: Any, origins: list[str], credentials: bool) -> Any:
         import navil.api.local.app as app_module
+
         monkeypatch.setattr(app_module, "_allow_origins", origins)
         monkeypatch.setattr(app_module, "_allow_credentials", credentials)
         return app_module.create_app(with_demo=False)
@@ -763,9 +787,7 @@ class TestCORSBehavior:
         async with httpx.AsyncClient(
             transport=httpx.ASGITransport(app=app), base_url="http://test"
         ) as client:
-            resp = await client.get(
-                "/api/local/overview", headers={"Origin": "http://evil.com"}
-            )
+            resp = await client.get("/api/local/overview", headers={"Origin": "http://evil.com"})
         # No Access-Control-Allow-Origin for an unrecognised origin
         acao = resp.headers.get("access-control-allow-origin", "")
         assert acao != "http://evil.com", "Evil origin must not be allowed"
@@ -781,9 +803,7 @@ class TestCORSBehavior:
         async with httpx.AsyncClient(
             transport=httpx.ASGITransport(app=app), base_url="http://test"
         ) as client:
-            resp = await client.get(
-                "/api/local/overview", headers={"Origin": "http://any.com"}
-            )
+            resp = await client.get("/api/local/overview", headers={"Origin": "http://any.com"})
         acao = resp.headers.get("access-control-allow-origin", "")
         assert not acao, "No origin should be allowed when origins list is empty"
 
@@ -945,12 +965,14 @@ class TestPolicyBypass:
         upstream = {"jsonrpc": "2.0", "result": {"content": "secret"}, "id": 1}
         proxy._forward = _mock_forward(upstream)
 
-        body = json.dumps({
-            "jsonrpc": "2.0",
-            "method": "tools/call",
-            "params": {"name": "forbidden_tool", "arguments": {}},
-            "id": 1,
-        }).encode()
+        body = json.dumps(
+            {
+                "jsonrpc": "2.0",
+                "method": "tools/call",
+                "params": {"name": "forbidden_tool", "arguments": {}},
+                "id": 1,
+            }
+        ).encode()
 
         result, _ = await proxy.handle_jsonrpc(body, {"x-agent-name": "agent-x"})
         assert result.get("error", {}).get("code") == -32001, (
@@ -1180,7 +1202,8 @@ class TestRotationEdgeCases:
         if len(results) == 2:
             # Both rotations succeeded — count ACTIVE credentials for agent-a
             active = [
-                v for v in cm.credentials.values()
+                v
+                for v in cm.credentials.values()
                 if v.agent_name == "agent-a" and v.status == CredentialStatus.ACTIVE
             ]
             assert len(active) <= 1, (

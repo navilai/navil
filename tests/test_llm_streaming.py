@@ -400,7 +400,7 @@ class TestSSEEndpoints:
             nonlocal call_count
             call_count += 1
             fresh_json = (
-                '{"explanation": "fresh", "risks": [],' ' "remediations": [], "severity": "LOW"}'
+                '{"explanation": "fresh", "risks": [], "remediations": [], "severity": "LOW"}'
             )
             return iter([fresh_json])
 
