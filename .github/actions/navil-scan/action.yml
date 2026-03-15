@@ -1,0 +1,91 @@
+name: "Navil MCP Security Scan"
+description: "Scan MCP server configurations for vulnerabilities using Navil"
+branding:
+  icon: "shield"
+  color: "blue"
+
+inputs:
+  config-path:
+    description: "Path to MCP configuration file"
+    required: false
+    default: ".mcp.json"
+  fail-threshold:
+    description: "Minimum security score (0-100). Action fails if the score is below this value."
+    required: false
+    default: "0"
+  format:
+    description: "Output format: sarif, json, or text"
+    required: false
+    default: "sarif"
+  navil-version:
+    description: "Navil version to install (default: latest)"
+    required: false
+    default: ""
+
+outputs:
+  security-score:
+    description: "The security score (0-100) from the scan"
+    value: ${{ steps.scan.outputs.security-score }}
+  sarif-file:
+    description: "Path to the SARIF output file (if format is sarif)"
+    value: ${{ steps.scan.outputs.sarif-file }}
+
+runs:
+  using: "composite"
+  steps:
+    - name: Set up Python
+      uses: actions/setup-python@v5
+      with:
+        python-version: "3.12"
+
+    - name: Install Navil
+      shell: bash
+      run: |
+        if [ -n "${{ inputs.navil-version }}" ]; then
+          pip install "navil==${{ inputs.navil-version }}"
+        else
+          pip install navil
+        fi
+
+    - name: Run Navil scan
+      id: scan
+      shell: bash
+      run: |
+        CONFIG="${{ inputs.config-path }}"
+        FORMAT="${{ inputs.format }}"
+        THRESHOLD="${{ inputs.fail-threshold }}"
+
+        if [ ! -f "$CONFIG" ]; then
+          echo "::error::Configuration file not found: $CONFIG"
+          exit 1
+        fi
+
+        # Run scan with JSON format to capture the score
+        SCORE=$(navil scan "$CONFIG" --format json | python3 -c "import sys,json; print(json.load(sys.stdin).get('security_score', 0))" 2>/dev/null || echo "0")
+        echo "security-score=$SCORE" >> "$GITHUB_OUTPUT"
+
+        # Run scan in the requested format
+        if [ "$FORMAT" = "sarif" ]; then
+          SARIF_FILE="navil-results.sarif"
+          navil scan "$CONFIG" --format sarif --output "$SARIF_FILE" || true
+          echo "sarif-file=$SARIF_FILE" >> "$GITHUB_OUTPUT"
+        elif [ "$FORMAT" = "json" ]; then
+          navil scan "$CONFIG" --format json || true
+        else
+          navil scan "$CONFIG" --format text || true
+        fi
+
+        # Check score against threshold
+        if [ "$THRESHOLD" -gt 0 ] 2>/dev/null; then
+          if [ "$SCORE" -lt "$THRESHOLD" ] 2>/dev/null; then
+            echo "::error::Security score ($SCORE) is below threshold ($THRESHOLD)"
+            exit 1
+          fi
+        fi
+
+    - name: Upload SARIF to GitHub Security
+      if: inputs.format == 'sarif' && always()
+      uses: github/codeql-action/upload-sarif@v3
+      with:
+        sarif_file: ${{ steps.scan.outputs.sarif-file }}
+      continue-on-error: true
