@@ -36,7 +36,7 @@
 
 Navil sits between your MCP clients and servers as a security proxy. It monitors, detects, and enforces — so your agents stay within bounds.
 
-> Developed by **[Pantheon Lab Limited](https://pantheonlab.ai)**.
+> Developed by **[Pantheon Lab Pte Ltd](https://github.com/ivanlkf/navil)**.
 
 ## Quick Start
 
@@ -152,7 +152,7 @@ python bench_total_latency.py   # Full session wall-clock
 ```
 
 <p align="center">
-  <img src="docs/screenshots/dashboard.png" alt="Navil Dashboard — Fleet overview with agent health, alerts, credential status, and policy decisions" width="800" />
+  <img src="docs/screenshots/dashboard.png" alt="Navil Dashboard — Fleet overview showing agent count, active alerts, invocations, credential status, agent health grid, and recent policy decisions" width="800" />
 </p>
 
 ## Features
@@ -175,8 +175,11 @@ YAML-driven tool/action allow-lists, per-agent rate limiting, data-sensitivity g
 ### LLM-Powered Analysis
 AI-powered config analysis, anomaly explanation, policy generation, and self-healing. Bring your own key — supports Anthropic, OpenAI, Gemini, and Ollama (fully local).
 
+### Analytics *(Navil Cloud)*
+Per-agent trust scores with behavioral profiling and anomaly trend analysis. Continuously scores every agent over time and surfaces risk trends before they become incidents.
+
 ### Credential Lifecycle
-Issue, rotate, and revoke JWT tokens with JIT provisioning, configurable TTL, usage tracking, and immutable audit logs.
+Issue, rotate, and revoke JWT tokens with JIT provisioning, configurable TTL, usage tracking, and immutable audit logs. Hardened with a global active-credential cap (500), auto-purge of expired credentials, thread-safe rotation (no TOCTOU races), and bearer-token auth on all credential endpoints (set `NAVIL_DASHBOARD_TOKEN`).
 
 ### Zero-Knowledge Telemetry
 Cloud sync anonymizes all agent identities with HMAC-SHA256, enforces a strict field allowlist, and actively blocks banned fields. Raw data never leaves your deployment. Fully opt-out with `NAVIL_DISABLE_CLOUD_SYNC=true`. See [Privacy Guarantees](#zero-knowledge-telemetry-details).
@@ -199,54 +202,70 @@ For the full system design, see **[ARCHITECTURE.md](ARCHITECTURE.md)**.
 
 ## Dashboard
 
-Navil ships with a full-featured security dashboard for visualizing and managing your MCP fleet.
+Navil ships with a full-featured 12-page security dashboard for visualizing and managing your MCP fleet.
 
 <table>
 <tr>
 <td width="50%">
 
-**Penetration Testing** — Run all 11 SAFE-MCP attack scenarios and see which threats your detectors catch.
+**Dashboard** — Fleet overview: agent count, active alerts, invocations, credential status, agent health grid, and recent policy decisions at a glance.
+
+<img src="docs/screenshots/dashboard.png" alt="Dashboard — fleet overview with stats and agent health" />
+
+</td>
+<td width="50%">
+
+**Gateway** — Configure and start the MCP Security Proxy. Intercepts agent-to-tool traffic in real time, enforcing policies and blocking anomalies.
+
+<img src="docs/screenshots/gateway.png" alt="Gateway — proxy configuration and start" />
+
+</td>
+</tr>
+<tr>
+<td width="50%">
+
+**Penetration Testing** — Run all 11 SAFE-MCP attack scenarios (reconnaissance, supply chain, c2 beaconing, rug pull, and more) and see which threats your detectors catch.
 
 <img src="docs/screenshots/pentest.png" alt="Pentest — 11/11 attacks detected" />
 
 </td>
 <td width="50%">
 
-**Config Scanner** — Paste any MCP server config and get a security score with actionable findings.
+**Config Scanner** — Paste any MCP server config and get a 0–100 security score with CRITICAL/HIGH findings and actionable remediation steps.
 
-<img src="docs/screenshots/scanner.png" alt="Scanner — vulnerability scan results" />
-
-</td>
-</tr>
-<tr>
-<td width="50%">
-
-**Self-Healing AI** — LLM-powered threat analysis with one-click remediation actions.
-
-<img src="docs/screenshots/self-healing.png" alt="Self-Healing — AI remediation suggestions" />
-
-</td>
-<td width="50%">
-
-**Alerts** — Real-time anomaly alerts with severity filtering across your agent fleet.
-
-<img src="docs/screenshots/alerts.png" alt="Alerts — anomaly detection alerts" />
+<img src="docs/screenshots/scanner.png" alt="Config Scanner — vulnerability scan results" />
 
 </td>
 </tr>
 <tr>
 <td width="50%">
 
-**Policy Engine** — Check permissions, review decisions, and generate YAML policies with AI.
+**Self-Healing AI** — Analyze threats and apply AI-generated remediation actions (credential rotation, policy updates, alert escalation) with confidence scores.
 
-<img src="docs/screenshots/policy.png" alt="Policy — permission checks and AI generation" />
+<img src="docs/screenshots/self-healing.png" alt="Self-Healing — AI remediation actions with confidence scores" />
 
 </td>
 <td width="50%">
 
-**Gateway** — MCP security proxy with real-time traffic monitoring and interception.
+**Alerts** — Real-time anomaly alerts with CRITICAL / HIGH / MEDIUM / LOW severity filtering across your agent fleet.
 
-<img src="docs/screenshots/gateway.png" alt="Gateway — proxy configuration" />
+<img src="docs/screenshots/alerts.png" alt="Alerts — anomaly detection alerts with severity filters" />
+
+</td>
+</tr>
+<tr>
+<td width="50%">
+
+**Policy Engine** — Check permissions for any agent/tool/action pair, review the live decision log, and generate YAML policies from natural language.
+
+<img src="docs/screenshots/policy.png" alt="Policy — permission check form, decision log, AI policy generation" />
+
+</td>
+<td width="50%">
+
+**Analytics** *(Navil Cloud)* — Per-agent trust scores with behavioral profiling and anomaly trend analysis. Surfaces drift before it becomes an incident.
+
+<img src="docs/screenshots/analytics.png" alt="Analytics — Navil Cloud agent risk scoring upsell" />
 
 </td>
 </tr>
@@ -257,10 +276,9 @@ Navil ships with a full-featured security dashboard for visualizing and managing
 
 | Page | Screenshot |
 |------|-----------|
-| Agents | <img src="docs/screenshots/agents.png" alt="Agents" width="600" /> |
-| Credentials | <img src="docs/screenshots/credentials.png" alt="Credentials" width="600" /> |
-| Feedback | <img src="docs/screenshots/feedback.png" alt="Feedback" width="600" /> |
-| Settings | <img src="docs/screenshots/settings.png" alt="Settings" width="600" /> |
+| Agents | <img src="docs/screenshots/agents.png" alt="Agents — fleet table with observations, alerts, and tool usage" width="600" /> |
+| Credentials | <img src="docs/screenshots/credentials.png" alt="Credentials — issue and revoke JWT tokens" width="600" /> |
+| Settings | <img src="docs/screenshots/settings.png" alt="Settings — subscription tier, LLM config, authentication" width="600" /> |
 
 </details>
 
@@ -431,8 +449,11 @@ navil policy check --tool file_system --agent my-agent --action read
 | `NAVIL_PORT` | `8080` | Rust proxy listen port |
 | `NAVIL_DISABLE_CLOUD_SYNC` | `false` | Disable cloud telemetry sync |
 | `NAVIL_API_KEY` | *(none)* | Navil Cloud API key (paid mode) |
-| `NAVIL_INTEL_SYNC_INTERVAL` | `3600` | Seconds between cloud sync cycles |
+| `NAVIL_INTEL_SYNC_INTERVAL` | `3600` | Seconds between outbound cloud sync cycles |
+| `NAVIL_INTEL_FETCH_INTERVAL` | `3600` | Seconds between inbound pattern fetch cycles |
 | `NAVIL_DEPLOYMENT_SECRET` | *(auto-generated)* | Secret for HMAC agent anonymization |
+| `NAVIL_CLOUD_URL` | `https://api.navil.ai` | Navil Cloud API base URL |
+| `NAVIL_DASHBOARD_TOKEN` | *(none)* | Bearer token for credential endpoints (unset = open in dev) |
 | `ANTHROPIC_API_KEY` | *(none)* | Anthropic API key for LLM features |
 | `OPENAI_API_KEY` | *(none)* | OpenAI API key for LLM features |
 | `GEMINI_API_KEY` | *(none)* | Google Gemini API key for LLM features |
@@ -457,13 +478,14 @@ Navil operates on a **Mutual Defense** model. AI threats evolve in minutes, not 
 
 **The Give:** Your local Navil instance detects a new attack pattern and sends a sanitized metadata snippet — anomaly type, severity, confidence score, tool name, and timing — to the central hub. Agent identities are HMAC-anonymized. Raw data never leaves your machine. You can audit exactly what is sent by inspecting [`navil/cloud/telemetry_sync.py`](navil/cloud/telemetry_sync.py).
 
-**The Get:** In exchange, your instance receives real-time updates from the **Global Threat Blocklist** — a curated feed of malicious patterns discovered by thousands of other Navil nodes, applied instantly to your local detectors and Rust proxy.
+**The Get:** In exchange, your instance receives real-time updates from the **Global Threat Blocklist** — a curated feed of malicious patterns discovered by thousands of other Navil nodes. The built-in `ThreatIntelFetcher` polls `GET /v1/threat-intel/patterns` on startup and periodically thereafter, publishing patterns to the local `PatternStore` for confidence-boosted anomaly detection.
 
 ### Privacy-First Architecture
 
 1. **Local Sanitization** — All telemetry is stripped of PII, secrets, and raw prompt content on your machine before it ever reaches our servers.
 2. **No Raw Data** — We never see your AI's conversations. We only see the *shape* of the attack (anomaly type, severity, timing, tool name).
-3. **Full Transparency** — You can audit exactly what is being sent by inspecting [`navil/cloud/telemetry_sync.py`](navil/cloud/telemetry_sync.py).
+3. **Deterministic Deduplication** — Each sync event carries a UUID5 `event_uuid` so the cloud can deduplicate without storing raw identifiers.
+4. **Full Transparency** — You can audit exactly what is being sent by inspecting [`navil/cloud/telemetry_sync.py`](navil/cloud/telemetry_sync.py).
 
 ### Tiered Participation
 
@@ -489,7 +511,7 @@ NAVIL_API_KEY=nvl_your_key NAVIL_DISABLE_CLOUD_SYNC=true navil cloud serve
 # Install dev dependencies
 pip install -e ".[dev]"
 
-# Run tests (373 tests)
+# Run tests (473 tests)
 pytest
 
 # Lint
@@ -526,4 +548,4 @@ Navil uses a dual-license model:
 
 **BSL 1.1** — free for internal use and self-hosting. You may not offer the Licensed Work as a competing hosted service. Each release converts to Apache 2.0 four years after its publication date.
 
-Commercial licensing enquiries: info@pantheonlab.ai
+Commercial licensing enquiries: https://github.com/ivanlkf/navil/issues

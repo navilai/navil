@@ -1,4 +1,4 @@
-# Copyright (c) 2026 Pantheon Lab Limited
+# Copyright (c) 2026 Pantheon Lab Pte Ltd
 # Licensed under the Business Source License 1.1 (see LICENSE.cloud)
 """Database engine and session management for Navil Cloud.
 

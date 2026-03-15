@@ -8,6 +8,7 @@ Enforces least-privilege access, detects suspicious patterns, and logs all decis
 from __future__ import annotations
 
 import logging
+import threading
 import time
 from dataclasses import dataclass
 from datetime import datetime, timezone
@@ -66,6 +67,7 @@ class PolicyEngine:
         self.policy: dict[str, Any] = {}
         self.decisions_log: list[PolicyEvaluationResult] = []
         self.rate_limits: dict[str, dict[str, int]] = {}
+        self._rate_limit_lock = threading.Lock()
         self._load_policy()
 
     def _load_policy(self) -> None:
@@ -211,8 +213,8 @@ class PolicyEngine:
         tools = self.policy.get("tools", {})
         tool_policy = tools.get(tool_name, {})
 
-        # Check allowed actions
-        allowed_actions = tool_policy.get("allowed_actions", ["read"])
+        # Check allowed actions (default includes standard MCP methods)
+        allowed_actions = tool_policy.get("allowed_actions", ["read", "tools/call", "tools/list"])
         if action not in allowed_actions and "*" not in allowed_actions:
             return False
 
@@ -221,31 +223,35 @@ class PolicyEngine:
         return action not in action_restrictions
 
     def _check_rate_limit(self, agent_name: str, tool_name: str) -> bool:
-        """Check if rate limit is exceeded."""
+        """Check if rate limit is exceeded (thread-safe)."""
         agents = self.policy.get("agents", {})
         agent_policy = agents.get(agent_name, {})
-
         rate_limit = agent_policy.get("rate_limit_per_hour", 1000)
 
-        key = f"{agent_name}:{tool_name}"
-        if key not in self.rate_limits:
-            self.rate_limits[key] = {"count": 0, "reset_at": 0}
-
+        key = (agent_name, tool_name)
         current_time = int(time.time())
-        limit_data = self.rate_limits[key]
 
-        # Reset if hour has passed
-        if current_time - limit_data["reset_at"] > 3600:
-            limit_data["count"] = 0
-            limit_data["reset_at"] = current_time
+        with self._rate_limit_lock:
+            if key not in self.rate_limits:
+                self.rate_limits[key] = {"count": 0, "reset_at": current_time}
 
-        # Check if within limit
-        if limit_data["count"] >= rate_limit:
-            return False
+            limit_data = self.rate_limits[key]
 
-        # Increment counter
-        limit_data["count"] += 1
-        return True
+            # Reset if hour has passed
+            if current_time - limit_data["reset_at"] > 3600:
+                limit_data["count"] = 0
+                limit_data["reset_at"] = current_time
+
+            # rate_limit=0 means unlimited (no cap)
+            if rate_limit == 0:
+                return True
+
+            # Atomic check-and-increment
+            if limit_data["count"] >= rate_limit:
+                return False
+
+            limit_data["count"] += 1
+            return True
 
     def _is_agent_allowed_sensitivity(self, agent_name: str, sensitivity: str) -> bool:
         """Check if agent has clearance for data sensitivity level."""

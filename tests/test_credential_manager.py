@@ -118,3 +118,28 @@ def test_no_log_path(cm_no_log: CredentialManager) -> None:
 def test_get_credential_info_nonexistent(cm: CredentialManager) -> None:
     """Getting info for nonexistent credential returns empty dict."""
     assert cm.get_credential_info("cred_nonexistent") == {}
+
+
+def test_default_secret_key_has_sufficient_entropy() -> None:
+    """Auto-generated secret key must have at least 64 bytes of entropy.
+
+    secrets.token_urlsafe(n) produces a base64url string of length ceil(n * 4/3).
+    64 bytes → at least 86 characters.
+    """
+    cm = CredentialManager()
+    assert len(cm.secret_key) >= 86, (
+        f"Secret key too short: {len(cm.secret_key)} chars (need ≥86 for 64 bytes entropy)"
+    )
+
+
+def test_token_id_has_sufficient_entropy() -> None:
+    """Token IDs must be long enough to prevent collision attacks at scale."""
+    cm = CredentialManager()
+    cred = cm.issue_credential("agent-x", "read:tools")
+    token_id = cred["token_id"]
+    # cred_{32 hex bytes} = "cred_" (5 chars) + 64 hex chars
+    assert token_id.startswith("cred_")
+    hex_part = token_id[len("cred_"):]
+    assert len(hex_part) == 64, (
+        f"Token ID hex part too short: {len(hex_part)} chars (need 64 for 256-bit)"
+    )
