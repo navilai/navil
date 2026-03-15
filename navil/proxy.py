@@ -18,6 +18,7 @@ from __future__ import annotations
 import asyncio
 import hashlib
 import hmac
+import json
 import logging
 import time
 from collections import deque
@@ -26,6 +27,11 @@ from typing import Any
 
 import httpx
 import orjson
+
+try:
+    import jwt as pyjwt  # PyJWT for standalone JWT parsing
+except ModuleNotFoundError:
+    pyjwt = None  # type: ignore[assignment]
 
 from navil.telemetry_event import TELEMETRY_QUEUE, build_telemetry_event
 
@@ -172,24 +178,93 @@ class MCPSecurityProxy:
 
     # ── Identity ──────────────────────────────────────────────
 
-    def extract_agent_name(self, headers: dict[str, str]) -> str | None:
-        """Extract agent identity from request headers.
+    def extract_identity(self, headers: dict[str, str], body: bytes = b"") -> dict[str, Any]:
+        """Extract full identity from request headers.
+
+        Returns a dict with keys:
+        - agent_name: str | None
+        - human_context: dict | None  (sub, email, roles)
+        - delegation_chain: list[str]
+        - is_jwt: bool  (True if authenticated via JWT)
+        - error: str | None  (set when Bearer token is present but invalid)
 
         Checks Authorization header (Bearer JWT) first. If a Bearer token is
-        present but fails verification, returns None — never falls back to
-        X-Agent-Name to prevent auth bypass.
+        present but fails verification, returns agent_name=None — never falls
+        back to X-Agent-Name to prevent auth bypass.
 
-        X-Agent-Name is only honoured when no Bearer token was attempted and
-        require_auth is False.
+        HMAC-authenticated requests do NOT get human_context or delegation_chain.
         """
+        result: dict[str, Any] = {
+            "agent_name": None,
+            "human_context": None,
+            "delegation_chain": [],
+            "is_jwt": False,
+            "error": None,
+        }
+
         auth = headers.get("authorization", "")
         if auth.startswith("Bearer "):
             token = auth[7:]
-            # Try JWT verification first
+
+            # Standalone JWT parsing (HS256) per proxy-interface-spec.md Section 3
+            jwt_secret = getattr(self.credential_manager, "secret_key", None)
+            if pyjwt is not None and jwt_secret:
+                try:
+                    payload = pyjwt.decode(
+                        token,
+                        jwt_secret,
+                        algorithms=["HS256"],
+                        options={
+                            "verify_exp": False,  # We check exp manually (ISO 8601 strings)
+                            "verify_iat": False,  # iat is ISO 8601 string, not numeric
+                        },
+                    )
+                    # Verify required claims are present
+                    if "agent_name" not in payload:
+                        result["error"] = "JWT missing required claim: agent_name"
+                        return result
+                    # Manual expiry check (ISO 8601 string, not numeric)
+                    exp_str = payload.get("exp", "")
+                    if isinstance(exp_str, str) and exp_str:
+                        try:
+                            exp_dt = datetime.fromisoformat(exp_str)
+                            if exp_dt < datetime.now(timezone.utc):
+                                result["error"] = "Token has expired"
+                                return result
+                        except ValueError:
+                            pass
+                    elif isinstance(exp_str, (int, float)):
+                        # Numeric exp (standard JWT) — compare directly
+                        if exp_str < time.time():
+                            result["error"] = "Token has expired"
+                            return result
+
+                    result["agent_name"] = payload.get("agent_name")
+                    result["human_context"] = payload.get("human_context")
+                    result["delegation_chain"] = payload.get("delegation_chain", []) or []
+                    result["is_jwt"] = True
+                    result["token_id"] = payload.get("token_id")
+                    result["scope"] = payload.get("scope", "")
+                    return result
+                except pyjwt.InvalidSignatureError:
+                    result["error"] = "JWT validation failed: invalid signature"
+                    return result
+                except pyjwt.DecodeError as exc:
+                    result["error"] = f"JWT validation failed: {exc}"
+                    return result
+                except Exception as exc:
+                    result["error"] = f"JWT validation failed: {exc}"
+                    return result
+
+            # Fallback to credential_manager.verify_credential
             try:
                 payload = self.credential_manager.verify_credential(token)
                 if payload and "agent_name" in payload:
-                    return payload["agent_name"]
+                    result["agent_name"] = payload["agent_name"]
+                    result["human_context"] = payload.get("human_context")
+                    result["delegation_chain"] = payload.get("delegation_chain", []) or []
+                    result["is_jwt"] = True
+                    return result
             except Exception:
                 pass
             # Fallback: match token against stored credentials (constant-time comparison)
@@ -199,16 +274,84 @@ class MCPSecurityProxy:
                     status_str = status.value if hasattr(status, "value") else str(status)
                     try:
                         token_match = hmac.compare_digest(cred.token.encode(), token.encode())
-                    except Exception:
+                    except Exception as exc:
+                        logger.warning("Credential token comparison error: %s", exc)
                         token_match = False
                     if token_match and status_str == "ACTIVE":
-                        return cred.agent_name
+                        result["agent_name"] = cred.agent_name
+                        result["human_context"] = getattr(cred, "human_context", None)
+                        result["delegation_chain"] = getattr(cred, "delegation_chain", []) or []
+                        result["is_jwt"] = True
+                        return result
             # Bearer was attempted but failed — do NOT fall through to X-Agent-Name
+            return result
+
+        # HMAC verification path
+        sig = headers.get("x-navil-signature", "")
+        if sig:
+            # Verify HMAC if we have a secret — reject if no secret configured
+            secret = getattr(self.credential_manager, "secret_key", None)
+            if not secret:
+                logger.warning("HMAC signature presented but no secret_key configured — rejecting")
+                return result  # no secret → cannot verify → unauthenticated
+            try:
+                sig_value = sig.removeprefix("sha256=")
+                expected = hmac.new(
+                    secret.encode(),
+                    body,
+                    hashlib.sha256,
+                ).hexdigest()
+                if not hmac.compare_digest(expected, sig_value):
+                    return result  # signature mismatch → unauthenticated
+                # HMAC-authenticated requests get agent_name from header
+                result["agent_name"] = headers.get("x-agent-name")
+                return result
+            except Exception as exc:
+                logger.warning("HMAC verification error: %s", exc)
+                return result  # verification failed → unauthenticated
+
+        # No Bearer token and no HMAC: only honour X-Agent-Name when auth is not required
+        if not self.require_auth:
+            result["agent_name"] = headers.get("x-agent-name")
+        return result
+
+    def extract_agent_name(self, headers: dict[str, str], body: bytes = b"") -> str | None:
+        """Extract agent identity from request headers (backward compat wrapper)."""
+        return self.extract_identity(headers, body=body)["agent_name"]
+
+    async def _verify_delegation_chain(self, chain: list[str]) -> str | None:
+        """Verify all ancestors in a delegation chain are ACTIVE.
+
+        Returns None on success, or an error message if any ancestor is not active.
+        Uses Redis MGET for a single round trip.
+        """
+        if not chain:
             return None
 
-        # No Bearer token: only honour X-Agent-Name when auth is not required
-        if not self.require_auth:
-            return headers.get("x-agent-name")
+        if len(chain) > 10:
+            return "Delegation chain too deep"
+
+        if self.redis_client is not None:
+            try:
+                # Single MGET round trip for all ancestor status keys (per spec Section 6.2)
+                keys = [f"navil:cred:{cred_id}:status" for cred_id in chain]
+                results = await self.redis_client.mget(*keys)
+
+                for i, status in enumerate(results):
+                    if isinstance(status, bytes):
+                        status = status.decode()
+                    if status != "ACTIVE":
+                        return f"Ancestor credential {chain[i]} is not active"
+                return None
+            except Exception as e:
+                # Fail-closed: delegation chain verification is security-critical
+                return f"Redis chain verification failed: {e}"
+
+        # No Redis: use credential manager to check statuses
+        for cred_id in chain:
+            cred = self.credential_manager._load_credential(cred_id)
+            if cred is None or cred.status != "ACTIVE":
+                return f"Ancestor credential {cred_id} is not active"
         return None
 
     # ── Core Request Handler ──────────────────────────────────
@@ -238,14 +381,34 @@ class MCPSecurityProxy:
         req_id = parsed["id"]
         method = parsed["method"]
 
-        # Extract identity
-        agent_name = self.extract_agent_name(headers)
+        # Extract identity (JWT → HMAC → anonymous)
+        identity = self.extract_identity(headers, body=body)
+        agent_name = identity["agent_name"]
+        human_context = identity["human_context"]
+        delegation_chain = identity["delegation_chain"]
+        is_jwt = identity["is_jwt"]
+        auth_error = identity.get("error")
+
+        # If JWT was present but validation failed, reject immediately (no fallback)
+        if auth_error:
+            self.stats["blocked"] += 1
+            self._log_traffic(agent_name, method, "", "AUTH_REQUIRED", 0, 0)
+            return self._jsonrpc_error(-32003, auth_error, req_id), {}
+
         if self.require_auth and not agent_name:
             self.stats["blocked"] += 1
             self._log_traffic(agent_name, method, "", "AUTH_REQUIRED", 0, 0)
             return self._jsonrpc_error(-32003, "Authentication required", req_id), {}
 
         agent_name = agent_name or "anonymous"
+
+        # Delegation chain verification (JWT path only, security-critical — fail closed)
+        if is_jwt and delegation_chain:
+            chain_error = await self._verify_delegation_chain(delegation_chain)
+            if chain_error:
+                self.stats["blocked"] += 1
+                self._log_traffic(agent_name, method, "", "AUTH_REQUIRED", 0, 0)
+                return self._jsonrpc_error(-32003, chain_error, req_id), {}
 
         # Pre-execution checks (only for tools/call)
         if method == "tools/call":
@@ -284,11 +447,29 @@ class MCPSecurityProxy:
                 return self._jsonrpc_error(-32002, msg, req_id), {}
 
             # Forward to upstream
-            response_data, response_bytes, upstream_hdrs = await self._forward(body, headers)
+            response_data, response_bytes, upstream_hdrs = await self._forward(
+                    body, headers,
+                    agent_name=agent_name,
+                    human_context=human_context,
+                    delegation_chain=delegation_chain,
+                    is_jwt=is_jwt,
+                )
             duration_ms = int((time.time() - start) * 1000)
 
             self.stats["forwarded"] += 1
             self._log_traffic(agent_name, method, tool_name, "ALLOWED", duration_ms, response_bytes)
+
+            # Audit log: every tool call records Agent ID + human email
+            human_email = human_context.get("email") if human_context else None
+            delegation_depth = len(delegation_chain) if delegation_chain else 0
+            logger.info(
+                "AUDIT tool_call agent=%s tool=%s human_email=%s delegation_depth=%d duration_ms=%d",
+                agent_name,
+                tool_name,
+                human_email or "(none)",
+                delegation_depth,
+                duration_ms,
+            )
 
             # Heavy anomaly detection + telemetry → background task
             asyncio.create_task(
@@ -300,6 +481,8 @@ class MCPSecurityProxy:
                     duration_ms=duration_ms,
                     response_data=response_data,
                     response_bytes=response_bytes,
+                    human_context=human_context,
+                    delegation_chain=delegation_chain,
                 )
             )
 
@@ -307,7 +490,13 @@ class MCPSecurityProxy:
 
         elif method == "tools/list":
             # Forward tools/list and track registered tools
-            response_data, response_bytes, upstream_hdrs = await self._forward(body, headers)
+            response_data, response_bytes, upstream_hdrs = await self._forward(
+                    body, headers,
+                    agent_name=agent_name,
+                    human_context=human_context,
+                    delegation_chain=delegation_chain,
+                    is_jwt=is_jwt,
+                )
             duration_ms = int((time.time() - start) * 1000)
 
             # Extract tool names from response for supply chain tracking
@@ -337,7 +526,13 @@ class MCPSecurityProxy:
 
         else:
             # Forward all other methods transparently
-            response_data, response_bytes, upstream_hdrs = await self._forward(body, headers)
+            response_data, response_bytes, upstream_hdrs = await self._forward(
+                    body, headers,
+                    agent_name=agent_name,
+                    human_context=human_context,
+                    delegation_chain=delegation_chain,
+                    is_jwt=is_jwt,
+                )
             duration_ms = int((time.time() - start) * 1000)
             self.stats["forwarded"] += 1
             self._log_traffic(agent_name, method, "", "FORWARDED", duration_ms, response_bytes)
@@ -354,11 +549,17 @@ class MCPSecurityProxy:
         duration_ms: int,
         response_data: dict[str, Any],
         response_bytes: int,
+        human_context: dict | None = None,
+        delegation_chain: list[str] | None = None,
     ) -> None:
         """Run heavy anomaly detection off the hot path."""
         try:
             args_bytes = orjson.dumps(arguments, option=orjson.OPT_SORT_KEYS)
             args_hash = hashlib.sha256(args_bytes).hexdigest()
+
+            # Identity-enriched telemetry fields
+            delegation_depth = len(delegation_chain) if delegation_chain else 0
+            human_email = human_context.get("email") if human_context else None
 
             # Redis LPUSH path: enqueue canonical event and return early.
             # The TelemetryWorker will consume and run full detection.
@@ -374,6 +575,8 @@ class MCPSecurityProxy:
                     target_server=self.target_url,
                     arguments_hash=args_hash,
                     arguments_size_bytes=len(args_bytes),
+                    delegation_depth=delegation_depth,
+                    human_email=human_email,
                 )
                 await self.redis_client.lpush(TELEMETRY_QUEUE, event_bytes)
                 return
@@ -473,7 +676,13 @@ class MCPSecurityProxy:
     # ── Upstream Forwarding ───────────────────────────────────
 
     async def _forward(
-        self, body: bytes, headers: dict[str, str]
+        self,
+        body: bytes,
+        headers: dict[str, str],
+        agent_name: str = "anonymous",
+        human_context: dict | None = None,
+        delegation_chain: list[str] | None = None,
+        is_jwt: bool = False,
     ) -> tuple[dict[str, Any], int, dict[str, str]]:
         """Forward request to upstream MCP server via httpx.
 
@@ -489,6 +698,20 @@ class MCPSecurityProxy:
         }
         forward_headers["content-type"] = "application/json"
         forward_headers["accept"] = "application/json, text/event-stream"
+
+        # Identity header injection (per proxy-interface-spec.md Section 8)
+        forward_headers["x-agent-name"] = agent_name
+
+        if is_jwt:
+            # X-Delegation-Depth: always present for JWT-authenticated requests
+            chain = delegation_chain or []
+            forward_headers["x-delegation-depth"] = str(len(chain))
+
+            # X-Human-Identity and X-Human-Email: only if human_context is present
+            if human_context and human_context.get("sub"):
+                forward_headers["x-human-identity"] = human_context["sub"]
+            if human_context and human_context.get("email"):
+                forward_headers["x-human-email"] = human_context["email"]
 
         resp = await self.http_client.post(
             self.target_url,

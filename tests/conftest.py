@@ -40,7 +40,17 @@ class FakeRedis:
             return [None] * len(keys)
         return [h.get(k) for k in keys]
 
+    async def hget(self, name: str, key: str) -> bytes | None:
+        h = self._data.get(name, {})
+        if not isinstance(h, dict):
+            return None
+        return h.get(key)
+
     # ── String commands ────────────────────────────────────────
+
+    async def mget(self, *keys: str) -> list[bytes | None]:
+        """Return values for multiple string keys (MGET)."""
+        return [self._data.get(k) if isinstance(self._data.get(k), bytes) else None for k in keys]
 
     async def incr(self, name: str) -> int:
         val = int(self._data.get(name, b"0"))
