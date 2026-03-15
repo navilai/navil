@@ -208,8 +208,7 @@ class CredentialManager:
 
             if old_credential.status != CredentialStatus.ACTIVE:
                 raise ValueError(
-                    f"Cannot rotate credential with status "
-                    f"{old_credential.status.value}: {token_id}"
+                    f"Cannot rotate credential with status {old_credential.status}: {token_id}"
                 )
 
             # Mark old credential as expired BEFORE issuing new one
@@ -219,8 +218,7 @@ class CredentialManager:
             # Compute remaining TTL; if credential is expired, use a fresh 1-hour TTL
             remaining = int(
                 (
-                    datetime.fromisoformat(old_credential.expires_at)
-                    - datetime.now(timezone.utc)
+                    datetime.fromisoformat(old_credential.expires_at) - datetime.now(timezone.utc)
                 ).total_seconds()
             )
             ttl = remaining if remaining > 0 else 3600
