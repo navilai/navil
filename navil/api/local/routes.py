@@ -1,4 +1,4 @@
-# Copyright (c) 2026 Pantheon Lab Limited
+# Copyright (c) 2026 Pantheon Lab Pte Ltd
 # Licensed under the Business Source License 1.1 (see LICENSE.cloud)
 """REST API endpoints for the local Navil dashboard."""
 
@@ -13,9 +13,9 @@ from pathlib import Path
 from typing import Any
 
 import yaml
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, Request
 from fastapi.responses import StreamingResponse
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 
 from navil.api.local.state import AppState
 from navil.llm.cache import LLMResponseCache, cache_key
@@ -36,6 +36,27 @@ def _require_llm(s: AppState) -> None:
                 "error_type": "auth",
             },
         )
+
+
+def _require_dashboard_auth(request: Request) -> None:
+    """Verify dashboard bearer token for sensitive endpoints.
+
+    If NAVIL_DASHBOARD_TOKEN is set, all credential-management requests
+    must include ``Authorization: Bearer <token>``.  When the env var is
+    unset the guard is a no-op (local-only dev mode).
+    """
+    expected = os.environ.get("NAVIL_DASHBOARD_TOKEN", "").strip()
+    if not expected:
+        _logger.warning(
+            "NAVIL_DASHBOARD_TOKEN is not set — credential endpoints are unprotected. "
+            "Set this env var in production to require authentication."
+        )
+        return  # no token configured — allow (local dev mode)
+    auth_header = request.headers.get("authorization", "")
+    if not auth_header.startswith("Bearer "):
+        raise HTTPException(status_code=401, detail="Missing Authorization header")
+    if auth_header[7:] != expected:
+        raise HTTPException(status_code=401, detail="Invalid dashboard token")
 
 
 def _call_llm(fn: Any, *args: Any, **kwargs: Any) -> Any:
@@ -183,32 +204,32 @@ class ScanRequest(BaseModel):
 
 
 class InvocationRequest(BaseModel):
-    agent_name: str
-    tool_name: str
-    action: str
+    agent_name: str = Field(..., min_length=1, max_length=256)
+    tool_name: str = Field(..., min_length=1, max_length=256)
+    action: str = Field(..., min_length=1, max_length=128)
     duration_ms: int
     data_accessed_bytes: int = 0
     success: bool = True
 
 
 class CredentialIssueRequest(BaseModel):
-    agent_name: str
-    scope: str
-    ttl_seconds: int = 3600
+    agent_name: str = Field(..., min_length=1, max_length=256)
+    scope: str = Field(..., min_length=1, max_length=512)
+    ttl_seconds: int = Field(default=3600, ge=1, le=86400 * 365)
 
 
 class PolicyCheckRequest(BaseModel):
-    agent_name: str
-    tool_name: str
-    action: str
+    agent_name: str = Field(..., min_length=1, max_length=256)
+    tool_name: str = Field(..., min_length=1, max_length=256)
+    action: str = Field(..., min_length=1, max_length=128)
 
 
 class FeedbackRequest(BaseModel):
-    alert_timestamp: str
-    anomaly_type: str
-    agent_name: str
-    verdict: str
-    operator_notes: str = ""
+    alert_timestamp: str = Field(..., max_length=64)
+    anomaly_type: str = Field(..., max_length=128)
+    agent_name: str = Field(..., min_length=1, max_length=256)
+    verdict: str = Field(..., max_length=64)
+    operator_notes: str = Field(default="", max_length=2048)
 
 
 class ExplainAnomalyRequest(BaseModel):
@@ -220,12 +241,12 @@ class AnalyzeConfigRequest(BaseModel):
 
 
 class GeneratePolicyRequest(BaseModel):
-    description: str
+    description: str = Field(..., min_length=1, max_length=4096)
 
 
 class RefinePolicyRequest(BaseModel):
     existing_policy: dict[str, Any]
-    instruction: str
+    instruction: str = Field(..., min_length=1, max_length=4096)
 
 
 class ApplyActionRequest(BaseModel):
@@ -233,14 +254,14 @@ class ApplyActionRequest(BaseModel):
 
 
 class AutoRemediateRequest(BaseModel):
-    confidence_threshold: float = 0.9
+    confidence_threshold: float = Field(default=0.9, ge=0.0, le=1.0)
 
 
 class LLMConfigRequest(BaseModel):
-    provider: str
-    api_key: str
-    base_url: str = ""
-    model: str = ""
+    provider: str = Field(..., max_length=64)
+    api_key: str = Field(..., max_length=512)
+    base_url: str = Field(default="", max_length=512)
+    model: str = Field(default="", max_length=128)
 
 
 # ── Overview ────────────────────────────────────────────────
@@ -390,13 +411,13 @@ async def record_invocation(req: InvocationRequest) -> dict[str, str]:
 # ── Credentials ─────────────────────────────────────────────
 
 
-@router.get("/credentials")
+@router.get("/credentials", dependencies=[Depends(_require_dashboard_auth)])
 def list_credentials(agent: str | None = None) -> list[dict[str, Any]]:
     s = AppState.get()
     return s.credential_manager.list_credentials(agent_name=agent)
 
 
-@router.post("/credentials")
+@router.post("/credentials", dependencies=[Depends(_require_dashboard_auth)])
 def issue_credential(req: CredentialIssueRequest) -> dict[str, Any]:
     s = AppState.get()
     return s.credential_manager.issue_credential(
@@ -406,7 +427,7 @@ def issue_credential(req: CredentialIssueRequest) -> dict[str, Any]:
     )
 
 
-@router.delete("/credentials/{token_id}")
+@router.delete("/credentials/{token_id}", dependencies=[Depends(_require_dashboard_auth)])
 def revoke_credential(token_id: str) -> dict[str, str]:
     s = AppState.get()
     try:

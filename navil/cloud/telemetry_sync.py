@@ -1,4 +1,4 @@
-# Copyright (c) 2026 Pantheon Lab Limited
+# Copyright (c) 2026 Pantheon Lab Pte Ltd
 # Licensed under the Business Source License 1.1 (see LICENSE.cloud)
 """Cloud Telemetry Sync — 'Give to Get' threat intelligence sharing.
 
@@ -38,6 +38,7 @@ import hashlib
 import hmac
 import logging
 import os
+import uuid
 from typing import Any
 
 logger = logging.getLogger(__name__)
@@ -57,6 +58,8 @@ ALLOWED_FIELDS: frozenset[str] = frozenset(
         "duration_ms",
         "timestamp",
         "action",
+        "event_uuid",  # deterministic dedup key for cloud backend
+        "tool_sequence_hash",  # SHA-256 of tool execution chain (optional)
     }
 )
 
@@ -131,12 +134,25 @@ def sanitize_alert(
     if "statistical_deviation" in alert:
         out["statistical_deviation"] = float(alert["statistical_deviation"])
 
-    # 4. Defence-in-depth: verify NO banned field leaked through
+    # 4. Generate deterministic event_uuid (idempotency key for cloud dedup)
+    uuid_input = (
+        f"{out.get('agent_id', '')}:{out.get('tool_name', '')}"
+        f":{out.get('timestamp', '')}:{out.get('anomaly_type', '')}"
+    )
+    out["event_uuid"] = str(uuid.uuid5(uuid.NAMESPACE_URL, uuid_input))
+
+    # 5. Optional: hash the tool execution chain for pattern aggregation
+    tool_seq = alert.get("tool_sequence")
+    if tool_seq and isinstance(tool_seq, (list, tuple)):
+        seq_str = ",".join(str(t) for t in tool_seq)
+        out["tool_sequence_hash"] = hashlib.sha256(seq_str.encode()).hexdigest()
+
+    # 6. Defence-in-depth: verify NO banned field leaked through
     leaked = BANNED_FIELDS & set(out.keys())
     if leaked:
         raise ValueError(f"Privacy violation: banned fields in sanitized output: {leaked}")
 
-    # 5. Final allowlist gate: drop anything not explicitly allowed
+    # 7. Final allowlist gate: drop anything not explicitly allowed
     return {k: v for k, v in out.items() if k in ALLOWED_FIELDS}
 
 

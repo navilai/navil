@@ -1,4 +1,4 @@
-# Copyright (c) 2026 Pantheon Lab Limited
+# Copyright (c) 2026 Pantheon Lab Pte Ltd
 # Licensed under the Business Source License 1.1 (see LICENSE.cloud)
 """Navil local dashboard — FastAPI application."""
 
@@ -33,6 +33,8 @@ _origins_env = os.environ.get("ALLOWED_ORIGINS", "")
 _allow_origins: list[str] = (
     [o.strip() for o in _origins_env.split(",") if o.strip()] if _origins_env else ["*"]
 )
+# Credentials only allowed when origins are explicitly restricted (not wildcard)
+_allow_credentials: bool = bool(_origins_env)
 
 
 # ---------------------------------------------------------------------------
@@ -84,6 +86,8 @@ def create_app(with_demo: bool = True) -> FastAPI:
         consumer: ThreatIntelConsumer | None = None
         cloud_sync_worker: CloudSyncWorker | None = None
         cloud_sync_task: asyncio.Task[None] | None = None
+        fetcher: ThreatIntelFetcher | None = None
+        fetcher_task: asyncio.Task[None] | None = None
         if redis_url:
             try:
                 import redis.asyncio as aioredis
@@ -126,6 +130,16 @@ def create_app(with_demo: bool = True) -> FastAPI:
                         "paid" if cloud_sync_worker.api_key else "community",
                         cloud_sync_worker.sync_interval,
                     )
+
+                # ── ThreatIntelFetcher (Get inbound patterns) ────
+                from navil.cloud.threat_intel_fetcher import ThreatIntelFetcher
+
+                fetcher = ThreatIntelFetcher(
+                    redis_client=state.redis_client,
+                    api_key=os.environ.get("NAVIL_API_KEY", ""),
+                )
+                if fetcher.is_enabled():
+                    fetcher_task = asyncio.create_task(fetcher.run())
             except Exception:
                 logger.warning(
                     "Redis unavailable (%s) — running in standalone mode",
@@ -142,6 +156,12 @@ def create_app(with_demo: bool = True) -> FastAPI:
             threat_intel_task.cancel()
             with contextlib.suppress(asyncio.CancelledError):
                 await threat_intel_task
+        if fetcher is not None:
+            await fetcher.stop()
+        if fetcher_task is not None:
+            fetcher_task.cancel()
+            with contextlib.suppress(asyncio.CancelledError):
+                await fetcher_task
         if cloud_sync_worker is not None:
             cloud_sync_worker.stop()
         if cloud_sync_task is not None:
@@ -175,7 +195,7 @@ def create_app(with_demo: bool = True) -> FastAPI:
     app.add_middleware(
         CORSMiddleware,
         allow_origins=_allow_origins,
-        allow_credentials=True,
+        allow_credentials=_allow_credentials,
         allow_methods=["*"],
         allow_headers=["*"],
     )
@@ -189,7 +209,14 @@ def create_app(with_demo: bool = True) -> FastAPI:
         @app.get("/{path:path}")
         def serve_frontend(path: str) -> FileResponse:
             """Serve the React SPA — all non-API routes go to index.html."""
-            file_path = DASHBOARD_DIR / path
+            _dashboard_root = DASHBOARD_DIR.resolve()
+            file_path = (DASHBOARD_DIR / path).resolve()
+            # Reject path traversal attempts (including symlinks outside root)
+            if not file_path.is_relative_to(_dashboard_root):
+                return FileResponse(
+                    str(DASHBOARD_DIR / "index.html"),
+                    headers={"Cache-Control": "no-cache, no-store, must-revalidate"},
+                )
             if file_path.exists() and file_path.is_file():
                 return FileResponse(str(file_path))
             # Never cache index.html so new builds are picked up immediately

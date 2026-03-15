@@ -120,6 +120,35 @@ class TestIdentity:
         name = proxy.extract_agent_name({"authorization": f"Bearer {token}"})
         assert name == "jwt-agent"
 
+    def test_bearer_failure_does_not_fall_through_to_x_agent_name(
+        self,
+        proxy: MCPSecurityProxy,
+    ) -> None:
+        """If Bearer token fails, x-agent-name must NOT be used as fallback."""
+        headers = {
+            "authorization": "Bearer invalid_token_xyz",
+            "x-agent-name": "attacker",
+        }
+        name = proxy.extract_agent_name(headers)
+        assert name is None, "Fallthrough from failed Bearer to X-Agent-Name is an auth bypass"
+
+    def test_x_agent_name_not_honored_when_require_auth_true(
+        self,
+        detector: BehavioralAnomalyDetector,
+        cred_manager: CredentialManager,
+    ) -> None:
+        """When require_auth=True, X-Agent-Name alone must not authenticate."""
+        from navil.policy_engine import PolicyEngine
+        strict_proxy = MCPSecurityProxy(
+            target_url="http://localhost:3000",
+            policy_engine=PolicyEngine(),
+            anomaly_detector=detector,
+            credential_manager=cred_manager,
+            require_auth=True,
+        )
+        name = strict_proxy.extract_agent_name({"x-agent-name": "legit-agent"})
+        assert name is None
+
 
 class TestHandleJsonRPC:
     @pytest.mark.asyncio

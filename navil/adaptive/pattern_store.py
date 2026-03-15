@@ -157,3 +157,4 @@ class PatternStore:
         except (json.JSONDecodeError, TypeError):
             logger.warning(f"Could not load patterns from {self.store_path}")
             self.patterns = []
+

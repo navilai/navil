@@ -1,4 +1,4 @@
-# Copyright (c) 2026 Pantheon Lab Limited
+# Copyright (c) 2026 Pantheon Lab Pte Ltd
 # Licensed under the Apache License, Version 2.0 (see LICENSE)
 """Self-healing policy and detection adjustments."""
 
