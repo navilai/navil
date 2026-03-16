@@ -118,11 +118,13 @@ def create_app(with_demo: bool = True) -> FastAPI:
 
                 # ── CloudSyncWorker (Give-to-Get outbound) ──────
                 from navil.cloud.telemetry_sync import CloudSyncWorker
+                from navil.commands.init import get_machine_id
 
                 cloud_sync_worker = CloudSyncWorker(
                     detector=state.anomaly_detector,
                     api_key=os.environ.get("NAVIL_API_KEY", ""),
                     deployment_secret=os.environ.get("NAVIL_DEPLOYMENT_SECRET", "").encode(),
+                    machine_id=get_machine_id(),
                 )
                 if cloud_sync_worker.enabled:
                     cloud_sync_task = asyncio.create_task(cloud_sync_worker.run())

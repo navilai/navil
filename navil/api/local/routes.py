@@ -1155,6 +1155,20 @@ def proxy_start_endpoint(req: ProxyStartRequest) -> dict[str, Any]:
     }
 
 
+# ── Machine identity ──────────────────────────────────────────
+
+
+@router.get("/machine")
+def get_machine_info() -> dict[str, Any]:
+    """Return machine identity (machine_id and label) from local config."""
+    from navil.commands.init import get_machine_id, get_machine_label
+
+    return {
+        "machine_id": get_machine_id() or "",
+        "machine_label": get_machine_label() or "",
+    }
+
+
 # ── Health check ──────────────────────────────────────────────
 
 

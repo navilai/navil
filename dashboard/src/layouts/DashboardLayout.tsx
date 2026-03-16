@@ -3,6 +3,8 @@ import { NavLink, Outlet, Link } from 'react-router-dom'
 import { UserButton } from '@clerk/clerk-react'
 import Icon, { type IconName } from '../components/Icon'
 
+const hasClerk = !!import.meta.env.VITE_CLERK_PUBLISHABLE_KEY
+
 const navItems: { to: string; label: string; icon: IconName }[] = [
   { to: '/',             label: 'Agents',       icon: 'bot' },
   { to: '/gateway',      label: 'Gateway',      icon: 'gateway' },
@@ -135,17 +137,27 @@ export default function DashboardLayout() {
         {/* User profile / logout */}
         <div className="relative border-t border-[#2a3650]">
           <div className="p-3 flex items-center gap-3">
-            <UserButton
-              appearance={{
-                elements: {
-                  avatarBox: 'w-7 h-7',
-                  userButtonPopoverCard: 'bg-[#111827] border-[#2a3650]',
-                },
-              }}
-            />
+            {hasClerk ? (
+              <UserButton
+                appearance={{
+                  elements: {
+                    avatarBox: 'w-7 h-7',
+                    userButtonPopoverCard: 'bg-[#111827] border-[#2a3650]',
+                  },
+                }}
+              />
+            ) : (
+              <div className="w-7 h-7 rounded-full bg-[#00e5c8]/20 flex items-center justify-center">
+                <Icon name="shield" size={14} className="text-[#00e5c8]" />
+              </div>
+            )}
             <div className="flex-1 min-w-0">
-              <p className="text-xs font-medium text-[#f0f4fc] truncate">Navil Cloud</p>
-              <p className="text-[10px] text-[#5a6a8a] truncate">Authenticated</p>
+              <p className="text-xs font-medium text-[#f0f4fc] truncate">
+                {hasClerk ? 'Navil Cloud' : 'Local Mode'}
+              </p>
+              <p className="text-[10px] text-[#5a6a8a] truncate">
+                {hasClerk ? 'Authenticated' : 'No sign-in required'}
+              </p>
             </div>
           </div>
           <div className="px-3 pb-3 flex items-center justify-end">
