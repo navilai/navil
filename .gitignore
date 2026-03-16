@@ -76,3 +76,4 @@ state_of_mcp_security.json
 
 # QA reports
 .gstack/
+.vercel

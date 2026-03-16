@@ -1,11 +1,55 @@
 /**
  * Navil Cloud API client.
  * Points at the cloud backend (/api/v1) vs the local backend (/api/local).
- * Falls back to demo/mock data when the backend is unreachable.
+ * Requires Clerk authentication — all requests include Bearer tokens.
+ *
+ * The API base URL is configured per environment via VITE_API_BASE_URL:
+ *   Production:  https://api.navil.ai
+ *   Preview:     https://api.navil.ai  (can be changed to a staging backend)
+ *   Local dev:   http://localhost:8484  (proxied via Vite dev server)
  */
 
-const CLOUD_BASE = '/api/v1'
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL as string | undefined
+const CLOUD_BASE = API_BASE_URL ? `${API_BASE_URL.replace(/\/+$/, '')}/api/v1` : '/api/v1'
 const FETCH_TIMEOUT_MS = 15_000
+
+// ── Auth helper ──────────────────────────────────────────
+
+/**
+ * Retrieve a Clerk session token.
+ * Uses the global Clerk instance attached to `window` by ClerkProvider.
+ * Returns null if no session is available (user not signed in).
+ */
+async function getSessionToken(): Promise<string | null> {
+  try {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const clerk = (window as any).Clerk
+    if (clerk?.session) {
+      const token = await clerk.session.getToken()
+      return token
+    }
+  } catch {
+    // Clerk not loaded yet or no session
+  }
+  return null
+}
+
+/**
+ * Build headers for an authenticated cloud API request.
+ * If an explicit token is provided, it takes precedence.
+ * Otherwise, attempts to retrieve the token from the Clerk session.
+ */
+async function buildHeaders(
+  token?: string | null,
+  extra?: Record<string, string>,
+): Promise<Record<string, string>> {
+  const headers: Record<string, string> = { ...extra }
+  const t = token ?? (await getSessionToken())
+  if (t) {
+    headers['Authorization'] = `Bearer ${t}`
+  }
+  return headers
+}
 
 // ── Error parsing ─────────────────────────────────────────
 
@@ -23,6 +67,12 @@ async function parseError(res: Response, method: string, path: string): Promise<
       throw new Error(detail.message as string)
     }
   }
+  if (res.status === 401) {
+    throw new Error('Authentication required. Please sign in.')
+  }
+  if (res.status === 403) {
+    throw new Error('Access denied. You do not have permission for this action.')
+  }
   if (res.status === 500 || res.status === 502 || res.status === 503) {
     throw new Error('Cloud backend not reachable.')
   }
@@ -35,10 +85,11 @@ function withTimeout(ms: number): { signal: AbortSignal; clear: () => void } {
   return { signal: controller.signal, clear: () => clearTimeout(id) }
 }
 
-async function get<T>(path: string): Promise<T> {
+async function get<T>(path: string, token?: string | null): Promise<T> {
   const { signal, clear } = withTimeout(FETCH_TIMEOUT_MS)
   try {
-    const res = await fetch(`${CLOUD_BASE}${path}`, { signal })
+    const headers = await buildHeaders(token)
+    const res = await fetch(`${CLOUD_BASE}${path}`, { signal, headers })
     if (!res.ok) return parseError(res, 'GET', path)
     return await res.json()
   } catch (e) {
@@ -51,12 +102,13 @@ async function get<T>(path: string): Promise<T> {
   }
 }
 
-async function post<T>(path: string, body: unknown): Promise<T> {
+async function post<T>(path: string, body: unknown, token?: string | null): Promise<T> {
   const { signal, clear } = withTimeout(FETCH_TIMEOUT_MS)
   try {
+    const headers = await buildHeaders(token, { 'Content-Type': 'application/json' })
     const res = await fetch(`${CLOUD_BASE}${path}`, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers,
       body: JSON.stringify(body),
       signal,
     })
@@ -72,12 +124,13 @@ async function post<T>(path: string, body: unknown): Promise<T> {
   }
 }
 
-async function patch<T>(path: string, body: unknown): Promise<T> {
+async function patch<T>(path: string, body: unknown, token?: string | null): Promise<T> {
   const { signal, clear } = withTimeout(FETCH_TIMEOUT_MS)
   try {
+    const headers = await buildHeaders(token, { 'Content-Type': 'application/json' })
     const res = await fetch(`${CLOUD_BASE}${path}`, {
       method: 'PATCH',
-      headers: { 'Content-Type': 'application/json' },
+      headers,
       body: JSON.stringify(body),
       signal,
     })
@@ -93,10 +146,11 @@ async function patch<T>(path: string, body: unknown): Promise<T> {
   }
 }
 
-async function del(path: string): Promise<void> {
+async function del(path: string, token?: string | null): Promise<void> {
   const { signal, clear } = withTimeout(FETCH_TIMEOUT_MS)
   try {
-    const res = await fetch(`${CLOUD_BASE}${path}`, { method: 'DELETE', signal })
+    const headers = await buildHeaders(token)
+    const res = await fetch(`${CLOUD_BASE}${path}`, { method: 'DELETE', signal, headers })
     if (!res.ok && res.status !== 204) return parseError(res, 'DELETE', path)
   } catch (e) {
     if (e instanceof DOMException && e.name === 'AbortError') {
@@ -235,6 +289,23 @@ export interface OrgProfile {
   user_count: number
 }
 
+// API Keys
+export interface ApiKey {
+  id: string
+  key_prefix: string
+  label: string
+  created_at: string
+  last_used_at: string | null
+}
+
+export interface CreateApiKeyResponse {
+  id: string
+  raw_key: string
+  key_prefix: string
+  label: string
+  created_at: string
+}
+
 // ── Allowed webhook events ────────────────────────────────
 
 export const WEBHOOK_EVENTS = [
@@ -304,196 +375,45 @@ export const PLANS: PlanInfo[] = [
 
 export const cloudApi = {
   // Org profile
-  getOrgProfile: () => get<OrgProfile>('/org/profile'),
+  getOrgProfile: (token?: string | null) => get<OrgProfile>('/org/me', token),
 
   // Billing
-  createCheckout: (tier: string, interval: 'monthly' | 'annual' = 'monthly') =>
-    post<CheckoutResponse>('/billing/checkout', { tier, interval }),
-  createPortal: () =>
-    post<PortalResponse>('/billing/portal', {}),
+  createCheckout: (tier: string, interval: 'monthly' | 'annual' = 'monthly', token?: string | null) =>
+    post<CheckoutResponse>('/billing/checkout', { tier, interval }, token),
+  createPortal: (token?: string | null) =>
+    post<PortalResponse>('/billing/portal', {}, token),
 
   // Webhooks
-  listWebhooks: () => get<WebhookEndpoint[]>('/org/webhooks'),
-  createWebhook: (data: CreateWebhookRequest) =>
-    post<CreateWebhookResponse>('/org/webhooks', data),
-  updateWebhook: (id: string, data: UpdateWebhookRequest) =>
-    patch<WebhookEndpoint>(`/org/webhooks/${id}`, data),
-  deleteWebhook: (id: string) => del(`/org/webhooks/${id}`),
-  testWebhook: (id: string) =>
-    post<TestDeliveryResponse>(`/org/webhooks/${id}/test`, {}),
-  listDeliveries: (webhookId: string) =>
-    get<WebhookDelivery[]>(`/org/webhooks/${webhookId}/deliveries`),
+  listWebhooks: (token?: string | null) => get<WebhookEndpoint[]>('/org/webhooks', token),
+  createWebhook: (data: CreateWebhookRequest, token?: string | null) =>
+    post<CreateWebhookResponse>('/org/webhooks', data, token),
+  updateWebhook: (id: string, data: UpdateWebhookRequest, token?: string | null) =>
+    patch<WebhookEndpoint>(`/org/webhooks/${id}`, data, token),
+  deleteWebhook: (id: string, token?: string | null) => del(`/org/webhooks/${id}`, token),
+  testWebhook: (id: string, token?: string | null) =>
+    post<TestDeliveryResponse>(`/org/webhooks/${id}/test`, {}, token),
+  listDeliveries: (webhookId: string, token?: string | null) =>
+    get<WebhookDelivery[]>(`/org/webhooks/${webhookId}/deliveries`, token),
 
   // Analytics
-  getTimeseries: (days = 7) =>
-    get<TimeseriesResponse>(`/org/analytics/timeseries?days=${days}`),
-  getTopThreats: (days = 7) =>
-    get<TopThreatsResponse>(`/org/analytics/top-threats?days=${days}`),
+  getTimeseries: (days = 7, token?: string | null) =>
+    get<TimeseriesResponse>(`/org/analytics/timeseries?days=${days}`, token),
+  getTopThreats: (days = 7, token?: string | null) =>
+    get<TopThreatsResponse>(`/org/analytics/top-threats?days=${days}`, token),
 
   // Threat rules (custom patterns — Team+ only)
-  listThreatRules: () => get<ThreatRule[]>('/org/threat-rules'),
-  createThreatRule: (data: CreateThreatRuleRequest) =>
-    post<ThreatRule>('/org/threat-rules', data),
-  updateThreatRule: (id: string, data: Partial<ThreatRule>) =>
-    patch<ThreatRule>(`/org/threat-rules/${id}`, data),
-  deleteThreatRule: (id: string) => del(`/org/threat-rules/${id}`),
-  testThreatRule: (pattern: string, sample: string) =>
-    post<TestRuleResult>('/org/threat-rules/test', { pattern, sample }),
-}
+  listThreatRules: (token?: string | null) => get<ThreatRule[]>('/org/threat-rules', token),
+  createThreatRule: (data: CreateThreatRuleRequest, token?: string | null) =>
+    post<ThreatRule>('/org/threat-rules', data, token),
+  updateThreatRule: (id: string, data: Partial<ThreatRule>, token?: string | null) =>
+    patch<ThreatRule>(`/org/threat-rules/${id}`, data, token),
+  deleteThreatRule: (id: string, token?: string | null) => del(`/org/threat-rules/${id}`, token),
+  testThreatRule: (pattern: string, sample: string, token?: string | null) =>
+    post<TestRuleResult>('/org/threat-rules/test', { pattern, sample }, token),
 
-// ── Mock data for demo mode ────────────────────────────────
-
-export const mockData = {
-  orgProfile: {
-    id: 'demo-org-001',
-    name: 'Demo Organization',
-    tier: 'pro' as OrgTier,
-    created_at: '2025-01-15T00:00:00Z',
-    api_key_count: 3,
-    user_count: 5,
-  },
-
-  webhooks: [
-    {
-      id: 'wh-001',
-      url: 'https://hooks.slack.com/services/T00/B00/xxx',
-      events: ['threat.detected', 'agent.blocked'],
-      secret: 'whsec_****',
-      status: 'active',
-      is_active: true,
-      success_rate: 0.98,
-      created_at: '2025-12-01T10:00:00Z',
-      updated_at: '2026-03-10T14:30:00Z',
-    },
-    {
-      id: 'wh-002',
-      url: 'https://api.pagerduty.com/webhooks/v3',
-      events: ['threat.detected', 'policy.violated'],
-      secret: 'whsec_****',
-      status: 'active',
-      is_active: true,
-      success_rate: 1.0,
-      created_at: '2026-01-20T08:00:00Z',
-      updated_at: '2026-03-15T09:00:00Z',
-    },
-    {
-      id: 'wh-003',
-      url: 'https://old-service.example.com/hook',
-      events: ['agent.connected'],
-      secret: 'whsec_****',
-      status: 'failed',
-      is_active: false,
-      success_rate: 0.12,
-      created_at: '2025-06-01T12:00:00Z',
-      updated_at: '2026-02-28T16:00:00Z',
-    },
-  ] as WebhookEndpoint[],
-
-  deliveries: [
-    {
-      id: 'del-001',
-      webhook_id: 'wh-001',
-      event_type: 'threat.detected',
-      status: 'delivered',
-      http_status: 200,
-      latency_ms: 142,
-      attempt: 1,
-      next_retry_at: null,
-      created_at: '2026-03-16T08:30:00Z',
-    },
-    {
-      id: 'del-002',
-      webhook_id: 'wh-001',
-      event_type: 'agent.blocked',
-      status: 'delivered',
-      http_status: 200,
-      latency_ms: 89,
-      attempt: 1,
-      next_retry_at: null,
-      created_at: '2026-03-16T07:15:00Z',
-    },
-    {
-      id: 'del-003',
-      webhook_id: 'wh-001',
-      event_type: 'threat.detected',
-      status: 'failed',
-      http_status: 500,
-      latency_ms: 2034,
-      attempt: 3,
-      next_retry_at: '2026-03-16T12:00:00Z',
-      created_at: '2026-03-15T22:00:00Z',
-    },
-    {
-      id: 'del-004',
-      webhook_id: 'wh-001',
-      event_type: 'policy.violated',
-      status: 'delivered',
-      http_status: 200,
-      latency_ms: 210,
-      attempt: 1,
-      next_retry_at: null,
-      created_at: '2026-03-15T18:45:00Z',
-    },
-  ] as WebhookDelivery[],
-
-  timeseries: (days: number): TimeseriesResponse => {
-    const data: TimeseriesPoint[] = []
-    const now = new Date()
-    for (let i = days - 1; i >= 0; i--) {
-      const d = new Date(now)
-      d.setDate(d.getDate() - i)
-      data.push({
-        date: d.toISOString().slice(0, 10),
-        count: Math.floor(Math.random() * 40) + 5,
-      })
-    }
-    return { days, data }
-  },
-
-  topThreats: {
-    days: 7,
-    data: [
-      { event_type: 'prompt_injection', count: 47 },
-      { event_type: 'data_exfiltration', count: 32 },
-      { event_type: 'privilege_escalation', count: 28 },
-      { event_type: 'tool_misuse', count: 19 },
-      { event_type: 'unusual_data_volume', count: 14 },
-      { event_type: 'credential_abuse', count: 11 },
-      { event_type: 'policy_violation', count: 8 },
-      { event_type: 'lateral_movement', count: 5 },
-    ],
-  } as TopThreatsResponse,
-
-  threatRules: [
-    {
-      id: 'rule-001',
-      name: 'SQL Injection Pattern',
-      pattern: '(?i)(union\\s+select|drop\\s+table|;\\s*delete)',
-      severity: 'CRITICAL',
-      action: 'block' as const,
-      enabled: true,
-      created_at: '2026-01-10T00:00:00Z',
-      match_count: 156,
-    },
-    {
-      id: 'rule-002',
-      name: 'Sensitive File Access',
-      pattern: '(?i)(/etc/passwd|/etc/shadow|\\.env|credentials\\.json)',
-      severity: 'HIGH',
-      action: 'alert' as const,
-      enabled: true,
-      created_at: '2026-02-05T00:00:00Z',
-      match_count: 89,
-    },
-    {
-      id: 'rule-003',
-      name: 'Base64 Encoded Payload',
-      pattern: '[A-Za-z0-9+/]{50,}={0,2}',
-      severity: 'MEDIUM',
-      action: 'alert' as const,
-      enabled: false,
-      created_at: '2026-02-20T00:00:00Z',
-      match_count: 342,
-    },
-  ] as ThreatRule[],
+  // API Keys
+  listApiKeys: (token?: string | null) => get<ApiKey[]>('/org/keys', token),
+  createApiKey: (label: string, token?: string | null) =>
+    post<CreateApiKeyResponse>('/org/keys', { label }, token),
+  revokeApiKey: (id: string, token?: string | null) => del(`/org/keys/${id}`, token),
 }

@@ -1,5 +1,7 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useCallback } from 'react'
 import { api, LLMConfig } from '../api'
+import { type ApiKey } from '../cloudApi'
+import useCloudApi from '../hooks/useCloudApi'
 import PageHeader from '../components/PageHeader'
 import Icon from '../components/Icon'
 import useSessionState from '../hooks/useSessionState'
@@ -257,6 +259,9 @@ export default function Settings() {
         </div>
       </div>
 
+      {/* API Key Management */}
+      <ApiKeyManager />
+
       {/* Community Threat Feed */}
       <TelemetryToggle />
 
@@ -296,6 +301,196 @@ export default function Settings() {
             </>
           )}
         </div>
+      </div>
+    </div>
+  )
+}
+
+function ApiKeyManager() {
+  const cloud = useCloudApi()
+  const [keys, setKeys] = useState<ApiKey[]>([])
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState('')
+  const [label, setLabel] = useState('')
+  const [creating, setCreating] = useState(false)
+  const [newKey, setNewKey] = useState<string | null>(null)
+  const [copied, setCopied] = useState(false)
+  const [revoking, setRevoking] = useState<string | null>(null)
+  const [actionMsg, setActionMsg] = useState<{ ok: boolean; msg: string } | null>(null)
+
+  const fetchKeys = useCallback(() => {
+    setLoading(true)
+    setError('')
+    cloud.listApiKeys()
+      .then(setKeys)
+      .catch((e: unknown) => {
+        setError(e instanceof Error ? e.message : 'Failed to load API keys.')
+      })
+      .finally(() => setLoading(false))
+  }, [cloud])
+
+  useEffect(() => { fetchKeys() }, [fetchKeys])
+
+  const handleCreate = async () => {
+    if (!label.trim()) return
+    setCreating(true)
+    setActionMsg(null)
+    setNewKey(null)
+    try {
+      const res = await cloud.createApiKey(label.trim())
+      setNewKey(res.raw_key)
+      setLabel('')
+      setCopied(false)
+      fetchKeys()
+    } catch (e: unknown) {
+      setActionMsg({ ok: false, msg: e instanceof Error ? e.message : String(e) })
+    } finally {
+      setCreating(false)
+    }
+  }
+
+  const handleRevoke = async (id: string) => {
+    setRevoking(id)
+    setActionMsg(null)
+    try {
+      await cloud.revokeApiKey(id)
+      setActionMsg({ ok: true, msg: 'API key revoked.' })
+      setKeys(prev => prev.filter(k => k.id !== id))
+    } catch (e: unknown) {
+      setActionMsg({ ok: false, msg: e instanceof Error ? e.message : String(e) })
+    } finally {
+      setRevoking(null)
+    }
+  }
+
+  const handleCopy = () => {
+    if (newKey) {
+      navigator.clipboard.writeText(newKey)
+      setCopied(true)
+      setTimeout(() => setCopied(false), 2000)
+    }
+  }
+
+  return (
+    <div className="glass-card p-6 animate-slideUp opacity-0 stagger-2">
+      <h3 className="text-sm font-semibold text-[#f0f4fc] mb-5 flex items-center gap-2">
+        <Icon name="key" size={16} className="text-[#fbbf24]" />
+        API Keys
+      </h3>
+
+      {/* Generate new key */}
+      <div className="space-y-4">
+        <div className="flex gap-3">
+          <input
+            value={label}
+            onChange={e => setLabel(e.target.value)}
+            onKeyDown={e => e.key === 'Enter' && handleCreate()}
+            className="flex-1 bg-[#111827] border border-[#2a3650] rounded-lg px-3 py-2.5 text-sm text-[#f0f4fc] focus:border-[#00e5c8] focus:outline-none transition-colors"
+            placeholder="Key label (e.g., Production, CI/CD)"
+          />
+          <button
+            onClick={handleCreate}
+            disabled={!label.trim() || creating}
+            className="px-4 py-2.5 bg-[#00e5c8] text-[#0a0e17] rounded-lg text-sm font-semibold hover:bg-[#00b8a0] hover:-translate-y-0.5 disabled:opacity-40 disabled:cursor-not-allowed flex items-center gap-2 transition-all duration-200 shrink-0"
+          >
+            <Icon name="key" size={14} />
+            {creating ? 'Generating...' : 'Generate API Key'}
+          </button>
+        </div>
+
+        {/* Newly created key */}
+        {newKey && (
+          <div className="p-3 rounded-[12px] border bg-[#fbbf24]/5 border-[#fbbf24]/20 animate-fadeIn">
+            <p className="text-xs text-[#fbbf24] font-medium mb-2 flex items-center gap-1.5">
+              <Icon name="warning" size={12} />
+              Copy this key now — it will not be shown again
+            </p>
+            <div className="flex items-center gap-2">
+              <code className="flex-1 bg-[#0d1117] border border-[#2a3650] rounded-lg px-3 py-2 text-sm font-mono text-[#f0f4fc] select-all break-all">
+                {newKey}
+              </code>
+              <button
+                onClick={handleCopy}
+                className="px-3 py-2 bg-[#1a2235] border border-[#2a3650] rounded-lg text-[#8b9bc0] hover:text-[#f0f4fc] hover:border-[#5a6a8a] transition-all duration-200 shrink-0"
+              >
+                <Icon name={copied ? 'check' : 'copy'} size={14} className={copied ? 'text-[#34d399]' : ''} />
+              </button>
+            </div>
+          </div>
+        )}
+
+        {/* Action messages */}
+        {actionMsg && (
+          <div className={`p-3 rounded-[12px] border animate-fadeIn ${
+            actionMsg.ok ? 'bg-[#34d399]/5 border-[#34d399]/20' : 'bg-[#ff4d6a]/5 border-[#ff4d6a]/20'
+          }`}>
+            <p className={`text-sm flex items-center gap-2 ${actionMsg.ok ? 'text-[#34d399]' : 'text-[#ff4d6a]'}`}>
+              <Icon name={actionMsg.ok ? 'check' : 'warning'} size={14} />
+              {actionMsg.msg}
+            </p>
+          </div>
+        )}
+
+        {/* Existing keys list */}
+        {loading ? (
+          <div className="skeleton h-16 rounded-lg" />
+        ) : error ? (
+          <div className="p-3 rounded-[12px] border bg-[#ff4d6a]/5 border-[#ff4d6a]/20">
+            <p className="text-sm text-[#ff4d6a] flex items-center gap-2">
+              <Icon name="warning" size={14} />
+              {error}
+            </p>
+          </div>
+        ) : keys.length === 0 ? (
+          <div className="text-center py-6">
+            <p className="text-sm text-[#8b9bc0]">No API keys yet.</p>
+            <p className="text-xs text-[#5a6a8a] mt-0.5">Generate a key to authenticate with the Navil Cloud API.</p>
+          </div>
+        ) : (
+          <div className="bg-[#111827] rounded-lg border border-[#2a3650] overflow-hidden">
+            <table className="w-full text-xs">
+              <thead>
+                <tr className="border-b border-[#2a3650] text-[#5a6a8a]">
+                  <th className="text-left px-3 py-2 font-medium">Prefix</th>
+                  <th className="text-left px-3 py-2 font-medium">Label</th>
+                  <th className="text-left px-3 py-2 font-medium">Created</th>
+                  <th className="text-left px-3 py-2 font-medium">Last Used</th>
+                  <th className="text-right px-3 py-2 font-medium" />
+                </tr>
+              </thead>
+              <tbody>
+                {keys.map(k => (
+                  <tr key={k.id} className="border-b border-[#2a3650]/50 hover:bg-[#1a2235] transition-colors">
+                    <td className="px-3 py-2 font-mono text-[#00e5c8]">{k.key_prefix}...</td>
+                    <td className="px-3 py-2 text-[#f0f4fc]">{k.label}</td>
+                    <td className="px-3 py-2 text-[#5a6a8a]">
+                      {new Date(k.created_at).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' })}
+                    </td>
+                    <td className="px-3 py-2 text-[#5a6a8a]">
+                      {k.last_used_at
+                        ? new Date(k.last_used_at).toLocaleDateString(undefined, { month: 'short', day: 'numeric' })
+                        : 'Never'}
+                    </td>
+                    <td className="px-3 py-2 text-right">
+                      <button
+                        onClick={() => handleRevoke(k.id)}
+                        disabled={revoking === k.id}
+                        className="px-2 py-1 text-[10px] bg-[#ff4d6a]/10 text-[#ff4d6a] border border-[#ff4d6a]/20 rounded hover:bg-[#ff4d6a]/20 disabled:opacity-50 transition-all duration-200"
+                      >
+                        {revoking === k.id ? 'Revoking...' : 'Revoke'}
+                      </button>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
+
+        <p className="text-[10px] text-[#5a6a8a] flex items-center gap-1">
+          <Icon name="lock" size={10} className="text-[#5a6a8a]" />
+          API keys are hashed and cannot be retrieved after creation. Store them securely.
+        </p>
       </div>
     </div>
   )
