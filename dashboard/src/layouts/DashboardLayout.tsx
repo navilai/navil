@@ -103,6 +103,33 @@ export default function DashboardLayout() {
               {label}
             </NavLink>
           ))}
+
+          {/* External links */}
+          <div className="pt-3 pb-1 px-3">
+            <p className="text-[10px] font-semibold text-[#5a6a8a] uppercase tracking-widest">Links</p>
+          </div>
+
+          <a
+            href="https://navil.ai/overview"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm transition-all duration-200 text-[#8b9bc0] hover:bg-[#1a2235] hover:text-[#f0f4fc]"
+          >
+            <Icon name="globe" size={18} />
+            Cloud Dashboard
+            <Icon name="external-link" size={12} className="ml-auto opacity-50" />
+          </a>
+
+          <a
+            href="https://navil.ai/docs"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm transition-all duration-200 text-[#8b9bc0] hover:bg-[#1a2235] hover:text-[#f0f4fc]"
+          >
+            <Icon name="book" size={18} />
+            Documentation
+            <Icon name="external-link" size={12} className="ml-auto opacity-50" />
+          </a>
         </nav>
 
         {/* User profile / logout */}
