@@ -23,6 +23,10 @@ const compatibleExamples = [
   { name: 'Ollama', url: 'http://localhost:11434/v1' },
 ]
 
+// Cloud mode = deployed on Vercel with a cloud API URL configured.
+// Local-only features (LLM config, telemetry toggle) require `navil cloud serve` running locally.
+const isCloudMode = !!import.meta.env.VITE_API_BASE_URL
+
 export default function Settings() {
   const [config, setConfig] = useState<LLMConfig | null>(null)
   const [provider, setProvider] = useState('anthropic')
@@ -38,6 +42,7 @@ export default function Settings() {
   const isCompatible = provider === 'openai_compatible'
 
   useEffect(() => {
+    if (isCloudMode) return // Skip local API calls in cloud mode
     api.getLLMSettings().then(c => {
       setConfig(c)
       if (c.provider) {
@@ -101,162 +106,183 @@ export default function Settings() {
           LLM Configuration
         </h3>
 
-        {/* Connection status */}
-        {config && (
-          <div className={`mb-5 p-3 rounded-[12px] border flex items-center gap-3 ${
-            config.api_key_set
-              ? 'bg-[#34d399]/5 border-[#34d399]/20'
-              : 'bg-[#fbbf24]/5 border-[#fbbf24]/20'
-          }`}>
-            <div className={`w-2 h-2 rounded-full ${config.api_key_set ? 'bg-[#34d399]' : 'bg-[#fbbf24]'}`} />
-            <div>
-              <p className={`text-sm ${config.api_key_set ? 'text-[#34d399]' : 'text-[#fbbf24]'}`}>
-                {config.api_key_set ? 'Connected' : 'Not configured'}
-              </p>
-              {config.api_key_set && (
-                <p className="text-xs text-[#5a6a8a]">
-                  Provider: {config.provider} · Model: {config.model}
-                  {config.base_url ? ` · ${config.base_url}` : ''}
+        {isCloudMode ? (
+          <div className="p-4 rounded-[12px] border bg-[#1a2235] border-[#2a3650]">
+            <p className="text-sm text-[#8b9bc0] mb-2">
+              LLM configuration is managed locally on each machine running Navil.
+            </p>
+            <div className="p-3 rounded-lg bg-[#111827] border border-[#2a3650]">
+              <code className="text-xs font-mono text-[#00e5c8] block leading-relaxed">
+                <span className="text-[#5a6a8a]"># Configure LLM provider locally:</span>{'\n'}
+                navil cloud serve{'\n'}
+                <span className="text-[#5a6a8a]"># Then open</span> http://localhost:5173/settings
+              </code>
+            </div>
+            <p className="text-[10px] text-[#5a6a8a] mt-2 flex items-center gap-1">
+              <Icon name="info" size={10} />
+              Supports Anthropic, OpenAI, Gemini, Ollama, and OpenAI-compatible APIs
+            </p>
+          </div>
+        ) : (
+          <>
+            {/* Connection status */}
+            {config && (
+              <div className={`mb-5 p-3 rounded-[12px] border flex items-center gap-3 ${
+                config.api_key_set
+                  ? 'bg-[#34d399]/5 border-[#34d399]/20'
+                  : 'bg-[#fbbf24]/5 border-[#fbbf24]/20'
+              }`}>
+                <div className={`w-2 h-2 rounded-full ${config.api_key_set ? 'bg-[#34d399]' : 'bg-[#fbbf24]'}`} />
+                <div>
+                  <p className={`text-sm ${config.api_key_set ? 'text-[#34d399]' : 'text-[#fbbf24]'}`}>
+                    {config.api_key_set ? 'Connected' : 'Not configured'}
+                  </p>
+                  {config.api_key_set && (
+                    <p className="text-xs text-[#5a6a8a]">
+                      Provider: {config.provider} · Model: {config.model}
+                      {config.base_url ? ` · ${config.base_url}` : ''}
+                    </p>
+                  )}
+                </div>
+              </div>
+            )}
+
+            {config && !config.available && (
+              <div className="mb-5 p-3 rounded-[12px] border bg-[#ff4d6a]/5 border-[#ff4d6a]/20 flex items-center gap-3">
+                <Icon name="warning" size={14} className="text-[#ff4d6a] shrink-0" />
+                <div>
+                  <p className="text-sm text-[#ff4d6a]">LLM SDKs not installed</p>
+                  <p className="text-xs text-[#5a6a8a]">
+                    Install with: <code className="font-mono text-[#ff4d6a]/80">pip install navil[llm]</code>
+                  </p>
+                </div>
+              </div>
+            )}
+
+            <div className="space-y-4">
+              {/* Provider */}
+              <div>
+                <label className="block text-xs text-[#5a6a8a] font-medium mb-1.5">Provider</label>
+                <select
+                  value={provider}
+                  onChange={e => { setProvider(e.target.value); setSaveResult(null); setTestResult(null) }}
+                  className="w-full bg-[#111827] border border-[#2a3650] rounded-lg px-3 py-2.5 text-sm text-[#f0f4fc] focus:border-[#00e5c8] focus:outline-none transition-colors"
+                >
+                  {providers.map(p => (
+                    <option key={p.value} value={p.value}>{p.label}</option>
+                  ))}
+                </select>
+                <p className="text-xs text-[#5a6a8a] mt-1">
+                  {isOllama
+                    ? 'Runs locally — no API key needed. Make sure Ollama is running on your machine.'
+                    : isCompatible
+                      ? 'Works with OpenRouter, Together AI, Groq, DeepSeek, Fireworks, and any OpenAI-compatible API'
+                      : <>Or set via environment variable: <code className="font-mono text-[#5a6a8a]">{selectedHint}</code></>
+                  }
                 </p>
+              </div>
+
+              {/* Base URL — only for OpenAI Compatible */}
+              {isCompatible && (
+                <div>
+                  <label className="block text-xs text-[#5a6a8a] font-medium mb-1.5">Base URL</label>
+                  <input
+                    value={baseUrl}
+                    onChange={e => { setBaseUrl(e.target.value); setSaveResult(null) }}
+                    className="w-full bg-[#111827] border border-[#2a3650] rounded-lg px-3 py-2.5 text-sm text-[#f0f4fc] focus:border-[#00e5c8] focus:outline-none font-mono transition-colors"
+                    placeholder="https://api.example.com/v1"
+
+                  />
+                  <div className="flex flex-wrap gap-1.5 mt-2">
+                    {compatibleExamples.map(ex => (
+                      <button
+                        key={ex.name}
+                        onClick={() => { setBaseUrl(ex.url); setSaveResult(null) }}
+                        className="px-2 py-0.5 text-[10px] bg-[#111827] text-[#8b9bc0] border border-[#2a3650] rounded hover:border-[#5a6a8a] hover:text-[#f0f4fc] transition-colors"
+                      >
+                        {ex.name}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* Model override */}
+              {(isCompatible || isOllama) && (
+                <div>
+                  <label className="block text-xs text-[#5a6a8a] font-medium mb-1.5">Model {!isOllama && <span className="text-[#5a6a8a]">(optional)</span>}</label>
+                  <input
+                    value={model}
+                    onChange={e => { setModel(e.target.value); setSaveResult(null) }}
+                    className="w-full bg-[#111827] border border-[#2a3650] rounded-lg px-3 py-2.5 text-sm text-[#f0f4fc] focus:border-[#00e5c8] focus:outline-none font-mono transition-colors"
+                    placeholder={isOllama ? 'e.g., llama3.2, deepseek-r1:70b, qwen3' : 'e.g., anthropic/claude-sonnet-4, deepseek-chat, llama-3.1-70b'}
+
+                  />
+                </div>
+              )}
+
+              {/* API Key — hidden for Ollama */}
+              {!isOllama && <div>
+                <label className="block text-xs text-[#5a6a8a] font-medium mb-1.5">API Key</label>
+                <input
+                  type="password"
+                  value={apiKey}
+                  onChange={e => { setApiKey(e.target.value); setSaveResult(null) }}
+                  onKeyDown={e => e.key === 'Enter' && handleSave()}
+                  className="w-full bg-[#111827] border border-[#2a3650] rounded-lg px-3 py-2.5 text-sm text-[#f0f4fc] focus:border-[#00e5c8] focus:outline-none font-mono transition-colors"
+                  placeholder={config?.api_key_set ? '--------  (key is set — enter new to replace)' : 'Paste your API key here'}
+
+                />
+                <p className="text-xs text-[#5a6a8a] mt-1 flex items-center gap-1">
+                  <Icon name="lock" size={10} className="text-[#5a6a8a]" />
+                  Stored in memory only. Not persisted to disk.
+                </p>
+              </div>}
+
+              {/* Buttons */}
+              <div className="flex gap-3 pt-1">
+                <button
+                  onClick={handleSave}
+                  disabled={!canSave || saving}
+                  className="px-4 py-2.5 bg-[#00e5c8] text-[#0a0e17] rounded-lg text-sm font-semibold hover:bg-[#00b8a0] hover:-translate-y-0.5 disabled:opacity-40 disabled:cursor-not-allowed flex items-center gap-2 transition-all duration-200"
+                >
+                  <Icon name="check" size={14} />
+                  {saving ? 'Saving...' : 'Save'}
+                </button>
+                <button
+                  onClick={handleTest}
+                  disabled={testing || (!config?.api_key_set && !isOllama && !apiKey.trim())}
+                  className="px-4 py-2.5 bg-[#1a2235] text-[#f0f4fc] border border-[#2a3650] rounded-lg text-sm font-medium hover:bg-[#1f2a40] hover:border-[#5a6a8a] hover:-translate-y-0.5 disabled:opacity-40 disabled:cursor-not-allowed flex items-center gap-2 transition-all duration-200"
+                >
+                  <Icon name="activity" size={14} className={testing ? 'animate-spin' : ''} />
+                  {testing ? 'Testing...' : 'Test Connection'}
+                </button>
+              </div>
+
+              {/* Result messages */}
+              {saveResult && (
+                <div className={`p-3 rounded-[12px] border animate-fadeIn ${
+                  saveResult.ok ? 'bg-[#34d399]/5 border-[#34d399]/20' : 'bg-[#ff4d6a]/5 border-[#ff4d6a]/20'
+                }`}>
+                  <p className={`text-sm flex items-center gap-2 ${saveResult.ok ? 'text-[#34d399]' : 'text-[#ff4d6a]'}`}>
+                    <Icon name={saveResult.ok ? 'check' : 'warning'} size={14} />
+                    {saveResult.msg}
+                  </p>
+                </div>
+              )}
+              {testResult && (
+                <div className={`p-3 rounded-[12px] border animate-fadeIn ${
+                  testResult.ok ? 'bg-[#34d399]/5 border-[#34d399]/20' : 'bg-[#ff4d6a]/5 border-[#ff4d6a]/20'
+                }`}>
+                  <p className={`text-sm flex items-center gap-2 ${testResult.ok ? 'text-[#34d399]' : 'text-[#ff4d6a]'}`}>
+                    <Icon name={testResult.ok ? 'check' : 'warning'} size={14} className="shrink-0" />
+                    <span className="line-clamp-2 break-words">{testResult.msg}</span>
+                  </p>
+                </div>
               )}
             </div>
-          </div>
+          </>
         )}
-
-        {config && !config.available && (
-          <div className="mb-5 p-3 rounded-[12px] border bg-[#ff4d6a]/5 border-[#ff4d6a]/20 flex items-center gap-3">
-            <Icon name="warning" size={14} className="text-[#ff4d6a] shrink-0" />
-            <div>
-              <p className="text-sm text-[#ff4d6a]">LLM SDKs not installed</p>
-              <p className="text-xs text-[#5a6a8a]">
-                Install with: <code className="font-mono text-[#ff4d6a]/80">pip install navil[llm]</code>
-              </p>
-            </div>
-          </div>
-        )}
-
-        <div className="space-y-4">
-          {/* Provider */}
-          <div>
-            <label className="block text-xs text-[#5a6a8a] font-medium mb-1.5">Provider</label>
-            <select
-              value={provider}
-              onChange={e => { setProvider(e.target.value); setSaveResult(null); setTestResult(null) }}
-              className="w-full bg-[#111827] border border-[#2a3650] rounded-lg px-3 py-2.5 text-sm text-[#f0f4fc] focus:border-[#00e5c8] focus:outline-none transition-colors"
-            >
-              {providers.map(p => (
-                <option key={p.value} value={p.value}>{p.label}</option>
-              ))}
-            </select>
-            <p className="text-xs text-[#5a6a8a] mt-1">
-              {isOllama
-                ? 'Runs locally — no API key needed. Make sure Ollama is running on your machine.'
-                : isCompatible
-                  ? 'Works with OpenRouter, Together AI, Groq, DeepSeek, Fireworks, and any OpenAI-compatible API'
-                  : <>Or set via environment variable: <code className="font-mono text-[#5a6a8a]">{selectedHint}</code></>
-              }
-            </p>
-          </div>
-
-          {/* Base URL — only for OpenAI Compatible */}
-          {isCompatible && (
-            <div>
-              <label className="block text-xs text-[#5a6a8a] font-medium mb-1.5">Base URL</label>
-              <input
-                value={baseUrl}
-                onChange={e => { setBaseUrl(e.target.value); setSaveResult(null) }}
-                className="w-full bg-[#111827] border border-[#2a3650] rounded-lg px-3 py-2.5 text-sm text-[#f0f4fc] focus:border-[#00e5c8] focus:outline-none font-mono transition-colors"
-                placeholder="https://api.example.com/v1"
-
-              />
-              <div className="flex flex-wrap gap-1.5 mt-2">
-                {compatibleExamples.map(ex => (
-                  <button
-                    key={ex.name}
-                    onClick={() => { setBaseUrl(ex.url); setSaveResult(null) }}
-                    className="px-2 py-0.5 text-[10px] bg-[#111827] text-[#8b9bc0] border border-[#2a3650] rounded hover:border-[#5a6a8a] hover:text-[#f0f4fc] transition-colors"
-                  >
-                    {ex.name}
-                  </button>
-                ))}
-              </div>
-            </div>
-          )}
-
-          {/* Model override */}
-          {(isCompatible || isOllama) && (
-            <div>
-              <label className="block text-xs text-[#5a6a8a] font-medium mb-1.5">Model {!isOllama && <span className="text-[#5a6a8a]">(optional)</span>}</label>
-              <input
-                value={model}
-                onChange={e => { setModel(e.target.value); setSaveResult(null) }}
-                className="w-full bg-[#111827] border border-[#2a3650] rounded-lg px-3 py-2.5 text-sm text-[#f0f4fc] focus:border-[#00e5c8] focus:outline-none font-mono transition-colors"
-                placeholder={isOllama ? 'e.g., llama3.2, deepseek-r1:70b, qwen3' : 'e.g., anthropic/claude-sonnet-4, deepseek-chat, llama-3.1-70b'}
-
-              />
-            </div>
-          )}
-
-          {/* API Key — hidden for Ollama */}
-          {!isOllama && <div>
-            <label className="block text-xs text-[#5a6a8a] font-medium mb-1.5">API Key</label>
-            <input
-              type="password"
-              value={apiKey}
-              onChange={e => { setApiKey(e.target.value); setSaveResult(null) }}
-              onKeyDown={e => e.key === 'Enter' && handleSave()}
-              className="w-full bg-[#111827] border border-[#2a3650] rounded-lg px-3 py-2.5 text-sm text-[#f0f4fc] focus:border-[#00e5c8] focus:outline-none font-mono transition-colors"
-              placeholder={config?.api_key_set ? '--------  (key is set — enter new to replace)' : 'Paste your API key here'}
-
-            />
-            <p className="text-xs text-[#5a6a8a] mt-1 flex items-center gap-1">
-              <Icon name="lock" size={10} className="text-[#5a6a8a]" />
-              Stored in memory only. Not persisted to disk.
-            </p>
-          </div>}
-
-          {/* Buttons */}
-          <div className="flex gap-3 pt-1">
-            <button
-              onClick={handleSave}
-              disabled={!canSave || saving}
-              className="px-4 py-2.5 bg-[#00e5c8] text-[#0a0e17] rounded-lg text-sm font-semibold hover:bg-[#00b8a0] hover:-translate-y-0.5 disabled:opacity-40 disabled:cursor-not-allowed flex items-center gap-2 transition-all duration-200"
-            >
-              <Icon name="check" size={14} />
-              {saving ? 'Saving...' : 'Save'}
-            </button>
-            <button
-              onClick={handleTest}
-              disabled={testing || (!config?.api_key_set && !isOllama && !apiKey.trim())}
-              className="px-4 py-2.5 bg-[#1a2235] text-[#f0f4fc] border border-[#2a3650] rounded-lg text-sm font-medium hover:bg-[#1f2a40] hover:border-[#5a6a8a] hover:-translate-y-0.5 disabled:opacity-40 disabled:cursor-not-allowed flex items-center gap-2 transition-all duration-200"
-            >
-              <Icon name="activity" size={14} className={testing ? 'animate-spin' : ''} />
-              {testing ? 'Testing...' : 'Test Connection'}
-            </button>
-          </div>
-
-          {/* Result messages */}
-          {saveResult && (
-            <div className={`p-3 rounded-[12px] border animate-fadeIn ${
-              saveResult.ok ? 'bg-[#34d399]/5 border-[#34d399]/20' : 'bg-[#ff4d6a]/5 border-[#ff4d6a]/20'
-            }`}>
-              <p className={`text-sm flex items-center gap-2 ${saveResult.ok ? 'text-[#34d399]' : 'text-[#ff4d6a]'}`}>
-                <Icon name={saveResult.ok ? 'check' : 'warning'} size={14} />
-                {saveResult.msg}
-              </p>
-            </div>
-          )}
-          {testResult && (
-            <div className={`p-3 rounded-[12px] border animate-fadeIn ${
-              testResult.ok ? 'bg-[#34d399]/5 border-[#34d399]/20' : 'bg-[#ff4d6a]/5 border-[#ff4d6a]/20'
-            }`}>
-              <p className={`text-sm flex items-center gap-2 ${testResult.ok ? 'text-[#34d399]' : 'text-[#ff4d6a]'}`}>
-                <Icon name={testResult.ok ? 'check' : 'warning'} size={14} className="shrink-0" />
-                <span className="line-clamp-2 break-words">{testResult.msg}</span>
-              </p>
-            </div>
-          )}
-        </div>
       </div>
 
       {/* API Key Management */}
@@ -278,8 +304,8 @@ export default function Settings() {
           </div>
           <div className="flex justify-between">
             <span className="text-[#5a6a8a]">LLM SDK</span>
-            <span className={`font-mono ${config?.available ? 'text-[#34d399]' : 'text-[#ff4d6a]'}`}>
-              {config?.available ? 'Installed' : 'Not installed'}
+            <span className={`font-mono ${isCloudMode ? 'text-[#5a6a8a]' : config?.available ? 'text-[#34d399]' : 'text-[#ff4d6a]'}`}>
+              {isCloudMode ? 'Local only' : config?.available ? 'Installed' : 'Not installed'}
             </span>
           </div>
           {config?.api_key_set && (
@@ -504,6 +530,7 @@ function TelemetryToggle() {
   const [error, setError] = useState<string | null>(null)
 
   useEffect(() => {
+    if (isCloudMode) return // Skip local API calls in cloud mode
     api.getTelemetrySettings()
       .then(r => {
         setEnabled(r.cloud_sync_enabled)
@@ -538,6 +565,32 @@ function TelemetryToggle() {
   }
 
   const isCommunity = mode === 'community'
+
+  if (isCloudMode) {
+    return (
+      <div className="glass-card p-6 animate-slideUp opacity-0 stagger-3">
+        <h3 className="text-sm font-semibold text-[#f0f4fc] mb-4 flex items-center gap-2">
+          <Icon name="activity" size={16} className="text-[#00e5c8]" />
+          Community Threat Feed
+        </h3>
+        <div className="p-4 rounded-[12px] border bg-[#1a2235] border-[#2a3650]">
+          <p className="text-sm text-[#8b9bc0] mb-2">
+            Threat feed sync is configured on each local Navil instance.
+          </p>
+          <div className="p-3 rounded-lg bg-[#111827] border border-[#2a3650]">
+            <code className="text-xs font-mono text-[#00e5c8] block leading-relaxed">
+              <span className="text-[#5a6a8a]"># Enable/disable via environment variable:</span>{'\n'}
+              export NAVIL_DISABLE_CLOUD_SYNC=false
+            </code>
+          </div>
+          <p className="text-[10px] text-[#5a6a8a] mt-2 flex items-center gap-1">
+            <Icon name="info" size={10} />
+            Community tier: give-to-get (share to receive). Paid tiers: optional sharing.
+          </p>
+        </div>
+      </div>
+    )
+  }
 
   return (
     <div className="glass-card p-6 animate-slideUp opacity-0 stagger-3">
