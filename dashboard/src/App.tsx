@@ -1,9 +1,18 @@
 /**
  * Navil OSS — local self-hosted dashboard.
- * All routes live at the root path (/).
+ *
+ * Two modes:
+ *  - Local (no Clerk key): no auth wall, all pages accessible immediately.
+ *  - Cloud (VITE_CLERK_PUBLISHABLE_KEY set): Clerk sign-in required.
  */
 import { Routes, Route, Navigate } from 'react-router-dom'
-import { SignIn, SignUp, SignedIn, SignedOut, RedirectToSignIn } from '@clerk/clerk-react'
+import {
+  SignIn,
+  SignUp,
+  SignedIn,
+  SignedOut,
+  RedirectToSignIn,
+} from '@clerk/clerk-react'
 import DashboardLayout from './layouts/DashboardLayout'
 
 import Agents from './pages/Agents'
@@ -21,41 +30,60 @@ import Billing from './pages/Billing'
 import Webhooks from './pages/Webhooks'
 import ThreatRules from './pages/ThreatRules'
 
+/**
+ * When running locally via `navil cloud serve`, no Clerk publishable key
+ * is set. The Clerk components are imported but only rendered when a
+ * ClerkProvider is present (see main.tsx).
+ */
+const hasClerk = !!import.meta.env.VITE_CLERK_PUBLISHABLE_KEY
+
+/**
+ * Auth-aware layout wrapper.
+ * Local mode: renders DashboardLayout directly — no sign-in wall.
+ * Cloud mode: wraps in Clerk's SignedIn / SignedOut guards.
+ */
+function ProtectedLayout() {
+  if (!hasClerk) return <DashboardLayout />
+
+  return (
+    <>
+      <SignedIn>
+        <DashboardLayout />
+      </SignedIn>
+      <SignedOut>
+        <RedirectToSignIn />
+      </SignedOut>
+    </>
+  )
+}
+
 export default function App() {
   return (
     <Routes>
-      {/* Auth routes */}
-      <Route
-        path="/sign-in/*"
-        element={
-          <div className="min-h-screen bg-[#0a0e17] flex items-center justify-center">
-            <SignIn routing="path" path="/sign-in" signUpUrl="/sign-up" />
-          </div>
-        }
-      />
-      <Route
-        path="/sign-up/*"
-        element={
-          <div className="min-h-screen bg-[#0a0e17] flex items-center justify-center">
-            <SignUp routing="path" path="/sign-up" signInUrl="/sign-in" />
-          </div>
-        }
-      />
+      {/* Auth routes — only relevant when Clerk is configured */}
+      {hasClerk && (
+        <>
+          <Route
+            path="/sign-in/*"
+            element={
+              <div className="min-h-screen bg-[#0a0e17] flex items-center justify-center">
+                <SignIn routing="path" path="/sign-in" signUpUrl="/sign-up" />
+              </div>
+            }
+          />
+          <Route
+            path="/sign-up/*"
+            element={
+              <div className="min-h-screen bg-[#0a0e17] flex items-center justify-center">
+                <SignUp routing="path" path="/sign-up" signInUrl="/sign-in" />
+              </div>
+            }
+          />
+        </>
+      )}
 
-      {/* Protected routes */}
-      <Route
-        path="/"
-        element={
-          <>
-            <SignedIn>
-              <DashboardLayout />
-            </SignedIn>
-            <SignedOut>
-              <RedirectToSignIn />
-            </SignedOut>
-          </>
-        }
-      >
+      {/* Dashboard routes */}
+      <Route path="/" element={<ProtectedLayout />}>
         <Route index element={<Agents />} />
         <Route path="gateway" element={<Gateway />} />
         <Route path="pentest" element={<Pentest />} />

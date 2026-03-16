@@ -322,6 +322,11 @@ export interface PentestReport {
   results: PentestScenarioResult[]
 }
 
+export interface MachineInfo {
+  machine_id: string
+  machine_label: string
+}
+
 // API calls
 export const api = {
   getOverview: () => get<Overview>('/overview'),
@@ -374,6 +379,9 @@ export const api = {
       api_key_present: boolean;
       mode: 'community' | 'paid';
     }>('/settings/telemetry', { enabled }),
+
+  // Machine identity
+  getMachineInfo: () => get<MachineInfo>('/machine'),
 
   // Pentest endpoints
   pentest: (scenario?: string) =>

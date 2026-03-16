@@ -60,6 +60,8 @@ ALLOWED_FIELDS: frozenset[str] = frozenset(
         "action",
         "event_uuid",  # deterministic dedup key for cloud backend
         "tool_sequence_hash",  # SHA-256 of tool execution chain (optional)
+        "machine_id",  # per-deployment machine identifier from config
+        "mcp_server_name",  # MCP server that triggered the alert
     }
 )
 
@@ -125,6 +127,8 @@ def sanitize_alert(
         "duration_ms",
         "timestamp",
         "action",
+        "machine_id",
+        "mcp_server_name",
     ):
         if key in alert:
             out[key] = alert[key]
@@ -181,10 +185,12 @@ class CloudSyncWorker:
         deployment_secret: bytes = b"",
         sync_interval: float | None = None,
         enabled: bool | None = None,
+        machine_id: str | None = None,
     ) -> None:
         self.detector = detector
         self.api_url = api_url
         self.api_key = api_key or os.environ.get("NAVIL_API_KEY", "")
+        self.machine_id = machine_id
         self.deployment_secret = deployment_secret or os.urandom(32)
 
         # NOTE: This interval will be overridden/shortened for Paid keys in the future.
@@ -280,6 +286,9 @@ class CloudSyncWorker:
         raw_dicts: list[dict[str, Any]] = []
         for a in new_alerts:
             d = a.__dict__ if hasattr(a, "__dict__") else dict(a)
+            # Inject machine_id from config if not already set on the alert
+            if self.machine_id and "machine_id" not in d:
+                d["machine_id"] = self.machine_id
             raw_dicts.append(d)
 
         sanitized = sanitize_batch(raw_dicts, self.deployment_secret)

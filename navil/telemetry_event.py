@@ -31,6 +31,7 @@ def build_telemetry_event(
     is_list_tools: bool = False,
     delegation_depth: int = 0,
     human_email: str | None = None,
+    machine_id: str | None = None,
 ) -> bytes:
     """Build canonical telemetry event matching Rust TelemetryEvent shape.
 
@@ -58,4 +59,6 @@ def build_telemetry_event(
         event["delegation_depth"] = delegation_depth
     if human_email:
         event["human_email"] = human_email
+    if machine_id:
+        event["machine_id"] = machine_id
     return orjson.dumps(event)

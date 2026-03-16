@@ -1,5 +1,5 @@
 import { useEffect, useState, useCallback } from 'react'
-import { api, LLMConfig } from '../api'
+import { api, LLMConfig, MachineInfo } from '../api'
 import { type ApiKey } from '../cloudApi'
 import useCloudApi from '../hooks/useCloudApi'
 import PageHeader from '../components/PageHeader'
@@ -38,8 +38,15 @@ export default function Settings() {
   const [saveResult, setSaveResult] = useSessionState<{ ok: boolean; msg: string } | null>('settings_save', null)
   const [testResult, setTestResult] = useSessionState<{ ok: boolean; msg: string } | null>('settings_test', null)
 
+  const [machineInfo, setMachineInfo] = useState<MachineInfo | null>(null)
+
   const isOllama = provider === 'ollama'
   const isCompatible = provider === 'openai_compatible'
+
+  useEffect(() => {
+    if (isCloudMode) return
+    api.getMachineInfo().then(setMachineInfo).catch(() => {})
+  }, [])
 
   useEffect(() => {
     if (isCloudMode) return // Skip local API calls in cloud mode
@@ -326,16 +333,34 @@ export default function Settings() {
               )}
             </>
           )}
+          {machineInfo?.machine_id && (
+            <div className="flex justify-between">
+              <span className="text-[#5a6a8a]">Machine ID</span>
+              <span className="text-[#f0f4fc] font-mono text-xs" title={machineInfo.machine_id}>
+                {machineInfo.machine_id.length > 12
+                  ? `${machineInfo.machine_id.slice(0, 8)}...`
+                  : machineInfo.machine_id}
+              </span>
+            </div>
+          )}
+          {machineInfo?.machine_label && (
+            <div className="flex justify-between">
+              <span className="text-[#5a6a8a]">Machine Label</span>
+              <span className="text-[#f0f4fc] font-mono">{machineInfo.machine_label}</span>
+            </div>
+          )}
         </div>
       </div>
     </div>
   )
 }
 
+const hasClerk = !!import.meta.env.VITE_CLERK_PUBLISHABLE_KEY
+
 function ApiKeyManager() {
   const cloud = useCloudApi()
   const [keys, setKeys] = useState<ApiKey[]>([])
-  const [loading, setLoading] = useState(true)
+  const [loading, setLoading] = useState(!hasClerk ? false : true)
   const [error, setError] = useState('')
   const [label, setLabel] = useState('')
   const [creating, setCreating] = useState(false)
@@ -345,6 +370,7 @@ function ApiKeyManager() {
   const [actionMsg, setActionMsg] = useState<{ ok: boolean; msg: string } | null>(null)
 
   const fetchKeys = useCallback(() => {
+    if (!hasClerk) return // No cloud auth — skip API call
     setLoading(true)
     setError('')
     cloud.listApiKeys()
@@ -356,6 +382,45 @@ function ApiKeyManager() {
   }, [cloud])
 
   useEffect(() => { fetchKeys() }, [fetchKeys])
+
+  // Local mode — show link to cloud signup instead of key manager
+  if (!hasClerk) {
+    return (
+      <div className="glass-card p-6 animate-slideUp opacity-0 stagger-2">
+        <h3 className="text-sm font-semibold text-[#f0f4fc] mb-5 flex items-center gap-2">
+          <Icon name="key" size={16} className="text-[#fbbf24]" />
+          Cloud API Key
+        </h3>
+        <div className="p-4 rounded-[12px] border bg-[#1a2235] border-[#2a3650] space-y-4">
+          <p className="text-sm text-[#8b9bc0]">
+            Connect this instance to the Navil Cloud threat feed by adding an API key.
+          </p>
+
+          <a
+            href="https://navil.ai/settings"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="flex items-center justify-center gap-2 w-full px-4 py-3 bg-[#00e5c8]/10 text-[#00e5c8] border border-[#00e5c8]/20 rounded-lg text-sm font-semibold hover:bg-[#00e5c8]/20 hover:-translate-y-0.5 transition-all duration-200"
+          >
+            <Icon name="external-link" size={14} />
+            Get API Key at navil.ai
+          </a>
+
+          <div className="p-3 rounded-lg bg-[#111827] border border-[#2a3650]">
+            <code className="text-xs font-mono text-[#00e5c8] block leading-relaxed">
+              <span className="text-[#5a6a8a]"># Then connect your local instance:</span>{'\n'}
+              navil init --api-key navil_live_...
+            </code>
+          </div>
+
+          <p className="text-[10px] text-[#5a6a8a] flex items-center gap-1">
+            <Icon name="info" size={10} />
+            API keys unlock the community threat intelligence feed — free tier available.
+          </p>
+        </div>
+      </div>
+    )
+  }
 
   const handleCreate = async () => {
     if (!label.trim()) return

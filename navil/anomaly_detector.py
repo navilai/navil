@@ -64,6 +64,7 @@ class ToolInvocation:
     is_list_tools: bool = False  # Whether this was a tools/list call
     # Pre-parsed datetime for O(1) access in detector loops
     timestamp_dt: datetime | None = None
+    machine_id: str | None = None
 
 
 @dataclass
@@ -78,6 +79,8 @@ class AnomalyAlert:
     evidence: list[str]
     recommended_action: str
     confidence: float = 0.0  # 0.0 for legacy binary alerts, 0.0-1.0 for scored alerts
+    machine_id: str | None = None
+    mcp_server_name: str | None = None
 
 
 @dataclass

@@ -20,16 +20,32 @@ import {
   type CreateApiKeyResponse,
 } from '../cloudApi'
 
+const hasClerk = !!import.meta.env.VITE_CLERK_PUBLISHABLE_KEY
+
+/**
+ * Stub that mirrors useAuth() shape but returns nulls.
+ * Used when running locally without ClerkProvider.
+ */
+function useNoAuth() {
+  return { getToken: async () => null as string | null }
+}
+
 /**
  * React hook that wraps cloudApi with Clerk auth tokens.
  * Use this in components instead of calling cloudApi directly
  * to ensure every request includes a valid Bearer token.
  *
+ * In local mode (no Clerk key), returns a stub that passes null tokens.
+ * Cloud API calls will fail gracefully; pages should check isCloudMode.
+ *
  * Returns a stable object (via useMemo) to avoid infinite
  * re-render loops when used as a useEffect/useCallback dependency.
  */
 export default function useCloudApi() {
-  const { getToken } = useAuth()
+  // hasClerk is a build-time constant — this conditional never changes
+  // at runtime, so the hook call order is stable across renders.
+  // eslint-disable-next-line react-hooks/rules-of-hooks
+  const { getToken } = hasClerk ? useAuth() : useNoAuth()
 
   const withToken = useCallback(async () => {
     const token = await getToken()

@@ -46,6 +46,7 @@ class Event(Base):
     duration_ms = Column(Integer, nullable=False)
     data_accessed_bytes = Column(Integer, nullable=False, default=0)
     success = Column(Boolean, nullable=False, default=True)
+    machine_id = Column(String(256), nullable=True)
     created_at = Column(
         DateTime,
         nullable=False,
@@ -70,6 +71,7 @@ class Alert(Base):
     anomaly_type = Column(String(128), nullable=False)
     severity = Column(String(16), nullable=False)  # LOW, MEDIUM, HIGH, CRITICAL
     details = Column(Text, nullable=False, default="{}")  # JSON blob
+    mcp_server_name = Column(String(256), nullable=True)
     created_at = Column(
         DateTime,
         nullable=False,
