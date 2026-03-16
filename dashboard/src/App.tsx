@@ -3,6 +3,7 @@
  * All routes live at the root path (/).
  */
 import { Routes, Route, Navigate } from 'react-router-dom'
+import { SignIn, SignUp, SignedIn, SignedOut, RedirectToSignIn } from '@clerk/clerk-react'
 import DashboardLayout from './layouts/DashboardLayout'
 
 import Agents from './pages/Agents'
@@ -23,7 +24,38 @@ import ThreatRules from './pages/ThreatRules'
 export default function App() {
   return (
     <Routes>
-      <Route path="/" element={<DashboardLayout />}>
+      {/* Auth routes */}
+      <Route
+        path="/sign-in/*"
+        element={
+          <div className="min-h-screen bg-[#0a0e17] flex items-center justify-center">
+            <SignIn routing="path" path="/sign-in" signUpUrl="/sign-up" />
+          </div>
+        }
+      />
+      <Route
+        path="/sign-up/*"
+        element={
+          <div className="min-h-screen bg-[#0a0e17] flex items-center justify-center">
+            <SignUp routing="path" path="/sign-up" signInUrl="/sign-in" />
+          </div>
+        }
+      />
+
+      {/* Protected routes */}
+      <Route
+        path="/"
+        element={
+          <>
+            <SignedIn>
+              <DashboardLayout />
+            </SignedIn>
+            <SignedOut>
+              <RedirectToSignIn />
+            </SignedOut>
+          </>
+        }
+      >
         <Route index element={<Agents />} />
         <Route path="gateway" element={<Gateway />} />
         <Route path="pentest" element={<Pentest />} />

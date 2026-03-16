@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { NavLink, Outlet, Link } from 'react-router-dom'
+import { UserButton } from '@clerk/clerk-react'
 import Icon, { type IconName } from '../components/Icon'
-import UserProfile from '../components/UserProfile'
 
 const navItems: { to: string; label: string; icon: IconName }[] = [
   { to: '/',             label: 'Agents',       icon: 'bot' },
@@ -105,7 +105,40 @@ export default function DashboardLayout() {
           ))}
         </nav>
 
-        <UserProfile />
+        {/* User profile / logout */}
+        <div className="relative border-t border-[#2a3650]">
+          <div className="p-3 flex items-center gap-3">
+            <UserButton
+              appearance={{
+                elements: {
+                  avatarBox: 'w-7 h-7',
+                  userButtonPopoverCard: 'bg-[#111827] border-[#2a3650]',
+                },
+              }}
+            />
+            <div className="flex-1 min-w-0">
+              <p className="text-xs font-medium text-[#f0f4fc] truncate">Navil Cloud</p>
+              <p className="text-[10px] text-[#5a6a8a] truncate">Authenticated</p>
+            </div>
+          </div>
+          <div className="px-3 pb-3 flex items-center justify-end">
+            <div className="flex items-center gap-2">
+              <span className="text-[10px] text-[#5a6a8a] font-mono">v0.1.0</span>
+              <NavLink
+                to="/settings"
+                className={({ isActive }) =>
+                  `p-1 rounded transition-all duration-200 ${
+                    isActive
+                      ? 'text-[#00e5c8] bg-[#00e5c8]/10'
+                      : 'text-[#5a6a8a] hover:text-[#8b9bc0] hover:bg-[#1a2235]'
+                  }`
+                }
+              >
+                <Icon name="settings" size={12} />
+              </NavLink>
+            </div>
+          </div>
+        </div>
       </aside>
 
       {/* Main content */}

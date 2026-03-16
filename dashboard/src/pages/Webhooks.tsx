@@ -1,17 +1,17 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useCallback } from 'react'
 import {
-  cloudApi,
-  mockData,
   WEBHOOK_EVENTS,
   type WebhookEndpoint,
   type WebhookDelivery,
-  type CreateWebhookRequest,
 } from '../cloudApi'
+import useCloudApi from '../hooks/useCloudApi'
 import PageHeader from '../components/PageHeader'
 import StatusBadge from '../components/StatusBadge'
+import CloudError from '../components/CloudError'
 import Icon from '../components/Icon'
 
 export default function Webhooks() {
+  const cloud = useCloudApi()
   const [webhooks, setWebhooks] = useState<WebhookEndpoint[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
@@ -28,27 +28,24 @@ export default function Webhooks() {
   const [creating, setCreating] = useState(false)
   const [createdSecret, setCreatedSecret] = useState<string | null>(null)
 
-  const fetchWebhooks = () => {
+  const fetchWebhooks = useCallback(() => {
     setLoading(true)
     setError('')
-    cloudApi.listWebhooks()
+    cloud.listWebhooks()
       .then(setWebhooks)
-      .catch(() => {
-        setWebhooks(mockData.webhooks)
+      .catch((e: unknown) => {
+        setError(e instanceof Error ? e.message : 'Failed to load webhooks.')
       })
       .finally(() => setLoading(false))
-  }
+  }, [cloud])
 
-  useEffect(() => { fetchWebhooks() }, [])
+  useEffect(() => { fetchWebhooks() }, [fetchWebhooks])
 
   const fetchDeliveries = (webhookId: string) => {
-    cloudApi.listDeliveries(webhookId)
+    cloud.listDeliveries(webhookId)
       .then(d => setDeliveries(prev => ({ ...prev, [webhookId]: d })))
-      .catch(() => {
-        setDeliveries(prev => ({
-          ...prev,
-          [webhookId]: mockData.deliveries.filter(d => d.webhook_id === webhookId),
-        }))
+      .catch((e: unknown) => {
+        setActionMsg({ ok: false, msg: e instanceof Error ? e.message : 'Failed to load deliveries.' })
       })
   }
 
@@ -66,7 +63,7 @@ export default function Webhooks() {
     setCreating(true)
     setActionMsg(null)
     try {
-      const res = await cloudApi.createWebhook({ url: newUrl.trim(), events: newEvents })
+      const res = await cloud.createWebhook({ url: newUrl.trim(), events: newEvents })
       setCreatedSecret(res.secret)
       setActionMsg({ ok: true, msg: 'Webhook created. Copy the signing secret below — it will not be shown again.' })
       setNewUrl('')
@@ -81,7 +78,7 @@ export default function Webhooks() {
 
   const handleToggleActive = async (wh: WebhookEndpoint) => {
     try {
-      await cloudApi.updateWebhook(wh.id, { is_active: !wh.is_active })
+      await cloud.updateWebhook(wh.id, { is_active: !wh.is_active })
       fetchWebhooks()
     } catch (e: unknown) {
       setActionMsg({ ok: false, msg: e instanceof Error ? e.message : String(e) })
@@ -92,7 +89,7 @@ export default function Webhooks() {
     setTesting(id)
     setActionMsg(null)
     try {
-      const res = await cloudApi.testWebhook(id)
+      const res = await cloud.testWebhook(id)
       if (res.success) {
         setActionMsg({ ok: true, msg: `Test delivery successful (${res.http_status}, ${res.latency_ms}ms)` })
       } else {
@@ -109,7 +106,7 @@ export default function Webhooks() {
     setDeleting(id)
     setActionMsg(null)
     try {
-      await cloudApi.deleteWebhook(id)
+      await cloud.deleteWebhook(id)
       setActionMsg({ ok: true, msg: 'Webhook deleted.' })
       if (expandedId === id) setExpandedId(null)
       fetchWebhooks()
@@ -133,6 +130,15 @@ export default function Webhooks() {
         {[0, 1, 2].map(i => (
           <div key={i} className="skeleton h-20 rounded-xl" style={{ animationDelay: `${i * 0.1}s` }} />
         ))}
+      </div>
+    )
+  }
+
+  if (error) {
+    return (
+      <div className="space-y-6">
+        <PageHeader title="Webhooks" subtitle="Manage webhook integrations" />
+        <CloudError message={error} onRetry={fetchWebhooks} />
       </div>
     )
   }
@@ -352,8 +358,8 @@ export default function Webhooks() {
                                       {d.status}
                                     </span>
                                   </td>
-                                  <td className="px-3 py-2 font-mono text-[#8b9bc0]">{d.http_status || '—'}</td>
-                                  <td className="px-3 py-2 font-mono text-[#8b9bc0]">{d.latency_ms ? `${d.latency_ms}ms` : '—'}</td>
+                                  <td className="px-3 py-2 font-mono text-[#8b9bc0]">{d.http_status || '\u2014'}</td>
+                                  <td className="px-3 py-2 font-mono text-[#8b9bc0]">{d.latency_ms ? `${d.latency_ms}ms` : '\u2014'}</td>
                                   <td className="px-3 py-2 text-[#5a6a8a]">
                                     {new Date(d.created_at).toLocaleString(undefined, { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })}
                                   </td>

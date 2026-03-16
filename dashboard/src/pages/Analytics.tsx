@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useCallback } from 'react'
 import {
   AreaChart,
   Area,
@@ -12,14 +12,14 @@ import {
   Cell,
 } from 'recharts'
 import {
-  cloudApi,
-  mockData,
   type TimeseriesResponse,
   type TopThreatsResponse,
 } from '../cloudApi'
+import useCloudApi from '../hooks/useCloudApi'
 import PageHeader from '../components/PageHeader'
 import StatCard from '../components/StatCard'
 import SeverityBadge from '../components/SeverityBadge'
+import CloudError from '../components/CloudError'
 import Icon from '../components/Icon'
 
 const RANGE_OPTIONS = [
@@ -54,23 +54,28 @@ function getSeverityColor(eventType: string): string {
 }
 
 export default function Analytics() {
+  const cloud = useCloudApi()
   const [days, setDays] = useState(7)
   const [timeseries, setTimeseries] = useState<TimeseriesResponse | null>(null)
   const [threats, setThreats] = useState<TopThreatsResponse | null>(null)
   const [loading, setLoading] = useState(true)
+  const [error, setError] = useState('')
 
-  const fetchData = (d: number) => {
+  const fetchData = useCallback((d: number) => {
     setLoading(true)
+    setError('')
     Promise.all([
-      cloudApi.getTimeseries(d).catch(() => mockData.timeseries(d)),
-      cloudApi.getTopThreats(d).catch(() => mockData.topThreats),
+      cloud.getTimeseries(d),
+      cloud.getTopThreats(d),
     ]).then(([ts, th]) => {
       setTimeseries(ts)
       setThreats(th)
+    }).catch((e: unknown) => {
+      setError(e instanceof Error ? e.message : 'Failed to load analytics data.')
     }).finally(() => setLoading(false))
-  }
+  }, [cloud])
 
-  useEffect(() => { fetchData(days) }, [days])
+  useEffect(() => { fetchData(days) }, [days, fetchData])
 
   const totalAlerts = timeseries?.data.reduce((sum, p) => sum + p.count, 0) || 0
   const avgDaily = timeseries?.data.length ? Math.round(totalAlerts / timeseries.data.length) : 0
@@ -95,6 +100,15 @@ export default function Analytics() {
         </div>
         <div className="skeleton h-72 rounded-xl" />
         <div className="skeleton h-64 rounded-xl" />
+      </div>
+    )
+  }
+
+  if (error && !timeseries) {
+    return (
+      <div className="space-y-6">
+        <PageHeader title="Analytics" subtitle="Threat detection analytics" />
+        <CloudError message={error} onRetry={() => fetchData(days)} />
       </div>
     )
   }

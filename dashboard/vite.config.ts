@@ -10,6 +10,11 @@ export default defineConfig({
         timeout: 120000,       // 2 min — LLM calls can be slow
         proxyTimeout: 120000,
       },
+      '/api/v1': {
+        target: 'http://localhost:8484',
+        timeout: 120000,
+        proxyTimeout: 120000,
+      },
     },
   },
 })

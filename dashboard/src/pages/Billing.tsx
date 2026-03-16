@@ -1,10 +1,13 @@
-import { useEffect, useState } from 'react'
-import { cloudApi, mockData, OrgProfile, PLANS, type OrgTier } from '../cloudApi'
+import { useEffect, useState, useCallback } from 'react'
+import { type OrgProfile, PLANS } from '../cloudApi'
+import useCloudApi from '../hooks/useCloudApi'
 import PageHeader from '../components/PageHeader'
 import StatCard from '../components/StatCard'
+import CloudError from '../components/CloudError'
 import Icon from '../components/Icon'
 
 export default function Billing() {
+  const cloud = useCloudApi()
   const [org, setOrg] = useState<OrgProfile | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
@@ -13,25 +16,24 @@ export default function Billing() {
   const [interval, setInterval] = useState<'monthly' | 'annual'>('monthly')
   const [actionMsg, setActionMsg] = useState<{ ok: boolean; msg: string } | null>(null)
 
-  const fetchOrg = () => {
+  const fetchOrg = useCallback(() => {
     setLoading(true)
     setError('')
-    cloudApi.getOrgProfile()
+    cloud.getOrgProfile()
       .then(setOrg)
-      .catch(() => {
-        // Demo mode fallback
-        setOrg(mockData.orgProfile)
+      .catch((e: unknown) => {
+        setError(e instanceof Error ? e.message : 'Failed to load billing data.')
       })
       .finally(() => setLoading(false))
-  }
+  }, [cloud])
 
-  useEffect(() => { fetchOrg() }, [])
+  useEffect(() => { fetchOrg() }, [fetchOrg])
 
   const handleUpgrade = async (tier: string) => {
     setUpgrading(tier)
     setActionMsg(null)
     try {
-      const res = await cloudApi.createCheckout(tier, interval)
+      const res = await cloud.createCheckout(tier, interval)
       if (res.upgraded) {
         setActionMsg({ ok: true, msg: `Successfully upgraded to ${tier}!` })
         fetchOrg()
@@ -49,7 +51,7 @@ export default function Billing() {
     setPortalLoading(true)
     setActionMsg(null)
     try {
-      const res = await cloudApi.createPortal()
+      const res = await cloud.createPortal()
       window.open(res.url, '_blank')
     } catch (e: unknown) {
       setActionMsg({ ok: false, msg: e instanceof Error ? e.message : String(e) })
@@ -70,6 +72,15 @@ export default function Billing() {
           ))}
         </div>
         <div className="skeleton h-64 rounded-xl" />
+      </div>
+    )
+  }
+
+  if (error) {
+    return (
+      <div className="space-y-6">
+        <PageHeader title="Billing" subtitle="Manage your subscription" />
+        <CloudError message={error} onRetry={fetchOrg} />
       </div>
     )
   }

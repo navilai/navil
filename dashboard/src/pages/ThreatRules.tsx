@@ -1,13 +1,13 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useCallback } from 'react'
 import {
-  cloudApi,
-  mockData,
   type ThreatRule,
   type OrgProfile,
   type OrgTier,
 } from '../cloudApi'
+import useCloudApi from '../hooks/useCloudApi'
 import PageHeader from '../components/PageHeader'
 import SeverityBadge from '../components/SeverityBadge'
+import CloudError from '../components/CloudError'
 import Icon from '../components/Icon'
 
 const SEVERITIES = ['CRITICAL', 'HIGH', 'MEDIUM', 'LOW']
@@ -17,9 +17,11 @@ const ACTIONS = ['alert', 'block'] as const
 const RULE_TIERS: OrgTier[] = ['team', 'enterprise']
 
 export default function ThreatRules() {
+  const cloud = useCloudApi()
   const [org, setOrg] = useState<OrgProfile | null>(null)
   const [rules, setRules] = useState<ThreatRule[]>([])
   const [loading, setLoading] = useState(true)
+  const [error, setError] = useState('')
   const [showCreate, setShowCreate] = useState(false)
   const [editing, setEditing] = useState<string | null>(null)
   const [actionMsg, setActionMsg] = useState<{ ok: boolean; msg: string } | null>(null)
@@ -40,25 +42,28 @@ export default function ThreatRules() {
 
   const canAccessRules = org ? RULE_TIERS.includes(org.tier) : false
 
-  const fetchData = () => {
+  const fetchData = useCallback(() => {
     setLoading(true)
+    setError('')
     Promise.all([
-      cloudApi.getOrgProfile().catch(() => mockData.orgProfile),
-      cloudApi.listThreatRules().catch(() => mockData.threatRules),
+      cloud.getOrgProfile(),
+      cloud.listThreatRules(),
     ]).then(([profile, rulesList]) => {
       setOrg(profile)
       setRules(rulesList)
+    }).catch((e: unknown) => {
+      setError(e instanceof Error ? e.message : 'Failed to load threat rules.')
     }).finally(() => setLoading(false))
-  }
+  }, [cloud])
 
-  useEffect(() => { fetchData() }, [])
+  useEffect(() => { fetchData() }, [fetchData])
 
   const handleCreate = async () => {
     if (!name.trim() || !pattern.trim()) return
     setCreating(true)
     setActionMsg(null)
     try {
-      await cloudApi.createThreatRule({ name: name.trim(), pattern: pattern.trim(), severity, action })
+      await cloud.createThreatRule({ name: name.trim(), pattern: pattern.trim(), severity, action })
       setActionMsg({ ok: true, msg: `Rule "${name}" created successfully.` })
       setName('')
       setPattern('')
@@ -75,7 +80,7 @@ export default function ThreatRules() {
 
   const handleToggleEnabled = async (rule: ThreatRule) => {
     try {
-      await cloudApi.updateThreatRule(rule.id, { enabled: !rule.enabled })
+      await cloud.updateThreatRule(rule.id, { enabled: !rule.enabled })
       setRules(prev => prev.map(r => r.id === rule.id ? { ...r, enabled: !r.enabled } : r))
     } catch (e: unknown) {
       setActionMsg({ ok: false, msg: e instanceof Error ? e.message : String(e) })
@@ -86,7 +91,7 @@ export default function ThreatRules() {
     setDeleting(id)
     setActionMsg(null)
     try {
-      await cloudApi.deleteThreatRule(id)
+      await cloud.deleteThreatRule(id)
       setActionMsg({ ok: true, msg: 'Rule deleted.' })
       setRules(prev => prev.filter(r => r.id !== id))
     } catch (e: unknown) {
@@ -101,7 +106,7 @@ export default function ThreatRules() {
     setTestingRule(true)
     setTestResult(null)
     try {
-      const res = await cloudApi.testThreatRule(pattern.trim(), testSample.trim())
+      const res = await cloud.testThreatRule(pattern.trim(), testSample.trim())
       setTestResult(res)
     } catch {
       // Local regex test as fallback
@@ -126,6 +131,15 @@ export default function ThreatRules() {
         <PageHeader title="Threat Rules" subtitle="Custom detection rules" />
         <div className="skeleton h-24 rounded-xl" />
         <div className="skeleton h-64 rounded-xl" />
+      </div>
+    )
+  }
+
+  if (error) {
+    return (
+      <div className="space-y-6">
+        <PageHeader title="Threat Rules" subtitle="Custom detection rules" />
+        <CloudError message={error} onRetry={fetchData} />
       </div>
     )
   }
