@@ -10,7 +10,7 @@
  */
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL as string | undefined
-const CLOUD_BASE = API_BASE_URL ? `${API_BASE_URL.replace(/\/+$/, '')}/api/v1` : '/api/v1'
+const CLOUD_BASE = API_BASE_URL ? `${API_BASE_URL.replace(/\/+$/, '')}/v1` : '/api/v1'
 const FETCH_TIMEOUT_MS = 15_000
 
 // ── Auth helper ──────────────────────────────────────────
