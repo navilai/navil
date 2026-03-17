@@ -56,6 +56,7 @@ def _schedule_command(cli, args: argparse.Namespace) -> int:  # type: ignore[no-
     from navil.crawler.scheduler import (
         generate_crontab_entry,
         generate_systemd_timer,
+        run_async_scheduler,
         run_daemon,
     )
 
@@ -71,6 +72,38 @@ def _schedule_command(cli, args: argparse.Namespace) -> int:  # type: ignore[no-
             timeout_per_scan=args.timeout,
             webhook_url=args.webhook,
         )
+        return 0
+
+    elif mode == "async":
+        print(f"Starting async scan scheduler (interval={interval})...")
+        print("Press Ctrl+C to stop.")
+
+        # Set up Redis client if URL provided
+        redis_client = None
+        redis_url = getattr(args, "redis_url", None)
+        if redis_url:
+            try:
+                import redis.asyncio as aioredis
+
+                redis_client = aioredis.from_url(redis_url)
+                print(f"Redis lock enabled: {redis_url}")
+            except Exception as exc:
+                print(f"Warning: Could not connect to Redis ({exc}). Running without lock.")
+
+        try:
+            asyncio.run(
+                run_async_scheduler(
+                    interval,
+                    limit=args.limit,
+                    timeout_per_scan=args.timeout,
+                    webhook_url=args.webhook,
+                    slack_webhook_url=getattr(args, "slack_webhook", None),
+                    redis_client=redis_client,
+                    feed_to_cloud=getattr(args, "feed_to_cloud", False),
+                )
+            )
+        except KeyboardInterrupt:
+            print("\nScheduler stopped.")
         return 0
 
     elif mode == "crontab":
@@ -286,9 +319,10 @@ def register(subparsers: argparse._SubParsersAction, cli_class: type) -> None:
     )
     sched_parser.add_argument(
         "--mode",
-        choices=["daemon", "crontab", "systemd"],
+        choices=["daemon", "async", "crontab", "systemd"],
         default="crontab",
-        help="Output mode: daemon (run now), crontab (print entry), systemd (print units)",
+        help="Output mode: daemon (sync loop), async (asyncio with Redis lock), "
+        "crontab (print entry), systemd (print units)",
     )
     sched_parser.add_argument(
         "--limit",
@@ -306,6 +340,22 @@ def register(subparsers: argparse._SubParsersAction, cli_class: type) -> None:
         "--webhook",
         default=None,
         help="Webhook URL to notify after each scan completes",
+    )
+    sched_parser.add_argument(
+        "--redis-url",
+        default=None,
+        help="Redis URL for distributed lock (e.g., redis://localhost:6379). "
+        "Used with --mode async to prevent concurrent runs.",
+    )
+    sched_parser.add_argument(
+        "--slack-webhook",
+        default=None,
+        help="Slack incoming webhook URL for error alerts",
+    )
+    sched_parser.add_argument(
+        "--feed-to-cloud",
+        action="store_true",
+        help="Feed scan results to Navil cloud threat intel endpoint",
     )
     sched_parser.set_defaults(func=lambda cli, args: _schedule_command(cli, args))
 
