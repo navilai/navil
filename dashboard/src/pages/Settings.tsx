@@ -393,7 +393,7 @@ function ApiKeyManager() {
         </h3>
         <div className="p-4 rounded-[12px] border bg-[#1a2235] border-[#2a3650] space-y-4">
           <p className="text-sm text-[#8b9bc0]">
-            Connect this instance to the Navil Cloud threat feed by adding an API key.
+            Navil uses a community threat feed — every instance shares anonymized attack data and receives real-time threat intelligence in return. Connect with a free API key to join.
           </p>
 
           <a
@@ -415,7 +415,7 @@ function ApiKeyManager() {
 
           <p className="text-[10px] text-[#5a6a8a] flex items-center gap-1">
             <Icon name="info" size={10} />
-            API keys unlock the community threat intelligence feed — free tier available.
+            Free community tier — no credit card required. Share data, get protection.
           </p>
         </div>
       </div>
@@ -682,14 +682,15 @@ function TelemetryToggle() {
       </div>
 
       {!apiKeyPresent ? (
-        <div className="p-3 rounded-lg bg-[#fbbf24]/5 border border-[#fbbf24]/20">
+        <div className="p-3 rounded-lg bg-[#ff4d6a]/5 border border-[#ff4d6a]/20">
           <div className="flex items-center gap-2 mb-1.5">
-            <Icon name="warning" size={14} className="text-[#fbbf24]" />
-            <p className="text-sm text-[#fbbf24] font-medium">Not connected</p>
+            <Icon name="warning" size={14} className="text-[#ff4d6a]" />
+            <p className="text-sm text-[#ff4d6a] font-medium">Not sharing — not protected</p>
           </div>
           <p className="text-xs text-[#8b9bc0] leading-relaxed">
-            No API key configured. Add a Cloud API key above to start sharing anonymous
-            threat metadata and receive community threat intelligence.
+            This instance is running without community threat intelligence. Add a free API key above
+            to join the threat feed — your instance shares anonymized attack metadata
+            and receives real-time protection from the network.
           </p>
         </div>
       ) : (
@@ -719,8 +720,8 @@ function TelemetryToggle() {
           {isCommunity && enabled && (
             <div className="mt-3 p-2.5 rounded-lg bg-[#00e5c8]/5 border border-[#00e5c8]/15">
               <p className="text-[11px] text-[#00e5c8]/80 leading-relaxed">
-                In community mode, sync must stay enabled to receive threat intelligence updates.
-                Add a Navil Cloud API key to gain independent control over sync.
+                Community tier: sharing must stay enabled to receive threat intelligence.
+                Upgrade to a paid plan for optional sharing (privacy premium).
               </p>
             </div>
           )}
@@ -738,7 +739,9 @@ function TelemetryToggle() {
 
       <p className="text-[10px] text-[#5a6a8a] mt-3 flex items-center gap-1">
         <Icon name="lock" size={10} className="text-[#5a6a8a]" />
-        Controlled by NAVIL_DISABLE_CLOUD_SYNC environment variable.
+        {isCommunity
+          ? 'Community tier: sharing is required to receive threat intelligence.'
+          : 'Paid tier: sharing is optional. Controlled by NAVIL_DISABLE_CLOUD_SYNC.'}
       </p>
     </div>
   )
