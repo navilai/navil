@@ -681,35 +681,50 @@ function TelemetryToggle() {
         )}
       </div>
 
-      <div className="flex items-center justify-between">
-        <div>
-          <p className="text-sm text-[#f0f4fc]">Share anonymous attack metadata</p>
-          <p className="text-xs text-[#5a6a8a] mt-0.5">
-            {isCommunity
-              ? 'Give-to-get: share anonymous metadata to receive community threat intelligence.'
-              : 'Share anonymous attack metadata to help protect the global agent ecosystem.'}
+      {!apiKeyPresent ? (
+        <div className="p-3 rounded-lg bg-[#fbbf24]/5 border border-[#fbbf24]/20">
+          <div className="flex items-center gap-2 mb-1.5">
+            <Icon name="warning" size={14} className="text-[#fbbf24]" />
+            <p className="text-sm text-[#fbbf24] font-medium">Not connected</p>
+          </div>
+          <p className="text-xs text-[#8b9bc0] leading-relaxed">
+            No API key configured. Add a Cloud API key above to start sharing anonymous
+            threat metadata and receive community threat intelligence.
           </p>
         </div>
-        <button
-          onClick={toggle}
-          disabled={enabled === null || saving}
-          className={`relative w-11 h-6 rounded-full transition-colors duration-200 focus:outline-none disabled:opacity-50 ${
-            enabled ? 'bg-[#00e5c8]' : 'bg-[#2a3650]'
-          }`}
-        >
-          <span className={`absolute top-0.5 left-0.5 w-5 h-5 bg-white rounded-full shadow transition-transform duration-200 ${
-            enabled ? 'translate-x-5' : 'translate-x-0'
-          }`} />
-        </button>
-      </div>
+      ) : (
+        <>
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-sm text-[#f0f4fc]">Share anonymous attack metadata</p>
+              <p className="text-xs text-[#5a6a8a] mt-0.5">
+                {isCommunity
+                  ? 'Give-to-get: share anonymous metadata to receive community threat intelligence.'
+                  : 'Share anonymous attack metadata to help protect the global agent ecosystem.'}
+              </p>
+            </div>
+            <button
+              onClick={toggle}
+              disabled={enabled === null || saving}
+              className={`relative w-11 h-6 rounded-full transition-colors duration-200 focus:outline-none disabled:opacity-50 ${
+                enabled ? 'bg-[#00e5c8]' : 'bg-[#2a3650]'
+              }`}
+            >
+              <span className={`absolute top-0.5 left-0.5 w-5 h-5 bg-white rounded-full shadow transition-transform duration-200 ${
+                enabled ? 'translate-x-5' : 'translate-x-0'
+              }`} />
+            </button>
+          </div>
 
-      {isCommunity && enabled && (
-        <div className="mt-3 p-2.5 rounded-lg bg-[#00e5c8]/5 border border-[#00e5c8]/15">
-          <p className="text-[11px] text-[#00e5c8]/80 leading-relaxed">
-            In community mode, sync must stay enabled to receive threat intelligence updates.
-            Add a Navil Cloud API key to gain independent control over sync.
-          </p>
-        </div>
+          {isCommunity && enabled && (
+            <div className="mt-3 p-2.5 rounded-lg bg-[#00e5c8]/5 border border-[#00e5c8]/15">
+              <p className="text-[11px] text-[#00e5c8]/80 leading-relaxed">
+                In community mode, sync must stay enabled to receive threat intelligence updates.
+                Add a Navil Cloud API key to gain independent control over sync.
+              </p>
+            </div>
+          )}
+        </>
       )}
 
       {error && (
