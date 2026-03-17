@@ -38,8 +38,12 @@ import hashlib
 import hmac
 import logging
 import os
+import platform
+import sys
 import uuid
 from typing import Any
+
+from navil import __version__
 
 logger = logging.getLogger(__name__)
 
@@ -228,15 +232,30 @@ class CloudSyncWorker:
             "pending": pending,
         }
 
+    def _build_headers(self) -> dict[str, str]:
+        """Build request headers for cloud sync.
+
+        Always sends X-Machine-ID and heartbeat metadata.
+        Only sends Authorization if an API key is configured.
+        """
+        headers: dict[str, str] = {
+            "Content-Type": "application/json",
+            "X-Navil-Version": __version__,
+            "X-OS-Platform": sys.platform,
+            "X-Python-Version": platform.python_version(),
+        }
+        if self.machine_id:
+            headers["X-Machine-ID"] = self.machine_id
+        if self.api_key:
+            headers["Authorization"] = f"Bearer {self.api_key}"
+        return headers
+
     def _get_client(self) -> Any:
         if self._http_client is None:
             import httpx
 
-            headers: dict[str, str] = {"Content-Type": "application/json"}
-            if self.api_key:
-                headers["Authorization"] = f"Bearer {self.api_key}"
             self._http_client = httpx.AsyncClient(
-                headers=headers,
+                headers=self._build_headers(),
                 timeout=30.0,
             )
         return self._http_client
