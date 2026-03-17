@@ -39,6 +39,23 @@ Navil sits between your MCP clients and servers as a security proxy. It monitors
 
 > Developed by **[Pantheon Lab Pte Ltd](https://github.com/ivanlkf/navil)**.
 
+## Getting Started
+
+```bash
+pip install navil
+navil init
+```
+
+`navil init` walks you through setup: paste your API key from the [Navil Cloud dashboard](https://dashboard.navil.ai) and Navil writes a local config at `~/.navil/config.toml`. The dashboard provides billing management, real-time analytics, and fleet-wide threat intelligence.
+
+Next, integrate Navil with your IDE or tool of choice:
+
+- **[Cursor IDE](docs/guides/cursor.md)** -- wrap MCP servers in `~/.cursor/mcp.json`
+- **[Claude Desktop](docs/guides/claude-desktop.md)** -- wrap MCP servers in `claude_desktop_config.json`
+- **[Continue.dev (VS Code)](docs/guides/continue-dev.md)** -- wrap MCP servers in `.continue/config.json`
+
+Each guide takes under 5 minutes and ends with dashboard verification.
+
 ## Quick Start
 
 ```bash
