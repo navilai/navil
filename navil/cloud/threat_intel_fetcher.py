@@ -49,9 +49,11 @@ class ThreatIntelFetcher:
         api_key: str = "",
         cloud_url: str = "",
         fetch_interval: int | None = None,
+        machine_id: str | None = None,
     ) -> None:
         self.redis = redis_client
         self.api_key = api_key or os.environ.get("NAVIL_API_KEY", "")
+        self.machine_id = machine_id
         self.cloud_url = (
             cloud_url or os.environ.get("NAVIL_CLOUD_URL", _DEFAULT_CLOUD_URL)
         ).rstrip("/")
@@ -64,14 +66,27 @@ class ThreatIntelFetcher:
         self._http_client: httpx.AsyncClient | None = None
 
     def is_enabled(self) -> bool:
-        """Fetcher requires an API key to authenticate with the cloud."""
-        return bool(self.api_key)
+        """Fetcher is enabled if we have an API key OR a machine_id."""
+        return bool(self.api_key) or bool(self.machine_id)
+
+    def _build_headers(self) -> dict[str, str]:
+        """Build request headers for threat intel fetch.
+
+        Always sends X-Machine-ID if available.
+        Only sends Authorization if an API key is configured.
+        """
+        headers: dict[str, str] = {}
+        if self.machine_id:
+            headers["X-Machine-ID"] = self.machine_id
+        if self.api_key:
+            headers["Authorization"] = f"Bearer {self.api_key}"
+        return headers
 
     def _get_client(self) -> httpx.AsyncClient:
         """Return a persistent httpx client (created once, reused across fetches)."""
         if self._http_client is None:
             self._http_client = httpx.AsyncClient(
-                headers={"Authorization": f"Bearer {self.api_key}"},
+                headers=self._build_headers(),
                 timeout=30,
             )
         return self._http_client
@@ -87,7 +102,7 @@ class ThreatIntelFetcher:
     async def run(self) -> None:
         """Main loop: fetch patterns periodically."""
         if not self.is_enabled():
-            logger.info("ThreatIntelFetcher disabled: no NAVIL_API_KEY set")
+            logger.info("ThreatIntelFetcher disabled: no API key or machine_id")
             return
 
         self._running = True

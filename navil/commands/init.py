@@ -156,6 +156,25 @@ def get_machine_id(config: dict[str, Any] | None = None) -> str | None:
     return config.get("machine", {}).get("id")
 
 
+def ensure_machine_id() -> str:
+    """Generate and persist machine_id if not already in config.
+
+    Called on first ``navil wrap`` — no ``navil init`` needed.
+    """
+    config_path = CONFIG_FILE
+    config = load_config(config_path)
+
+    machine_id = config.get("machine", {}).get("id")
+    if machine_id:
+        return machine_id
+
+    machine_id = str(uuid.uuid4())
+    config.setdefault("machine", {})["id"] = machine_id
+    config_path.parent.mkdir(parents=True, exist_ok=True)
+    config_path.write_text(yaml.dump(config, default_flow_style=False))
+    return machine_id
+
+
 def get_machine_label(config: dict[str, Any] | None = None) -> str | None:
     """Return the machine_label from the config, loading from disk if needed."""
     if config is None:

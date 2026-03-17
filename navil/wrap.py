@@ -20,6 +20,8 @@ import sys
 from pathlib import Path
 from typing import Any
 
+from navil.commands.init import ensure_machine_id
+
 
 def _is_already_wrapped(entry: dict[str, Any]) -> bool:
     """Return True if this mcpServers entry already uses navil shim."""
@@ -108,6 +110,9 @@ def wrap_config(
         total: total server count
         output_path: path where the config was written
     """
+    # Ensure machine_id exists on first wrap (no `navil init` needed)
+    ensure_machine_id()
+
     path = Path(config_path)
     if not path.exists():
         raise FileNotFoundError(f"Config not found: {config_path}")
