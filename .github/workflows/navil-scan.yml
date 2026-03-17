@@ -1,0 +1,63 @@
+name: Navil MCP Security Scan
+
+on:
+  push:
+    paths:
+      - "**.mcp.json"
+      - ".mcp.json"
+      - "mcp-config*.json"
+  pull_request:
+    paths:
+      - "**.mcp.json"
+      - ".mcp.json"
+      - "mcp-config*.json"
+  workflow_dispatch:
+    inputs:
+      config-path:
+        description: "Path to MCP configuration file"
+        required: false
+        default: ".mcp.json"
+      fail-threshold:
+        description: "Minimum security score (0-100)"
+        required: false
+        default: "60"
+      format:
+        description: "Output format: sarif, json, or text"
+        required: false
+        default: "sarif"
+  workflow_call:
+    inputs:
+      config-path:
+        description: "Path to MCP configuration file"
+        required: false
+        type: string
+        default: ".mcp.json"
+      fail-threshold:
+        description: "Minimum security score (0-100)"
+        required: false
+        type: string
+        default: "60"
+      format:
+        description: "Output format: sarif, json, or text"
+        required: false
+        type: string
+        default: "sarif"
+
+jobs:
+  scan:
+    name: Security Scan
+    runs-on: ubuntu-latest
+    permissions:
+      security-events: write   # Required for uploading SARIF
+      contents: read
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Run Navil scan
+        uses: ./.github/actions/navil-scan
+        with:
+          config-path: ${{ inputs.config-path || '.mcp.json' }}
+          fail-threshold: ${{ inputs.fail-threshold || '60' }}
+          format: ${{ inputs.format || 'sarif' }}

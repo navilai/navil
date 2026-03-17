@@ -27,13 +27,20 @@ from navil.api.local.routes import (
     CredentialIssueRequest,
     PolicyCheckRequest,
 )
-from navil.credential_manager import Credential, CredentialManager, CredentialStatus
+from navil.credential_manager import Credential, CredentialManager, CredentialStatus, _InMemoryStore
 from navil.policy_engine import PolicyEngine
 from navil.proxy import MCPSecurityProxy
 
 # ---------------------------------------------------------------------------
 # Shared helpers
 # ---------------------------------------------------------------------------
+
+
+def _isolated_credential_manager(**kwargs: Any) -> CredentialManager:
+    """Create a CredentialManager with an in-memory store (no real Redis)."""
+    cm = CredentialManager(**kwargs)
+    cm._redis = _InMemoryStore()
+    return cm
 
 
 def _make_proxy(
@@ -46,7 +53,7 @@ def _make_proxy(
         target_url="http://localhost:3000",
         policy_engine=PolicyEngine(),
         anomaly_detector=detector,
-        credential_manager=CredentialManager(),
+        credential_manager=_isolated_credential_manager(),
         require_auth=require_auth,
     )
 
@@ -176,7 +183,7 @@ class TestJWTSecurity:
 
         This means token expiry is never enforced in the real proxy auth flow.
         """
-        cm = CredentialManager()
+        cm = _isolated_credential_manager()
         cred = cm.issue_credential("agent-x", "read:tools", ttl_seconds=3600)
         token = cred["token"]
         with pytest.raises(Exception):
@@ -185,7 +192,7 @@ class TestJWTSecurity:
 
     def test_alg_none_rejected(self) -> None:
         """JWT with alg:none must be rejected when algorithms=['HS256'] is specified."""
-        cm = CredentialManager()
+        cm = _isolated_credential_manager()
         # Craft alg:none token manually (base64 imported at top level)
         header = base64.urlsafe_b64encode(b'{"alg":"none","typ":"JWT"}').rstrip(b"=").decode()
         payload_data = json.dumps(
@@ -204,7 +211,7 @@ class TestJWTSecurity:
 
     def test_tampered_payload_rejected(self) -> None:
         """A token with a flipped agent_name in the payload must be rejected."""
-        cm = CredentialManager()
+        cm = _isolated_credential_manager()
         good_token = _make_jwt(cm.secret_key, {"agent_name": "legit-agent"})
         # Decode without verification, flip name, re-encode with NO signature
         parts = good_token.split(".")
@@ -218,7 +225,7 @@ class TestJWTSecurity:
 
     def test_expired_token_rejected(self) -> None:
         """A JWT with exp in the past must be rejected."""
-        cm = CredentialManager()
+        cm = _isolated_credential_manager()
         expired_token = _make_jwt(
             cm.secret_key,
             {
@@ -233,7 +240,7 @@ class TestJWTSecurity:
 
         PyJWT does not require exp unless options['require_exp'] is set.
         """
-        cm = CredentialManager()
+        cm = _isolated_credential_manager()
         eternal_token = _make_jwt(cm.secret_key, {"exp": None})  # _make_jwt strips None values
         # Should succeed (no expiry check) — this is the finding
         result = cm.verify_credential(eternal_token)
@@ -241,10 +248,11 @@ class TestJWTSecurity:
 
     def test_revoked_token_rejected(self) -> None:
         """A token whose token_id is REVOKED in the credential store must be rejected."""
-        cm = CredentialManager()
+        cm = _isolated_credential_manager()
         token = _make_jwt(cm.secret_key, {"token_id": "cred_revoked_001"})
-        # Manually insert a REVOKED credential with this token_id (Credential imported at top)
-        cm.credentials["cred_revoked_001"] = Credential(
+        # Manually insert a REVOKED credential with this token_id
+        # Use _store_credential directly (credentials property returns a copy, not a live reference)
+        cm._store_credential(Credential(
             token_id="cred_revoked_001",
             agent_name="revokedagent",
             scope="*",
@@ -252,20 +260,20 @@ class TestJWTSecurity:
             issued_at="2026-01-01T00:00:00+00:00",
             expires_at="2027-01-01T00:00:00+00:00",
             status=CredentialStatus.REVOKED,
-        )
+        ))
         with pytest.raises(Exception, match="revoked"):
             cm.verify_credential(token)
 
     def test_wrong_secret_rejected(self) -> None:
         """A token signed with the wrong secret must be rejected."""
-        cm = CredentialManager()
+        cm = _isolated_credential_manager()
         wrong_secret_token = _make_jwt("completely-wrong-secret-key-abcdefg", {})
         with pytest.raises(Exception):
             cm.verify_credential(wrong_secret_token)
 
     def test_rs256_algorithm_confusion_rejected(self) -> None:
         """A JWT claiming alg:RS256 must be rejected (only HS256 is allowed)."""
-        cm = CredentialManager()
+        cm = _isolated_credential_manager()
         # Attempt to create an RS256 token — will fail at creation or verification
         try:
             from cryptography.hazmat.backends import default_backend
@@ -291,7 +299,7 @@ class TestJWTSecurity:
 
     def test_empty_string_token_rejected(self) -> None:
         """Empty string must not authenticate."""
-        cm = CredentialManager()
+        cm = _isolated_credential_manager()
         with pytest.raises(Exception):
             cm.verify_credential("")
 
@@ -503,7 +511,7 @@ class TestJSONRPCAbuse:
             target_url="http://localhost:3000",
             policy_engine=PolicyEngine(),
             anomaly_detector=detector,
-            credential_manager=CredentialManager(),
+            credential_manager=_isolated_credential_manager(),
             require_auth=False,
         )
         # Pre-wire a mock http_client so _forward() doesn't assert
@@ -883,7 +891,7 @@ class TestNewVulnerabilities:
 
         This test uses the actual proxy flow (extract_agent_name), not verify_credential.
         """
-        cm = CredentialManager()
+        cm = _isolated_credential_manager()
         # Issue a credential with a very short TTL (conceptually expired)
         cred_info = cm.issue_credential("expiry-test-agent", "read:tools", ttl_seconds=1)
         token = cred_info["token"]
@@ -959,7 +967,7 @@ class TestPolicyBypass:
             target_url="http://localhost:3000",
             policy_engine=engine,
             anomaly_detector=detector,
-            credential_manager=CredentialManager(),
+            credential_manager=_isolated_credential_manager(),
             require_auth=False,
         )
         upstream = {"jsonrpc": "2.0", "result": {"content": "secret"}, "id": 1}
@@ -1021,6 +1029,8 @@ class TestUnauthenticatedEndpoints:
         monkeypatch.setattr(app_module, "DASHBOARD_DIR", tmp_path)
         monkeypatch.setenv("NAVIL_DASHBOARD_TOKEN", "test-secret-token")
         app = app_module.create_app(with_demo=False)
+        # Force in-memory store so tests don't hit stale credentials in real Redis
+        AppState.get().credential_manager._redis = _InMemoryStore()
         yield app
         AppState.reset()
 
@@ -1089,7 +1099,7 @@ class TestResourceExhaustion:
         Previously: unlimited credentials could be issued, growing memory unbounded.
         Now: ValueError raised when cap (500) is reached.
         """
-        cm = CredentialManager()
+        cm = _isolated_credential_manager()
         for i in range(500):
             cm.issue_credential(f"agent-{i % 10}", "read:tools")
         with pytest.raises(ValueError, match="Credential cap reached"):
@@ -1146,18 +1156,19 @@ class TestRotationEdgeCases:
         """
         from datetime import datetime, timedelta, timezone
 
-        cm = CredentialManager()
+        cm = _isolated_credential_manager()
         cred = cm.issue_credential("agent-a", "read:tools", ttl_seconds=3600)
         token_id = cred["token_id"]
 
         # Backdate expires_at by 7,200 s (expired 2 hours ago)
-        stored = cm.credentials[token_id]
+        stored = cm._load_credential(token_id)
         past_expiry = (datetime.now(timezone.utc) - timedelta(seconds=7200)).isoformat()
         stored.expires_at = past_expiry
+        cm._store_credential(stored)
 
         try:
             new_cred = cm.rotate_credential(token_id)
-            new_stored = cm.credentials[new_cred["token_id"]]
+            new_stored = cm._load_credential(new_cred["token_id"])
             new_expires = datetime.fromisoformat(new_stored.expires_at)
             now = datetime.now(timezone.utc)
             assert new_expires > now, (
@@ -1176,7 +1187,7 @@ class TestRotationEdgeCases:
         The original credential is then marked EXPIRED twice (idempotent),
         but both new credentials remain ACTIVE.
         """
-        cm = CredentialManager()
+        cm = _isolated_credential_manager()
         cred = cm.issue_credential("agent-a", "read:tools", ttl_seconds=3600)
         token_id = cred["token_id"]
         results: list[dict[str, Any]] = []

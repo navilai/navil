@@ -29,6 +29,9 @@ def build_telemetry_event(
     arguments_hash: str | None = None,
     arguments_size_bytes: int = 0,
     is_list_tools: bool = False,
+    delegation_depth: int = 0,
+    human_email: str | None = None,
+    machine_id: str | None = None,
 ) -> bytes:
     """Build canonical telemetry event matching Rust TelemetryEvent shape.
 
@@ -51,4 +54,11 @@ def build_telemetry_event(
         event["arguments_size_bytes"] = arguments_size_bytes
     if is_list_tools:
         event["is_list_tools"] = True
+    # Identity-enriched fields (for JWT-authenticated requests)
+    if delegation_depth:
+        event["delegation_depth"] = delegation_depth
+    if human_email:
+        event["human_email"] = human_email
+    if machine_id:
+        event["machine_id"] = machine_id
     return orjson.dumps(event)

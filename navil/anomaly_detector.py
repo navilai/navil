@@ -64,6 +64,7 @@ class ToolInvocation:
     is_list_tools: bool = False  # Whether this was a tools/list call
     # Pre-parsed datetime for O(1) access in detector loops
     timestamp_dt: datetime | None = None
+    machine_id: str | None = None
 
 
 @dataclass
@@ -78,6 +79,8 @@ class AnomalyAlert:
     evidence: list[str]
     recommended_action: str
     confidence: float = 0.0  # 0.0 for legacy binary alerts, 0.0-1.0 for scored alerts
+    machine_id: str | None = None
+    mcp_server_name: str | None = None
 
 
 @dataclass
@@ -144,6 +147,15 @@ class BehavioralAnomalyDetector:
 
         # Proxy-mode tracking for SAFE-MCP detectors
         self.registered_tools: dict[str, set[str]] = {}  # server_url -> known tool names
+
+        # ── Blocklist engine (loaded lazily from Redis or file) ──
+        self._blocklist: Any | None = None
+        self._blocklist_loaded = False
+
+        # ── Findings (unified Finding objects from blocklist matches) ──
+        from collections import deque as _deque
+
+        self.findings: deque[Any] = _deque(maxlen=5000)
 
     # ── Per-agent invocation storage ──────────────────────────
 
@@ -359,6 +371,87 @@ class BehavioralAnomalyDetector:
         # Sync detectors already ran; now push thresholds to Redis
         await self._sync_thresholds_to_redis(agent_name)
 
+    def _load_blocklist(self) -> None:
+        """Lazily load the blocklist engine from Redis (fail-gracefully)."""
+        if self._blocklist_loaded:
+            return
+        self._blocklist_loaded = True
+        try:
+            from navil.blocklist import BlocklistManager
+
+            mgr = BlocklistManager(redis_client=self.redis)
+            loaded = 0
+            # Try Redis first
+            if self.redis is not None:
+                loaded = mgr.load_from_redis()
+            # Fall back to file if Redis was empty
+            if loaded == 0:
+                try:
+                    mgr.load_from_file()
+                except FileNotFoundError:
+                    logger.debug("No blocklist file found, blocklist disabled")
+                    return
+            self._blocklist = mgr
+            logger.debug("Blocklist loaded: %d patterns", mgr.pattern_count)
+        except Exception:
+            logger.debug("Failed to load blocklist, continuing without it", exc_info=True)
+
+    def _check_blocklist(self, agent_name: str) -> None:
+        """Check the latest invocation against the blocklist.
+
+        High-confidence matches (>0.8) generate immediate alerts and Finding objects.
+        Lower-confidence matches boost subsequent ML detector sensitivity.
+        """
+        if self._blocklist is None:
+            return
+
+        dq = self._per_agent_invocations.get(agent_name)
+        if not dq:
+            return
+
+        inv = dq[-1]  # latest invocation
+
+        # Build arguments dict from available fields
+        args: dict[str, Any] = {}
+        if inv.arguments_hash:
+            args["hash"] = inv.arguments_hash
+
+        matches = self._blocklist.match(inv.tool_name, args)
+        if not matches:
+            return
+
+        # Generate Finding objects for all matches (unified type system)
+        findings = self._blocklist.match_to_findings(inv.tool_name, args)
+        for finding in findings:
+            self.findings.append(finding)
+
+        for entry in matches:
+            if entry.confidence > 0.8:
+                # High-confidence: immediate alert
+                self.alerts.append(
+                    AnomalyAlert(
+                        anomaly_type="BLOCKLIST",
+                        severity=entry.severity,
+                        agent_name=agent_name,
+                        description=(
+                            f"Blocklist match: {entry.description} "
+                            f"(pattern={entry.pattern_id}, tool={inv.tool_name})"
+                        ),
+                        timestamp=inv.timestamp,
+                        evidence=[
+                            f"pattern_id: {entry.pattern_id}",
+                            f"pattern_type: {entry.pattern_type}",
+                            f"value: {entry.value}",
+                            f"tool: {inv.tool_name}",
+                        ],
+                        recommended_action="Block the agent and investigate the tool call",
+                        confidence=entry.confidence,
+                    )
+                )
+            # Lower-confidence matches are noted but don't generate standalone alerts;
+            # they will be consumed by ML detectors for confidence boosting via
+            # the _blocklist_boost attribute.
+
     def _run_detectors(self, agent_name: str) -> None:
         """Run all anomaly detection methods and recompute local thresholds."""
         # Build baseline if needed
@@ -366,6 +459,10 @@ class BehavioralAnomalyDetector:
             self._build_baseline(agent_name)
 
         alert_count_before = len(self.alerts)
+
+        # ── Blocklist check BEFORE ML detectors ──────────────────
+        self._load_blocklist()
+        self._check_blocklist(agent_name)
 
         # Run all detection methods
         self._detect_rug_pull(agent_name)
@@ -675,13 +772,13 @@ class BehavioralAnomalyDetector:
             if inv.is_list_tools and inv.timestamp_dt and inv.timestamp_dt > cutoff
         ]
 
-        if len(list_calls) > 5:
+        if len(list_calls) > 20:
             self._create_alert(
                 anomaly_type=AnomalyType.RECONNAISSANCE,
                 severity="MEDIUM",
                 agent_name=agent_name,
                 description=(
-                    f"Agent called tools/list {len(list_calls)} times in 10 minutes (threshold: 5)"
+                    f"Agent called tools/list {len(list_calls)} times in 10 minutes (threshold: 20)"
                 ),
                 evidence=[
                     f"tools/list call count: {len(list_calls)}",
@@ -716,7 +813,9 @@ class BehavioralAnomalyDetector:
         std_dev = statistics.stdev(intervals) if len(intervals) > 1 else 0.0
 
         # Very regular intervals (std_dev < 2s) on meaningful gaps = bot-like
-        if std_dev < 2.0 and mean_interval > 5.0:
+        # Exception: intervals > 60s are common for legitimate monitoring agents
+        # that poll every 1-5 minutes. Only flag sub-minute periodic patterns.
+        if std_dev < 2.0 and mean_interval > 5.0 and mean_interval < 60.0:
             self._create_alert(
                 anomaly_type=AnomalyType.PERSISTENCE,
                 severity="HIGH",
@@ -750,8 +849,8 @@ class BehavioralAnomalyDetector:
         for inv in recent:
             evidence: list[str] = []
 
-            # Check for suspiciously large arguments
-            if inv.arguments_size_bytes > 5000:
+            # Check for suspiciously large arguments (50KB+)
+            if inv.arguments_size_bytes > 50000:
                 evidence.append(
                     f"Large argument payload: {inv.arguments_size_bytes} bytes in {inv.tool_name}"
                 )
@@ -784,13 +883,14 @@ class BehavioralAnomalyDetector:
         ]
 
         servers = set(inv.target_server for inv in recent if inv.target_server)
-        if len(servers) > 3:
+        if len(servers) > 8:
             self._create_alert(
                 anomaly_type=AnomalyType.LATERAL_MOVEMENT,
                 severity="HIGH",
                 agent_name=agent_name,
                 description=(
-                    f"Agent communicating with {len(servers)} distinct MCP servers in 5 minutes"
+                    f"Agent communicating with {len(servers)} distinct MCP servers "
+                    f"in 5 minutes (threshold: 8)"
                 ),
                 evidence=[
                     f"Servers: {', '.join(sorted(servers))}",
@@ -807,7 +907,7 @@ class BehavioralAnomalyDetector:
         agent_dq = self._per_agent_invocations.get(agent_name, deque())
         recent = [inv for inv in agent_dq if inv.timestamp_dt and inv.timestamp_dt > cutoff]
 
-        if len(recent) < 5:
+        if len(recent) < 10:
             return
 
         # Check for beaconing: regular intervals + consistent small payloads
@@ -816,7 +916,7 @@ class BehavioralAnomalyDetector:
             (timestamps[i + 1] - timestamps[i]).total_seconds() for i in range(len(timestamps) - 1)
         ]
 
-        if len(intervals) < 4:
+        if len(intervals) < 9:
             return
 
         mean_interval = statistics.mean(intervals)

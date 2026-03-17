@@ -7,23 +7,23 @@ import AnimatedNumber from '../components/AnimatedNumber'
 import SeverityBadge from '../components/SeverityBadge'
 
 const verdictColors = {
-  confirmed: 'bg-emerald-500',
-  dismissed: 'bg-gray-500',
-  escalated: 'bg-red-500',
+  confirmed: 'bg-[#34d399]',
+  dismissed: 'bg-[#5a6a8a]',
+  escalated: 'bg-[#ff4d6a]',
 }
 
 const verdictChipStyles = {
   confirmed: {
-    active: 'bg-emerald-500/20 border-emerald-500/40 text-emerald-300',
-    inactive: 'bg-gray-900/60 border-gray-700 text-gray-400 hover:border-emerald-500/30 hover:text-emerald-400',
+    active: 'bg-[#34d399]/20 border-[#34d399]/40 text-[#34d399]',
+    inactive: 'bg-[#1a2235] border-[#2a3650] text-[#8b9bc0] hover:border-[#34d399]/30 hover:text-[#34d399]',
   },
   dismissed: {
-    active: 'bg-gray-500/20 border-gray-500/40 text-gray-300',
-    inactive: 'bg-gray-900/60 border-gray-700 text-gray-400 hover:border-gray-500/30',
+    active: 'bg-[#5a6a8a]/20 border-[#5a6a8a]/40 text-[#8b9bc0]',
+    inactive: 'bg-[#1a2235] border-[#2a3650] text-[#8b9bc0] hover:border-[#5a6a8a]/30',
   },
   escalated: {
-    active: 'bg-red-500/20 border-red-500/40 text-red-300',
-    inactive: 'bg-gray-900/60 border-gray-700 text-gray-400 hover:border-red-500/30 hover:text-red-400',
+    active: 'bg-[#ff4d6a]/20 border-[#ff4d6a]/40 text-[#ff4d6a]',
+    inactive: 'bg-[#1a2235] border-[#2a3650] text-[#8b9bc0] hover:border-[#ff4d6a]/30 hover:text-[#ff4d6a]',
   },
 }
 
@@ -90,29 +90,29 @@ export default function Feedback() {
 
       {/* Stats cards */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-        <div className="glass-card p-4 animate-slideUp opacity-0" style={{ animationDelay: '0s' }}>
-          <p className="text-xs text-gray-500 mb-1">Total Feedback</p>
-          <AnimatedNumber value={stats?.total_entries || 0} className="text-2xl font-bold block" />
+        <div className="glass-card p-5 animate-slideUp opacity-0 hover:bg-[#1f2a40] hover:-translate-y-0.5 transition-all duration-200" style={{ animationDelay: '0s' }}>
+          <p className="text-xs text-[#5a6a8a] font-medium mb-1">Total Feedback</p>
+          <AnimatedNumber value={stats?.total_entries || 0} className="text-2xl font-bold block text-[#f0f4fc]" />
         </div>
-        <div className="glass-card p-4 animate-slideUp opacity-0" style={{ animationDelay: '0.06s' }}>
-          <p className="text-xs text-emerald-400 mb-1">Confirmed</p>
-          <AnimatedNumber value={totalByVerdict.confirmed} className="text-2xl font-bold text-emerald-400 block" />
+        <div className="glass-card p-5 animate-slideUp opacity-0 hover:bg-[#1f2a40] hover:-translate-y-0.5 transition-all duration-200 border-[#34d399]/20" style={{ animationDelay: '0.06s' }}>
+          <p className="text-xs text-[#34d399] font-medium mb-1">Confirmed</p>
+          <AnimatedNumber value={totalByVerdict.confirmed} className="text-2xl font-bold text-[#34d399] block" />
         </div>
-        <div className="glass-card p-4 animate-slideUp opacity-0" style={{ animationDelay: '0.12s' }}>
-          <p className="text-xs text-gray-400 mb-1">Dismissed</p>
-          <AnimatedNumber value={totalByVerdict.dismissed} className="text-2xl font-bold text-gray-400 block" />
+        <div className="glass-card p-5 animate-slideUp opacity-0 hover:bg-[#1f2a40] hover:-translate-y-0.5 transition-all duration-200" style={{ animationDelay: '0.12s' }}>
+          <p className="text-xs text-[#8b9bc0] font-medium mb-1">Dismissed</p>
+          <AnimatedNumber value={totalByVerdict.dismissed} className="text-2xl font-bold text-[#8b9bc0] block" />
         </div>
-        <div className="glass-card p-4 animate-slideUp opacity-0" style={{ animationDelay: '0.18s' }}>
-          <p className="text-xs text-red-400 mb-1">Escalated</p>
-          <AnimatedNumber value={totalByVerdict.escalated} className="text-2xl font-bold text-red-400 block" />
+        <div className="glass-card p-5 animate-slideUp opacity-0 hover:bg-[#1f2a40] hover:-translate-y-0.5 transition-all duration-200 border-[#ff4d6a]/20" style={{ animationDelay: '0.18s' }}>
+          <p className="text-xs text-[#ff4d6a] font-medium mb-1">Escalated</p>
+          <AnimatedNumber value={totalByVerdict.escalated} className="text-2xl font-bold text-[#ff4d6a] block" />
         </div>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Anomaly type breakdown */}
         <div className="glass-card p-5">
-          <h3 className="text-sm font-medium text-gray-300 mb-4 flex items-center gap-2">
-            <Icon name="chart" size={16} className="text-cyan-400" />
+          <h3 className="text-sm font-semibold text-[#f0f4fc] mb-4 flex items-center gap-2">
+            <Icon name="chart" size={16} className="text-[#00e5c8]" />
             Feedback by Anomaly Type
           </h3>
           {stats && Object.keys(stats.by_anomaly_type).length > 0 ? (
@@ -122,59 +122,59 @@ export default function Feedback() {
                 return (
                   <div key={type}>
                     <div className="flex items-center justify-between mb-1.5">
-                      <span className="text-sm text-gray-300 font-mono">{type}</span>
-                      <span className="text-xs text-gray-500">{total} entries</span>
+                      <span className="text-sm text-[#f0f4fc] font-mono">{type}</span>
+                      <span className="text-xs text-[#5a6a8a]">{total} entries</span>
                     </div>
-                    <div className="flex gap-1 h-2 rounded-full overflow-hidden bg-gray-800">
+                    <div className="flex gap-1 h-2 rounded-full overflow-hidden bg-[#111827]">
                       {counts.confirmed > 0 && (
-                        <div className="bg-emerald-500 rounded-full" style={{ width: `${(counts.confirmed / total) * 100}%` }} />
+                        <div className="bg-[#34d399] rounded-full" style={{ width: `${(counts.confirmed / total) * 100}%` }} />
                       )}
                       {counts.dismissed > 0 && (
-                        <div className="bg-gray-500 rounded-full" style={{ width: `${(counts.dismissed / total) * 100}%` }} />
+                        <div className="bg-[#5a6a8a] rounded-full" style={{ width: `${(counts.dismissed / total) * 100}%` }} />
                       )}
                       {counts.escalated > 0 && (
-                        <div className="bg-red-500 rounded-full" style={{ width: `${(counts.escalated / total) * 100}%` }} />
+                        <div className="bg-[#ff4d6a] rounded-full" style={{ width: `${(counts.escalated / total) * 100}%` }} />
                       )}
                     </div>
-                    <div className="flex gap-4 mt-1 text-[10px] text-gray-500">
-                      <span className="text-emerald-400">{counts.confirmed} confirmed</span>
+                    <div className="flex gap-4 mt-1 text-[10px] text-[#5a6a8a]">
+                      <span className="text-[#34d399]">{counts.confirmed} confirmed</span>
                       <span>{counts.dismissed} dismissed</span>
-                      <span className="text-red-400">{counts.escalated} escalated</span>
+                      <span className="text-[#ff4d6a]">{counts.escalated} escalated</span>
                     </div>
                   </div>
                 )
               })}
             </div>
           ) : (
-            <p className="text-gray-500 text-sm text-center py-4">No feedback data yet. Submit verdicts below.</p>
+            <p className="text-[#5a6a8a] text-sm text-center py-4">No feedback data yet. Submit verdicts below.</p>
           )}
           {/* Legend */}
-          <div className="flex gap-4 mt-4 pt-3 border-t border-gray-800/60">
-            <div className="flex items-center gap-1.5 text-xs text-gray-500">
-              <span className="w-2.5 h-2.5 rounded-full bg-emerald-500" /> Confirmed
+          <div className="flex gap-4 mt-4 pt-3 border-t border-[#2a3650]">
+            <div className="flex items-center gap-1.5 text-xs text-[#5a6a8a]">
+              <span className="w-2.5 h-2.5 rounded-full bg-[#34d399]" /> Confirmed
             </div>
-            <div className="flex items-center gap-1.5 text-xs text-gray-500">
-              <span className="w-2.5 h-2.5 rounded-full bg-gray-500" /> Dismissed
+            <div className="flex items-center gap-1.5 text-xs text-[#5a6a8a]">
+              <span className="w-2.5 h-2.5 rounded-full bg-[#5a6a8a]" /> Dismissed
             </div>
-            <div className="flex items-center gap-1.5 text-xs text-gray-500">
-              <span className="w-2.5 h-2.5 rounded-full bg-red-500" /> Escalated
+            <div className="flex items-center gap-1.5 text-xs text-[#5a6a8a]">
+              <span className="w-2.5 h-2.5 rounded-full bg-[#ff4d6a]" /> Escalated
             </div>
           </div>
         </div>
 
         {/* Submit feedback form */}
         <div className="glass-card p-5">
-          <h3 className="text-sm font-medium text-gray-300 mb-4 flex items-center gap-2">
-            <Icon name="activity" size={16} className="text-cyan-400" />
+          <h3 className="text-sm font-semibold text-[#f0f4fc] mb-4 flex items-center gap-2">
+            <Icon name="activity" size={16} className="text-[#00e5c8]" />
             Submit Feedback
           </h3>
           <div className="space-y-4">
             <div>
-              <label className="block text-xs text-gray-500 mb-1">Select Alert</label>
+              <label className="block text-xs text-[#5a6a8a] font-medium mb-1.5">Select Alert</label>
               <select
                 value={selectedAlert}
                 onChange={e => setSelectedAlert(e.target.value)}
-                className="w-full bg-gray-800 border border-gray-700 rounded-lg px-3 py-2 text-sm text-gray-300 focus:border-cyan-500 focus:outline-none"
+                className="w-full bg-[#111827] border border-[#2a3650] rounded-lg px-3 py-2.5 text-sm text-[#f0f4fc] focus:border-[#00e5c8] focus:outline-none transition-colors"
               >
                 <option value="">Choose an alert...</option>
                 {alerts.slice(0, 20).map((a) => (
@@ -186,7 +186,7 @@ export default function Feedback() {
             </div>
 
             <div>
-              <label className="block text-xs text-gray-500 mb-2">Verdict</label>
+              <label className="block text-xs text-[#5a6a8a] font-medium mb-2">Verdict</label>
               <div className="flex gap-2">
                 {(['confirmed', 'dismissed', 'escalated'] as const).map(v => (
                   <button
@@ -205,11 +205,11 @@ export default function Feedback() {
             </div>
 
             <div>
-              <label className="block text-xs text-gray-500 mb-1">Notes (optional)</label>
+              <label className="block text-xs text-[#5a6a8a] font-medium mb-1.5">Notes (optional)</label>
               <textarea
                 value={notes}
                 onChange={e => setNotes(e.target.value)}
-                className="w-full h-24 bg-gray-800 border border-gray-700 rounded-lg px-3 py-2 text-sm text-gray-300 focus:border-cyan-500 focus:outline-none resize-none"
+                className="w-full h-24 bg-[#111827] border border-[#2a3650] rounded-lg px-3 py-2.5 text-sm text-[#f0f4fc] focus:border-[#00e5c8] focus:outline-none resize-none placeholder:text-[#5a6a8a] transition-colors"
                 placeholder="Additional context about this alert..."
               />
             </div>
@@ -217,7 +217,7 @@ export default function Feedback() {
             <button
               onClick={handleSubmit}
               disabled={!selectedAlert || submitting}
-              className="w-full px-4 py-2.5 bg-cyan-500 text-white rounded-lg text-sm font-medium hover:bg-cyan-400 disabled:opacity-40 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+              className="w-full px-4 py-2.5 bg-[#00e5c8] text-[#0a0e17] rounded-lg text-sm font-semibold hover:bg-[#00b8a0] hover:-translate-y-0.5 disabled:opacity-40 disabled:cursor-not-allowed flex items-center justify-center gap-2 transition-all duration-200"
             >
               <Icon name="activity" size={14} />
               {submitting ? 'Submitting...' : 'Submit Feedback'}
@@ -228,11 +228,11 @@ export default function Feedback() {
 
       {/* Success / Error messages */}
       {success && (
-        <div className="glass-card border-emerald-500/30 p-4 animate-slideUp flex items-center gap-2 text-sm text-emerald-400">
+        <div className="glass-card border-[#34d399]/30 p-4 animate-slideUp flex items-center gap-2 text-sm text-[#34d399]">
           <Icon name="check" size={16} /> {success}
         </div>
       )}
-      {error && <p className="text-red-400 text-sm">{error}</p>}
+      {error && <p className="text-[#ff4d6a] text-sm">{error}</p>}
     </div>
   )
 }

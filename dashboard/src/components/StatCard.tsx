@@ -11,36 +11,42 @@ interface StatCardProps {
 
 export default function StatCard({ label, value, icon, accent = 'cyan', index = 0 }: StatCardProps) {
   const accentMap: Record<string, string> = {
-    cyan: 'from-cyan-500/20 to-cyan-500/5 border-cyan-500/20',
-    red: 'from-red-500/20 to-red-500/5 border-red-500/20',
-    emerald: 'from-emerald-500/20 to-emerald-500/5 border-emerald-500/20',
-    amber: 'from-amber-500/20 to-amber-500/5 border-amber-500/20',
+    cyan: 'border-[#00e5c8]/20',
+    red: 'border-[#ff4d6a]/20',
+    emerald: 'border-[#34d399]/20',
+    amber: 'border-[#f59e0b]/20',
+  }
+  const iconBgMap: Record<string, string> = {
+    cyan: 'bg-[#00e5c8]/10',
+    red: 'bg-[#ff4d6a]/10',
+    emerald: 'bg-[#34d399]/10',
+    amber: 'bg-[#f59e0b]/10',
   }
   const iconColorMap: Record<string, string> = {
-    cyan: 'text-cyan-400',
-    red: 'text-red-400',
-    emerald: 'text-emerald-400',
-    amber: 'text-amber-400',
+    cyan: 'text-[#00e5c8]',
+    red: 'text-[#ff4d6a]',
+    emerald: 'text-[#34d399]',
+    amber: 'text-[#f59e0b]',
   }
 
   const numericValue = typeof value === 'number' ? value : null
 
   return (
     <div
-      className={`bg-gradient-to-br ${accentMap[accent] || accentMap.cyan} border rounded-xl p-5 animate-slideUp opacity-0`}
+      className={`bg-[#1a2235] border ${accentMap[accent] || accentMap.cyan} rounded-[12px] p-5 animate-slideUp opacity-0 hover:bg-[#1f2a40] hover:border-[#5a6a8a]/40 hover:-translate-y-0.5 transition-all duration-200`}
       style={{ animationDelay: `${index * 0.08}s` }}
     >
       <div className="flex items-center justify-between">
         <div>
-          <p className="text-sm text-gray-400">{label}</p>
+          <p className="text-sm text-[#8b9bc0] font-medium">{label}</p>
           {numericValue !== null ? (
-            <AnimatedNumber value={numericValue} className="text-3xl font-bold mt-1 block" />
+            <AnimatedNumber value={numericValue} className="text-3xl font-bold mt-1.5 block text-[#f0f4fc]" />
           ) : (
-            <p className="text-3xl font-bold mt-1">{value}</p>
+            <p className="text-3xl font-bold mt-1.5 text-[#f0f4fc]">{value}</p>
           )}
         </div>
-        <div className={`${iconColorMap[accent] || 'text-cyan-400'} opacity-50`}>
-          <Icon name={icon} size={28} />
+        <div className={`w-12 h-12 rounded-xl ${iconBgMap[accent] || 'bg-[#00e5c8]/10'} flex items-center justify-center`}>
+          <Icon name={icon} size={24} className={iconColorMap[accent] || 'text-[#00e5c8]'} />
         </div>
       </div>
     </div>

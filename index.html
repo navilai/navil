@@ -1,0 +1,438 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Navil — The Security Gateway for AI Agents</title>
+  <meta name="description" content="Protect your MCP servers from prompt injection, data exfiltration, and autonomous drift. 12 behavioral detectors, SARIF CI/CD integration, and sub-millisecond overhead." />
+  <style>
+    :root {
+      --bg: #0a0a0f;
+      --surface: #12121a;
+      --border: #1e1e2e;
+      --text: #e4e4ef;
+      --text-muted: #8888a0;
+      --accent: #6366f1;
+      --accent-hover: #818cf8;
+      --green: #22c55e;
+      --orange: #f59e0b;
+      --red: #ef4444;
+    }
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      line-height: 1.6;
+    }
+    a { color: var(--accent); text-decoration: none; }
+    a:hover { color: var(--accent-hover); }
+
+    /* Nav */
+    nav {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 1.5rem 2rem;
+    }
+    nav .logo { font-size: 1.5rem; font-weight: 700; color: var(--text); }
+    nav .nav-links { display: flex; gap: 2rem; align-items: center; }
+    nav .nav-links a { color: var(--text-muted); font-size: 0.95rem; }
+    nav .nav-links a:hover { color: var(--text); }
+    .btn {
+      display: inline-block;
+      padding: 0.6rem 1.4rem;
+      border-radius: 6px;
+      font-weight: 600;
+      font-size: 0.95rem;
+      transition: background 0.2s;
+    }
+    .btn-primary { background: var(--accent); color: #fff; }
+    .btn-primary:hover { background: var(--accent-hover); color: #fff; }
+    .btn-outline { border: 1px solid var(--border); color: var(--text); }
+    .btn-outline:hover { border-color: var(--accent); color: var(--accent); }
+
+    /* Hero */
+    .hero {
+      text-align: center;
+      padding: 6rem 2rem 4rem;
+      max-width: 900px;
+      margin: 0 auto;
+    }
+    .hero h1 {
+      font-size: 3.5rem;
+      font-weight: 800;
+      line-height: 1.15;
+      margin-bottom: 1.5rem;
+    }
+    .hero h1 span { color: var(--accent); }
+    .hero p {
+      font-size: 1.25rem;
+      color: var(--text-muted);
+      max-width: 650px;
+      margin: 0 auto 2rem;
+    }
+    .hero-cta { display: flex; gap: 1rem; justify-content: center; flex-wrap: wrap; }
+    .hero-stats {
+      display: flex;
+      justify-content: center;
+      gap: 3rem;
+      margin-top: 3rem;
+      flex-wrap: wrap;
+    }
+    .hero-stats .stat { text-align: center; }
+    .hero-stats .stat-value { font-size: 2rem; font-weight: 700; color: var(--accent); }
+    .hero-stats .stat-label { font-size: 0.85rem; color: var(--text-muted); }
+
+    /* Sections */
+    section { max-width: 1200px; margin: 0 auto; padding: 5rem 2rem; }
+    section h2 {
+      font-size: 2.2rem;
+      font-weight: 700;
+      text-align: center;
+      margin-bottom: 1rem;
+    }
+    section .section-sub {
+      text-align: center;
+      color: var(--text-muted);
+      max-width: 600px;
+      margin: 0 auto 3rem;
+      font-size: 1.1rem;
+    }
+
+    /* Features grid */
+    .features-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+      gap: 1.5rem;
+    }
+    .feature-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 2rem;
+    }
+    .feature-card h3 { font-size: 1.15rem; margin-bottom: 0.5rem; }
+    .feature-card p { color: var(--text-muted); font-size: 0.95rem; }
+
+    /* Report CTA */
+    .report-cta {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 3rem;
+      text-align: center;
+      max-width: 800px;
+      margin: 0 auto;
+    }
+    .report-cta h2 { margin-bottom: 1rem; }
+    .report-cta p { color: var(--text-muted); margin-bottom: 2rem; font-size: 1.05rem; }
+    .report-stats {
+      display: flex;
+      justify-content: center;
+      gap: 2.5rem;
+      margin-bottom: 2rem;
+      flex-wrap: wrap;
+    }
+    .report-stats .stat-value { font-size: 1.6rem; font-weight: 700; }
+    .report-stats .stat-label { font-size: 0.8rem; color: var(--text-muted); }
+    .severity-high { color: var(--red); }
+    .severity-warn { color: var(--orange); }
+    .severity-ok { color: var(--green); }
+
+    /* CI/CD */
+    .cicd-block {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 2rem;
+      max-width: 700px;
+      margin: 0 auto;
+    }
+    .cicd-block pre {
+      background: #0d0d14;
+      border-radius: 8px;
+      padding: 1.5rem;
+      overflow-x: auto;
+      font-size: 0.9rem;
+      color: var(--text-muted);
+      line-height: 1.7;
+    }
+    .cicd-block pre code { color: var(--text); }
+    .cicd-block h3 { margin-bottom: 1rem; }
+
+    /* Pricing */
+    .pricing-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+      gap: 1.5rem;
+      max-width: 1000px;
+      margin: 0 auto;
+    }
+    .price-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 2rem;
+      text-align: center;
+    }
+    .price-card.featured { border-color: var(--accent); }
+    .price-card h3 { font-size: 1.2rem; margin-bottom: 0.5rem; }
+    .price-card .price {
+      font-size: 2.2rem;
+      font-weight: 800;
+      margin: 1rem 0 0.25rem;
+    }
+    .price-card .price-period { color: var(--text-muted); font-size: 0.85rem; margin-bottom: 1.5rem; }
+    .price-card ul {
+      list-style: none;
+      text-align: left;
+      margin-bottom: 1.5rem;
+    }
+    .price-card ul li {
+      padding: 0.35rem 0;
+      font-size: 0.9rem;
+      color: var(--text-muted);
+    }
+    .price-card ul li::before { content: "\2713  "; color: var(--green); }
+
+    /* Footer */
+    footer {
+      text-align: center;
+      padding: 3rem 2rem;
+      color: var(--text-muted);
+      font-size: 0.85rem;
+      border-top: 1px solid var(--border);
+      max-width: 1200px;
+      margin: 2rem auto 0;
+    }
+    footer a { color: var(--text-muted); }
+    footer a:hover { color: var(--text); }
+
+    /* Responsive */
+    @media (max-width: 640px) {
+      .hero h1 { font-size: 2.2rem; }
+      .hero-stats { gap: 1.5rem; }
+      nav .nav-links { gap: 1rem; }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Nav -->
+  <nav>
+    <div class="logo">Navil</div>
+    <div class="nav-links">
+      <a href="#features">Features</a>
+      <a href="#cicd">CI/CD</a>
+      <a href="#report">Report</a>
+      <a href="#pricing">Pricing</a>
+      <a href="https://github.com/ivanlkf/navil#readme">Docs</a>
+      <a href="https://github.com/ivanlkf/navil" class="btn btn-outline">GitHub</a>
+      <a href="https://navil.ai/login" class="btn btn-outline">Sign In</a>
+      <a href="https://navil.ai/register" class="btn btn-primary">Get Started</a>
+    </div>
+  </nav>
+
+  <!-- Hero -->
+  <section class="hero">
+    <h1>Security gateway for <span>AI agents</span></h1>
+    <p>Protect your MCP servers from prompt injection, data exfiltration, and autonomous drift &mdash; with sub-millisecond overhead.</p>
+    <div class="hero-cta">
+      <a href="https://navil.ai/register" class="btn btn-primary">Get Started Free</a>
+      <a href="#report" class="btn btn-outline">Read the Report</a>
+    </div>
+    <div class="hero-stats">
+      <div class="stat">
+        <div class="stat-value">12</div>
+        <div class="stat-label">Behavioral Detectors</div>
+      </div>
+      <div class="stat">
+        <div class="stat-value">2.7 &micro;s</div>
+        <div class="stat-label">Overhead per Message</div>
+      </div>
+      <div class="stat">
+        <div class="stat-value">1,000</div>
+        <div class="stat-label">MCP Servers Scanned</div>
+      </div>
+      <div class="stat">
+        <div class="stat-value">11</div>
+        <div class="stat-label">Pentest Scenarios</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Features -->
+  <section id="features">
+    <h2>Built for MCP security</h2>
+    <p class="section-sub">Everything you need to secure AI agent &harr; tool communication, from development to production.</p>
+    <div class="features-grid">
+      <div class="feature-card">
+        <h3>12 Anomaly Detectors</h3>
+        <p>Statistical behavioral analysis with adaptive EMA baselines and operator feedback loops. Detects rug-pull, exfiltration, C2 beaconing, supply chain attacks, and more.</p>
+      </div>
+      <div class="feature-card">
+        <h3>SARIF CI/CD Integration</h3>
+        <p>Scan MCP configs in every PR with <code>navil scan --format sarif</code>. Native GitHub Action uploads results to the Security tab.</p>
+      </div>
+      <div class="feature-card">
+        <h3>Rust Data Plane</h3>
+        <p>Axum-based reverse proxy with HMAC-SHA256 verification, JSON depth limiting, and O(1) Redis threshold checks. Sub-millisecond overhead.</p>
+      </div>
+      <div class="feature-card">
+        <h3>Registry Scanning</h3>
+        <p>Crawl npm, PyPI, and awesome-mcp-servers lists. Bulk-scan with <code>navil scan-batch</code> and generate security reports.</p>
+      </div>
+      <div class="feature-card">
+        <h3>Policy Engine</h3>
+        <p>YAML-driven tool/action allow-lists, per-agent rate limiting, data-sensitivity gates, and suspicious-pattern detection.</p>
+      </div>
+      <div class="feature-card">
+        <h3>Honeypot &amp; Canary Kit</h3>
+        <p>Deploy decoy MCP servers to detect attackers in the wild. Auto-generates blocklist entries from observed attack patterns.</p>
+      </div>
+      <div class="feature-card">
+        <h3>Identity &amp; Delegation</h3>
+        <p>OIDC token exchange, delegation chains for sub-agents, cascade revocation, and human-identity attribution headers.</p>
+      </div>
+      <div class="feature-card">
+        <h3>Threat Intelligence</h3>
+        <p>Community-sourced threat intel via the Give-to-Get initiative. 28 curated patterns, 200+ parameterized attack variants for ML training.</p>
+      </div>
+      <div class="feature-card">
+        <h3>LLM-Powered Analysis</h3>
+        <p>AI-powered config analysis, anomaly explanation, policy generation, and self-healing. Supports Anthropic, OpenAI, Gemini, and Ollama.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- CI/CD -->
+  <section id="cicd">
+    <h2>CI/CD in minutes</h2>
+    <p class="section-sub">Add MCP security scanning to your GitHub Actions pipeline. Results appear in the Security tab.</p>
+    <div class="cicd-block">
+      <h3>GitHub Action</h3>
+      <pre><code>- uses: actions/checkout@v4
+- uses: ./.github/actions/navil-scan
+  with:
+    config: .mcp.json
+    fail-on-score-below: "60"
+    format: sarif</code></pre>
+    </div>
+  </section>
+
+  <!-- State of MCP Security Report CTA -->
+  <section id="report">
+    <div class="report-cta">
+      <h2>State of MCP Security</h2>
+      <p>We scanned 1,000 public MCP servers. The results are sobering.</p>
+      <div class="report-stats">
+        <div class="stat">
+          <div class="stat-value severity-high">100%</div>
+          <div class="stat-label">Missing Authentication</div>
+        </div>
+        <div class="stat">
+          <div class="stat-value severity-warn">61.7</div>
+          <div class="stat-label">Average Score (out of 100)</div>
+        </div>
+        <div class="stat">
+          <div class="stat-value severity-high">0</div>
+          <div class="stat-label">Servers Scored Above 80</div>
+        </div>
+        <div class="stat">
+          <div class="stat-value severity-warn">3,015</div>
+          <div class="stat-label">Total Findings</div>
+        </div>
+      </div>
+      <a href="https://github.com/ivanlkf/navil/blob/main/state_of_mcp_security_v3.md" class="btn btn-primary">Read the Full Report</a>
+    </div>
+  </section>
+
+  <!-- Pricing -->
+  <section id="pricing">
+    <h2>Pricing</h2>
+    <p class="section-sub">Open-core model. The security engine is Apache 2.0. Pay for real-time threat intel and cloud features.</p>
+    <div class="pricing-grid">
+      <div class="price-card">
+        <h3>Community</h3>
+        <div class="price">$0</div>
+        <div class="price-period">per month</div>
+        <ul>
+          <li>3 agents / nodes</li>
+          <li>12 anomaly detectors</li>
+          <li>200+ SAFE-MCP pen tests</li>
+          <li>Shared threat intel (48h delay)</li>
+          <li>Community support</li>
+        </ul>
+        <a href="https://navil.ai/register" class="btn btn-outline">Install Free</a>
+      </div>
+      <div class="price-card">
+        <h3>Pro</h3>
+        <div class="price">$59</div>
+        <div class="price-period">per month</div>
+        <ul>
+          <li>10 agents / nodes</li>
+          <li>Private telemetry (no give-to-get)</li>
+          <li>Real-time threat feed</li>
+          <li>CI/CD SARIF integration</li>
+          <li>Webhooks (Slack/Discord)</li>
+        </ul>
+        <a href="https://navil.ai/register" class="btn btn-outline">Get Started</a>
+      </div>
+      <div class="price-card featured">
+        <h3>Growth</h3>
+        <div class="price">$129</div>
+        <div class="price-period">per month</div>
+        <ul>
+          <li>25 agents / nodes</li>
+          <li>Everything in Pro</li>
+          <li>Basic OIDC identity</li>
+          <li>5 custom threat rules</li>
+          <li>Email support (48h SLA)</li>
+        </ul>
+        <a href="https://navil.ai/register" class="btn btn-primary">Get Started</a>
+      </div>
+      <div class="price-card">
+        <h3>Team</h3>
+        <div class="price">$299</div>
+        <div class="price-period">per month</div>
+        <ul>
+          <li>50 agents / nodes</li>
+          <li>Full OIDC &amp; delegation chains</li>
+          <li>Unlimited custom rules</li>
+          <li>Fleet-wide analytics</li>
+          <li>Priority support (8h SLA)</li>
+        </ul>
+        <a href="https://navil.ai/register" class="btn btn-outline">Get Started</a>
+      </div>
+      <div class="price-card">
+        <h3>Enterprise</h3>
+        <div class="price">$1,299</div>
+        <div class="price-period">per month</div>
+        <ul>
+          <li>Unlimited agents / nodes</li>
+          <li>SLA guarantees</li>
+          <li>On-prem deployment</li>
+          <li>Dedicated threat feed</li>
+          <li>24/7 support</li>
+        </ul>
+        <a href="https://navil.ai/register" class="btn btn-outline">Contact Sales</a>
+      </div>
+    </div>
+  </section>
+
+  <!-- Footer -->
+  <footer>
+    <p>Navil is developed by <a href="https://github.com/ivanlkf/navil">Pantheon Lab Pte Ltd</a>. Apache 2.0 core, BSL 1.1 cloud components.</p>
+    <p style="margin-top: 0.5rem;">
+      <a href="https://github.com/ivanlkf/navil">GitHub</a> &middot;
+      <a href="https://github.com/ivanlkf/navil/blob/main/SECURITY.md">Security</a> &middot;
+      <a href="https://github.com/ivanlkf/navil/blob/main/DATA_COLLECTION.md">Privacy</a> &middot;
+      <a href="https://github.com/ivanlkf/navil/blob/main/CONTRIBUTING.md">Contributing</a>
+    </p>
+  </footer>
+
+</body>
+</html>

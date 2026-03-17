@@ -1,0 +1,17 @@
+# Ignore everything outside the dashboard directory for Vercel deployments
+.venv
+venv
+__pycache__
+*.py[cod]
+*.egg-info
+.pytest_cache
+.mypy_cache
+.ruff_cache
+crawl_results
+crawl_results_v2
+scan_results*.jsonl
+target
+*.db
+*.db-journal
+.claude
+.gstack
