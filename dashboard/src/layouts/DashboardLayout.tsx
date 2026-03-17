@@ -4,6 +4,7 @@ import { UserButton } from '@clerk/clerk-react'
 import Icon, { type IconName } from '../components/Icon'
 
 const hasClerk = !!import.meta.env.VITE_CLERK_PUBLISHABLE_KEY
+const hasCloudApi = !!import.meta.env.VITE_API_BASE_URL
 
 const navItems: { to: string; label: string; icon: IconName }[] = [
   { to: '/',             label: 'Agents',       icon: 'bot' },
@@ -83,28 +84,32 @@ export default function DashboardLayout() {
             </NavLink>
           ))}
 
-          {/* Cloud section divider */}
-          <div className="pt-3 pb-1 px-3">
-            <p className="text-[10px] font-semibold text-[#5a6a8a] uppercase tracking-widest">Cloud</p>
-          </div>
+          {/* Cloud section divider — only shown when connected to cloud API */}
+          {hasCloudApi && (
+            <>
+              <div className="pt-3 pb-1 px-3">
+                <p className="text-[10px] font-semibold text-[#5a6a8a] uppercase tracking-widest">Cloud</p>
+              </div>
 
-          {cloudNavItems.map(({ to, label, icon }) => (
-            <NavLink
-              key={to}
-              to={to}
-              onClick={() => setSidebarOpen(false)}
-              className={({ isActive }) =>
-                `flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm transition-all duration-200 nav-glow ${
-                  isActive
-                    ? 'nav-active-bar bg-[#00e5c8]/10 text-[#00e5c8] font-semibold'
-                    : 'text-[#8b9bc0] hover:bg-[#1a2235] hover:text-[#f0f4fc]'
-                }`
-              }
-            >
-              <Icon name={icon} size={18} />
-              {label}
-            </NavLink>
-          ))}
+              {cloudNavItems.map(({ to, label, icon }) => (
+                <NavLink
+                  key={to}
+                  to={to}
+                  onClick={() => setSidebarOpen(false)}
+                  className={({ isActive }) =>
+                    `flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm transition-all duration-200 nav-glow ${
+                      isActive
+                        ? 'nav-active-bar bg-[#00e5c8]/10 text-[#00e5c8] font-semibold'
+                        : 'text-[#8b9bc0] hover:bg-[#1a2235] hover:text-[#f0f4fc]'
+                    }`
+                  }
+                >
+                  <Icon name={icon} size={18} />
+                  {label}
+                </NavLink>
+              ))}
+            </>
+          )}
 
           {/* External links */}
           <div className="pt-3 pb-1 px-3">

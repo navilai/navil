@@ -29,6 +29,7 @@ import Analytics from './pages/Analytics'
 import Billing from './pages/Billing'
 import Webhooks from './pages/Webhooks'
 import ThreatRules from './pages/ThreatRules'
+import CloudGuard from './components/CloudGuard'
 
 /**
  * When running locally via `navil cloud serve`, no Clerk publishable key
@@ -94,11 +95,11 @@ export default function App() {
         <Route path="feedback" element={<Feedback />} />
         <Route path="self-healing" element={<SelfHealing />} />
         <Route path="settings" element={<Settings />} />
-        {/* Cloud management pages */}
-        <Route path="analytics" element={<Analytics />} />
-        <Route path="billing" element={<Billing />} />
-        <Route path="webhooks" element={<Webhooks />} />
-        <Route path="threat-rules" element={<ThreatRules />} />
+        {/* Cloud management pages — guarded for local mode */}
+        <Route path="analytics" element={<CloudGuard title="Analytics" subtitle="Threat detection analytics"><Analytics /></CloudGuard>} />
+        <Route path="billing" element={<CloudGuard title="Billing" subtitle="Manage your subscription"><Billing /></CloudGuard>} />
+        <Route path="webhooks" element={<CloudGuard title="Webhooks" subtitle="Manage webhook integrations"><Webhooks /></CloudGuard>} />
+        <Route path="threat-rules" element={<CloudGuard title="Threat Rules" subtitle="Custom detection rules"><ThreatRules /></CloudGuard>} />
       </Route>
 
       {/* Catch-all: redirect old /dashboard/* deep links to root */}
