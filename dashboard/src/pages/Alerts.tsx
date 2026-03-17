@@ -63,15 +63,15 @@ export default function Alerts() {
             <button
               key={s}
               onClick={() => setFilter(s)}
-              className={`px-3 py-1.5 text-xs rounded-lg border flex items-center gap-1.5 ${
+              className={`px-3 py-1.5 text-xs rounded-lg border flex items-center gap-1.5 font-medium transition-all duration-200 ${
                 filter === s
-                  ? 'bg-cyan-500/20 border-cyan-500/40 text-cyan-300 shadow-[0_0_8px_rgba(99,102,241,0.15)]'
-                  : 'bg-gray-900/60 border-gray-700 text-gray-400 hover:border-gray-600 hover:text-gray-300'
+                  ? 'bg-[#00e5c8]/15 border-[#00e5c8]/40 text-[#00e5c8]'
+                  : 'bg-[#1a2235] border-[#2a3650] text-[#8b9bc0] hover:border-[#5a6a8a] hover:text-[#f0f4fc]'
               }`}
             >
               {s || 'All'}
               {alertCounts[s] !== undefined && (
-                <span className="bg-gray-800 text-gray-400 text-[10px] px-1.5 py-0.5 rounded-full min-w-[20px] text-center">
+                <span className="bg-[#111827] text-[#8b9bc0] text-[10px] px-1.5 py-0.5 rounded-full min-w-[20px] text-center font-semibold">
                   {alertCounts[s]}
                 </span>
               )}
@@ -82,10 +82,10 @@ export default function Alerts() {
 
       {alerts.length === 0 ? (
         <div className="text-center py-16 animate-fadeIn">
-          <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-emerald-500/10 mb-4">
-            <Icon name="check" size={32} className="text-emerald-400" />
+          <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-[#34d399]/10 border border-[#34d399]/20 mb-4">
+            <Icon name="check" size={32} className="text-[#34d399]" />
           </div>
-          <p className="text-gray-400">No alerts{filter ? ` with severity ${filter}` : ''}. Looking good!</p>
+          <p className="text-[#8b9bc0]">No alerts{filter ? ` with severity ${filter}` : ''}. Looking good!</p>
         </div>
       ) : (
         <div className="space-y-2">
@@ -97,17 +97,17 @@ export default function Alerts() {
             >
               <div
                 onClick={() => setExpanded(expanded === i ? null : i)}
-                className="flex items-center gap-4 px-4 py-3 cursor-pointer hover:bg-gray-800/30"
+                className="flex items-center gap-4 px-4 py-3 cursor-pointer hover:bg-[#1f2a40] transition-colors duration-200"
               >
                 <SeverityBadge severity={alert.severity} />
-                <span className="font-mono text-xs text-gray-400 w-40 shrink-0">{alert.anomaly_type}</span>
-                <span className="text-sm text-gray-300 w-32 shrink-0">{alert.agent}</span>
-                <span className="text-sm text-gray-400 flex-1 truncate">{alert.description}</span>
-                <span className="text-sm text-gray-500 w-16 text-right">{(alert.confidence * 100).toFixed(0)}%</span>
+                <span className="font-mono text-xs text-[#8b9bc0] w-40 shrink-0">{alert.anomaly_type}</span>
+                <span className="text-sm text-[#f0f4fc] font-medium w-32 shrink-0">{alert.agent}</span>
+                <span className="text-sm text-[#8b9bc0] flex-1 truncate">{alert.description}</span>
+                <span className="text-sm text-[#5a6a8a] font-mono w-16 text-right">{(alert.confidence * 100).toFixed(0)}%</span>
                 <Icon
                   name="chevron-down"
                   size={16}
-                  className={`text-gray-500 transition-transform duration-200 ${expanded === i ? 'rotate-0' : '-rotate-90'}`}
+                  className={`text-[#5a6a8a] transition-transform duration-200 ${expanded === i ? 'rotate-0' : '-rotate-90'}`}
                 />
               </div>
 
@@ -117,24 +117,24 @@ export default function Alerts() {
                   expanded === i ? 'max-h-96 opacity-100' : 'max-h-0 opacity-0'
                 }`}
               >
-                <div className="px-4 pb-4 pt-2 border-t border-gray-800/60 space-y-3">
+                <div className="px-4 pb-4 pt-2 border-t border-[#2a3650] space-y-3">
                   <div>
-                    <p className="text-xs text-gray-500 mb-1">Evidence</p>
+                    <p className="text-xs text-[#5a6a8a] font-medium uppercase tracking-wider mb-1.5">Evidence</p>
                     <ul className="space-y-1">
                       {alert.evidence.map((e, j) => (
-                        <li key={j} className="text-sm text-gray-400 flex items-start gap-2">
-                          <Icon name="chevron-right" size={12} className="text-gray-600 mt-0.5 shrink-0" />
+                        <li key={j} className="text-sm text-[#8b9bc0] flex items-start gap-2">
+                          <Icon name="chevron-right" size={12} className="text-[#5a6a8a] mt-0.5 shrink-0" />
                           {e}
                         </li>
                       ))}
                     </ul>
                   </div>
                   <div>
-                    <p className="text-xs text-gray-500 mb-1">Recommended Action</p>
-                    <p className="text-sm text-cyan-400">{alert.recommended_action}</p>
+                    <p className="text-xs text-[#5a6a8a] font-medium uppercase tracking-wider mb-1.5">Recommended Action</p>
+                    <p className="text-sm text-[#00e5c8]">{alert.recommended_action}</p>
                   </div>
                   {/* AI Explanation */}
-                  <div className="pt-2 border-t border-gray-800/30">
+                  <div className="pt-2 border-t border-[#2a3650]/50">
                     {!explanations[i] ? (
                       canUseLLM ? (
                         <>
@@ -169,7 +169,7 @@ export default function Alerts() {
                             {explaining === i ? 'Analyzing...' : 'Explain with AI'}
                           </button>
                           {explaining === i && streamingText[i] && (
-                            <pre className="mt-2 text-xs text-gray-400 whitespace-pre-wrap font-mono bg-gray-900/50 rounded-lg p-2 max-h-32 overflow-y-auto">
+                            <pre className="mt-2 text-xs text-[#8b9bc0] whitespace-pre-wrap font-mono bg-[#0d1117] rounded-lg p-2 max-h-32 overflow-y-auto">
                               {streamingText[i]}
                               <span className="animate-pulse text-violet-400">|</span>
                             </pre>
@@ -185,20 +185,20 @@ export default function Alerts() {
                           <span className="text-xs font-medium text-violet-400">AI Analysis</span>
                           <span className={`px-2 py-0.5 text-[10px] rounded-full font-medium ${
                             explanations[i].likely_threat
-                              ? 'bg-red-500/15 text-red-400 border border-red-500/30'
-                              : 'bg-emerald-500/15 text-emerald-400 border border-emerald-500/30'
+                              ? 'bg-[#ff4d6a]/15 text-[#ff4d6a] border border-[#ff4d6a]/30'
+                              : 'bg-[#34d399]/15 text-[#34d399] border border-[#34d399]/30'
                           }`}>
                             {explanations[i].likely_threat ? 'Likely Threat' : 'Likely Benign'}
                           </span>
                         </div>
-                        <p className="text-sm text-gray-300">{explanations[i].explanation}</p>
+                        <p className="text-sm text-[#f0f4fc]">{explanations[i].explanation}</p>
                         {explanations[i].recommended_actions?.length > 0 && (
                           <div>
-                            <p className="text-xs text-gray-500 mb-1">AI Recommended Actions</p>
+                            <p className="text-xs text-[#5a6a8a] mb-1">AI Recommended Actions</p>
                             <ul className="space-y-1">
                               {explanations[i].recommended_actions.map((a, j) => (
-                                <li key={j} className="text-sm text-cyan-400 flex items-start gap-2">
-                                  <Icon name="chevron-right" size={12} className="text-cyan-500 mt-0.5 shrink-0" />
+                                <li key={j} className="text-sm text-[#00e5c8] flex items-start gap-2">
+                                  <Icon name="chevron-right" size={12} className="text-[#00e5c8] mt-0.5 shrink-0" />
                                   {a}
                                 </li>
                               ))}
@@ -237,9 +237,9 @@ export default function Alerts() {
                       />
                     )}
                   </div>
-                  <div className="flex gap-4 text-xs text-gray-500">
+                  <div className="flex gap-4 text-xs text-[#5a6a8a]">
                     <span>Confidence: {(alert.confidence * 100).toFixed(1)}%</span>
-                    <RelativeTime timestamp={alert.timestamp} className="text-gray-500" />
+                    <RelativeTime timestamp={alert.timestamp} className="text-[#5a6a8a]" />
                   </div>
                 </div>
               </div>

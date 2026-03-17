@@ -20,14 +20,17 @@ from navil.anomaly_detector import AnomalyAlert, AnomalyType, BehavioralAnomalyD
 from navil.credential_manager import Credential, CredentialManager, CredentialStatus
 from navil.policy_engine import PolicyDecision, PolicyEngine, PolicyEvaluationResult
 from navil.scanner import MCPSecurityScanner, RiskLevel, Vulnerability
+from navil.types import Finding, Severity
 
-__version__ = "0.1.0"
+__version__ = "0.2.0"
 __author__ = "Pantheon Lab Pte Ltd"
 __all__ = [
     # Core
     "MCPSecurityScanner",
     "RiskLevel",
     "Vulnerability",
+    "Finding",
+    "Severity",
     "CredentialManager",
     "Credential",
     "CredentialStatus",

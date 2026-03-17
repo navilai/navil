@@ -67,3 +67,13 @@ target/
 # Dashboard (React frontend)
 dashboard/node_modules/
 dashboard/dist/
+
+# Scan / crawl data artifacts
+crawl_results/
+crawl_results_v2/
+scan_results*.jsonl
+state_of_mcp_security.json
+
+# QA reports
+.gstack/
+.vercel

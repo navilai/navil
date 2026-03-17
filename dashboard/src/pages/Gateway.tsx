@@ -8,19 +8,19 @@ import RelativeTime from '../components/RelativeTime'
 const POLL_INTERVAL = 2000
 
 const decisionColors: Record<string, string> = {
-  ALLOWED: 'text-emerald-400',
-  FORWARDED: 'text-emerald-400',
-  DENIED: 'text-red-400',
-  AUTH_REQUIRED: 'text-red-400',
-  ALERT: 'text-amber-400',
+  ALLOWED: 'text-[#34d399]',
+  FORWARDED: 'text-[#34d399]',
+  DENIED: 'text-[#ff4d6a]',
+  AUTH_REQUIRED: 'text-[#ff4d6a]',
+  ALERT: 'text-[#fbbf24]',
 }
 
 const decisionBg: Record<string, string> = {
-  ALLOWED: 'bg-emerald-500/10',
-  FORWARDED: 'bg-emerald-500/10',
-  DENIED: 'bg-red-500/10',
-  AUTH_REQUIRED: 'bg-red-500/10',
-  ALERT: 'bg-amber-500/10',
+  ALLOWED: 'bg-[#34d399]/10',
+  FORWARDED: 'bg-[#34d399]/10',
+  DENIED: 'bg-[#ff4d6a]/10',
+  AUTH_REQUIRED: 'bg-[#ff4d6a]/10',
+  ALERT: 'bg-[#fbbf24]/10',
 }
 
 function formatUptime(seconds: number): string {
@@ -86,18 +86,18 @@ export default function Gateway() {
       >
         <div className="flex items-center gap-3">
           {running ? (
-            <span className="flex items-center gap-2 px-3 py-1.5 bg-emerald-500/10 border border-emerald-500/20 rounded-lg text-emerald-400 text-sm font-medium">
-              <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
+            <span className="flex items-center gap-2 px-3 py-1.5 bg-[#34d399]/10 border border-[#34d399]/20 rounded-lg text-[#34d399] text-sm font-medium">
+              <span className="w-2 h-2 rounded-full bg-[#34d399] animate-pulse" />
               Running
             </span>
           ) : (
-            <span className="flex items-center gap-2 px-3 py-1.5 bg-gray-500/10 border border-gray-500/20 rounded-lg text-gray-400 text-sm font-medium">
-              <span className="w-2 h-2 rounded-full bg-gray-500" />
+            <span className="flex items-center gap-2 px-3 py-1.5 bg-[#5a6a8a]/10 border border-[#5a6a8a]/20 rounded-lg text-[#8b9bc0] text-sm font-medium">
+              <span className="w-2 h-2 rounded-full bg-[#5a6a8a]" />
               Stopped
             </span>
           )}
           {running && status?.target_url && (
-            <span className="text-xs text-gray-500 font-mono">
+            <span className="text-xs text-[#5a6a8a] font-mono">
               {status.target_url}
             </span>
           )}
@@ -107,45 +107,45 @@ export default function Gateway() {
       {!running ? (
         /* Start proxy form */
         <div className="flex flex-col items-center justify-center py-16 text-center">
-          <div className="w-16 h-16 rounded-2xl bg-cyan-500/10 border border-cyan-500/20 flex items-center justify-center mb-6">
-            <Icon name="gateway" size={32} className="text-cyan-400" />
+          <div className="w-16 h-16 rounded-2xl bg-[#00e5c8]/10 border border-[#00e5c8]/20 flex items-center justify-center mb-6">
+            <Icon name="gateway" size={32} className="text-[#00e5c8]" />
           </div>
-          <h3 className="text-xl font-semibold mb-2">Start MCP Security Proxy</h3>
-          <p className="text-gray-400 max-w-md mb-6">
+          <h3 className="text-xl font-bold mb-2 text-[#f0f4fc]">Start MCP Security Proxy</h3>
+          <p className="text-[#8b9bc0] max-w-md mb-6 leading-relaxed">
             Intercept and monitor agent-to-tool traffic in real time.
             The proxy enforces policies, detects anomalies, and blocks threats.
           </p>
 
-          <div className="bg-gray-900/50 border border-gray-800/60 rounded-xl p-6 max-w-lg w-full text-left space-y-4">
+          <div className="bg-[#1a2235] border border-[#2a3650] rounded-[12px] p-6 max-w-lg w-full text-left space-y-4">
             <div>
-              <label className="block text-xs text-gray-500 mb-1.5">Target MCP Server URL</label>
+              <label className="block text-xs text-[#5a6a8a] font-medium mb-1.5">Target MCP Server URL</label>
               <input
                 type="text"
                 value={targetUrl}
                 onChange={e => setTargetUrl(e.target.value)}
                 placeholder="http://localhost:3000"
-                className="w-full bg-gray-800 border border-gray-700 rounded-lg px-3 py-2 text-sm text-gray-300 font-mono focus:border-cyan-500 focus:outline-none"
+                className="w-full bg-[#111827] border border-[#2a3650] rounded-lg px-3 py-2.5 text-sm text-[#f0f4fc] font-mono focus:border-[#00e5c8] focus:outline-none transition-colors"
               />
             </div>
 
             <div className="flex gap-4">
               <div className="flex-1">
-                <label className="block text-xs text-gray-500 mb-1.5">Proxy Port</label>
+                <label className="block text-xs text-[#5a6a8a] font-medium mb-1.5">Proxy Port</label>
                 <input
                   type="number"
                   value={proxyPort}
                   onChange={e => setProxyPort(e.target.value)}
                   placeholder="9090"
-                  className="w-full bg-gray-800 border border-gray-700 rounded-lg px-3 py-2 text-sm text-gray-300 font-mono focus:border-cyan-500 focus:outline-none"
+                  className="w-full bg-[#111827] border border-[#2a3650] rounded-lg px-3 py-2.5 text-sm text-[#f0f4fc] font-mono focus:border-[#00e5c8] focus:outline-none transition-colors"
                 />
               </div>
               <div className="flex-1 flex items-end pb-1">
-                <label className="flex items-center gap-2 text-sm text-gray-400 cursor-pointer">
+                <label className="flex items-center gap-2 text-sm text-[#8b9bc0] cursor-pointer">
                   <input
                     type="checkbox"
                     checked={requireAuth}
                     onChange={e => setRequireAuth(e.target.checked)}
-                    className="rounded border-gray-700 bg-gray-800 text-cyan-500 focus:ring-cyan-500/30"
+                    className="rounded border-[#2a3650] bg-[#111827] text-[#00e5c8] focus:ring-[#00e5c8]/30"
                   />
                   Require auth tokens
                 </label>
@@ -153,7 +153,7 @@ export default function Gateway() {
             </div>
 
             {startError && (
-              <p className="text-xs text-red-400 flex items-center gap-1">
+              <p className="text-xs text-[#ff4d6a] flex items-center gap-1">
                 <Icon name="warning" size={11} />
                 {startError}
               </p>
@@ -162,14 +162,14 @@ export default function Gateway() {
             <button
               onClick={handleStartProxy}
               disabled={!targetUrl.trim() || starting}
-              className="w-full px-4 py-2.5 bg-cyan-500 text-white rounded-lg text-sm font-medium hover:bg-cyan-400 disabled:opacity-40 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+              className="w-full px-4 py-2.5 bg-[#00e5c8] text-[#0a0e17] rounded-lg text-sm font-semibold hover:bg-[#00b8a0] hover:-translate-y-0.5 disabled:opacity-40 disabled:cursor-not-allowed flex items-center justify-center gap-2 transition-all duration-200"
             >
               <Icon name="gateway" size={14} className={starting ? 'animate-spin' : ''} />
               {starting ? 'Starting...' : 'Start Proxy'}
             </button>
 
-            <p className="text-xs text-gray-600 text-center">
-              Agents connect to <span className="text-gray-400 font-mono">http://localhost:{proxyPort || '9090'}/mcp</span> instead of the MCP server directly.
+            <p className="text-xs text-[#5a6a8a] text-center">
+              Agents connect to <span className="text-[#8b9bc0] font-mono">http://localhost:{proxyPort || '9090'}/mcp</span> instead of the MCP server directly.
             </p>
           </div>
         </div>
@@ -212,7 +212,7 @@ export default function Gateway() {
             <select
               value={agentFilter}
               onChange={e => setAgentFilter(e.target.value)}
-              className="bg-gray-900/50 border border-gray-800/60 rounded-lg px-3 py-2 text-sm text-gray-300 focus:outline-none focus:border-cyan-500/50"
+              className="bg-[#1a2235] border border-[#2a3650] rounded-lg px-3 py-2 text-sm text-[#f0f4fc] focus:outline-none focus:border-[#00e5c8]/50 transition-colors"
             >
               <option value="">All agents</option>
               {agents.map(a => (
@@ -220,40 +220,40 @@ export default function Gateway() {
               ))}
             </select>
 
-            <label className="flex items-center gap-2 text-sm text-gray-400 cursor-pointer">
+            <label className="flex items-center gap-2 text-sm text-[#8b9bc0] cursor-pointer">
               <input
                 type="checkbox"
                 checked={blockedOnly}
                 onChange={e => setBlockedOnly(e.target.checked)}
-                className="rounded border-gray-700 bg-gray-800 text-cyan-500 focus:ring-cyan-500/30"
+                className="rounded border-[#2a3650] bg-[#111827] text-[#00e5c8] focus:ring-[#00e5c8]/30"
               />
               Blocked only
             </label>
 
-            <span className="text-xs text-gray-600 ml-auto">
+            <span className="text-xs text-[#5a6a8a] ml-auto font-medium">
               Auto-refreshing every 2s
             </span>
           </div>
 
           {/* Traffic table */}
-          <div className="bg-gray-900/30 border border-gray-800/60 rounded-xl overflow-hidden">
+          <div className="glass-card overflow-hidden">
             <div className="overflow-x-auto">
               <table className="w-full text-sm">
                 <thead>
-                  <tr className="border-b border-gray-800/60">
-                    <th className="text-left px-4 py-3 text-gray-500 font-medium">Time</th>
-                    <th className="text-left px-4 py-3 text-gray-500 font-medium">Agent</th>
-                    <th className="text-left px-4 py-3 text-gray-500 font-medium">Method</th>
-                    <th className="text-left px-4 py-3 text-gray-500 font-medium">Tool</th>
-                    <th className="text-left px-4 py-3 text-gray-500 font-medium">Decision</th>
-                    <th className="text-right px-4 py-3 text-gray-500 font-medium">Duration</th>
-                    <th className="text-right px-4 py-3 text-gray-500 font-medium">Data</th>
+                  <tr className="border-b border-[#2a3650] bg-[#111827]/60">
+                    <th className="text-left px-4 py-3 text-[#8b9bc0] font-medium text-xs uppercase tracking-wider">Time</th>
+                    <th className="text-left px-4 py-3 text-[#8b9bc0] font-medium text-xs uppercase tracking-wider">Agent</th>
+                    <th className="text-left px-4 py-3 text-[#8b9bc0] font-medium text-xs uppercase tracking-wider">Method</th>
+                    <th className="text-left px-4 py-3 text-[#8b9bc0] font-medium text-xs uppercase tracking-wider">Tool</th>
+                    <th className="text-left px-4 py-3 text-[#8b9bc0] font-medium text-xs uppercase tracking-wider">Decision</th>
+                    <th className="text-right px-4 py-3 text-[#8b9bc0] font-medium text-xs uppercase tracking-wider">Duration</th>
+                    <th className="text-right px-4 py-3 text-[#8b9bc0] font-medium text-xs uppercase tracking-wider">Data</th>
                   </tr>
                 </thead>
                 <tbody>
                   {traffic.length === 0 ? (
                     <tr>
-                      <td colSpan={7} className="px-4 py-12 text-center text-gray-600">
+                      <td colSpan={7} className="px-4 py-12 text-center text-[#5a6a8a]">
                         {blockedOnly
                           ? 'No blocked requests'
                           : 'No traffic yet — send a JSON-RPC request to the proxy'}
@@ -263,27 +263,27 @@ export default function Gateway() {
                     traffic.map((entry) => (
                       <tr
                         key={entry.timestamp + entry.agent + entry.tool}
-                        className={`border-b border-gray-800/30 ${decisionBg[entry.decision] || ''} hover:bg-gray-800/20 transition-colors`}
+                        className={`border-b border-[#2a3650]/50 ${decisionBg[entry.decision] || ''} hover:bg-[#1f2a40] transition-colors duration-200`}
                       >
-                        <td className="px-4 py-2.5 text-gray-500 font-mono text-xs whitespace-nowrap">
+                        <td className="px-4 py-2.5 text-[#5a6a8a] font-mono text-xs whitespace-nowrap">
                           <RelativeTime timestamp={entry.timestamp} />
                         </td>
-                        <td className="px-4 py-2.5 text-gray-300 font-medium">
+                        <td className="px-4 py-2.5 text-[#f0f4fc] font-semibold">
                           {entry.agent}
                         </td>
-                        <td className="px-4 py-2.5 text-gray-400 font-mono text-xs">
+                        <td className="px-4 py-2.5 text-[#8b9bc0] font-mono text-xs">
                           {entry.method}
                         </td>
-                        <td className="px-4 py-2.5 text-gray-300">
+                        <td className="px-4 py-2.5 text-[#f0f4fc]">
                           {entry.tool || '-'}
                         </td>
-                        <td className={`px-4 py-2.5 font-medium ${decisionColors[entry.decision] || 'text-gray-400'}`}>
+                        <td className={`px-4 py-2.5 font-semibold ${decisionColors[entry.decision] || 'text-[#8b9bc0]'}`}>
                           {entry.decision}
                         </td>
-                        <td className="px-4 py-2.5 text-gray-500 text-right font-mono text-xs">
+                        <td className="px-4 py-2.5 text-[#5a6a8a] text-right font-mono text-xs">
                           {entry.duration_ms}ms
                         </td>
-                        <td className="px-4 py-2.5 text-gray-500 text-right font-mono text-xs">
+                        <td className="px-4 py-2.5 text-[#5a6a8a] text-right font-mono text-xs">
                           {entry.data_bytes > 1024
                             ? `${(entry.data_bytes / 1024).toFixed(1)}KB`
                             : `${entry.data_bytes}B`}

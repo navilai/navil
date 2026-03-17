@@ -3,10 +3,24 @@ export default {
   content: ['./index.html', './src/**/*.{js,ts,jsx,tsx}'],
   theme: {
     extend: {
+      colors: {
+        // Landing-page design tokens
+        navil: {
+          bg: '#0a0e17',
+          'bg-secondary': '#111827',
+          card: '#1a2235',
+          'card-hover': '#1f2a40',
+          border: '#2a3650',
+          accent: '#00e5c8',
+          'accent-dim': '#00b8a0',
+        },
+      },
       fontFamily: {
-        sans: ['"DM Sans"', 'system-ui', 'sans-serif'],
+        sans: ['Inter', 'system-ui', 'sans-serif'],
         mono: ['"JetBrains Mono"', 'ui-monospace', 'monospace'],
-        display: ['"JetBrains Mono"', 'ui-monospace', 'monospace'],
+      },
+      borderRadius: {
+        card: '12px',
       },
       animation: {
         fadeIn: 'fadeIn 0.4s ease-out forwards',

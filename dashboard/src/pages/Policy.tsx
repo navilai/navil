@@ -69,42 +69,42 @@ export default function Policy() {
         {/* Policy Checker */}
         <div className="space-y-4">
           <div className="glass-card p-5">
-            <h3 className="text-sm font-medium text-gray-300 mb-4 flex items-center gap-2">
-              <Icon name="shield" size={16} className="text-cyan-400" />
+            <h3 className="text-sm font-semibold text-[#f0f4fc] mb-4 flex items-center gap-2">
+              <Icon name="shield" size={16} className="text-[#00e5c8]" />
               Check Permission
             </h3>
             <div className="space-y-3">
               <div>
-                <label className="block text-xs text-gray-500 mb-1">Agent Name</label>
+                <label className="block text-xs text-[#5a6a8a] font-medium mb-1.5">Agent Name</label>
                 <input
                   value={agentName}
                   onChange={e => setAgentName(e.target.value)}
-                  className="w-full bg-gray-800 border border-gray-700 rounded-lg px-3 py-2 text-sm text-gray-300 focus:border-cyan-500 focus:outline-none"
+                  className="w-full bg-[#111827] border border-[#2a3650] rounded-lg px-3 py-2.5 text-sm text-[#f0f4fc] focus:border-[#00e5c8] focus:outline-none transition-colors"
                   placeholder="e.g., code-assistant"
                 />
               </div>
               <div>
-                <label className="block text-xs text-gray-500 mb-1">Tool Name</label>
+                <label className="block text-xs text-[#5a6a8a] font-medium mb-1.5">Tool Name</label>
                 <input
                   value={toolName}
                   onChange={e => setToolName(e.target.value)}
-                  className="w-full bg-gray-800 border border-gray-700 rounded-lg px-3 py-2 text-sm text-gray-300 focus:border-cyan-500 focus:outline-none"
+                  className="w-full bg-[#111827] border border-[#2a3650] rounded-lg px-3 py-2.5 text-sm text-[#f0f4fc] focus:border-[#00e5c8] focus:outline-none transition-colors"
                   placeholder="e.g., admin_panel"
                 />
               </div>
               <div>
-                <label className="block text-xs text-gray-500 mb-1">Action</label>
+                <label className="block text-xs text-[#5a6a8a] font-medium mb-1.5">Action</label>
                 <input
                   value={action}
                   onChange={e => setAction(e.target.value)}
-                  className="w-full bg-gray-800 border border-gray-700 rounded-lg px-3 py-2 text-sm text-gray-300 focus:border-cyan-500 focus:outline-none"
+                  className="w-full bg-[#111827] border border-[#2a3650] rounded-lg px-3 py-2.5 text-sm text-[#f0f4fc] focus:border-[#00e5c8] focus:outline-none transition-colors"
                   placeholder="e.g., read, write, delete"
                 />
               </div>
               <button
                 onClick={handleCheck}
                 disabled={!agentName || !toolName || !action || checking}
-                className="w-full px-4 py-2.5 bg-cyan-500 text-white rounded-lg text-sm font-medium hover:bg-cyan-400 disabled:opacity-40 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                className="w-full px-4 py-2.5 bg-[#00e5c8] text-[#0a0e17] rounded-lg text-sm font-semibold hover:bg-[#00b8a0] hover:-translate-y-0.5 disabled:opacity-40 disabled:cursor-not-allowed flex items-center justify-center gap-2 transition-all duration-200"
               >
                 <Icon name="shield" size={14} />
                 {checking ? 'Checking...' : 'Check Permission'}
@@ -116,64 +116,64 @@ export default function Policy() {
           {result && (
             <div className={`glass-card p-5 animate-slideUp ${
               result.allowed
-                ? 'border-emerald-500/30'
-                : 'border-red-500/30'
+                ? 'border-[#34d399]/30'
+                : 'border-[#ff4d6a]/30'
             }`}>
               <div className="flex items-center gap-3 mb-2">
                 {result.allowed ? (
                   <>
-                    <div className="w-10 h-10 rounded-full bg-emerald-500/15 flex items-center justify-center">
-                      <Icon name="check" size={20} className="text-emerald-400" />
+                    <div className="w-10 h-10 rounded-full bg-[#34d399]/15 flex items-center justify-center">
+                      <Icon name="check" size={20} className="text-[#34d399]" />
                     </div>
                     <div>
-                      <p className="font-medium text-emerald-400">Allowed</p>
-                      <p className="text-xs text-gray-500">This action is permitted</p>
+                      <p className="font-medium text-[#34d399]">Allowed</p>
+                      <p className="text-xs text-[#5a6a8a]">This action is permitted</p>
                     </div>
                   </>
                 ) : (
                   <>
-                    <div className="w-10 h-10 rounded-full bg-red-500/15 flex items-center justify-center">
-                      <Icon name="x" size={20} className="text-red-400" />
+                    <div className="w-10 h-10 rounded-full bg-[#ff4d6a]/15 flex items-center justify-center">
+                      <Icon name="x" size={20} className="text-[#ff4d6a]" />
                     </div>
                     <div>
-                      <p className="font-medium text-red-400">Denied</p>
-                      <p className="text-xs text-gray-500">This action is blocked</p>
+                      <p className="font-medium text-[#ff4d6a]">Denied</p>
+                      <p className="text-xs text-[#5a6a8a]">This action is blocked</p>
                     </div>
                   </>
                 )}
               </div>
-              <p className="text-sm text-gray-400 mt-2">{result.reason}</p>
+              <p className="text-sm text-[#8b9bc0] mt-2">{result.reason}</p>
             </div>
           )}
         </div>
 
         {/* Decision Log */}
         <div>
-          <h3 className="text-sm font-medium text-gray-300 mb-3 flex items-center gap-2">
-            <Icon name="clock" size={16} className="text-gray-500" />
+          <h3 className="text-sm font-semibold text-[#f0f4fc] mb-3 flex items-center gap-2">
+            <Icon name="clock" size={16} className="text-[#5a6a8a]" />
             Decision Log
           </h3>
           {!loaded ? <SkeletonTable rows={8} cols={4} /> : (
             decisions.length === 0 ? (
               <div className="glass-card p-8 text-center">
-                <p className="text-gray-500 text-sm">No policy decisions recorded yet.</p>
+                <p className="text-[#5a6a8a] text-sm">No policy decisions recorded yet.</p>
               </div>
             ) : (
               <div className="glass-card overflow-hidden max-h-[600px] overflow-y-auto">
                 <table className="w-full text-sm">
-                  <thead className="sticky top-0 bg-gray-900/90 backdrop-blur">
-                    <tr className="border-b border-gray-800/60 text-gray-400 text-left">
-                      <th className="px-3 py-2.5 font-medium">Decision</th>
-                      <th className="px-3 py-2.5 font-medium">Agent</th>
-                      <th className="px-3 py-2.5 font-medium">Tool / Action</th>
-                      <th className="px-3 py-2.5 font-medium">Time</th>
+                  <thead className="sticky top-0 bg-[#111827]/90 backdrop-blur">
+                    <tr className="border-b border-[#2a3650] text-[#8b9bc0] text-left">
+                      <th className="px-3 py-2.5 font-medium text-xs uppercase tracking-wider">Decision</th>
+                      <th className="px-3 py-2.5 font-medium text-xs uppercase tracking-wider">Agent</th>
+                      <th className="px-3 py-2.5 font-medium text-xs uppercase tracking-wider">Tool / Action</th>
+                      <th className="px-3 py-2.5 font-medium text-xs uppercase tracking-wider">Time</th>
                     </tr>
                   </thead>
                   <tbody>
                     {decisions.map((d, i) => (
                       <tr
                         key={`${d.timestamp}-${d.agent}-${d.tool}-${d.action}`}
-                        className="border-b border-gray-800/30 hover:bg-cyan-400/[0.04] animate-fadeIn opacity-0"
+                        className="border-b border-[#2a3650]/50 hover:bg-[#1f2a40] animate-fadeIn opacity-0"
                         style={{ animationDelay: `${i * 0.03}s` }}
                       >
                         <td className="px-3 py-2.5">
@@ -181,14 +181,14 @@ export default function Policy() {
                             <StatusBadge status={d.decision} />
                           </div>
                         </td>
-                        <td className="px-3 py-2.5 text-gray-300 text-xs">{d.agent}</td>
+                        <td className="px-3 py-2.5 text-[#f0f4fc] text-xs">{d.agent}</td>
                         <td className="px-3 py-2.5">
-                          <span className="text-gray-300 text-xs font-mono">{d.tool}</span>
-                          <span className="text-gray-600 text-xs mx-1">→</span>
-                          <span className="text-gray-400 text-xs">{d.action}</span>
+                          <span className="text-[#f0f4fc] text-xs font-mono">{d.tool}</span>
+                          <span className="text-[#5a6a8a] text-xs mx-1">&rarr;</span>
+                          <span className="text-[#8b9bc0] text-xs">{d.action}</span>
                         </td>
                         <td className="px-3 py-2.5">
-                          <RelativeTime timestamp={d.timestamp} className="text-gray-500 text-xs" />
+                          <RelativeTime timestamp={d.timestamp} className="text-[#5a6a8a] text-xs" />
                         </td>
                       </tr>
                     ))}
@@ -202,7 +202,7 @@ export default function Policy() {
 
       {/* AI Policy Generator */}
       <div className="glass-card p-5">
-        <h3 className="text-sm font-medium text-gray-300 mb-4 flex items-center gap-2">
+        <h3 className="text-sm font-semibold text-[#f0f4fc] mb-4 flex items-center gap-2">
           <Icon name="sparkles" size={16} className="text-violet-400" />
           Generate Policy with AI
         </h3>
@@ -211,15 +211,15 @@ export default function Policy() {
         ) : (
         <div className="space-y-3">
           <div>
-            <label className="block text-xs text-gray-500 mb-1">Describe your security policy</label>
+            <label className="block text-xs text-[#5a6a8a] font-medium mb-1.5">Describe your security policy</label>
             <textarea
               value={genDescription}
               onChange={e => setGenDescription(e.target.value)}
-              className="w-full h-24 bg-gray-800 border border-gray-700 rounded-lg px-3 py-2 text-sm text-gray-300 placeholder:text-gray-600 focus:border-cyan-500 focus:outline-none resize-none"
+              className="w-full h-24 bg-[#111827] border border-[#2a3650] rounded-lg px-3 py-2.5 text-sm text-[#f0f4fc] placeholder:text-[#5a6a8a] focus:border-[#00e5c8] focus:outline-none resize-none transition-colors"
               placeholder="e.g., Allow data-reader to read logs only. Deny write/delete for all agents except admin-bot. Rate limit 60 req/hr."
             />
             {genDescription.trim() && genDescription.trim().split(/\s+/).length < 5 && (
-              <p className="text-xs text-amber-400 mt-1 flex items-center gap-1">
+              <p className="text-xs text-[#f59e0b] mt-1 flex items-center gap-1">
                 <Icon name="warning" size={11} />
                 Vague descriptions produce weak policies. Be specific about agents, tools, and permissions.
               </p>
@@ -245,7 +245,7 @@ export default function Policy() {
           </button>
           {/* Streaming text preview */}
           {genStream.streaming && genStream.text && !generatedYaml && (
-            <pre className="mt-2 text-xs text-gray-400 whitespace-pre-wrap font-mono bg-gray-900/50 rounded-lg p-3 max-h-32 overflow-y-auto">
+            <pre className="mt-2 text-xs text-[#8b9bc0] whitespace-pre-wrap font-mono bg-[#0d1117] rounded-lg p-3 max-h-32 overflow-y-auto">
               {genStream.text}
               <span className="animate-pulse text-violet-400">|</span>
             </pre>
@@ -276,27 +276,27 @@ export default function Policy() {
         {generatedYaml && (
           <div className="mt-4 space-y-3 animate-fadeIn">
             <div className="flex items-center justify-between">
-              <p className="text-xs text-gray-500">Generated YAML</p>
+              <p className="text-xs text-[#5a6a8a]">Generated YAML</p>
               <button
                 onClick={() => {
                   navigator.clipboard.writeText(generatedYaml)
                   setCopied(true)
                   setTimeout(() => setCopied(false), 2000)
                 }}
-                className="px-2 py-1 text-xs text-gray-400 hover:text-gray-200 border border-gray-700 rounded hover:border-gray-600 flex items-center gap-1"
+                className="px-2 py-1 text-xs text-[#8b9bc0] hover:text-[#f0f4fc] border border-[#2a3650] rounded hover:border-[#5a6a8a] flex items-center gap-1 transition-colors"
               >
                 <Icon name={copied ? 'check' : 'terminal'} size={12} />
                 {copied ? 'Copied!' : 'Copy'}
               </button>
             </div>
-            <pre className={`bg-gray-900/80 border border-gray-800/60 rounded-lg p-4 text-sm text-gray-300 font-mono overflow-x-auto max-h-80 overflow-y-auto whitespace-pre-wrap transition-opacity ${generating || refineStream.streaming ? 'opacity-30' : ''}`}>
+            <pre className={`bg-[#0d1117] border border-[#2a3650] rounded-[12px] p-4 text-sm text-[#f0f4fc] font-mono overflow-x-auto max-h-80 overflow-y-auto whitespace-pre-wrap transition-opacity ${generating || refineStream.streaming ? 'opacity-30' : ''}`}>
               {generatedYaml}
             </pre>
             <div className="flex gap-2">
               <input
                 value={refineInput}
                 onChange={e => setRefineInput(e.target.value)}
-                className="flex-1 bg-gray-800 border border-gray-700 rounded-lg px-3 py-2 text-sm text-gray-300 focus:border-cyan-500 focus:outline-none"
+                className="flex-1 bg-[#111827] border border-[#2a3650] rounded-lg px-3 py-2.5 text-sm text-[#f0f4fc] focus:border-[#00e5c8] focus:outline-none transition-colors"
                 placeholder="Refine: e.g., Add a rate limit of 50/hr for deploy-agent"
               />
               <button
@@ -316,7 +316,7 @@ export default function Policy() {
                   })
                 }}
                 disabled={!refineInput.trim() || refineStream.streaming}
-                className="px-4 py-2 bg-cyan-500 text-white rounded-lg text-sm hover:bg-cyan-400 disabled:opacity-40 disabled:cursor-not-allowed flex items-center gap-1.5"
+                className="px-4 py-2 bg-[#00e5c8] text-[#0a0e17] rounded-lg text-sm font-semibold hover:bg-[#00b8a0] disabled:opacity-40 disabled:cursor-not-allowed flex items-center gap-1.5"
               >
                 <Icon name="sparkles" size={13} className={refineStream.streaming ? 'animate-spin' : ''} />
                 Refine
@@ -326,7 +326,7 @@ export default function Policy() {
         )}
       </div>
 
-      {error && <p className="text-red-400 text-sm">{error}</p>}
+      {error && <p className="text-[#ff4d6a] text-sm">{error}</p>}
     </div>
   )
 }

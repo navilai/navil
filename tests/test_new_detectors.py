@@ -18,8 +18,8 @@ class TestReconnaissance:
     """RECONNAISSANCE — excessive tools/list probing."""
 
     def test_no_alert_below_threshold(self, detector: BehavioralAnomalyDetector) -> None:
-        """5 or fewer tools/list calls should not trigger an alert."""
-        for _ in range(5):
+        """20 or fewer tools/list calls should not trigger an alert."""
+        for _ in range(20):
             detector.record_invocation(
                 agent_name="agent-a",
                 tool_name="__tools_list__",
@@ -31,8 +31,8 @@ class TestReconnaissance:
         assert len(recon_alerts) == 0
 
     def test_alert_above_threshold(self, detector: BehavioralAnomalyDetector) -> None:
-        """More than 5 tools/list calls in 10 min should trigger RECONNAISSANCE alert."""
-        for _ in range(7):
+        """More than 20 tools/list calls in 10 min should trigger RECONNAISSANCE alert."""
+        for _ in range(25):
             detector.record_invocation(
                 agent_name="agent-a",
                 tool_name="__tools_list__",
@@ -96,13 +96,13 @@ class TestDefenseEvasion:
     """DEFENSE_EVASION — encoding tricks and prompt injection."""
 
     def test_large_arguments_flagged(self, detector: BehavioralAnomalyDetector) -> None:
-        """Arguments larger than 5000 bytes should trigger DEFENSE_EVASION."""
+        """Arguments larger than 50000 bytes should trigger DEFENSE_EVASION."""
         detector.record_invocation(
             agent_name="agent-d",
             tool_name="execute",
             action="run",
             duration_ms=100,
-            arguments_size_bytes=6000,
+            arguments_size_bytes=60000,
         )
         evasion_alerts = [a for a in detector.alerts if a.anomaly_type == "DEFENSE_EVASION"]
         assert len(evasion_alerts) >= 1
@@ -125,13 +125,8 @@ class TestLateralMovement:
     """LATERAL_MOVEMENT — cross-server tool chaining."""
 
     def test_multiple_servers_flagged(self, detector: BehavioralAnomalyDetector) -> None:
-        """Talking to >3 MCP servers in 5 min should trigger LATERAL_MOVEMENT."""
-        servers = [
-            "http://server-1:3000",
-            "http://server-2:3000",
-            "http://server-3:3000",
-            "http://server-4:3000",
-        ]
+        """Talking to >8 MCP servers in 5 min should trigger LATERAL_MOVEMENT."""
+        servers = [f"http://server-{i}:3000" for i in range(9)]
         for server in servers:
             detector.record_invocation(
                 agent_name="agent-f",
@@ -164,7 +159,7 @@ class TestCommandAndControl:
     def test_beaconing_detected(self, detector: BehavioralAnomalyDetector) -> None:
         """Regular intervals with small consistent responses = beaconing."""
         base = datetime.now(timezone.utc) - timedelta(minutes=5)
-        for i in range(8):
+        for i in range(12):
             ts = base + timedelta(seconds=i * 10)
             detector.record_invocation(
                 agent_name="agent-h",

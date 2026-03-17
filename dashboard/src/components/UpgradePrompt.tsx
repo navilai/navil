@@ -17,9 +17,9 @@ export default function UpgradePrompt({ feature, compact }: UpgradePromptProps) 
     return (
       <div className="flex items-center gap-3 p-3 rounded-lg bg-violet-500/5 border border-violet-500/20">
         <Icon name="sparkles" size={14} className="text-violet-400 shrink-0" />
-        <p className="text-xs text-gray-400 flex-1">
+        <p className="text-xs text-[#8b9bc0] flex-1">
           {feature} requires an LLM API key.{' '}
-          <Link to="/settings" className="text-cyan-400 hover:underline">
+          <Link to="/settings" className="text-[#00e5c8] hover:underline">
             Configure in Settings
           </Link>
         </p>
@@ -29,16 +29,16 @@ export default function UpgradePrompt({ feature, compact }: UpgradePromptProps) 
 
   return (
     <div className="glass-card p-8 text-center animate-fadeIn">
-      <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-violet-500/10 mb-4">
+      <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-violet-500/10 border border-violet-500/20 mb-4">
         <Icon name="sparkles" size={32} className="text-violet-400" />
       </div>
-      <h3 className="text-lg font-medium text-gray-200 mb-2">{feature}</h3>
-      <p className="text-sm text-gray-500 mb-6 max-w-md mx-auto">
+      <h3 className="text-lg font-bold text-[#f0f4fc] mb-2">{feature}</h3>
+      <p className="text-sm text-[#5a6a8a] mb-6 max-w-md mx-auto leading-relaxed">
         Configure an LLM API key in Settings to enable AI-powered analysis.
       </p>
       <Link
         to="/settings"
-        className="inline-flex items-center gap-2 px-5 py-2.5 bg-cyan-500 text-white rounded-lg text-sm font-medium hover:bg-cyan-400"
+        className="inline-flex items-center gap-2 px-5 py-2.5 bg-[#00e5c8] text-[#0a0e17] rounded-lg text-sm font-semibold hover:bg-[#00b8a0] transition-all duration-200 hover:-translate-y-0.5"
       >
         <Icon name="key" size={14} />
         Configure API Key
