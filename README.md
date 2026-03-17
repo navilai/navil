@@ -50,9 +50,16 @@ navil init
 
 Next, integrate Navil with your IDE or tool of choice:
 
+- **[Claude Desktop](docs/guides/claude-desktop.md)** -- wrap MCP servers in your Claude Desktop config
 - **[Cursor IDE](docs/guides/cursor.md)** -- wrap MCP servers in `~/.cursor/mcp.json`
-- **[Claude Desktop](docs/guides/claude-desktop.md)** -- wrap MCP servers in `claude_desktop_config.json`
 - **[Continue.dev (VS Code)](docs/guides/continue-dev.md)** -- wrap MCP servers in `.continue/config.json`
+
+Or, if you already know your config file path:
+
+```bash
+navil wrap mcp_config.json
+# Works with Claude Desktop, Cursor, Continue.dev, or any MCP config
+```
 
 Each guide takes under 5 minutes and ends with dashboard verification.
 
