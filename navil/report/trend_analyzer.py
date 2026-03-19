@@ -14,7 +14,6 @@ from __future__ import annotations
 import json
 import logging
 from collections import Counter
-from datetime import datetime
 from typing import Any
 
 from navil.crawler.scan_history import ScanHistoryStore
@@ -127,7 +126,9 @@ class TrendAnalyzer:
 
         if vuln_counts:
             result["current_vuln_count"] = vuln_counts[-1]
-            result["vuln_count_change"] = vuln_counts[-1] - vuln_counts[0] if len(vuln_counts) > 1 else 0
+            result["vuln_count_change"] = (
+                vuln_counts[-1] - vuln_counts[0] if len(vuln_counts) > 1 else 0
+            )
         else:
             result["current_vuln_count"] = 0
             result["vuln_count_change"] = 0
@@ -256,9 +257,7 @@ class TrendAnalyzer:
         return {
             "vuln_distribution_change": distribution_change,
             "new_vulnerability_types": new_types,
-            "top_vulnerability_types": [
-                {"type": t, "count": c} for t, c in top_vulns
-            ],
+            "top_vulnerability_types": [{"type": t, "count": c} for t, c in top_vulns],
         }
 
     def _find_repeat_offenders(self, scans: list[Any]) -> list[dict[str, Any]]:
@@ -374,7 +373,8 @@ class TrendAnalyzer:
             lines.append("|--------|-----------|-----------|--------|")
             for s in improved[:10]:
                 lines.append(
-                    f"| {s['server_name']} | {s['old_score']} | {s['new_score']} | {s['delta']:+d} |"
+                    f"| {s['server_name']} | {s['old_score']}"
+                    f" | {s['new_score']} | {s['delta']:+d} |"
                 )
             lines.append("")
 
@@ -387,7 +387,8 @@ class TrendAnalyzer:
             lines.append("|--------|-----------|-----------|--------|")
             for s in degraded[:10]:
                 lines.append(
-                    f"| {s['server_name']} | {s['old_score']} | {s['new_score']} | {s['delta']:+d} |"
+                    f"| {s['server_name']} | {s['old_score']}"
+                    f" | {s['new_score']} | {s['delta']:+d} |"
                 )
             lines.append("")
 

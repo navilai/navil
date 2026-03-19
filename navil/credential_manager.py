@@ -242,7 +242,7 @@ class _InMemoryStore:
         """No-op for in-memory store (no concurrency issues)."""
         pass
 
-    def multi(self) -> "_InMemoryStore":
+    def multi(self) -> _InMemoryStore:
         """No-op transaction start for in-memory store."""
         return self
 
@@ -250,10 +250,10 @@ class _InMemoryStore:
         """No-op transaction execute for in-memory store."""
         return []
 
-    def pipeline(self) -> "_InMemoryPipeline":
+    def pipeline(self) -> _InMemoryPipeline:
         return _InMemoryPipeline(self)
 
-    def register_script(self, script: str) -> "_InMemoryScript":
+    def register_script(self, script: str) -> _InMemoryScript:
         """Register a Lua script (simulated for in-memory store)."""
         return _InMemoryScript(self, script)
 
@@ -265,27 +265,29 @@ class _InMemoryPipeline:
         self._store = store
         self._results: list[Any] = []
 
-    def watch(self, *names: str) -> "_InMemoryPipeline":
+    def watch(self, *names: str) -> _InMemoryPipeline:
         return self
 
-    def multi(self) -> "_InMemoryPipeline":
+    def multi(self) -> _InMemoryPipeline:
         return self
 
-    def hgetall(self, name: str) -> "_InMemoryPipeline":
+    def hgetall(self, name: str) -> _InMemoryPipeline:
         self._results.append(self._store.hgetall(name))
         return self
 
-    def hset(self, name: str, mapping: dict[str, str] | None = None, **kwargs: str) -> "_InMemoryPipeline":
+    def hset(
+        self, name: str, mapping: dict[str, str] | None = None, **kwargs: str
+    ) -> _InMemoryPipeline:
         self._store.hset(name, mapping=mapping, **kwargs)
         self._results.append(True)
         return self
 
-    def set(self, name: str, value: str) -> "_InMemoryPipeline":
+    def set(self, name: str, value: str) -> _InMemoryPipeline:
         self._store.set(name, value)
         self._results.append(True)
         return self
 
-    def sadd(self, name: str, *values: str) -> "_InMemoryPipeline":
+    def sadd(self, name: str, *values: str) -> _InMemoryPipeline:
         self._results.append(self._store.sadd(name, *values))
         return self
 
@@ -417,8 +419,9 @@ class CredentialManager:
         creds: list[Credential] = []
         for key in keys:
             # Skip sub-keys like navil:cred:{id}:children
-            # Credential keys are exactly navil:cred:{token_id} with no further colons after the prefix
-            suffix = key[len(_CRED_KEY_PREFIX):]
+            # Credential keys are exactly navil:cred:{token_id}
+            # with no further colons after the prefix
+            suffix = key[len(_CRED_KEY_PREFIX) :]
             if ":" in suffix:
                 continue
             data = self._redis.hgetall(key)
@@ -956,9 +959,7 @@ class CredentialManager:
         # Check remaining delegation depth
         remaining_depth = parent.max_delegation_depth
         if remaining_depth <= 0:
-            raise ValueError(
-                f"Delegation depth exhausted for credential: {parent_credential_id}"
-            )
+            raise ValueError(f"Delegation depth exhausted for credential: {parent_credential_id}")
 
         # Global depth cap check
         parent_chain = parent.delegation_chain or []
@@ -972,9 +973,7 @@ class CredentialManager:
         child_scope_set = set(narrowed_scope.split()) if narrowed_scope else set()
         if not child_scope_set <= parent_scope_set:
             extra = child_scope_set - parent_scope_set
-            raise ValueError(
-                f"Scope is not a subset of parent's scope. Extra scopes: {extra}"
-            )
+            raise ValueError(f"Scope is not a subset of parent's scope. Extra scopes: {extra}")
 
         # TTL check: child cannot outlive parent
         parent_remaining_ttl = int((parent_expires - now).total_seconds())
@@ -992,7 +991,7 @@ class CredentialManager:
         child_chain = list(parent_chain) + [parent_credential_id]
 
         # Use WATCH for race condition guard on real Redis
-        if hasattr(self._redis, 'watch') and not isinstance(self._redis, _InMemoryStore):
+        if hasattr(self._redis, "watch") and not isinstance(self._redis, _InMemoryStore):
             parent_key = _CRED_KEY_PREFIX + parent_credential_id
             try:
                 pipe = self._redis.pipeline()
@@ -1103,7 +1102,7 @@ return cascade(ARGV[1], tonumber(ARGV[2]), 0)
             raise ValueError(f"Credential not found: {credential_id}")
 
         # Initialize script if not already done
-        if not hasattr(self, '_cascade_script') or self._cascade_script is None:
+        if not hasattr(self, "_cascade_script") or self._cascade_script is None:
             self._register_cascade_script()
 
         if self._cascade_script is not None:

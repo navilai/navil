@@ -5,8 +5,6 @@ from __future__ import annotations
 import json
 from typing import Any
 
-import pytest
-
 from navil.sarif import (
     _severity_to_sarif_level,
     findings_to_sarif,
@@ -15,7 +13,6 @@ from navil.sarif import (
 )
 from navil.scanner import MCPSecurityScanner
 from navil.types import Finding
-
 
 # ── Helpers ────────────────────────────────────────────────────
 

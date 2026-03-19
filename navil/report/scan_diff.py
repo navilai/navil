@@ -74,7 +74,7 @@ def render_scan_diff_markdown(diff: dict[str, Any]) -> str:
     lines.append("# Scan Comparison Report")
     lines.append("")
     lines.append(f"**Scan {scan_1.get('scan_id', '?')}** ({scan_1.get('timestamp', '?')[:10]})")
-    lines.append(f"  vs  ")
+    lines.append("  vs  ")
     lines.append(f"**Scan {scan_2.get('scan_id', '?')}** ({scan_2.get('timestamp', '?')[:10]})")
     lines.append("")
 

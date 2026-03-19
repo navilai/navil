@@ -37,7 +37,7 @@ import random
 import sys
 import time
 import uuid
-from datetime import datetime, timedelta, timezone
+from datetime import datetime, timedelta
 from typing import Any
 
 try:
@@ -244,10 +244,9 @@ class PostgresMCP(VirtualMCP):
     ]
 
     async def fire_normal(self, count: int = 50) -> None:
-        batch: list[dict] = []
         for i in range(count):
-            query = random.choice(self.NORMAL_QUERIES)
-            ts = _ts(offset_seconds=-count + i)
+            random.choice(self.NORMAL_QUERIES)
+            _ts(offset_seconds=-count + i)
 
             # Raw telemetry event
             await self._post_telemetry(
@@ -371,7 +370,7 @@ class FileSystemMCP(VirtualMCP):
 
     async def fire_normal(self, count: int = 50) -> None:
         for i in range(count):
-            filepath = random.choice(self.NORMAL_FILES)
+            random.choice(self.NORMAL_FILES)
             file_size = random.randint(200, 15000)
 
             await self._post_telemetry(
@@ -573,7 +572,7 @@ class GitHubMCP(VirtualMCP):
         self.stats["attacks"] += 1
 
         # 4. Command & Control: periodic beacon after injection
-        for i in range(6):
+        for _i in range(6):
             beacon_event = build_raw_event(
                 event_type="anomaly.high",
                 data={
@@ -683,8 +682,8 @@ async def main() -> None:
     print(f"  API Key:    {API_KEY[:20]}...")
     print(f"  Fire Rate:  {FIRE_RATE} events/sec/MCP")
     print(f"  Dry Run:    {DRY_RUN}")
-    print(f"  MCPs:       Postgres, FileSystem, GitHub")
-    print(f"  Strategy:   50 normal calls → attack payload (per MCP)")
+    print("  MCPs:       Postgres, FileSystem, GitHub")
+    print("  Strategy:   50 normal calls → attack payload (per MCP)")
 
     # Validate connectivity
     _banner("Phase 0: Connectivity Check")
@@ -702,10 +701,10 @@ async def main() -> None:
                     print(f"  Backend is healthy: {resp.json()}")
                 else:
                     print(f"  WARNING: Health check returned {resp.status_code}")
-                    print(f"  Continuing anyway...")
+                    print("  Continuing anyway...")
             except httpx.HTTPError as exc:
                 print(f"  WARNING: Cannot reach backend: {exc}")
-                print(f"  Continuing anyway (may fail)...")
+                print("  Continuing anyway (may fail)...")
         else:
             print("  [DRY-RUN] Skipping connectivity check")
 
@@ -795,7 +794,7 @@ async def main() -> None:
         total_errors = 0
 
         mcp_names = ["Postgres MCP", "FileSystem MCP", "GitHub MCP"]
-        for i, (name, result) in enumerate(zip(mcp_names, results)):
+        for _i, (name, result) in enumerate(zip(mcp_names, results, strict=False)):
             if isinstance(result, Exception):
                 print(f"  {name:18s}  ERROR: {result}")
             else:

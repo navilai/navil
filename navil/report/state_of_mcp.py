@@ -91,8 +91,8 @@ def generate_state_of_mcp_report(jsonl_path: str | Path) -> str:
     # Summary
     lines.append("## Summary")
     lines.append("")
-    lines.append(f"| Metric | Value |")
-    lines.append(f"|--------|-------|")
+    lines.append("| Metric | Value |")
+    lines.append("|--------|-------|")
     lines.append(f"| Total servers scanned | {total} |")
     lines.append(f"| Successful scans | {len(successful)} |")
     lines.append(f"| Failed scans | {len(failed)} |")

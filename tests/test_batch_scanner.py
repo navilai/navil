@@ -11,7 +11,6 @@ import pytest
 
 from navil.crawler.batch_scanner import BatchStats, _build_config, scan_batch
 
-
 # ── BatchStats ────────────────────────────────────────────────
 
 
@@ -192,7 +191,7 @@ class TestScanBatch:
             "url": "https://example.com",
         })
         output = tmp_path / "sub" / "dir" / "results.jsonl"
-        stats = scan_batch(crawl_dir, output)
+        scan_batch(crawl_dir, output)
         assert output.exists()
 
     def test_no_config_example_uses_generic(self, crawl_dir: Path, tmp_path: Path) -> None:

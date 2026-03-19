@@ -39,27 +39,51 @@ _TOOL_POOLS: dict[str, list[str]] = {
 }
 
 _TARGET_PATHS: list[str] = [
-    ".env", "~/.ssh/id_rsa", "~/.aws/credentials", "/etc/shadow",
-    "~/.bashrc", "~/.gitconfig", "config/secrets.yaml", ".env.local",
-    "~/.kube/config", "~/.docker/config.json", "/etc/passwd",
-    "~/.ssh/known_hosts", "~/.npmrc", "~/.pypirc",
+    ".env",
+    "~/.ssh/id_rsa",
+    "~/.aws/credentials",
+    "/etc/shadow",
+    "~/.bashrc",
+    "~/.gitconfig",
+    "config/secrets.yaml",
+    ".env.local",
+    "~/.kube/config",
+    "~/.docker/config.json",
+    "/etc/passwd",
+    "~/.ssh/known_hosts",
+    "~/.npmrc",
+    "~/.pypirc",
 ]
 
 _EXFIL_URLS: list[str] = [
-    "https://evil.com/exfil", "https://attacker.io/collect",
-    "https://c2.badactor.net/data", "https://exfil.malware.xyz/upload",
+    "https://evil.com/exfil",
+    "https://attacker.io/collect",
+    "https://c2.badactor.net/data",
+    "https://exfil.malware.xyz/upload",
 ]
 
 _MCP_SERVERS: list[str] = [
-    "http://mcp-alpha:3000", "http://mcp-beta:3000",
-    "http://mcp-gamma:3000", "http://mcp-delta:3000",
-    "http://mcp-epsilon:3000", "http://mcp-zeta:3000",
-    "http://mcp-eta:3000", "http://mcp-theta:3000",
+    "http://mcp-alpha:3000",
+    "http://mcp-beta:3000",
+    "http://mcp-gamma:3000",
+    "http://mcp-delta:3000",
+    "http://mcp-epsilon:3000",
+    "http://mcp-zeta:3000",
+    "http://mcp-eta:3000",
+    "http://mcp-theta:3000",
 ]
 
 _AGENT_PREFIXES: list[str] = [
-    "agent", "bot", "assistant", "worker", "task-runner",
-    "copilot", "helper", "auto", "daemon", "service",
+    "agent",
+    "bot",
+    "assistant",
+    "worker",
+    "task-runner",
+    "copilot",
+    "helper",
+    "auto",
+    "daemon",
+    "service",
 ]
 
 # Sensitive tools the detector flags for privilege escalation / rug pull
@@ -196,8 +220,15 @@ def _variants_lateral_movement(attack: dict[str, Any], n: int = 7) -> list[list[
 
 def _variants_supply_chain(attack: dict[str, Any], n: int = 7) -> list[list[dict[str, Any]]]:
     """Generate supply chain attack variants with unregistered tool calls."""
-    bad_tools = ["inject_backdoor", "shadow_deploy", "exfil_creds", "keylogger",
-                 "rootkit_install", "covert_tunnel", "data_siphon"]
+    bad_tools = [
+        "inject_backdoor",
+        "shadow_deploy",
+        "exfil_creds",
+        "keylogger",
+        "rootkit_install",
+        "covert_tunnel",
+        "data_siphon",
+    ]
     variants: list[list[dict[str, Any]]] = []
     for _ in range(n):
         agent = _random_agent()
@@ -244,7 +275,9 @@ def _variants_rug_pull(attack: dict[str, Any], n: int = 7) -> list[list[dict[str
     return variants
 
 
-def _variants_privilege_escalation(attack: dict[str, Any], n: int = 7) -> list[list[dict[str, Any]]]:
+def _variants_privilege_escalation(
+    attack: dict[str, Any], n: int = 7
+) -> list[list[dict[str, Any]]]:
     """Generate privilege escalation variants."""
     variants: list[list[dict[str, Any]]] = []
     for _ in range(n):
@@ -387,7 +420,9 @@ class AttackVariantGenerator:
     def attack_names(self) -> list[str]:
         return [a["name"] for a in self.attacks]
 
-    def generate_variants(self, attack_name: str | None = None) -> dict[str, list[list[dict[str, Any]]]]:
+    def generate_variants(
+        self, attack_name: str | None = None
+    ) -> dict[str, list[list[dict[str, Any]]]]:
         """Generate variants for one or all attacks.
 
         Args:
@@ -442,6 +477,7 @@ class AttackVariantGenerator:
                     for inv in invocations:
                         inv["agent_name"] = agent
                     return invocations
+
                 return _gen
 
             generators[name] = _make_gen(attack, gen_fn)

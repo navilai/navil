@@ -11,7 +11,7 @@ import logging
 import os
 import time
 from typing import Any
-from urllib.parse import urljoin, urlparse
+from urllib.parse import urlparse
 
 import jwt
 import requests
@@ -179,8 +179,8 @@ def verify_oidc_token(
             signing_key,
             **decode_kwargs,
         )
-    except jwt.ExpiredSignatureError:
-        raise ValueError("OIDC token has expired")
+    except jwt.ExpiredSignatureError as err:
+        raise ValueError("OIDC token has expired") from err
     except jwt.InvalidTokenError as e:
         raise ValueError(f"OIDC token verification failed: {e}") from e
 

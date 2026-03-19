@@ -17,11 +17,11 @@ import json
 import logging
 import signal
 import tempfile
-import time
+from collections.abc import Iterator
 from contextlib import contextmanager
 from dataclasses import asdict, dataclass
 from pathlib import Path
-from typing import Any, Iterator
+from typing import Any
 
 import orjson
 
@@ -43,13 +43,13 @@ class BatchStats:
         return asdict(self)
 
 
-class _ScanTimeout(Exception):
+class _ScanTimeoutError(Exception):
     """Raised when a single scan exceeds the timeout."""
 
 
 @contextmanager
 def _timeout_context(seconds: int) -> Iterator[None]:
-    """Context manager that raises _ScanTimeout after *seconds*.
+    """Context manager that raises _ScanTimeoutError after *seconds*.
 
     Uses SIGALRM on Unix; on Windows this is a no-op (no timeout enforcement).
     """
@@ -58,7 +58,7 @@ def _timeout_context(seconds: int) -> Iterator[None]:
         return
 
     def _handler(signum: int, frame: Any) -> None:
-        raise _ScanTimeout(f"Scan timed out after {seconds}s")
+        raise _ScanTimeoutError(f"Scan timed out after {seconds}s")
 
     old_handler = signal.signal(signal.SIGALRM, _handler)
     signal.alarm(seconds)
@@ -143,9 +143,7 @@ def scan_batch(
             }
 
             try:
-                with tempfile.NamedTemporaryFile(
-                    mode="w", suffix=".json", delete=True
-                ) as tmp:
+                with tempfile.NamedTemporaryFile(mode="w", suffix=".json", delete=True) as tmp:
                     json.dump(config, tmp)
                     tmp.flush()
 
@@ -155,7 +153,9 @@ def scan_batch(
                 # Serialize findings for JSONL (dataclass -> dict)
                 if "findings" in scan_result:
                     scan_result["findings"] = [
-                        dataclasses.asdict(f) if dataclasses.is_dataclass(f) and not isinstance(f, type) else f
+                        dataclasses.asdict(f)
+                        if dataclasses.is_dataclass(f) and not isinstance(f, type)
+                        else f
                         for f in scan_result["findings"]
                     ]
 
@@ -163,7 +163,7 @@ def scan_batch(
                 result_record["status"] = "success"
                 stats.successful += 1
 
-            except _ScanTimeout:
+            except _ScanTimeoutError:
                 result_record["status"] = "timeout"
                 result_record["error"] = f"Scan timed out after {timeout_per_scan}s"
                 stats.timed_out += 1

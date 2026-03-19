@@ -92,7 +92,15 @@ def sanitize_record(record: dict[str, Any]) -> dict[str, Any]:
         out["tool_sequence_hash"] = hashlib.sha256(tool_name.encode()).hexdigest()
 
     # Copy allowed metadata
-    for key in ("anomaly_type", "severity", "confidence", "timestamp", "source_type", "profile_name", "method"):
+    for key in (
+        "anomaly_type",
+        "severity",
+        "confidence",
+        "timestamp",
+        "source_type",
+        "profile_name",
+        "method",
+    ):
         if key in record:
             out[key] = record[key]
 
@@ -153,13 +161,10 @@ def summarize_records(
         tool_counts[tool] = tool_counts.get(tool, 0) + 1
 
     # Hash all tool names for privacy
-    tool_hashes = {
-        hashlib.sha256(name.encode()).hexdigest(): count
-        for name, count in tool_counts.items()
-    }
+    {hashlib.sha256(name.encode()).hexdigest(): count for name, count in tool_counts.items()}
 
     timestamps = [r.get("timestamp", "") for r in records if r.get("timestamp")]
-    first_seen = min(timestamps) if timestamps else ""
+    min(timestamps) if timestamps else ""
     last_seen = max(timestamps) if timestamps else ""
 
     summary = {
@@ -193,7 +198,9 @@ class CanaryReporter:
         api_key: str = "",
     ) -> None:
         self.endpoint = endpoint
-        self.api_key = api_key or os.environ.get("NAVIL_API_KEY", os.environ.get("CANARY_API_KEY", ""))
+        self.api_key = api_key or os.environ.get(
+            "NAVIL_API_KEY", os.environ.get("CANARY_API_KEY", "")
+        )
         self._http_client: Any = None
 
     def _get_client(self) -> Any:
@@ -287,7 +294,9 @@ class CanaryReporter:
             )
 
             if resp.status_code < 300:
-                logger.info("Canary summary reported (%d interactions)", summary.get("interaction_count", 0))
+                logger.info(
+                    "Canary summary reported (%d interactions)", summary.get("interaction_count", 0)
+                )
                 return {"submitted": 1, "status": "ok"}
             else:
                 logger.warning("Canary summary report failed: HTTP %d", resp.status_code)

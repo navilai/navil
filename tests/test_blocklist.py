@@ -10,8 +10,7 @@ from unittest.mock import MagicMock, patch
 import fakeredis
 import pytest
 
-from navil.blocklist import BlocklistEntry, BlocklistManager, REDIS_PATTERNS_KEY, REDIS_VERSION_KEY
-
+from navil.blocklist import REDIS_PATTERNS_KEY, REDIS_VERSION_KEY, BlocklistEntry, BlocklistManager
 
 # ── BlocklistEntry ───────────────────────────────────────────
 
@@ -369,14 +368,24 @@ class TestBlocklistManagerMerge:
 
         cloud_entries = [
             BlocklistEntry(
-                "CLOUD-001", "tool_name", "cloud_malware", "CRITICAL",
-                "Cloud-sourced threat", 0.95, source="cloud",
+                "CLOUD-001",
+                "tool_name",
+                "cloud_malware",
+                "CRITICAL",
+                "Cloud-sourced threat",
+                0.95,
+                source="cloud",
             ),
         ]
         community_entries = [
             BlocklistEntry(
-                "COMM-001", "tool_name", "community_threat", "HIGH",
-                "Community-reported threat", 0.75, source="community",
+                "COMM-001",
+                "tool_name",
+                "community_threat",
+                "HIGH",
+                "Community-reported threat",
+                0.75,
+                source="community",
             ),
         ]
 
@@ -398,8 +407,13 @@ class TestBlocklistManagerAddEntry:
     def test_add_new_entry(self):
         mgr = BlocklistManager()
         entry = BlocklistEntry(
-            "ADD-001", "tool_name", "evil_tool", "CRITICAL",
-            "Manually added", 0.9, source="manual",
+            "ADD-001",
+            "tool_name",
+            "evil_tool",
+            "CRITICAL",
+            "Manually added",
+            0.9,
+            source="manual",
         )
         result = mgr.add_entry(entry)
         assert result is True
@@ -409,10 +423,20 @@ class TestBlocklistManagerAddEntry:
     def test_add_entry_replaces_lower_confidence(self):
         mgr = BlocklistManager()
         mgr._entries["ADD-001"] = BlocklistEntry(
-            "ADD-001", "tool_name", "evil_tool", "HIGH", "Old", 0.5,
+            "ADD-001",
+            "tool_name",
+            "evil_tool",
+            "HIGH",
+            "Old",
+            0.5,
         )
         new = BlocklistEntry(
-            "ADD-001", "tool_name", "evil_tool", "CRITICAL", "New", 0.9,
+            "ADD-001",
+            "tool_name",
+            "evil_tool",
+            "CRITICAL",
+            "New",
+            0.9,
         )
         result = mgr.add_entry(new)
         assert result is True
@@ -421,10 +445,20 @@ class TestBlocklistManagerAddEntry:
     def test_add_entry_skips_lower_confidence(self):
         mgr = BlocklistManager()
         mgr._entries["ADD-001"] = BlocklistEntry(
-            "ADD-001", "tool_name", "evil_tool", "CRITICAL", "Original", 0.9,
+            "ADD-001",
+            "tool_name",
+            "evil_tool",
+            "CRITICAL",
+            "Original",
+            0.9,
         )
         new = BlocklistEntry(
-            "ADD-001", "tool_name", "evil_tool", "HIGH", "Lower", 0.5,
+            "ADD-001",
+            "tool_name",
+            "evil_tool",
+            "HIGH",
+            "Lower",
+            0.5,
         )
         result = mgr.add_entry(new)
         assert result is False
@@ -433,8 +467,12 @@ class TestBlocklistManagerAddEntry:
     def test_add_argument_pattern_compiles_regex(self):
         mgr = BlocklistManager()
         entry = BlocklistEntry(
-            "ADD-REGEX", "argument_pattern", ".*\\.ssh/.*", "CRITICAL",
-            "SSH access", 0.9,
+            "ADD-REGEX",
+            "argument_pattern",
+            ".*\\.ssh/.*",
+            "CRITICAL",
+            "SSH access",
+            0.9,
         )
         result = mgr.add_entry(entry)
         assert result is True
@@ -443,8 +481,12 @@ class TestBlocklistManagerAddEntry:
     def test_add_invalid_regex_warns(self):
         mgr = BlocklistManager()
         entry = BlocklistEntry(
-            "ADD-BAD-REGEX", "argument_pattern", "[invalid(regex",
-            "HIGH", "Bad regex", 0.5,
+            "ADD-BAD-REGEX",
+            "argument_pattern",
+            "[invalid(regex",
+            "HIGH",
+            "Bad regex",
+            0.5,
         )
         # Should not raise, just log a warning
         result = mgr.add_entry(entry)
@@ -493,11 +535,13 @@ class TestBlocklistManagerMatch:
 
     def test_matches_sorted_by_confidence(self, loaded_manager):
         # Add entries with varying confidence
-        loaded_manager.merge([
-            BlocklistEntry("SORT-001", "tool_name", "test_sort", "HIGH", "A", 0.5),
-            BlocklistEntry("SORT-002", "tool_name", "test_sort", "HIGH", "B", 0.9),
-            BlocklistEntry("SORT-003", "tool_name", "test_sort", "HIGH", "C", 0.7),
-        ])
+        loaded_manager.merge(
+            [
+                BlocklistEntry("SORT-001", "tool_name", "test_sort", "HIGH", "A", 0.5),
+                BlocklistEntry("SORT-002", "tool_name", "test_sort", "HIGH", "B", 0.9),
+                BlocklistEntry("SORT-003", "tool_name", "test_sort", "HIGH", "C", 0.7),
+            ]
+        )
         matches = loaded_manager.match("test_sort")
         assert len(matches) >= 2
         for i in range(len(matches) - 1):
@@ -624,7 +668,9 @@ class TestBlocklistUpdater:
     def test_get_tier_explicit(self):
         from navil.blocklist_updater import _get_tier
 
-        with patch.dict(os.environ, {"NAVIL_API_KEY": "key", "NAVIL_TIER": "enterprise"}, clear=True):
+        with patch.dict(
+            os.environ, {"NAVIL_API_KEY": "key", "NAVIL_TIER": "enterprise"}, clear=True
+        ):
             assert _get_tier() == "enterprise"
 
     def test_should_delay_community(self):

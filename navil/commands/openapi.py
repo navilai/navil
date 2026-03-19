@@ -18,7 +18,6 @@ import json
 import sys
 from pathlib import Path
 
-
 # ---------------------------------------------------------------------------
 # Subcommand handlers
 # ---------------------------------------------------------------------------
@@ -47,7 +46,7 @@ def _openapi_wrap(cli, args: argparse.Namespace) -> int:  # type: ignore[no-unty
         return 1
 
     # Print summary
-    print(f"\nOpenAPI -> MCP Bridge", file=sys.stderr)
+    print("\nOpenAPI -> MCP Bridge", file=sys.stderr)
     print(f"{'─' * 50}", file=sys.stderr)
     print(f"  Spec:       {spec_path}", file=sys.stderr)
     print(f"  API name:   {result['server_name']}", file=sys.stderr)
@@ -58,10 +57,10 @@ def _openapi_wrap(cli, args: argparse.Namespace) -> int:  # type: ignore[no-unty
         schemes = ", ".join(result["security_schemes"])
         print(f"  Security:   {schemes}", file=sys.stderr)
     else:
-        print(f"  Security:   (none detected)", file=sys.stderr)
+        print("  Security:   (none detected)", file=sys.stderr)
 
     if dry_run:
-        print(f"\n  [dry-run] MCP config preview:\n", file=sys.stderr)
+        print("\n  [dry-run] MCP config preview:\n", file=sys.stderr)
         print(json.dumps(result["mcp_config"], indent=2))
         return 0
 
@@ -81,7 +80,7 @@ def _openapi_serve(cli, args: argparse.Namespace) -> int:  # type: ignore[no-unt
     import asyncio
     import logging
 
-    from navil.openapi_bridge import load_spec, spec_to_tools, _extract_security_requirements
+    from navil.openapi_bridge import _extract_security_requirements, load_spec, spec_to_tools
 
     spec_path = args.spec
 

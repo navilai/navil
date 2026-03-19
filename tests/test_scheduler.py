@@ -1,28 +1,23 @@
-"""Tests for the scheduler module — Redis lock, async scheduler, scan summary, and error handling."""
+"""Tests for the scheduler module — Redis lock, async scheduler, and errors."""
 
 from __future__ import annotations
 
-import asyncio
 import json
 from pathlib import Path
 from typing import Any
-from unittest.mock import AsyncMock, MagicMock, patch
+from unittest.mock import AsyncMock, patch
 
 import pytest
 
 from navil.crawler.scheduler import (
-    INTERVAL_SECONDS,
     REDIS_LOCK_KEY,
-    REDIS_LOCK_TTL_SECONDS,
     _feed_results_to_cloud,
     _send_slack_alert,
     _write_scan_summary,
     acquire_redis_lock,
     release_redis_lock,
     run_async_scheduler,
-    run_full_scan,
 )
-
 
 # ── Fake async Redis with NX support ─────────────────────────
 
@@ -123,9 +118,7 @@ class TestRedisLock:
 
         await acquire_redis_lock(mock_redis, ttl=3600)
 
-        mock_redis.set.assert_called_once_with(
-            REDIS_LOCK_KEY, "locked", nx=True, ex=3600
-        )
+        mock_redis.set.assert_called_once_with(REDIS_LOCK_KEY, "locked", nx=True, ex=3600)
 
 
 # ── Concurrent run prevention ────────────────────────────────
@@ -140,18 +133,18 @@ class TestConcurrentRunPrevention:
         # Pre-acquire the lock
         await acquire_redis_lock(fake_async_redis)
 
-        with patch(
-            "navil.crawler.scheduler.run_full_scan",
-            side_effect=AssertionError("Should not run scan when lock is held"),
+        with (
+            patch(
+                "navil.crawler.scheduler.run_full_scan",
+                side_effect=AssertionError("Should not run scan when lock is held"),
+            ),
+            patch("navil.crawler.scheduler.INTERVAL_SECONDS", {"weekly": 0.01}),
         ):
-            # Run scheduler with max_iterations=1 and a very short sleep
-            # It should skip due to lock and never call run_full_scan
-            with patch("navil.crawler.scheduler.INTERVAL_SECONDS", {"weekly": 0.01}):
-                await run_async_scheduler(
-                    interval="weekly",
-                    redis_client=fake_async_redis,
-                    max_iterations=1,
-                )
+            await run_async_scheduler(
+                interval="weekly",
+                redis_client=fake_async_redis,
+                max_iterations=1,
+            )
 
     @pytest.mark.asyncio
     async def test_runs_scan_when_lock_free(self, fake_async_redis: FakeAsyncRedis) -> None:
@@ -164,11 +157,13 @@ class TestConcurrentRunPrevention:
             "elapsed_seconds": 1.0,
         }
 
-        with patch(
-            "navil.crawler.scheduler.run_full_scan",
-            return_value=mock_result,
-        ) as mock_scan, \
-             patch("navil.crawler.scheduler.INTERVAL_SECONDS", {"weekly": 0.01}):
+        with (
+            patch(
+                "navil.crawler.scheduler.run_full_scan",
+                return_value=mock_result,
+            ) as mock_scan,
+            patch("navil.crawler.scheduler.INTERVAL_SECONDS", {"weekly": 0.01}),
+        ):
             await run_async_scheduler(
                 interval="weekly",
                 redis_client=fake_async_redis,
@@ -229,18 +224,16 @@ class TestErrorHandling:
     """Tests for error handling in the scheduler."""
 
     @pytest.mark.asyncio
-    async def test_scan_failure_sends_slack_alert(
-        self, fake_async_redis: FakeAsyncRedis
-    ) -> None:
+    async def test_scan_failure_sends_slack_alert(self, fake_async_redis: FakeAsyncRedis) -> None:
         """When a scan fails, a Slack alert should be sent if configured."""
-        with patch(
-            "navil.crawler.scheduler.run_full_scan",
-            side_effect=RuntimeError("Scan explosion"),
-        ), \
-             patch(
-                 "navil.crawler.scheduler._send_slack_alert"
-             ) as mock_slack, \
-             patch("navil.crawler.scheduler.INTERVAL_SECONDS", {"weekly": 0.01}):
+        with (
+            patch(
+                "navil.crawler.scheduler.run_full_scan",
+                side_effect=RuntimeError("Scan explosion"),
+            ),
+            patch("navil.crawler.scheduler._send_slack_alert") as mock_slack,
+            patch("navil.crawler.scheduler.INTERVAL_SECONDS", {"weekly": 0.01}),
+        ):
             await run_async_scheduler(
                 interval="weekly",
                 redis_client=fake_async_redis,
@@ -258,14 +251,14 @@ class TestErrorHandling:
         self, fake_async_redis: FakeAsyncRedis
     ) -> None:
         """When no Slack webhook is configured, no alert is sent."""
-        with patch(
-            "navil.crawler.scheduler.run_full_scan",
-            side_effect=RuntimeError("boom"),
-        ), \
-             patch(
-                 "navil.crawler.scheduler._send_slack_alert"
-             ) as mock_slack, \
-             patch("navil.crawler.scheduler.INTERVAL_SECONDS", {"weekly": 0.01}):
+        with (
+            patch(
+                "navil.crawler.scheduler.run_full_scan",
+                side_effect=RuntimeError("boom"),
+            ),
+            patch("navil.crawler.scheduler._send_slack_alert") as mock_slack,
+            patch("navil.crawler.scheduler.INTERVAL_SECONDS", {"weekly": 0.01}),
+        ):
             await run_async_scheduler(
                 interval="weekly",
                 redis_client=fake_async_redis,
@@ -276,14 +269,15 @@ class TestErrorHandling:
         mock_slack.assert_not_called()
 
     @pytest.mark.asyncio
-    async def test_lock_released_after_scan_failure(
-        self, fake_async_redis: FakeAsyncRedis
-    ) -> None:
+    async def test_lock_released_after_scan_failure(self, fake_async_redis: FakeAsyncRedis) -> None:
         """The Redis lock should be released even if the scan fails."""
-        with patch(
-            "navil.crawler.scheduler.run_full_scan",
-            side_effect=RuntimeError("crash"),
-        ), patch("navil.crawler.scheduler.INTERVAL_SECONDS", {"weekly": 0.01}):
+        with (
+            patch(
+                "navil.crawler.scheduler.run_full_scan",
+                side_effect=RuntimeError("crash"),
+            ),
+            patch("navil.crawler.scheduler.INTERVAL_SECONDS", {"weekly": 0.01}),
+        ):
             await run_async_scheduler(
                 interval="weekly",
                 redis_client=fake_async_redis,
@@ -367,9 +361,7 @@ class TestCloudFeed:
         assert ok is False
 
     def test_returns_false_without_api_key(self) -> None:
-        with patch(
-            "navil.crawler.scheduler._load_api_key_from_config", return_value=None
-        ):
+        with patch("navil.crawler.scheduler._load_api_key_from_config", return_value=None):
             ok = _feed_results_to_cloud({"status": "complete"})
         assert ok is False
 
@@ -404,11 +396,13 @@ class TestAsyncSchedulerIntegration:
             "elapsed_seconds": 0.5,
         }
 
-        with patch(
-            "navil.crawler.scheduler.run_full_scan",
-            return_value=mock_result,
-        ) as mock_scan, \
-             patch("navil.crawler.scheduler.INTERVAL_SECONDS", {"daily": 0.01}):
+        with (
+            patch(
+                "navil.crawler.scheduler.run_full_scan",
+                return_value=mock_result,
+            ) as mock_scan,
+            patch("navil.crawler.scheduler.INTERVAL_SECONDS", {"daily": 0.01}),
+        ):
             await run_async_scheduler(
                 interval="daily",
                 redis_client=None,
@@ -418,9 +412,7 @@ class TestAsyncSchedulerIntegration:
         mock_scan.assert_called_once()
 
     @pytest.mark.asyncio
-    async def test_feeds_to_cloud_when_enabled(
-        self, fake_async_redis: FakeAsyncRedis
-    ) -> None:
+    async def test_feeds_to_cloud_when_enabled(self, fake_async_redis: FakeAsyncRedis) -> None:
         mock_result = {
             "status": "complete",
             "scan_id": 1,
@@ -429,14 +421,14 @@ class TestAsyncSchedulerIntegration:
             "elapsed_seconds": 0.5,
         }
 
-        with patch(
-            "navil.crawler.scheduler.run_full_scan",
-            return_value=mock_result,
-        ), \
-             patch(
-                 "navil.crawler.scheduler._feed_results_to_cloud"
-             ) as mock_feed, \
-             patch("navil.crawler.scheduler.INTERVAL_SECONDS", {"weekly": 0.01}):
+        with (
+            patch(
+                "navil.crawler.scheduler.run_full_scan",
+                return_value=mock_result,
+            ),
+            patch("navil.crawler.scheduler._feed_results_to_cloud") as mock_feed,
+            patch("navil.crawler.scheduler.INTERVAL_SECONDS", {"weekly": 0.01}),
+        ):
             await run_async_scheduler(
                 interval="weekly",
                 redis_client=fake_async_redis,
@@ -458,14 +450,14 @@ class TestAsyncSchedulerIntegration:
             "elapsed_seconds": 0.5,
         }
 
-        with patch(
-            "navil.crawler.scheduler.run_full_scan",
-            return_value=mock_result,
-        ), \
-             patch(
-                 "navil.crawler.scheduler._feed_results_to_cloud"
-             ) as mock_feed, \
-             patch("navil.crawler.scheduler.INTERVAL_SECONDS", {"weekly": 0.01}):
+        with (
+            patch(
+                "navil.crawler.scheduler.run_full_scan",
+                return_value=mock_result,
+            ),
+            patch("navil.crawler.scheduler._feed_results_to_cloud") as mock_feed,
+            patch("navil.crawler.scheduler.INTERVAL_SECONDS", {"weekly": 0.01}),
+        ):
             await run_async_scheduler(
                 interval="weekly",
                 redis_client=fake_async_redis,
@@ -484,11 +476,13 @@ class TestAsyncSchedulerIntegration:
             "elapsed_seconds": 0.1,
         }
 
-        with patch(
-            "navil.crawler.scheduler.run_full_scan",
-            return_value=mock_result,
-        ) as mock_scan, \
-             patch("navil.crawler.scheduler.INTERVAL_SECONDS", {"hourly": 0.01}):
+        with (
+            patch(
+                "navil.crawler.scheduler.run_full_scan",
+                return_value=mock_result,
+            ) as mock_scan,
+            patch("navil.crawler.scheduler.INTERVAL_SECONDS", {"hourly": 0.01}),
+        ):
             await run_async_scheduler(
                 interval="hourly",
                 redis_client=fake_async_redis,

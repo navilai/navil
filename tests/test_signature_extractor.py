@@ -8,7 +8,6 @@ import pytest
 
 from navil.honeypot.signature_extractor import SignatureExtractor
 
-
 # -- Helpers -----------------------------------------------------------------
 
 

@@ -11,8 +11,6 @@ import logging
 import os
 import threading
 from collections import deque
-from datetime import datetime, timezone
-from pathlib import Path
 from typing import Any
 
 logger = logging.getLogger(__name__)
@@ -50,7 +48,7 @@ class HoneypotCollector:
         directory = os.path.dirname(path)
         if directory:
             os.makedirs(directory, exist_ok=True)
-        self._log_file = open(path, "a", encoding="utf-8")
+        self._log_file = open(path, "a", encoding="utf-8")  # noqa: SIM115
         self._log_path = path
         logger.info("Honeypot collector logging to %s", path)
 

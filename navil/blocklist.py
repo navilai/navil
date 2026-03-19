@@ -14,8 +14,7 @@ import json
 import logging
 import os
 import re
-import time
-from dataclasses import asdict, dataclass, field
+from dataclasses import asdict, dataclass
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
@@ -192,7 +191,9 @@ class BlocklistManager:
 
             self._version = int(results[1])  # INCR returns new value
             self._last_update = datetime.now(timezone.utc).isoformat()
-            logger.info("Saved %d blocklist patterns to Redis (v%d)", len(self._entries), self._version)
+            logger.info(
+                "Saved %d blocklist patterns to Redis (v%d)", len(self._entries), self._version
+            )
             return True
 
         except Exception:
@@ -227,10 +228,7 @@ class BlocklistManager:
         changes = 0
         for entry in other_entries:
             existing = self._entries.get(entry.pattern_id)
-            if existing is None:
-                self._entries[entry.pattern_id] = entry
-                changes += 1
-            elif entry.confidence > existing.confidence:
+            if existing is None or entry.confidence > existing.confidence:
                 self._entries[entry.pattern_id] = entry
                 changes += 1
 
@@ -269,11 +267,10 @@ class BlocklistManager:
                 if tool_name in seq_parts:
                     matches.append(entry)
 
-            elif entry.pattern_type == "argument_pattern":
-                if args_str:
-                    regex = self._regex_cache.get(entry.pattern_id)
-                    if regex and regex.search(args_str):
-                        matches.append(entry)
+            elif entry.pattern_type == "argument_pattern" and args_str:
+                regex = self._regex_cache.get(entry.pattern_id)
+                if regex and regex.search(args_str):
+                    matches.append(entry)
 
         # Sort by confidence descending
         matches.sort(key=lambda e: e.confidence, reverse=True)
@@ -315,7 +312,9 @@ class BlocklistManager:
             try:
                 self._regex_cache[entry.pattern_id] = re.compile(entry.value, re.IGNORECASE)
             except re.error:
-                logger.warning("Invalid regex in blocklist entry %s: %s", entry.pattern_id, entry.value)
+                logger.warning(
+                    "Invalid regex in blocklist entry %s: %s", entry.pattern_id, entry.value
+                )
         return True
 
     # ── Finding generation ───────────────────────────────────
@@ -382,4 +381,6 @@ class BlocklistManager:
                 try:
                     self._regex_cache[entry.pattern_id] = re.compile(entry.value, re.IGNORECASE)
                 except re.error:
-                    logger.warning("Invalid regex in blocklist entry %s: %s", entry.pattern_id, entry.value)
+                    logger.warning(
+                        "Invalid regex in blocklist entry %s: %s", entry.pattern_id, entry.value
+                    )

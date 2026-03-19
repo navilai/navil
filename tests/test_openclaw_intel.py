@@ -15,7 +15,6 @@ import yaml
 
 from navil.honeypot.server import HoneypotMCPServer
 
-
 # ── Paths ──────────────────────────────────────────────────────
 
 _DATA_DIR = Path(__file__).resolve().parent.parent / "navil" / "data"
@@ -85,9 +84,9 @@ class TestOpenClawAttacks:
         """Severity must be one of LOW, MEDIUM, HIGH, CRITICAL."""
         valid = {"LOW", "MEDIUM", "HIGH", "CRITICAL"}
         for attack in openclaw_attacks:
-            assert attack["severity"] in valid, (
-                f"Attack '{attack['name']}' has invalid severity: {attack['severity']}"
-            )
+            assert (
+                attack["severity"] in valid
+            ), f"Attack '{attack['name']}' has invalid severity: {attack['severity']}"
 
     def test_category_values_valid(self, openclaw_attacks: list[dict]) -> None:
         """Category must be a known attack category."""
@@ -104,9 +103,9 @@ class TestOpenClawAttacks:
             "RATE_SPIKE",
         }
         for attack in openclaw_attacks:
-            assert attack["category"] in valid, (
-                f"Attack '{attack['name']}' has invalid category: {attack['category']}"
-            )
+            assert (
+                attack["category"] in valid
+            ), f"Attack '{attack['name']}' has invalid category: {attack['category']}"
 
     def test_skill_registry_poisoning_exists(self, openclaw_attacks: list[dict]) -> None:
         """Skill registry poisoning attack should be defined."""
@@ -136,17 +135,15 @@ class TestOpenClawAttacks:
     def test_all_attacks_have_source_reference(self, openclaw_attacks: list[dict]) -> None:
         """Each attack should have a source_reference for traceability."""
         for attack in openclaw_attacks:
-            assert "source_reference" in attack, (
-                f"Attack '{attack['name']}' missing source_reference"
-            )
+            assert (
+                "source_reference" in attack
+            ), f"Attack '{attack['name']}' missing source_reference"
             assert len(attack["source_reference"]) > 0
 
     def test_all_attacks_have_attack_steps(self, openclaw_attacks: list[dict]) -> None:
         """Each attack should have attack_steps defining the attack chain."""
         for attack in openclaw_attacks:
-            assert "attack_steps" in attack, (
-                f"Attack '{attack['name']}' missing attack_steps"
-            )
+            assert "attack_steps" in attack, f"Attack '{attack['name']}' missing attack_steps"
             assert len(attack["attack_steps"]) > 0
 
     def test_yaml_file_is_valid(self) -> None:
@@ -169,8 +166,15 @@ class TestOpenClawBlocklist:
         assert len(openclaw_patterns) >= 30
 
     def test_all_patterns_have_required_fields(self, openclaw_patterns: list[dict]) -> None:
-        """Each pattern must have pattern_id, pattern_type, value, severity, description, confidence."""
-        required_fields = {"pattern_id", "pattern_type", "value", "severity", "description", "confidence"}
+        """Each pattern must have required fields."""
+        required_fields = {
+            "pattern_id",
+            "pattern_type",
+            "value",
+            "severity",
+            "description",
+            "confidence",
+        }
         for pattern in openclaw_patterns:
             missing = required_fields - set(pattern.keys())
             assert not missing, f"Pattern '{pattern['pattern_id']}' missing fields: {missing}"
@@ -178,29 +182,29 @@ class TestOpenClawBlocklist:
     def test_pattern_ids_unique(self, openclaw_patterns: list[dict]) -> None:
         """All OpenClaw pattern IDs should be unique."""
         ids = [p["pattern_id"] for p in openclaw_patterns]
-        assert len(ids) == len(set(ids)), f"Duplicate pattern IDs found"
+        assert len(ids) == len(set(ids)), "Duplicate pattern IDs found"
 
     def test_pattern_ids_follow_convention(self, openclaw_patterns: list[dict]) -> None:
         """All OpenClaw pattern IDs should follow BL-OC-NNN convention."""
         for pattern in openclaw_patterns:
-            assert re.match(r"^BL-OC-\d{3}$", pattern["pattern_id"]), (
-                f"Pattern ID '{pattern['pattern_id']}' doesn't match BL-OC-NNN format"
-            )
+            assert re.match(
+                r"^BL-OC-\d{3}$", pattern["pattern_id"]
+            ), f"Pattern ID '{pattern['pattern_id']}' doesn't match BL-OC-NNN format"
 
     def test_severity_values_valid(self, openclaw_patterns: list[dict]) -> None:
         """Severity must be one of LOW, MEDIUM, HIGH, CRITICAL."""
         valid = {"LOW", "MEDIUM", "HIGH", "CRITICAL"}
         for pattern in openclaw_patterns:
-            assert pattern["severity"] in valid, (
-                f"Pattern '{pattern['pattern_id']}' has invalid severity: {pattern['severity']}"
-            )
+            assert (
+                pattern["severity"] in valid
+            ), f"Pattern '{pattern['pattern_id']}' has invalid severity: {pattern['severity']}"
 
     def test_confidence_values_valid(self, openclaw_patterns: list[dict]) -> None:
         """Confidence must be between 0.0 and 1.0."""
         for pattern in openclaw_patterns:
-            assert 0.0 <= pattern["confidence"] <= 1.0, (
-                f"Pattern '{pattern['pattern_id']}' has invalid confidence: {pattern['confidence']}"
-            )
+            assert (
+                0.0 <= pattern["confidence"] <= 1.0
+            ), f"Pattern '{pattern['pattern_id']}' has invalid confidence: {pattern['confidence']}"
 
     def test_pattern_types_valid(self, openclaw_patterns: list[dict]) -> None:
         """Pattern types should be from the known set."""
@@ -216,14 +220,15 @@ class TestOpenClawBlocklist:
             "mcp_specific",
         }
         for pattern in openclaw_patterns:
-            assert pattern["pattern_type"] in valid, (
-                f"Pattern '{pattern['pattern_id']}' has invalid type: {pattern['pattern_type']}"
-            )
+            assert (
+                pattern["pattern_type"] in valid
+            ), f"Pattern '{pattern['pattern_id']}' has invalid type: {pattern['pattern_type']}"
 
     def test_skill_squatting_patterns_match_expected(self, openclaw_patterns: list[dict]) -> None:
         """Typosquatting patterns should match their intended inputs."""
         squatting_patterns = [
-            p for p in openclaw_patterns
+            p
+            for p in openclaw_patterns
             if "squatting" in p["description"].lower() or "typosquat" in p["description"].lower()
         ]
         assert len(squatting_patterns) >= 3, "Should have at least 3 skill squatting patterns"
@@ -231,38 +236,42 @@ class TestOpenClawBlocklist:
     def test_config_manipulation_patterns_exist(self, openclaw_patterns: list[dict]) -> None:
         """Config file manipulation patterns should exist."""
         config_patterns = [
-            p for p in openclaw_patterns
-            if "openclaw.json" in p["value"] or "openclaw" in p["value"].lower() and "config" in p["description"].lower()
+            p
+            for p in openclaw_patterns
+            if "openclaw.json" in p["value"]
+            or "openclaw" in p["value"].lower()
+            and "config" in p["description"].lower()
         ]
         assert len(config_patterns) >= 1, "Should have config manipulation patterns"
 
     def test_exfiltration_sequences_exist(self, openclaw_patterns: list[dict]) -> None:
         """Tool sequence patterns for exfiltration should exist."""
-        sequences = [
-            p for p in openclaw_patterns
-            if p["pattern_type"] == "tool_sequence"
-        ]
+        sequences = [p for p in openclaw_patterns if p["pattern_type"] == "tool_sequence"]
         assert len(sequences) >= 4, "Should have at least 4 tool sequence patterns"
 
     def test_exposed_instance_patterns_exist(self, openclaw_patterns: list[dict]) -> None:
         """Patterns for exposed OpenClaw instances should exist."""
         exposed = [
-            p for p in openclaw_patterns
+            p
+            for p in openclaw_patterns
             if p["pattern_type"] == "mcp_specific" and "openclaw" in p["value"]
         ]
         assert len(exposed) >= 2, "Should have at least 2 exposed instance patterns"
 
     def test_regex_patterns_compile(self, openclaw_patterns: list[dict]) -> None:
         """All argument_pattern and argument_content regex values should compile."""
-        regex_types = {"argument_pattern", "argument_content", "description_injection", "url_pattern"}
+        regex_types = {
+            "argument_pattern",
+            "argument_content",
+            "description_injection",
+            "url_pattern",
+        }
         for pattern in openclaw_patterns:
             if pattern["pattern_type"] in regex_types:
                 try:
                     re.compile(pattern["value"])
                 except re.error as e:
-                    pytest.fail(
-                        f"Pattern '{pattern['pattern_id']}' has invalid regex: {e}"
-                    )
+                    pytest.fail(f"Pattern '{pattern['pattern_id']}' has invalid regex: {e}")
 
     def test_blocklist_json_is_valid(self) -> None:
         """The blocklist_v1.json file should parse without errors."""
@@ -279,12 +288,16 @@ class TestOpenClawBlocklist:
             None,
         )
         assert pattern is not None, "git-hub typosquat pattern not found"
-        assert re.search(pattern["value"], 'skill_name: git-hub')
+        assert re.search(pattern["value"], "skill_name: git-hub")
 
     def test_secrets_exfil_sequence_exists(self, openclaw_patterns: list[dict]) -> None:
         """A sequence for secrets access followed by network call should exist."""
         seq = next(
-            (p for p in openclaw_patterns if p["pattern_type"] == "tool_sequence" and "secrets" in p["value"]),
+            (
+                p
+                for p in openclaw_patterns
+                if p["pattern_type"] == "tool_sequence" and "secrets" in p["value"]
+            ),
             None,
         )
         assert seq is not None, "get_skill_secrets,fetch_url sequence not found"
@@ -328,9 +341,9 @@ class TestOpenClawHoneypot:
         """Each tool should have an inputSchema."""
         for name, info in openclaw_honeypot.tools.items():
             assert "inputSchema" in info, f"Tool '{name}' missing inputSchema"
-            assert info["inputSchema"]["type"] == "object", (
-                f"Tool '{name}' inputSchema type should be 'object'"
-            )
+            assert (
+                info["inputSchema"]["type"] == "object"
+            ), f"Tool '{name}' inputSchema type should be 'object'"
 
     def test_tools_have_responses(self, openclaw_honeypot: HoneypotMCPServer) -> None:
         """Each tool should have a fake response defined."""
@@ -352,12 +365,16 @@ class TestOpenClawHoneypot:
         schema = openclaw_honeypot.tools["search_skills"]["inputSchema"]
         assert "query" in schema.get("required", [])
 
-    def test_install_skill_has_skill_name_required(self, openclaw_honeypot: HoneypotMCPServer) -> None:
+    def test_install_skill_has_skill_name_required(
+        self, openclaw_honeypot: HoneypotMCPServer
+    ) -> None:
         """The install_skill tool should require a skill_name parameter."""
         schema = openclaw_honeypot.tools["install_skill"]["inputSchema"]
         assert "skill_name" in schema.get("required", [])
 
-    def test_get_skill_secrets_response_has_secrets(self, openclaw_honeypot: HoneypotMCPServer) -> None:
+    def test_get_skill_secrets_response_has_secrets(
+        self, openclaw_honeypot: HoneypotMCPServer
+    ) -> None:
         """The get_skill_secrets response should contain fake secrets."""
         response = openclaw_honeypot.tools["get_skill_secrets"]["response"]
         assert "secrets" in response

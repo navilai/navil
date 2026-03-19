@@ -559,7 +559,10 @@ class MCPSecurityScanner:
                     self.vulnerabilities.append(
                         Vulnerability(
                             id=f"INJ-{pattern_type.upper().replace('_', '-')}",
-                            title=f"Prompt Injection Risk: {pattern_type.replace('_', ' ').title()}",
+                            title=(
+                                f"Prompt Injection Risk:"
+                                f" {pattern_type.replace('_', ' ').title()}"
+                            ),
                             description=(
                                 f"Tool description or config contains language associated with "
                                 f"prompt injection ({pattern_type.replace('_', ' ')})"
@@ -614,8 +617,7 @@ class MCPSecurityScanner:
 
     # Keywords in server name/description indicating command running is expected
     EXPECTED_CMD_EXEC_PATTERNS = re.compile(
-        r"(?i)(terminal|shell|bash|zsh|console|cli|command[- ]?line"
-        r"|filesystem|file[- ]?system)"
+        r"(?i)(terminal|shell|bash|zsh|console|cli|command[- ]?line" r"|filesystem|file[- ]?system)"
     )
 
     def _check_privilege_escalation_patterns(self, config: dict[str, Any]) -> None:
@@ -698,9 +700,7 @@ class MCPSecurityScanner:
                 # Check if this is a known-safe npm scope.
                 # Use the full combined text since the regex capture may
                 # be truncated (e.g. "npx @" without the full scope).
-                is_safe_scope = any(
-                    scope in combined for scope in self.NPX_SAFE_SCOPES
-                )
+                is_safe_scope = any(scope in combined for scope in self.NPX_SAFE_SCOPES)
                 if is_safe_scope:
                     sub_id = "NPX-EXEC"
                     sub_title = "npx Package Execution (Official SDK)"
@@ -841,15 +841,26 @@ class MCPSecurityScanner:
 
     # IDs that represent real security issues (things that need fixing)
     SECURITY_ISSUE_IDS = {
-        "CRED-API_KEY", "CRED-PASSWORD", "CRED-TOKEN", "CRED-AWS_KEY",
-        "CRED-PRIVATE_KEY", "CRED-JWT",
-        "INJ-INSTRUCTION-OVERRIDE", "INJ-SYSTEM-PROMPT-ACCESS",
-        "INJ-ROLE-MANIPULATION", "INJ-HIDDEN-INSTRUCTIONS",
+        "CRED-API_KEY",
+        "CRED-PASSWORD",
+        "CRED-TOKEN",
+        "CRED-AWS_KEY",
+        "CRED-PRIVATE_KEY",
+        "CRED-JWT",
+        "INJ-INSTRUCTION-OVERRIDE",
+        "INJ-SYSTEM-PROMPT-ACCESS",
+        "INJ-ROLE-MANIPULATION",
+        "INJ-HIDDEN-INSTRUCTIONS",
         "EXFIL-READ-SEND",
-        "MAL-EXFILTRATION", "MAL-PRIVILEGE_ESCALATION",
-        "MAL-DATA_DESTRUCTION", "MAL-BACKDOOR",
-        "PERM-OVERPRIVILEGED", "PERM-UNRESTRICTED-FS", "PERM-EXCESSIVE",
-        "SUPPLY-PIPE-SHELL", "SUPPLY-PKG-INSTALL",
+        "MAL-EXFILTRATION",
+        "MAL-PRIVILEGE_ESCALATION",
+        "MAL-DATA_DESTRUCTION",
+        "MAL-BACKDOOR",
+        "PERM-OVERPRIVILEGED",
+        "PERM-UNRESTRICTED-FS",
+        "PERM-EXCESSIVE",
+        "SUPPLY-PIPE-SHELL",
+        "SUPPLY-PKG-INSTALL",
     }
 
     # IDs that are hardening recommendations (nice to have)

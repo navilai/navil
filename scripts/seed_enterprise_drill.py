@@ -30,7 +30,7 @@ import os
 import secrets
 import sys
 import uuid
-from datetime import datetime, timezone, UTC
+from datetime import datetime
 
 # ---------------------------------------------------------------------------
 # Database URL — required
@@ -67,9 +67,8 @@ async def main() -> None:
     # Late imports — keep startup fast and allow the script to print help
     # even if sqlalchemy is not installed.
     try:
-        from sqlalchemy import delete, text
+        from sqlalchemy import text
         from sqlalchemy.ext.asyncio import (
-            AsyncSession,
             async_sessionmaker,
             create_async_engine,
         )
@@ -85,7 +84,7 @@ async def main() -> None:
         pool_pre_ping=True,
         connect_args={"statement_cache_size": 0, "prepared_statement_cache_size": 0},
     )
-    Session = async_sessionmaker(engine, expire_on_commit=False)
+    Session = async_sessionmaker(engine, expire_on_commit=False)  # noqa: N806
 
     async with Session() as db:  # type: AsyncSession
         # ------------------------------------------------------------------
@@ -170,7 +169,7 @@ async def main() -> None:
         await db.commit()
         print(f"  Org ID:   {org_id}")
         print(f"  Slug:     {ORG_SLUG}")
-        print(f"  Tier:     enterprise")
+        print("  Tier:     enterprise")
         print(f"  Slack WH: {TEST_SLACK_WEBHOOK[:50]}...")
 
         # ------------------------------------------------------------------
@@ -248,7 +247,7 @@ async def main() -> None:
         await db.commit()
         print(f"  Webhook ID:  {webhook_id}")
         print(f"  URL:         {TEST_SLACK_WEBHOOK[:60]}")
-        print(f"  Events:      anomaly.critical, anomaly.high, blocked, alert")
+        print("  Events:      anomaly.critical, anomaly.high, blocked, alert")
 
         # ------------------------------------------------------------------
         # Step 5: Generate API key
@@ -256,7 +255,7 @@ async def main() -> None:
         _banner("Step 5/5 — Generating API key")
 
         # Replicate the key generation from app/core/security.py
-        B62 = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz"
+        B62 = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz"  # noqa: N806
 
         def base62_encode(data: bytes) -> str:
             num = int.from_bytes(data, "big")

@@ -645,7 +645,7 @@ def export_scenarios(include_expanded: bool = True) -> list[dict[str, Any]]:
         List of scenario definition dicts.
     """
     base_scenarios: list[dict[str, Any]] = []
-    for name, gen_fn in _SCENARIO_GENERATORS.items():
+    for name, _gen_fn in _SCENARIO_GENERATORS.items():
         base_scenarios.append({
             "name": name,
             "source": "builtin",

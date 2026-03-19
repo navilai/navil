@@ -2,14 +2,11 @@
 
 from __future__ import annotations
 
-import json
 from pathlib import Path
 
 import orjson
-import pytest
 
 from navil.report.state_of_mcp import generate_state_of_mcp_report
-
 
 # ── Helpers ───────────────────────────────────────────────────
 

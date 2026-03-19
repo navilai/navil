@@ -41,7 +41,7 @@ def _discover_commands(subparsers: argparse._SubParsersAction) -> None:
     """Auto-discover and register all command modules from navil.commands."""
     import navil.commands as commands_pkg
 
-    for finder, module_name, _ispkg in pkgutil.iter_modules(commands_pkg.__path__):
+    for _finder, module_name, _ispkg in pkgutil.iter_modules(commands_pkg.__path__):
         module = importlib.import_module(f"navil.commands.{module_name}")
         if hasattr(module, "register"):
             module.register(subparsers, MCPGuardianCLI)

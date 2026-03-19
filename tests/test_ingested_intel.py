@@ -9,7 +9,6 @@ load correctly and satisfy structural requirements.
 from __future__ import annotations
 
 import json
-import os
 from pathlib import Path
 
 import pytest
@@ -48,19 +47,13 @@ def blocklist_patterns(blocklist: dict) -> list[dict]:
 @pytest.fixture(scope="module")
 def vdb_attacks(attacks: list[dict]) -> list[dict]:
     """Attack entries sourced from VulnerableMCP database."""
-    return [
-        a for a in attacks
-        if "vulnerablemcp" in str(a.get("source_reference", "")).lower()
-    ]
+    return [a for a in attacks if "vulnerablemcp" in str(a.get("source_reference", "")).lower()]
 
 
 @pytest.fixture(scope="module")
 def cve_attacks(attacks: list[dict]) -> list[dict]:
     """Attack entries sourced from CVE database."""
-    return [
-        a for a in attacks
-        if str(a.get("source_reference", "")).startswith("CVE-")
-    ]
+    return [a for a in attacks if str(a.get("source_reference", "")).startswith("CVE-")]
 
 
 @pytest.fixture(scope="module")
@@ -101,12 +94,20 @@ class TestVulnerableMCPAttacks:
     """Validate attack entries derived from vulnerablemcp database."""
 
     def test_vdb_attack_count(self, vdb_attacks: list[dict]) -> None:
-        assert len(vdb_attacks) >= 30, (
-            f"Expected at least 30 VulnerableMCP-derived attacks, got {len(vdb_attacks)}"
-        )
+        assert (
+            len(vdb_attacks) >= 30
+        ), f"Expected at least 30 VulnerableMCP-derived attacks, got {len(vdb_attacks)}"
 
     def test_vdb_attacks_have_required_fields(self, vdb_attacks: list[dict]) -> None:
-        required = {"name", "description", "category", "severity", "attack_steps", "indicators", "source_reference"}
+        required = {
+            "name",
+            "description",
+            "category",
+            "severity",
+            "attack_steps",
+            "indicators",
+            "source_reference",
+        }
         for attack in vdb_attacks:
             missing = required - set(attack.keys())
             assert not missing, f"Attack {attack.get('name', '?')} missing fields: {missing}"
@@ -114,39 +115,45 @@ class TestVulnerableMCPAttacks:
     def test_vdb_attacks_have_valid_severity(self, vdb_attacks: list[dict]) -> None:
         valid_severities = {"LOW", "MEDIUM", "HIGH", "CRITICAL"}
         for attack in vdb_attacks:
-            assert attack["severity"] in valid_severities, (
-                f"Attack {attack['name']} has invalid severity: {attack['severity']}"
-            )
+            assert (
+                attack["severity"] in valid_severities
+            ), f"Attack {attack['name']} has invalid severity: {attack['severity']}"
 
     def test_vdb_attacks_have_valid_category(self, vdb_attacks: list[dict]) -> None:
         valid_categories = {
-            "RECONNAISSANCE", "DATA_EXFILTRATION", "DEFENSE_EVASION",
-            "LATERAL_MOVEMENT", "SUPPLY_CHAIN", "RUG_PULL",
-            "PRIVILEGE_ESCALATION", "PERSISTENCE", "COMMAND_AND_CONTROL",
+            "RECONNAISSANCE",
+            "DATA_EXFILTRATION",
+            "DEFENSE_EVASION",
+            "LATERAL_MOVEMENT",
+            "SUPPLY_CHAIN",
+            "RUG_PULL",
+            "PRIVILEGE_ESCALATION",
+            "PERSISTENCE",
+            "COMMAND_AND_CONTROL",
             "RATE_SPIKE",
         }
         for attack in vdb_attacks:
-            assert attack["category"] in valid_categories, (
-                f"Attack {attack['name']} has invalid category: {attack['category']}"
-            )
+            assert (
+                attack["category"] in valid_categories
+            ), f"Attack {attack['name']} has invalid category: {attack['category']}"
 
     def test_vdb_attacks_reference_vulnerablemcp(self, vdb_attacks: list[dict]) -> None:
         for attack in vdb_attacks:
-            assert "vulnerablemcp" in attack["source_reference"].lower(), (
-                f"Attack {attack['name']} source_reference should reference vulnerablemcp"
-            )
+            assert (
+                "vulnerablemcp" in attack["source_reference"].lower()
+            ), f"Attack {attack['name']} source_reference should reference vulnerablemcp"
 
     def test_vdb_attacks_have_nonempty_indicators(self, vdb_attacks: list[dict]) -> None:
         for attack in vdb_attacks:
-            assert len(attack["indicators"]) >= 1, (
-                f"Attack {attack['name']} must have at least one indicator"
-            )
+            assert (
+                len(attack["indicators"]) >= 1
+            ), f"Attack {attack['name']} must have at least one indicator"
 
     def test_vdb_attacks_have_nonempty_steps(self, vdb_attacks: list[dict]) -> None:
         for attack in vdb_attacks:
-            assert len(attack["attack_steps"]) >= 1, (
-                f"Attack {attack['name']} must have at least one attack step"
-            )
+            assert (
+                len(attack["attack_steps"]) >= 1
+            ), f"Attack {attack['name']} must have at least one attack step"
 
     def test_specific_vdb_entries_present(self, vdb_attacks: list[dict]) -> None:
         """Check that key vulnerability patterns are represented."""
@@ -175,12 +182,20 @@ class TestCVEAttacks:
     """Validate attack entries derived from CVE database."""
 
     def test_cve_attack_count(self, cve_attacks: list[dict]) -> None:
-        assert len(cve_attacks) >= 10, (
-            f"Expected at least 10 CVE-derived attacks, got {len(cve_attacks)}"
-        )
+        assert (
+            len(cve_attacks) >= 10
+        ), f"Expected at least 10 CVE-derived attacks, got {len(cve_attacks)}"
 
     def test_cve_attacks_have_required_fields(self, cve_attacks: list[dict]) -> None:
-        required = {"name", "description", "category", "severity", "attack_steps", "indicators", "source_reference"}
+        required = {
+            "name",
+            "description",
+            "category",
+            "severity",
+            "attack_steps",
+            "indicators",
+            "source_reference",
+        }
         for attack in cve_attacks:
             missing = required - set(attack.keys())
             assert not missing, f"Attack {attack.get('name', '?')} missing fields: {missing}"
@@ -188,9 +203,9 @@ class TestCVEAttacks:
     def test_cve_attacks_reference_cve_ids(self, cve_attacks: list[dict]) -> None:
         for attack in cve_attacks:
             ref = attack["source_reference"]
-            assert ref.startswith("CVE-"), (
-                f"Attack {attack['name']} source_reference should start with 'CVE-': got {ref}"
-            )
+            assert ref.startswith(
+                "CVE-"
+            ), f"Attack {attack['name']} source_reference should start with 'CVE-': got {ref}"
 
     def test_specific_cves_present(self, cve_attacks: list[dict]) -> None:
         """Check all required CVEs are covered."""
@@ -215,14 +230,17 @@ class TestCVEAttacks:
         entry = next(a for a in cve_attacks if a["source_reference"] == "CVE-2025-6514")
         assert entry["severity"] == "CRITICAL"
         assert entry["category"] == "PRIVILEGE_ESCALATION"
-        assert "command_injection" in " ".join(entry["indicators"]).lower() or \
-               any("command_injection" in i for i in entry["indicators"])
+        assert "command_injection" in " ".join(entry["indicators"]).lower() or any(
+            "command_injection" in i for i in entry["indicators"]
+        )
 
     def test_cve_2026_25253_details(self, cve_attacks: list[dict]) -> None:
         """Validate CVE-2026-25253 OpenClaw WebSocket token leak entry."""
         entry = next(a for a in cve_attacks if a["source_reference"] == "CVE-2026-25253")
         assert entry["severity"] == "CRITICAL"
-        assert "websocket" in entry["description"].lower() or "token" in entry["description"].lower()
+        assert (
+            "websocket" in entry["description"].lower() or "token" in entry["description"].lower()
+        )
 
     def test_cve_2025_53109_details(self, cve_attacks: list[dict]) -> None:
         """Validate CVE-2025-53109 Filesystem MCP symlink bypass."""
@@ -238,9 +256,9 @@ class TestVDBBlocklistPatterns:
     """Validate blocklist patterns derived from VulnerableMCP."""
 
     def test_vdb_pattern_count(self, vdb_patterns: list[dict]) -> None:
-        assert len(vdb_patterns) >= 20, (
-            f"Expected at least 20 BL-VDB patterns, got {len(vdb_patterns)}"
-        )
+        assert (
+            len(vdb_patterns) >= 20
+        ), f"Expected at least 20 BL-VDB patterns, got {len(vdb_patterns)}"
 
     def test_vdb_patterns_have_required_fields(self, vdb_patterns: list[dict]) -> None:
         required = {"pattern_id", "pattern_type", "value", "severity", "description", "confidence"}
@@ -257,33 +275,39 @@ class TestVDBBlocklistPatterns:
 
     def test_vdb_patterns_valid_types(self, vdb_patterns: list[dict]) -> None:
         valid_types = {
-            "tool_name", "tool_sequence", "argument_pattern",
-            "argument_content", "url_pattern", "description_injection",
-            "behavioral", "env_access", "mcp_specific",
+            "tool_name",
+            "tool_sequence",
+            "argument_pattern",
+            "argument_content",
+            "url_pattern",
+            "description_injection",
+            "behavioral",
+            "env_access",
+            "mcp_specific",
         }
         for pattern in vdb_patterns:
-            assert pattern["pattern_type"] in valid_types, (
-                f"Pattern {pattern['pattern_id']} has invalid type: {pattern['pattern_type']}"
-            )
+            assert (
+                pattern["pattern_type"] in valid_types
+            ), f"Pattern {pattern['pattern_id']} has invalid type: {pattern['pattern_type']}"
 
     def test_vdb_patterns_valid_severity(self, vdb_patterns: list[dict]) -> None:
         valid = {"LOW", "MEDIUM", "HIGH", "CRITICAL"}
         for pattern in vdb_patterns:
-            assert pattern["severity"] in valid, (
-                f"Pattern {pattern['pattern_id']} has invalid severity: {pattern['severity']}"
-            )
+            assert (
+                pattern["severity"] in valid
+            ), f"Pattern {pattern['pattern_id']} has invalid severity: {pattern['severity']}"
 
     def test_vdb_patterns_confidence_range(self, vdb_patterns: list[dict]) -> None:
         for pattern in vdb_patterns:
-            assert 0.0 < pattern["confidence"] <= 1.0, (
-                f"Pattern {pattern['pattern_id']} confidence out of range: {pattern['confidence']}"
-            )
+            assert (
+                0.0 < pattern["confidence"] <= 1.0
+            ), f"Pattern {pattern['pattern_id']} confidence out of range: {pattern['confidence']}"
 
     def test_vdb_patterns_have_source(self, vdb_patterns: list[dict]) -> None:
         for pattern in vdb_patterns:
-            assert "source" in pattern, (
-                f"Pattern {pattern['pattern_id']} should have a 'source' field"
-            )
+            assert (
+                "source" in pattern
+            ), f"Pattern {pattern['pattern_id']} should have a 'source' field"
             assert "vulnerablemcp" in pattern["source"].lower()
 
 
@@ -294,9 +318,9 @@ class TestCVEBlocklistPatterns:
     """Validate blocklist patterns derived from CVE database."""
 
     def test_cve_pattern_count(self, cve_patterns: list[dict]) -> None:
-        assert len(cve_patterns) >= 15, (
-            f"Expected at least 15 BL-CVE patterns, got {len(cve_patterns)}"
-        )
+        assert (
+            len(cve_patterns) >= 15
+        ), f"Expected at least 15 BL-CVE patterns, got {len(cve_patterns)}"
 
     def test_cve_patterns_have_required_fields(self, cve_patterns: list[dict]) -> None:
         required = {"pattern_id", "pattern_type", "value", "severity", "description", "confidence"}
@@ -312,18 +336,23 @@ class TestCVEBlocklistPatterns:
 
     def test_cve_patterns_reference_cves(self, cve_patterns: list[dict]) -> None:
         for pattern in cve_patterns:
-            assert "source" in pattern, (
-                f"Pattern {pattern['pattern_id']} should have a 'source' field"
-            )
-            assert pattern["source"].startswith("CVE-"), (
-                f"Pattern {pattern['pattern_id']} source should start with 'CVE-': got {pattern['source']}"
+            assert (
+                "source" in pattern
+            ), f"Pattern {pattern['pattern_id']} should have a 'source' field"
+            assert pattern[
+                "source"
+            ].startswith(
+                "CVE-"
+            ), (
+                f"Pattern {pattern['pattern_id']} source should"
+                f" start with 'CVE-': got {pattern['source']}"
             )
 
     def test_cve_patterns_confidence_range(self, cve_patterns: list[dict]) -> None:
         for pattern in cve_patterns:
-            assert 0.0 < pattern["confidence"] <= 1.0, (
-                f"Pattern {pattern['pattern_id']} confidence out of range: {pattern['confidence']}"
-            )
+            assert (
+                0.0 < pattern["confidence"] <= 1.0
+            ), f"Pattern {pattern['pattern_id']} confidence out of range: {pattern['confidence']}"
 
     def test_specific_cve_patterns_present(self, cve_patterns: list[dict]) -> None:
         """Verify key CVE-specific signatures exist."""
@@ -381,20 +410,20 @@ class TestCrossReferences:
         pattern_sources = {p["source"] for p in cve_patterns}
         for attack in cve_attacks:
             cve_id = attack["source_reference"]
-            assert cve_id in pattern_sources, (
-                f"CVE attack {attack['name']} ({cve_id}) has no corresponding blocklist pattern"
-            )
+            assert (
+                cve_id in pattern_sources
+            ), f"CVE attack {attack['name']} ({cve_id}) has no corresponding blocklist pattern"
 
     def test_total_attack_count_increased(self, attacks: list[dict]) -> None:
         """After ingestion, total attacks should be substantially higher than baseline."""
         # Original had ~64 entries before ingestion
-        assert len(attacks) >= 100, (
-            f"Expected at least 100 total attacks after ingestion, got {len(attacks)}"
-        )
+        assert (
+            len(attacks) >= 100
+        ), f"Expected at least 100 total attacks after ingestion, got {len(attacks)}"
 
     def test_total_blocklist_count_increased(self, blocklist_patterns: list[dict]) -> None:
         """After ingestion, total blocklist patterns should be higher than baseline."""
         # Original had ~288 entries before ingestion
-        assert len(blocklist_patterns) >= 300, (
-            f"Expected at least 300 total patterns after ingestion, got {len(blocklist_patterns)}"
-        )
+        assert (
+            len(blocklist_patterns) >= 300
+        ), f"Expected at least 300 total patterns after ingestion, got {len(blocklist_patterns)}"

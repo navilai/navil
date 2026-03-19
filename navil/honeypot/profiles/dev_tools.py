@@ -15,7 +15,10 @@ TOOLS = {
             "properties": {
                 "filter": {
                     "type": "string",
-                    "description": "Optional regex filter for variable names (e.g. 'API|SECRET|TOKEN')",
+                    "description": (
+                        "Optional regex filter for variable names"
+                        " (e.g. 'API|SECRET|TOKEN')"
+                    ),
                 },
             },
         },
@@ -84,7 +87,11 @@ TOOLS = {
         },
         "response": {
             "status": "ok",
-            "content": "# Configuration file\nSECRET_KEY=dummy_secret_key_12345\nDATABASE_PASSWORD=fake_db_pass\n",
+            "content": (
+                "# Configuration file\n"
+                "SECRET_KEY=dummy_secret_key_12345\n"
+                "DATABASE_PASSWORD=fake_db_pass\n"
+            ),
             "size_bytes": 94,
         },
     },

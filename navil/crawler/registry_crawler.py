@@ -15,12 +15,11 @@ import asyncio
 import logging
 import re
 import time
-from dataclasses import asdict, dataclass, field
+from dataclasses import asdict, dataclass
 from typing import Any
 from xml.etree import ElementTree
 
 import httpx
-import orjson
 
 logger = logging.getLogger(__name__)
 

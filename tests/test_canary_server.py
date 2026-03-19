@@ -12,29 +12,27 @@ from __future__ import annotations
 
 import json
 import os
-import urllib.request
 import time
+import urllib.request
 from unittest.mock import AsyncMock, patch
 
 import pytest
 
-from navil.canary.server import CanaryServer, CanaryRecord, CanaryCollector
 from navil.canary.config import (
-    CanaryConfig,
-    PROFILES,
     AVAILABLE_PROFILES,
+    CanaryConfig,
     get_profile_tools,
     resolve_profile_name,
 )
 from navil.canary.reporter import (
-    CanaryReporter,
-    sanitize_record,
-    sanitize_batch,
-    summarize_records,
     _ALLOWED_FIELDS,
     _BANNED_FIELDS,
+    CanaryReporter,
+    sanitize_batch,
+    sanitize_record,
+    summarize_records,
 )
-
+from navil.canary.server import CanaryCollector, CanaryRecord, CanaryServer
 
 # ── CanaryRecord ────────────────────────────────────────────────
 
