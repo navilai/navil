@@ -1,7 +1,7 @@
 <p align="center">
   <h1 align="center">Navil</h1>
   <p align="center">
-    <strong>The Cloudflare of MCP security.</strong>
+    <strong>Community-powered MCP security.</strong>
     <br />
     One command secures every AI agent tool call. Every wrap makes the network smarter.
   </p>
@@ -84,10 +84,10 @@ This connects your local instance to [navil.ai](https://navil.ai) for dashboards
 
 ## How It Works
 
-Navil is a security proxy that sits between your MCP clients and servers. Like Cloudflare sits between browsers and web servers, Navil sits between AI agents and tools.
+Navil is a security proxy that sits between your MCP clients and servers. Like a community threat network sits between browsers and web servers, Navil sits between AI agents and tools.
 
 ```
-                        The Cloudflare Model
+                        The Proxy Model
 
   Agents ------> [ Navil Proxy ] ------> MCP Servers
                        |
