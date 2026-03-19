@@ -22,6 +22,15 @@ from navil.commands.init import (
 
 def _cloud_login_command(cli: Any, args: argparse.Namespace) -> int:
     """Handle `navil cloud login` — OAuth device flow enrollment."""
+    # Check if already logged in
+    config = load_config(CONFIG_FILE)
+    existing_key = config.get("cloud", {}).get("api_key", "")
+    if existing_key:
+        masked = existing_key[:10] + "****" if len(existing_key) > 10 else "****"
+        print(f"Already connected to Navil Cloud (key: {masked}).")
+        print("Run `navil cloud logout` first to reconnect with a different account.")
+        return 0
+
     api_url = os.environ.get("NAVIL_API_URL", DEFAULT_BACKEND_URL).rstrip("/")
     machine_id = ensure_machine_id()
 
