@@ -1,0 +1,43 @@
+# Example: Add this to your repo's .github/workflows/ to scan MCP configs on every PR
+name: MCP Security Scan
+on:
+  pull_request:
+    paths: ['**.mcp.json', '.mcp.json', 'openclaw.json', 'mcp_config.json']
+
+jobs:
+  navil-scan:
+    runs-on: ubuntu-latest
+    permissions:
+      security-events: write
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: ivanlkf/navil/.github/actions/scan@main
+        id: scan
+        with:
+          fail-on: critical
+
+      - name: Upload SARIF
+        if: always()
+        uses: github/codeql-action/upload-sarif@v3
+        with:
+          sarif_file: navil-results.sarif
+
+      - name: Comment on PR
+        if: always()
+        uses: actions/github-script@v7
+        env:
+          SCAN_SCORE: ${{ steps.scan.outputs.score }}
+          SCAN_FINDINGS: ${{ steps.scan.outputs.findings }}
+        with:
+          script: |
+            const score = process.env.SCAN_SCORE;
+            const findings = process.env.SCAN_FINDINGS;
+            const icon = parseInt(score) >= 80 ? ':white_check_mark:' : parseInt(score) >= 50 ? ':warning:' : ':x:';
+            await github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: `## ${icon} Navil MCP Security Scan\n\n**Score:** ${score}/100\n**Findings:** ${findings}\n\nFull results in the Security tab.`
+            });

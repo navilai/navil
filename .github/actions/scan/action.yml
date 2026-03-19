@@ -1,0 +1,176 @@
+name: 'Navil MCP Security Scan'
+description: 'Scan MCP server configurations for security vulnerabilities'
+branding:
+  icon: 'shield'
+  color: 'blue'
+
+inputs:
+  config:
+    description: 'Path to MCP config file (auto-detects if not specified)'
+    required: false
+    default: ''
+  fail-on:
+    description: 'Fail if findings at this severity or above (critical, high, medium, low, info)'
+    required: false
+    default: 'critical'
+  sarif-output:
+    description: 'Path for SARIF output file'
+    required: false
+    default: 'navil-results.sarif'
+
+outputs:
+  score:
+    description: 'Security score (0-100)'
+    value: ${{ steps.scan.outputs.score }}
+  findings:
+    description: 'Number of findings'
+    value: ${{ steps.scan.outputs.findings }}
+
+runs:
+  using: 'composite'
+  steps:
+    - name: Install Navil
+      shell: bash
+      run: pip install navil
+
+    - name: Auto-detect MCP config
+      id: detect
+      shell: bash
+      run: |
+        CONFIG="${{ inputs.config }}"
+        if [ -z "$CONFIG" ]; then
+          for f in mcp_config.json .mcp.json openclaw.json mcp.json; do
+            if [ -f "$f" ]; then CONFIG="$f"; break; fi
+          done
+        fi
+        if [ -z "$CONFIG" ]; then
+          echo "::error::No MCP config file found. Specify with 'config' input."
+          exit 1
+        fi
+        echo "config=$CONFIG" >> "$GITHUB_OUTPUT"
+
+    - name: Run Navil scan
+      id: scan
+      shell: bash
+      run: |
+        CONFIG="${{ steps.detect.outputs.config }}"
+        echo "Scanning: $CONFIG"
+
+        # Run scan with JSON output
+        navil scan "$CONFIG" --json > /tmp/navil-scan-result.json 2>/dev/null || true
+
+        # Extract score and findings count
+        SCORE=$(python3 -c "import json; d=json.load(open('/tmp/navil-scan-result.json')); print(d.get('score', 0))" 2>/dev/null || echo "0")
+        FINDINGS=$(python3 -c "import json; d=json.load(open('/tmp/navil-scan-result.json')); print(len(d.get('vulnerabilities', [])))" 2>/dev/null || echo "0")
+
+        echo "score=$SCORE" >> "$GITHUB_OUTPUT"
+        echo "findings=$FINDINGS" >> "$GITHUB_OUTPUT"
+
+        echo "Security Score: $SCORE/100"
+        echo "Findings: $FINDINGS"
+
+    - name: Generate SARIF
+      shell: bash
+      run: |
+        python3 << 'PYEOF'
+        import json, sys
+
+        try:
+            with open("/tmp/navil-scan-result.json") as f:
+                result = json.load(f)
+        except Exception:
+            result = {"score": 0, "vulnerabilities": []}
+
+        severity_map = {
+            "CRITICAL": "error",
+            "HIGH": "error",
+            "MEDIUM": "warning",
+            "LOW": "note",
+            "INFO": "note",
+        }
+
+        level_priority = {"error": 0, "warning": 1, "note": 2}
+
+        rules = []
+        results = []
+
+        for i, vuln in enumerate(result.get("vulnerabilities", [])):
+            rule_id = f"navil/{vuln.get('id', f'finding-{i}')}"
+            severity = vuln.get("severity", "INFO").upper()
+            sarif_level = severity_map.get(severity, "note")
+
+            rules.append({
+                "id": rule_id,
+                "shortDescription": {"text": vuln.get("title", "Security finding")},
+                "fullDescription": {"text": vuln.get("description", "")},
+                "defaultConfiguration": {"level": sarif_level},
+                "properties": {"security-severity": {"CRITICAL": "9.0", "HIGH": "7.0", "MEDIUM": "4.0", "LOW": "2.0", "INFO": "1.0"}.get(severity, "1.0")},
+            })
+
+            results.append({
+                "ruleId": rule_id,
+                "level": sarif_level,
+                "message": {"text": vuln.get("description", "") + "\n\nRemediation: " + vuln.get("remediation", "Review the configuration.")},
+                "locations": [{
+                    "physicalLocation": {
+                        "artifactLocation": {"uri": "${{ steps.detect.outputs.config }}"},
+                        "region": {"startLine": 1}
+                    }
+                }],
+            })
+
+        sarif = {
+            "$schema": "https://raw.githubusercontent.com/oasis-tcs/sarif-spec/main/sarif-2.1/schema/sarif-schema-2.1.0.json",
+            "version": "2.1.0",
+            "runs": [{
+                "tool": {
+                    "driver": {
+                        "name": "Navil",
+                        "informationUri": "https://github.com/ivanlkf/navil",
+                        "version": result.get("version", "0.2.1"),
+                        "rules": rules,
+                    }
+                },
+                "results": results,
+            }],
+        }
+
+        with open("${{ inputs.sarif-output }}", "w") as f:
+            json.dump(sarif, f, indent=2)
+
+        print(f"SARIF written: {len(results)} findings")
+        PYEOF
+
+    - name: Check severity threshold
+      shell: bash
+      run: |
+        FAIL_ON="${{ inputs.fail-on }}"
+
+        python3 << PYEOF
+        import json, sys
+
+        threshold_order = ["info", "low", "medium", "high", "critical"]
+        fail_on = "$FAIL_ON".lower()
+        fail_idx = threshold_order.index(fail_on) if fail_on in threshold_order else 4
+
+        try:
+            with open("/tmp/navil-scan-result.json") as f:
+                result = json.load(f)
+        except Exception:
+            sys.exit(0)
+
+        blocking = []
+        for vuln in result.get("vulnerabilities", []):
+            sev = vuln.get("severity", "INFO").lower()
+            sev_idx = threshold_order.index(sev) if sev in threshold_order else 0
+            if sev_idx >= fail_idx:
+                blocking.append(f"  [{sev.upper()}] {vuln.get('title', 'Unknown')}")
+
+        if blocking:
+            print(f"::error::Navil found {len(blocking)} finding(s) at or above '{fail_on}' severity:")
+            for b in blocking:
+                print(b)
+            sys.exit(1)
+        else:
+            print(f"No findings at or above '{fail_on}' severity. Passed.")
+        PYEOF
