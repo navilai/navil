@@ -560,8 +560,7 @@ class MCPSecurityScanner:
                         Vulnerability(
                             id=f"INJ-{pattern_type.upper().replace('_', '-')}",
                             title=(
-                                f"Prompt Injection Risk:"
-                                f" {pattern_type.replace('_', ' ').title()}"
+                                f"Prompt Injection Risk: {pattern_type.replace('_', ' ').title()}"
                             ),
                             description=(
                                 f"Tool description or config contains language associated with "
@@ -609,8 +608,7 @@ class MCPSecurityScanner:
                         "prevention controls and monitor outbound data flows."
                     ),
                     evidence=(
-                        "Detected both file read and network send capabilities "
-                        "in the same server"
+                        "Detected both file read and network send capabilities in the same server"
                     ),
                 )
             )

@@ -196,8 +196,7 @@ class SignatureExtractor:
                         value=seq,
                         severity="HIGH" if confidence > 0.8 else "MEDIUM",
                         description=(
-                            f"Suspicious tool sequence observed in honeypot "
-                            f"({count} occurrences)"
+                            f"Suspicious tool sequence observed in honeypot ({count} occurrences)"
                         ),
                         confidence=round(confidence, 2),
                     )

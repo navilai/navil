@@ -84,9 +84,9 @@ class TestOpenClawAttacks:
         """Severity must be one of LOW, MEDIUM, HIGH, CRITICAL."""
         valid = {"LOW", "MEDIUM", "HIGH", "CRITICAL"}
         for attack in openclaw_attacks:
-            assert (
-                attack["severity"] in valid
-            ), f"Attack '{attack['name']}' has invalid severity: {attack['severity']}"
+            assert attack["severity"] in valid, (
+                f"Attack '{attack['name']}' has invalid severity: {attack['severity']}"
+            )
 
     def test_category_values_valid(self, openclaw_attacks: list[dict]) -> None:
         """Category must be a known attack category."""
@@ -103,9 +103,9 @@ class TestOpenClawAttacks:
             "RATE_SPIKE",
         }
         for attack in openclaw_attacks:
-            assert (
-                attack["category"] in valid
-            ), f"Attack '{attack['name']}' has invalid category: {attack['category']}"
+            assert attack["category"] in valid, (
+                f"Attack '{attack['name']}' has invalid category: {attack['category']}"
+            )
 
     def test_skill_registry_poisoning_exists(self, openclaw_attacks: list[dict]) -> None:
         """Skill registry poisoning attack should be defined."""
@@ -135,9 +135,9 @@ class TestOpenClawAttacks:
     def test_all_attacks_have_source_reference(self, openclaw_attacks: list[dict]) -> None:
         """Each attack should have a source_reference for traceability."""
         for attack in openclaw_attacks:
-            assert (
-                "source_reference" in attack
-            ), f"Attack '{attack['name']}' missing source_reference"
+            assert "source_reference" in attack, (
+                f"Attack '{attack['name']}' missing source_reference"
+            )
             assert len(attack["source_reference"]) > 0
 
     def test_all_attacks_have_attack_steps(self, openclaw_attacks: list[dict]) -> None:
@@ -187,24 +187,24 @@ class TestOpenClawBlocklist:
     def test_pattern_ids_follow_convention(self, openclaw_patterns: list[dict]) -> None:
         """All OpenClaw pattern IDs should follow BL-OC-NNN convention."""
         for pattern in openclaw_patterns:
-            assert re.match(
-                r"^BL-OC-\d{3}$", pattern["pattern_id"]
-            ), f"Pattern ID '{pattern['pattern_id']}' doesn't match BL-OC-NNN format"
+            assert re.match(r"^BL-OC-\d{3}$", pattern["pattern_id"]), (
+                f"Pattern ID '{pattern['pattern_id']}' doesn't match BL-OC-NNN format"
+            )
 
     def test_severity_values_valid(self, openclaw_patterns: list[dict]) -> None:
         """Severity must be one of LOW, MEDIUM, HIGH, CRITICAL."""
         valid = {"LOW", "MEDIUM", "HIGH", "CRITICAL"}
         for pattern in openclaw_patterns:
-            assert (
-                pattern["severity"] in valid
-            ), f"Pattern '{pattern['pattern_id']}' has invalid severity: {pattern['severity']}"
+            assert pattern["severity"] in valid, (
+                f"Pattern '{pattern['pattern_id']}' has invalid severity: {pattern['severity']}"
+            )
 
     def test_confidence_values_valid(self, openclaw_patterns: list[dict]) -> None:
         """Confidence must be between 0.0 and 1.0."""
         for pattern in openclaw_patterns:
-            assert (
-                0.0 <= pattern["confidence"] <= 1.0
-            ), f"Pattern '{pattern['pattern_id']}' has invalid confidence: {pattern['confidence']}"
+            assert 0.0 <= pattern["confidence"] <= 1.0, (
+                f"Pattern '{pattern['pattern_id']}' has invalid confidence: {pattern['confidence']}"
+            )
 
     def test_pattern_types_valid(self, openclaw_patterns: list[dict]) -> None:
         """Pattern types should be from the known set."""
@@ -220,9 +220,9 @@ class TestOpenClawBlocklist:
             "mcp_specific",
         }
         for pattern in openclaw_patterns:
-            assert (
-                pattern["pattern_type"] in valid
-            ), f"Pattern '{pattern['pattern_id']}' has invalid type: {pattern['pattern_type']}"
+            assert pattern["pattern_type"] in valid, (
+                f"Pattern '{pattern['pattern_id']}' has invalid type: {pattern['pattern_type']}"
+            )
 
     def test_skill_squatting_patterns_match_expected(self, openclaw_patterns: list[dict]) -> None:
         """Typosquatting patterns should match their intended inputs."""
@@ -341,9 +341,9 @@ class TestOpenClawHoneypot:
         """Each tool should have an inputSchema."""
         for name, info in openclaw_honeypot.tools.items():
             assert "inputSchema" in info, f"Tool '{name}' missing inputSchema"
-            assert (
-                info["inputSchema"]["type"] == "object"
-            ), f"Tool '{name}' inputSchema type should be 'object'"
+            assert info["inputSchema"]["type"] == "object", (
+                f"Tool '{name}' inputSchema type should be 'object'"
+            )
 
     def test_tools_have_responses(self, openclaw_honeypot: HoneypotMCPServer) -> None:
         """Each tool should have a fake response defined."""

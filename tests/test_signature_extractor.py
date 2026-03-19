@@ -95,9 +95,9 @@ class TestSignatureExtractor:
         entries = extractor.analyze(records)
 
         for entry in entries:
-            assert (
-                entry.confidence >= 0.7
-            ), f"Entry {entry.pattern_id} has confidence {entry.confidence} < 0.7"
+            assert entry.confidence >= 0.7, (
+                f"Entry {entry.pattern_id} has confidence {entry.confidence} < 0.7"
+            )
 
     def test_custom_confidence_threshold(self):
         """Should respect custom minimum confidence threshold."""

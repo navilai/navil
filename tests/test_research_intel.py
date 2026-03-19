@@ -112,9 +112,9 @@ class TestFileValidity:
 
     def test_no_duplicate_attack_names(self, all_attacks: list[dict]) -> None:
         names = [a["name"] for a in all_attacks]
-        assert len(names) == len(
-            set(names)
-        ), f"Duplicate names: {[n for n in names if names.count(n) > 1]}"
+        assert len(names) == len(set(names)), (
+            f"Duplicate names: {[n for n in names if names.count(n) > 1]}"
+        )
 
     def test_no_duplicate_pattern_ids(self, all_patterns: list[dict]) -> None:
         ids = [p["pattern_id"] for p in all_patterns]
@@ -176,9 +176,9 @@ class TestMCPLIBAttacks:
     """MCPLIB: 4 classifications covering injection and LLM risks."""
 
     def test_mcplib_attacks_exist(self, mcplib_attacks: list[dict]) -> None:
-        assert (
-            len(mcplib_attacks) >= 14
-        ), f"Expected >= 14 MCPLIB attacks, got {len(mcplib_attacks)}"
+        assert len(mcplib_attacks) >= 14, (
+            f"Expected >= 14 MCPLIB attacks, got {len(mcplib_attacks)}"
+        )
 
     def test_direct_injection_file_attacks(self, mcplib_attacks: list[dict]) -> None:
         names = [a["name"] for a in mcplib_attacks]
@@ -576,9 +576,9 @@ class TestBlogBlocklist:
             "mcp_specific",
         }
         for p in blg_patterns:
-            assert (
-                p["pattern_type"] in valid
-            ), f"{p['pattern_id']} has invalid type: {p['pattern_type']}"
+            assert p["pattern_type"] in valid, (
+                f"{p['pattern_id']} has invalid type: {p['pattern_type']}"
+            )
 
 
 # ── Test: Cross-source deduplication ───────────────────────────
@@ -636,34 +636,34 @@ class TestAttackFieldsValid:
     def test_categories_valid(self, all_attacks: list[dict]) -> None:
         for a in all_attacks:
             if a["name"].startswith(self.RESEARCH_PREFIXES):
-                assert (
-                    a["category"] in self.VALID_CATEGORIES
-                ), f"{a['name']} invalid category: {a['category']}"
+                assert a["category"] in self.VALID_CATEGORIES, (
+                    f"{a['name']} invalid category: {a['category']}"
+                )
 
     def test_severities_valid(self, all_attacks: list[dict]) -> None:
         for a in all_attacks:
             if a["name"].startswith(self.RESEARCH_PREFIXES):
-                assert (
-                    a["severity"] in self.VALID_SEVERITIES
-                ), f"{a['name']} invalid severity: {a['severity']}"
+                assert a["severity"] in self.VALID_SEVERITIES, (
+                    f"{a['name']} invalid severity: {a['severity']}"
+                )
 
     def test_all_have_indicators(self, all_attacks: list[dict]) -> None:
         for a in all_attacks:
             if a["name"].startswith(self.RESEARCH_PREFIXES):
-                assert (
-                    "indicators" in a and len(a["indicators"]) > 0
-                ), f"{a['name']} missing indicators"
+                assert "indicators" in a and len(a["indicators"]) > 0, (
+                    f"{a['name']} missing indicators"
+                )
 
     def test_all_have_attack_steps(self, all_attacks: list[dict]) -> None:
         for a in all_attacks:
             if a["name"].startswith(self.RESEARCH_PREFIXES):
-                assert (
-                    "attack_steps" in a and len(a["attack_steps"]) > 0
-                ), f"{a['name']} missing attack_steps"
+                assert "attack_steps" in a and len(a["attack_steps"]) > 0, (
+                    f"{a['name']} missing attack_steps"
+                )
 
     def test_all_have_source_reference(self, all_attacks: list[dict]) -> None:
         for a in all_attacks:
             if a["name"].startswith(self.RESEARCH_PREFIXES):
-                assert (
-                    "source_reference" in a and len(a["source_reference"]) > 0
-                ), f"{a['name']} missing source_reference"
+                assert "source_reference" in a and len(a["source_reference"]) > 0, (
+                    f"{a['name']} missing source_reference"
+                )

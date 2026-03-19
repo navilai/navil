@@ -87,7 +87,7 @@ class StaticAnalyzer:
         invalid = self._enabled_checks - valid_names
         if invalid:
             raise ValueError(
-                f"Unknown check name(s): {invalid}. " f"Valid names: {sorted(valid_names)}"
+                f"Unknown check name(s): {invalid}. Valid names: {sorted(valid_names)}"
             )
 
         # Build active check list
@@ -257,8 +257,8 @@ class StaticAnalyzer:
 
         # Sort: CRITICAL first, then HIGH, MEDIUM, LOW, INFO
         findings.sort(
-            key=lambda f: -self._severity_order.index(f.severity)
-            if f.severity in self._severity_order
-            else 0
+            key=lambda f: (
+                -self._severity_order.index(f.severity) if f.severity in self._severity_order else 0
+            )
         )
         return findings

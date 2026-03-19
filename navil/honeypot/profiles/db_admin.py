@@ -40,8 +40,7 @@ TOOLS = {
     },
     "list_tables": {
         "description": (
-            "List all tables in the database with row counts, sizes, "
-            "and last modified timestamps."
+            "List all tables in the database with row counts, sizes, and last modified timestamps."
         ),
         "inputSchema": {
             "type": "object",

@@ -158,9 +158,9 @@ def test_default_secret_key_has_sufficient_entropy() -> None:
     64 bytes -> at least 86 characters.
     """
     cm = _make_manager()
-    assert (
-        len(cm.secret_key) >= 86
-    ), f"Secret key too short: {len(cm.secret_key)} chars (need >=86 for 64 bytes entropy)"
+    assert len(cm.secret_key) >= 86, (
+        f"Secret key too short: {len(cm.secret_key)} chars (need >=86 for 64 bytes entropy)"
+    )
 
 
 def test_token_id_has_sufficient_entropy() -> None:
@@ -171,9 +171,9 @@ def test_token_id_has_sufficient_entropy() -> None:
     # cred_{32 hex bytes} = "cred_" (5 chars) + 64 hex chars
     assert token_id.startswith("cred_")
     hex_part = token_id[len("cred_") :]
-    assert (
-        len(hex_part) == 64
-    ), f"Token ID hex part too short: {len(hex_part)} chars (need 64 for 256-bit)"
+    assert len(hex_part) == 64, (
+        f"Token ID hex part too short: {len(hex_part)} chars (need 64 for 256-bit)"
+    )
 
 
 def test_credentials_survive_reinitialization() -> None:

@@ -109,8 +109,7 @@ def _llm_analyze_config_command(cli, args: argparse.Namespace) -> int:  # type: 
     api_key = _resolve_llm_api_key(args)
     if not api_key:
         print(
-            f"Error: No API key. Pass --api-key or set "
-            f"{args.provider.upper()}_API_KEY env var.",
+            f"Error: No API key. Pass --api-key or set {args.provider.upper()}_API_KEY env var.",
             file=sys.stderr,
         )
         return 1
@@ -144,8 +143,7 @@ def _llm_explain_anomaly_command(cli, args: argparse.Namespace) -> int:  # type:
     api_key = _resolve_llm_api_key(args)
     if not api_key:
         print(
-            f"Error: No API key. Pass --api-key or set "
-            f"{args.provider.upper()}_API_KEY env var.",
+            f"Error: No API key. Pass --api-key or set {args.provider.upper()}_API_KEY env var.",
             file=sys.stderr,
         )
         return 1
@@ -180,8 +178,7 @@ def _llm_generate_policy_command(cli, args: argparse.Namespace) -> int:  # type:
     api_key = _resolve_llm_api_key(args)
     if not api_key:
         print(
-            f"Error: No API key. Pass --api-key or set "
-            f"{args.provider.upper()}_API_KEY env var.",
+            f"Error: No API key. Pass --api-key or set {args.provider.upper()}_API_KEY env var.",
             file=sys.stderr,
         )
         return 1
@@ -219,8 +216,7 @@ def _llm_suggest_healing_command(cli, args: argparse.Namespace) -> int:  # type:
     api_key = _resolve_llm_api_key(args)
     if not api_key:
         print(
-            f"Error: No API key. Pass --api-key or set "
-            f"{args.provider.upper()}_API_KEY env var.",
+            f"Error: No API key. Pass --api-key or set {args.provider.upper()}_API_KEY env var.",
             file=sys.stderr,
         )
         return 1

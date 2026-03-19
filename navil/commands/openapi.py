@@ -110,7 +110,7 @@ def _openapi_serve(cli, args: argparse.Namespace) -> int:  # type: ignore[no-unt
     )
 
     print(
-        f"Starting OpenAPI MCP server for {spec_path} " f"({len(tools)} tools, base={base_url})",
+        f"Starting OpenAPI MCP server for {spec_path} ({len(tools)} tools, base={base_url})",
         file=sys.stderr,
     )
 

@@ -97,9 +97,9 @@ def _agent_id(name: str) -> str:
 
 def _banner(msg: str) -> None:
     width = 64
-    print(f"\n{'━'*width}")
+    print(f"\n{'━' * width}")
     print(f"  {msg}")
-    print(f"{'━'*width}")
+    print(f"{'━' * width}")
 
 
 def _phase(phase: str, mcp: str) -> None:
@@ -817,7 +817,7 @@ async def main() -> None:
                     f"errors={result['errors']:2d}"
                 )
 
-        print(f"\n  {'─'*50}")
+        print(f"\n  {'─' * 50}")
         print(f"  Total events sent:    {total_sent}")
         print(f"  Total attack payloads: {total_attacks}")
         print(f"  Total errors:          {total_errors}")
@@ -842,7 +842,7 @@ async def main() -> None:
   │                                                              │
   │  10 / 13 recognized anomaly types exercised                  │
   │                                                              │
-  │  Check: {BACKEND_URL.replace('/api','')}/dashboard
+  │  Check: {BACKEND_URL.replace("/api", "")}/dashboard
   └─────────────────────────────────────────────────────────────┘
 """)
 

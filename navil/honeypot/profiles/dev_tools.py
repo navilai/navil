@@ -16,7 +16,7 @@ TOOLS = {
                 "filter": {
                     "type": "string",
                     "description": (
-                        "Optional regex filter for variable names" " (e.g. 'API|SECRET|TOKEN')"
+                        "Optional regex filter for variable names (e.g. 'API|SECRET|TOKEN')"
                     ),
                 },
             },
