@@ -297,7 +297,7 @@ class RegistryCrawler:
 
         results: list[CrawlResult] = []
         for batch in all_results_nested:
-            if isinstance(batch, Exception):
+            if isinstance(batch, BaseException):
                 logger.error("Crawl source failed: %s", batch)
                 continue
             results.extend(batch)

@@ -136,28 +136,41 @@ class _InMemoryStore:
     """Dict-backed store that mirrors the Redis interface used by CredentialManager."""
 
     def __init__(self) -> None:
-        self._data: dict[str, dict[str, str]] = {}
+        self._data: dict[str, dict[str, str] | set[str]] = {}
 
     def hset(self, name: str, mapping: dict[str, str] | None = None, **kwargs: str) -> int:  # noqa: ARG002
-        if name not in self._data:
+        if name not in self._data or isinstance(self._data[name], set):
             self._data[name] = {}
+        d = self._data[name]
+        assert isinstance(d, dict)
         if mapping:
-            self._data[name].update(mapping)
-        self._data[name].update(kwargs)
+            d.update(mapping)
+        d.update(kwargs)
         return len(mapping) if mapping else len(kwargs)
 
     def hgetall(self, name: str) -> dict[str, str]:
-        return dict(self._data.get(name, {}))
+        val = self._data.get(name, {})
+        if isinstance(val, set):
+            return {}
+        return dict(val)
 
     def hget(self, name: str, key: str) -> str | None:
-        return self._data.get(name, {}).get(key)
+        val = self._data.get(name, {})
+        if isinstance(val, set):
+            return None
+        return val.get(key)
 
     def hincrby(self, name: str, key: str, amount: int = 1) -> int:
         if name not in self._data:
             self._data[name] = {}
-        cur = int(self._data[name].get(key, "0"))
+        d = self._data[name]
+        if isinstance(d, set):
+            self._data[name] = {}
+            d = self._data[name]
+        assert isinstance(d, dict)
+        cur = int(d.get(key, "0"))
         cur += amount
-        self._data[name][key] = str(cur)
+        d[key] = str(cur)
         return cur
 
     def delete(self, *names: str) -> int:
@@ -201,7 +214,7 @@ class _InMemoryStore:
     def mget(self, *names: str) -> list[str | None]:
         """Get values for multiple keys. For hash keys ending in a specific field,
         we retrieve the simple string value stored at that key."""
-        result = []
+        result: list[str | None] = []
         for n in names:
             val = self._data.get(n)
             if isinstance(val, str):
@@ -360,6 +373,7 @@ class CredentialManager:
         self._rotation_lock = threading.Lock()
 
         # Try Redis; fall back to in-memory dict for local dev / tests without Redis
+        self._cascade_script: _InMemoryScript | None = None
         self._redis: Any  # redis.Redis | _InMemoryStore
         try:
             import redis as _redis_mod

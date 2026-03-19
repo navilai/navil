@@ -155,7 +155,7 @@ def scan_batch(
                 # Serialize findings for JSONL (dataclass -> dict)
                 if "findings" in scan_result:
                     scan_result["findings"] = [
-                        dataclasses.asdict(f) if dataclasses.is_dataclass(f) else f
+                        dataclasses.asdict(f) if dataclasses.is_dataclass(f) and not isinstance(f, type) else f
                         for f in scan_result["findings"]
                     ]
 

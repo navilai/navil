@@ -54,6 +54,7 @@ dev = [
     "ruff==0.15.6",
     "mypy>=1.8",
     "types-PyYAML>=6.0",
+    "types-requests>=2.31",
 ]
 ml = [
     "scikit-learn>=1.3",
