@@ -287,14 +287,5 @@ def register(subparsers: argparse._SubParsersAction, cli_class: type) -> None:
     _add_llm_args(llm_heal)
     llm_heal.set_defaults(func=lambda cli, args: _llm_suggest_healing_command(cli, args))
 
-    # Cloud commands
-    cloud_parser = subparsers.add_parser(
-        "cloud", help="Launch Navil Cloud dashboard (requires navil[cloud])"
-    )
-    cloud_sub = cloud_parser.add_subparsers(dest="cloud_command")
-
-    cloud_serve = cloud_sub.add_parser("serve", help="Start the dashboard server")
-    cloud_serve.add_argument("--port", default="8484", help="Port to serve on (default: 8484)")
-    cloud_serve.add_argument("--host", default="0.0.0.0", help="Host to bind (default: 0.0.0.0)")
-    cloud_serve.add_argument("--no-demo", action="store_true", help="Don't seed demo data")
-    cloud_serve.set_defaults(func=_cloud_serve)
+    # NOTE: cloud subcommands (login, logout, status, serve) are registered
+    # in navil/commands/cloud.py to avoid argparse conflicts.

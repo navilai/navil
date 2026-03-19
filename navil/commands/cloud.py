@@ -139,6 +139,24 @@ def _cloud_status_command(cli: Any, args: argparse.Namespace) -> int:
     return 0
 
 
+def _cloud_serve_command(cli: Any, args: argparse.Namespace) -> int:
+    """Handle `navil cloud serve` — start the local dashboard server."""
+    try:
+        from navil.api.local.app import create_app
+    except ImportError:
+        print(
+            "Error: Cloud dependencies not installed. Run: pip install navil[cloud]",
+            file=sys.stderr,
+        )
+        return 1
+
+    import uvicorn
+
+    app = create_app(demo=not getattr(args, "no_demo", False))
+    uvicorn.run(app, host=args.host, port=int(args.port), log_level="info")
+    return 0
+
+
 def register(subparsers: argparse._SubParsersAction, cli_class: type) -> None:
     """Register the cloud subcommands."""
     cloud_parser = subparsers.add_parser("cloud", help="Manage cloud connection")
@@ -161,3 +179,12 @@ def register(subparsers: argparse._SubParsersAction, cli_class: type) -> None:
         "status", help="Show current cloud connection status"
     )
     status_parser.set_defaults(func=lambda cli, args: _cloud_status_command(cli, args))
+
+    # serve (local dashboard — migrated from export.py)
+    serve_parser = cloud_subparsers.add_parser(
+        "serve", help="Start local dashboard server (requires navil[cloud])"
+    )
+    serve_parser.add_argument("--port", default="8484", help="Port to serve on (default: 8484)")
+    serve_parser.add_argument("--host", default="0.0.0.0", help="Host to bind (default: 0.0.0.0)")
+    serve_parser.add_argument("--no-demo", action="store_true", help="Don't seed demo data")
+    serve_parser.set_defaults(func=lambda cli, args: _cloud_serve_command(cli, args))
