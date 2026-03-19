@@ -235,9 +235,7 @@ class SignatureExtractor:
                     pattern_type="argument_pattern",
                     value=f".*{pattern}.*",
                     severity="HIGH",
-                    description=(
-                        f"Sensitive argument pattern observed in honeypot ({count} hits)"
-                    ),
+                    description=(f"Sensitive argument pattern observed in honeypot ({count} hits)"),
                     confidence=round(confidence, 2),
                 )
             )

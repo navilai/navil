@@ -61,9 +61,7 @@ class HoneypotDeployer:
             project_dir = str(Path(__file__).resolve().parent.parent.parent)
 
         self.project_dir = project_dir
-        self.compose_file = compose_file or os.path.join(
-            self.project_dir, _DEFAULT_COMPOSE_FILE
-        )
+        self.compose_file = compose_file or os.path.join(self.project_dir, _DEFAULT_COMPOSE_FILE)
         self.log_dir = log_dir or os.path.join(self.project_dir, "honeypot_logs")
 
     def _docker_compose_cmd(self) -> list[str]:

@@ -121,8 +121,7 @@ def _check_python_ts(ctx: SourceContext) -> list[Finding]:
                                 file_path=ctx.file_path,
                                 line_no=line_number(node),
                                 remediation=(
-                                    "Use parameterized queries instead of "
-                                    "string concatenation."
+                                    "Use parameterized queries instead of " "string concatenation."
                                 ),
                                 evidence=snippet,
                             )
@@ -149,9 +148,7 @@ def _check_python_ts(ctx: SourceContext) -> list[Finding]:
                             severity="CRITICAL",
                             file_path=ctx.file_path,
                             line_no=line_number(node),
-                            remediation=(
-                                "Use parameterized queries instead of str.format()."
-                            ),
+                            remediation=("Use parameterized queries instead of str.format()."),
                             evidence=snippet,
                         )
                     )

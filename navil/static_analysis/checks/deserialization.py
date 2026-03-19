@@ -23,9 +23,7 @@ from navil.types import Finding
 CHECK_ID = "SA-DESERIALIZE"
 
 # Regex fallback patterns for detecting dangerous deserialization in scanned code
-_PY_UNSAFE_DESER = re.compile(
-    r"(?:pickle|cPickle|shelve|marshal)\.(loads?|Unpickler)\s*\("
-)
+_PY_UNSAFE_DESER = re.compile(r"(?:pickle|cPickle|shelve|marshal)\.(loads?|Unpickler)\s*\(")
 _PY_YAML_UNSAFE = re.compile(r"yaml\.(load|unsafe_load|full_load)\s*\(")
 
 
@@ -103,8 +101,7 @@ def _check_python_ts(ctx: SourceContext) -> list[Finding]:
                         file_path=ctx.file_path,
                         line_no=line_number(node),
                         remediation=(
-                            "Use yaml.safe_load() or "
-                            "yaml.load(data, Loader=SafeLoader)."
+                            "Use yaml.safe_load() or " "yaml.load(data, Loader=SafeLoader)."
                         ),
                         evidence=snippet,
                     )

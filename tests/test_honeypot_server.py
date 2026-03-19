@@ -339,9 +339,7 @@ class TestHoneypotHTTPServer:
     def test_context_manager(self):
         with HoneypotMCPServer(profile="dev_tools", host="127.0.0.1", port=0) as srv:
             assert srv.port > 0
-            req_body = json.dumps(
-                {"jsonrpc": "2.0", "id": 1, "method": "tools/list"}
-            ).encode()
+            req_body = json.dumps({"jsonrpc": "2.0", "id": 1, "method": "tools/list"}).encode()
             req = urllib.request.Request(
                 srv.url,
                 data=req_body,
@@ -496,9 +494,7 @@ class TestHoneypotCollector:
 
     def test_records_include_user_agent(self):
         collector = HoneypotCollector()
-        record = HoneypotRecord(
-            "test", {}, "1.2.3.4", {"User-Agent": "attacker/1.0"}
-        )
+        record = HoneypotRecord("test", {}, "1.2.3.4", {"User-Agent": "attacker/1.0"})
         collector.record(record)
         records = collector.records
         assert records[0]["user_agent"] == "attacker/1.0"
@@ -512,12 +508,14 @@ class TestHoneypotDeployer:
 
     def test_import(self):
         from navil.honeypot.deploy import AVAILABLE_PROFILES
+
         assert "dev_tools" in AVAILABLE_PROFILES
         assert "cloud_creds" in AVAILABLE_PROFILES
         assert "db_admin" in AVAILABLE_PROFILES
 
     def test_invalid_profiles_rejected(self):
         from navil.honeypot.deploy import HoneypotDeployer
+
         deployer = HoneypotDeployer()
         result = deployer.start(profiles=["nonexistent_profile"])
         assert result["status"] == "error"
@@ -525,6 +523,7 @@ class TestHoneypotDeployer:
 
     def test_project_dir_resolution(self):
         from navil.honeypot.deploy import HoneypotDeployer
+
         deployer = HoneypotDeployer()
         assert os.path.isabs(deployer.project_dir)
         assert os.path.isabs(deployer.compose_file)

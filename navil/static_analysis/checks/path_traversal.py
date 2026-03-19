@@ -168,10 +168,22 @@ def _check_js_ts(ctx: SourceContext) -> list[Finding]:
             if obj and prop and node_text(obj) == "fs":
                 method = node_text(prop)
                 fs_methods = {
-                    "readFile", "writeFile", "readFileSync", "writeFileSync",
-                    "unlink", "unlinkSync", "readdir", "readdirSync",
-                    "mkdir", "mkdirSync", "rmdir", "rmdirSync",
-                    "rename", "renameSync", "access", "accessSync",
+                    "readFile",
+                    "writeFile",
+                    "readFileSync",
+                    "writeFileSync",
+                    "unlink",
+                    "unlinkSync",
+                    "readdir",
+                    "readdirSync",
+                    "mkdir",
+                    "mkdirSync",
+                    "rmdir",
+                    "rmdirSync",
+                    "rename",
+                    "renameSync",
+                    "access",
+                    "accessSync",
                 }
                 if method in fs_methods:
                     args = node.child_by_field_name("arguments")

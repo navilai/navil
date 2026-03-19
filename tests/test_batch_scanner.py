@@ -84,16 +84,20 @@ class TestScanBatch:
 
     def test_single_entry_successful(self, crawl_dir: Path, tmp_path: Path) -> None:
         """A valid config should produce a successful scan result."""
-        _write_crawl_entry(crawl_dir, 0, {
-            "server_name": "test-server",
-            "source": "npm",
-            "url": "https://example.com",
-            "config_example": {
-                "server": {"protocol": "https", "verified": True},
-                "authentication": {"type": "mTLS"},
-                "tools": [],
+        _write_crawl_entry(
+            crawl_dir,
+            0,
+            {
+                "server_name": "test-server",
+                "source": "npm",
+                "url": "https://example.com",
+                "config_example": {
+                    "server": {"protocol": "https", "verified": True},
+                    "authentication": {"type": "mTLS"},
+                    "tools": [],
+                },
             },
-        })
+        )
         output = tmp_path / "results.jsonl"
         stats = scan_batch(crawl_dir, output)
 
@@ -113,15 +117,19 @@ class TestScanBatch:
     def test_multiple_entries(self, crawl_dir: Path, tmp_path: Path) -> None:
         """Multiple entries should all be scanned."""
         for i in range(5):
-            _write_crawl_entry(crawl_dir, i, {
-                "server_name": f"server-{i}",
-                "source": "npm",
-                "url": f"https://example.com/{i}",
-                "config_example": {
-                    "server": {"protocol": "https"},
-                    "tools": [],
+            _write_crawl_entry(
+                crawl_dir,
+                i,
+                {
+                    "server_name": f"server-{i}",
+                    "source": "npm",
+                    "url": f"https://example.com/{i}",
+                    "config_example": {
+                        "server": {"protocol": "https"},
+                        "tools": [],
+                    },
                 },
-            })
+            )
         output = tmp_path / "results.jsonl"
         stats = scan_batch(crawl_dir, output)
 
@@ -134,11 +142,15 @@ class TestScanBatch:
     def test_jsonl_streaming(self, crawl_dir: Path, tmp_path: Path) -> None:
         """Each line in JSONL should be a valid JSON object."""
         for i in range(3):
-            _write_crawl_entry(crawl_dir, i, {
-                "server_name": f"server-{i}",
-                "source": "pypi",
-                "url": f"https://pypi.org/project/server-{i}/",
-            })
+            _write_crawl_entry(
+                crawl_dir,
+                i,
+                {
+                    "server_name": f"server-{i}",
+                    "source": "pypi",
+                    "url": f"https://pypi.org/project/server-{i}/",
+                },
+            )
         output = tmp_path / "results.jsonl"
         scan_batch(crawl_dir, output)
 
@@ -149,15 +161,19 @@ class TestScanBatch:
 
     def test_findings_serialized_as_dicts(self, crawl_dir: Path, tmp_path: Path) -> None:
         """Findings in JSONL should be plain dicts, not dataclass instances."""
-        _write_crawl_entry(crawl_dir, 0, {
-            "server_name": "vuln-server",
-            "source": "npm",
-            "url": "https://example.com",
-            "config_example": {
-                "server": {"protocol": "http"},
-                "tools": [{"name": "tool", "permissions": ["*"]}],
+        _write_crawl_entry(
+            crawl_dir,
+            0,
+            {
+                "server_name": "vuln-server",
+                "source": "npm",
+                "url": "https://example.com",
+                "config_example": {
+                    "server": {"protocol": "http"},
+                    "tools": [{"name": "tool", "permissions": ["*"]}],
+                },
             },
-        })
+        )
         output = tmp_path / "results.jsonl"
         scan_batch(crawl_dir, output)
 
@@ -172,11 +188,15 @@ class TestScanBatch:
     def test_malformed_crawl_file_skipped(self, crawl_dir: Path, tmp_path: Path) -> None:
         """Malformed JSON files should be skipped, not crash."""
         (crawl_dir / "bad.json").write_text("not json!")
-        _write_crawl_entry(crawl_dir, 0, {
-            "server_name": "good-server",
-            "source": "npm",
-            "url": "https://example.com",
-        })
+        _write_crawl_entry(
+            crawl_dir,
+            0,
+            {
+                "server_name": "good-server",
+                "source": "npm",
+                "url": "https://example.com",
+            },
+        )
         output = tmp_path / "results.jsonl"
         stats = scan_batch(crawl_dir, output)
 
@@ -185,22 +205,30 @@ class TestScanBatch:
 
     def test_output_directory_created(self, crawl_dir: Path, tmp_path: Path) -> None:
         """Output file parent directory should be created if it doesn't exist."""
-        _write_crawl_entry(crawl_dir, 0, {
-            "server_name": "test",
-            "source": "npm",
-            "url": "https://example.com",
-        })
+        _write_crawl_entry(
+            crawl_dir,
+            0,
+            {
+                "server_name": "test",
+                "source": "npm",
+                "url": "https://example.com",
+            },
+        )
         output = tmp_path / "sub" / "dir" / "results.jsonl"
         scan_batch(crawl_dir, output)
         assert output.exists()
 
     def test_no_config_example_uses_generic(self, crawl_dir: Path, tmp_path: Path) -> None:
         """Entry without config_example should use the generic config builder."""
-        _write_crawl_entry(crawl_dir, 0, {
-            "server_name": "generic-server",
-            "source": "awesome-mcp-servers",
-            "url": "https://github.com/example/server",
-        })
+        _write_crawl_entry(
+            crawl_dir,
+            0,
+            {
+                "server_name": "generic-server",
+                "source": "awesome-mcp-servers",
+                "url": "https://github.com/example/server",
+            },
+        )
         output = tmp_path / "results.jsonl"
         stats = scan_batch(crawl_dir, output)
         assert stats.total == 1

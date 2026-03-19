@@ -323,12 +323,14 @@ class TestCanaryHTTPServer:
             assert "tools" in data["result"]
 
     def test_http_tools_call(self, server):
-        req_body = json.dumps({
-            "jsonrpc": "2.0",
-            "id": 2,
-            "method": "tools/call",
-            "params": {"name": "read_file", "arguments": {"path": "/tmp/test"}},
-        }).encode()
+        req_body = json.dumps(
+            {
+                "jsonrpc": "2.0",
+                "id": 2,
+                "method": "tools/call",
+                "params": {"name": "read_file", "arguments": {"path": "/tmp/test"}},
+            }
+        ).encode()
         req = urllib.request.Request(
             server.url,
             data=req_body,

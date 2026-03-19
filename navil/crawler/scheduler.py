@@ -43,9 +43,9 @@ REDIS_LOCK_TTL_SECONDS = 7200  # 2 hours
 
 INTERVAL_CRON: dict[str, str] = {
     "hourly": "0 * * * *",
-    "daily": "0 2 * * *",          # 2 AM
-    "weekly": "0 2 * * 0",         # Sunday 2 AM
-    "monthly": "0 2 1 * *",        # 1st of month, 2 AM
+    "daily": "0 2 * * *",  # 2 AM
+    "weekly": "0 2 * * 0",  # Sunday 2 AM
+    "monthly": "0 2 1 * *",  # 1st of month, 2 AM
 }
 
 INTERVAL_SECONDS: dict[str, int] = {
@@ -398,9 +398,7 @@ def _feed_results_to_cloud(
             logger.info("Scan results fed to cloud threat intel endpoint")
             return True
         else:
-            logger.warning(
-                "Cloud feed returned HTTP %d: %s", resp.status_code, resp.text[:200]
-            )
+            logger.warning("Cloud feed returned HTTP %d: %s", resp.status_code, resp.text[:200])
             return False
     except Exception:
         logger.warning("Failed to feed results to cloud", exc_info=True)

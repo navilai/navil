@@ -189,9 +189,7 @@ def _check_regex(ctx: SourceContext) -> list[Finding]:
                 make_finding(
                     check_id=CHECK_ID,
                     title="Missing input validation in tool handler",
-                    description=(
-                        f"Tool handler '{func_name}' may lack input validation."
-                    ),
+                    description=(f"Tool handler '{func_name}' may lack input validation."),
                     severity="MEDIUM",
                     file_path=ctx.file_path,
                     line_no=line_no,

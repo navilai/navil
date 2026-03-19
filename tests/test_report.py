@@ -69,10 +69,13 @@ class TestEmptyData:
     def test_no_successful_scans(self, tmp_path: Path) -> None:
         """Guard against division by zero when all scans fail."""
         path = tmp_path / "results.jsonl"
-        _write_jsonl(path, [
-            _make_scan_record(status="error"),
-            _make_scan_record(status="timeout"),
-        ])
+        _write_jsonl(
+            path,
+            [
+                _make_scan_record(status="error"),
+                _make_scan_record(status="timeout"),
+            ],
+        )
         report = generate_state_of_mcp_report(path)
         assert "Average security score | 0.0" in report
         assert "Failed scans | 1" in report
@@ -84,26 +87,29 @@ class TestWithSampleData:
 
     def test_basic_report(self, tmp_path: Path) -> None:
         path = tmp_path / "results.jsonl"
-        _write_jsonl(path, [
-            _make_scan_record(
-                server_name="server-a",
-                score=80,
-                findings=[{"severity": "HIGH", "id": "AUTH-MISSING"}],
-                vulns=[{"id": "AUTH-MISSING", "title": "Missing Auth"}],
-            ),
-            _make_scan_record(
-                server_name="server-b",
-                score=60,
-                findings=[
-                    {"severity": "CRITICAL", "id": "CRED-API_KEY"},
-                    {"severity": "MEDIUM", "id": "NET-UNENCRYPTED"},
-                ],
-                vulns=[
-                    {"id": "CRED-API_KEY", "title": "Plaintext Credential"},
-                    {"id": "NET-UNENCRYPTED", "title": "Unencrypted"},
-                ],
-            ),
-        ])
+        _write_jsonl(
+            path,
+            [
+                _make_scan_record(
+                    server_name="server-a",
+                    score=80,
+                    findings=[{"severity": "HIGH", "id": "AUTH-MISSING"}],
+                    vulns=[{"id": "AUTH-MISSING", "title": "Missing Auth"}],
+                ),
+                _make_scan_record(
+                    server_name="server-b",
+                    score=60,
+                    findings=[
+                        {"severity": "CRITICAL", "id": "CRED-API_KEY"},
+                        {"severity": "MEDIUM", "id": "NET-UNENCRYPTED"},
+                    ],
+                    vulns=[
+                        {"id": "CRED-API_KEY", "title": "Plaintext Credential"},
+                        {"id": "NET-UNENCRYPTED", "title": "Unencrypted"},
+                    ],
+                ),
+            ],
+        )
 
         report = generate_state_of_mcp_report(path)
 
@@ -117,37 +123,46 @@ class TestWithSampleData:
 
     def test_vulnerability_types_counted(self, tmp_path: Path) -> None:
         path = tmp_path / "results.jsonl"
-        _write_jsonl(path, [
-            _make_scan_record(
-                vulns=[
-                    {"id": "AUTH-MISSING"},
-                    {"id": "AUTH-MISSING"},
-                    {"id": "CRED-API_KEY"},
-                ],
-            ),
-        ])
+        _write_jsonl(
+            path,
+            [
+                _make_scan_record(
+                    vulns=[
+                        {"id": "AUTH-MISSING"},
+                        {"id": "AUTH-MISSING"},
+                        {"id": "CRED-API_KEY"},
+                    ],
+                ),
+            ],
+        )
         report = generate_state_of_mcp_report(path)
         assert "AUTH-MISSING" in report
         assert "CRED-API_KEY" in report
 
     def test_source_breakdown(self, tmp_path: Path) -> None:
         path = tmp_path / "results.jsonl"
-        _write_jsonl(path, [
-            _make_scan_record(source="npm"),
-            _make_scan_record(source="npm"),
-            _make_scan_record(source="pypi"),
-        ])
+        _write_jsonl(
+            path,
+            [
+                _make_scan_record(source="npm"),
+                _make_scan_record(source="npm"),
+                _make_scan_record(source="pypi"),
+            ],
+        )
         report = generate_state_of_mcp_report(path)
         assert "npm" in report
         assert "pypi" in report
 
     def test_score_distribution(self, tmp_path: Path) -> None:
         path = tmp_path / "results.jsonl"
-        _write_jsonl(path, [
-            _make_scan_record(score=10),
-            _make_scan_record(score=50),
-            _make_scan_record(score=90),
-        ])
+        _write_jsonl(
+            path,
+            [
+                _make_scan_record(score=10),
+                _make_scan_record(score=50),
+                _make_scan_record(score=90),
+            ],
+        )
         report = generate_state_of_mcp_report(path)
         assert "Score Distribution" in report
         assert "0-20" in report
@@ -155,11 +170,14 @@ class TestWithSampleData:
 
     def test_mixed_statuses(self, tmp_path: Path) -> None:
         path = tmp_path / "results.jsonl"
-        _write_jsonl(path, [
-            _make_scan_record(status="success", score=80),
-            _make_scan_record(status="error"),
-            _make_scan_record(status="timeout"),
-        ])
+        _write_jsonl(
+            path,
+            [
+                _make_scan_record(status="success", score=80),
+                _make_scan_record(status="error"),
+                _make_scan_record(status="timeout"),
+            ],
+        )
         report = generate_state_of_mcp_report(path)
         assert "Total servers scanned | 3" in report
         assert "Successful scans | 1" in report
@@ -180,10 +198,7 @@ class TestWithSampleData:
     def test_malformed_jsonl_lines_skipped(self, tmp_path: Path) -> None:
         """Malformed JSONL lines should be skipped, not crash."""
         path = tmp_path / "results.jsonl"
-        content = (
-            'not valid json\n'
-            + orjson.dumps(_make_scan_record(score=90)).decode() + '\n'
-        )
+        content = "not valid json\n" + orjson.dumps(_make_scan_record(score=90)).decode() + "\n"
         path.write_text(content)
         report = generate_state_of_mcp_report(path)
         # Should still process the valid line

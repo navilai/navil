@@ -52,9 +52,7 @@ _SECRET_PATTERNS: list[tuple[str, re.Pattern[str], str]] = [
     ),
     (
         "GENERIC-PASSWORD",
-        re.compile(
-            r"""(?i)(?:password|passwd|pwd|pass)\s*[:=]\s*['"]([^\s'"]{8,})['"]"""
-        ),
+        re.compile(r"""(?i)(?:password|passwd|pwd|pass)\s*[:=]\s*['"]([^\s'"]{8,})['"]"""),
         "Hardcoded password",
     ),
     (
@@ -66,9 +64,7 @@ _SECRET_PATTERNS: list[tuple[str, re.Pattern[str], str]] = [
     ),
     (
         "CONNECTION-STRING",
-        re.compile(
-            r"""(?i)(?:mysql|postgres|postgresql|mongodb|redis)://[^\s'"]{10,}"""
-        ),
+        re.compile(r"""(?i)(?:mysql|postgres|postgresql|mongodb|redis)://[^\s'"]{10,}"""),
         "Database connection string with credentials",
     ),
 ]

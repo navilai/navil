@@ -252,15 +252,17 @@ class TestJWTSecurity:
         token = _make_jwt(cm.secret_key, {"token_id": "cred_revoked_001"})
         # Manually insert a REVOKED credential with this token_id
         # Use _store_credential directly (credentials property returns a copy, not a live reference)
-        cm._store_credential(Credential(
-            token_id="cred_revoked_001",
-            agent_name="revokedagent",
-            scope="*",
-            token=token,
-            issued_at="2026-01-01T00:00:00+00:00",
-            expires_at="2027-01-01T00:00:00+00:00",
-            status=CredentialStatus.REVOKED,
-        ))
+        cm._store_credential(
+            Credential(
+                token_id="cred_revoked_001",
+                agent_name="revokedagent",
+                scope="*",
+                token=token,
+                issued_at="2026-01-01T00:00:00+00:00",
+                expires_at="2027-01-01T00:00:00+00:00",
+                status=CredentialStatus.REVOKED,
+            )
+        )
         with pytest.raises(Exception, match="revoked"):
             cm.verify_credential(token)
 
@@ -347,9 +349,9 @@ class TestRateLimitBypass:
             t.join()
 
         allowed_count = sum(results)
-        assert allowed_count <= 5, (
-            f"Rate limit exceeded under concurrent load: {allowed_count} allowed (limit 5)"
-        )
+        assert (
+            allowed_count <= 5
+        ), f"Rate limit exceeded under concurrent load: {allowed_count} allowed (limit 5)"
 
     def test_key_collision_different_agents(self) -> None:
         """FINDING (Medium): agent='a:b' + tool='c' produces key 'a:b:c',
@@ -665,9 +667,9 @@ class TestPathTraversal:
         monkeypatch.setattr(app_module, "DASHBOARD_DIR", tmp_path)
         app = app_module.create_app(with_demo=False)
         # Guard: verify serve_frontend catch-all route was actually registered
-        assert any("{path" in getattr(r, "path", "") for r in app.routes), (
-            "serve_frontend route not registered — DASHBOARD_DIR patch may have failed"
-        )
+        assert any(
+            "{path" in getattr(r, "path", "") for r in app.routes
+        ), "serve_frontend route not registered — DASHBOARD_DIR patch may have failed"
         return app
 
     @pytest.mark.asyncio
@@ -771,9 +773,9 @@ class TestCORSBehavior:
         ) as client:
             resp = await client.get("/api/local/overview", headers={"Origin": "http://evil.com"})
         credentials_header = resp.headers.get("access-control-allow-credentials", "")
-        assert credentials_header.lower() != "true", (
-            "CORS: credentials must not be sent with wildcard origin"
-        )
+        assert (
+            credentials_header.lower() != "true"
+        ), "CORS: credentials must not be sent with wildcard origin"
 
     @pytest.mark.asyncio
     async def test_explicit_origin_sends_credentials(self, monkeypatch: Any) -> None:
@@ -867,9 +869,9 @@ class TestNewVulnerabilities:
         proxy = _make_proxy(require_auth=False)
         huge_name = "a" * 10_000
         result = proxy.extract_agent_name({"x-agent-name": huge_name})
-        assert result == huge_name, (
-            "FINDING: X-Agent-Name has no length limit — 10,000-char name accepted verbatim"
-        )
+        assert (
+            result == huge_name
+        ), "FINDING: X-Agent-Name has no length limit — 10,000-char name accepted verbatim"
 
     def test_x_agent_name_newline_log_injection(self) -> None:
         """FINDING (Low): Newlines in X-Agent-Name enable log injection.
@@ -879,9 +881,9 @@ class TestNewVulnerabilities:
         proxy = _make_proxy(require_auth=False)
         injected = "admin\nX-Injected: injected-header-value"
         result = proxy.extract_agent_name({"x-agent-name": injected})
-        assert result == injected, (
-            "FINDING: newline in X-Agent-Name accepted — enables log/header injection"
-        )
+        assert (
+            result == injected
+        ), "FINDING: newline in X-Agent-Name accepted — enables log/header injection"
 
     def test_jwt_expiry_not_enforced_via_proxy_hmac_path(self) -> None:
         """FINDING (High): Proxy auth falls back to hmac.compare_digest, bypassing JWT expiry.

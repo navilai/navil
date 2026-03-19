@@ -131,17 +131,23 @@ class TestValidateApiKey:
             assert validate_api_key("navil_live_bad") is False
 
     def test_connection_error_raises(self) -> None:
-        with patch(
-            "navil.commands.init.httpx.get",
-            side_effect=httpx.ConnectError("Connection refused"),
-        ), pytest.raises(httpx.ConnectError):
+        with (
+            patch(
+                "navil.commands.init.httpx.get",
+                side_effect=httpx.ConnectError("Connection refused"),
+            ),
+            pytest.raises(httpx.ConnectError),
+        ):
             validate_api_key("navil_live_test")
 
     def test_timeout_error_raises(self) -> None:
-        with patch(
-            "navil.commands.init.httpx.get",
-            side_effect=httpx.TimeoutException("timed out"),
-        ), pytest.raises(httpx.TimeoutException):
+        with (
+            patch(
+                "navil.commands.init.httpx.get",
+                side_effect=httpx.TimeoutException("timed out"),
+            ),
+            pytest.raises(httpx.TimeoutException),
+        ):
             validate_api_key("navil_live_test")
 
     def test_custom_backend_url(self) -> None:
@@ -182,8 +188,10 @@ class TestInitCommand:
             200,
             request=httpx.Request("GET", "https://api.navil.ai/v1/health"),
         )
-        with patch("navil.commands.init.httpx.get", return_value=mock_resp), \
-             patch("navil.commands.init.CONFIG_FILE", config_path):
+        with (
+            patch("navil.commands.init.httpx.get", return_value=mock_resp),
+            patch("navil.commands.init.CONFIG_FILE", config_path),
+        ):
             args = _make_args()
             result = _init_command(None, args)
 
@@ -201,9 +209,11 @@ class TestInitCommand:
             200,
             request=httpx.Request("GET", "https://api.navil.ai/v1/health"),
         )
-        with patch("navil.commands.init.httpx.get", return_value=mock_resp), \
-             patch("navil.commands.init.CONFIG_FILE", config_path), \
-             patch("builtins.input", return_value="y"):
+        with (
+            patch("navil.commands.init.httpx.get", return_value=mock_resp),
+            patch("navil.commands.init.CONFIG_FILE", config_path),
+            patch("builtins.input", return_value="y"),
+        ):
             args = _make_args()
             result = _init_command(None, args)
 
@@ -215,8 +225,10 @@ class TestInitCommand:
         config_path.parent.mkdir(parents=True)
         config_path.write_text("old config")
 
-        with patch("navil.commands.init.CONFIG_FILE", config_path), \
-             patch("builtins.input", return_value="n"):
+        with (
+            patch("navil.commands.init.CONFIG_FILE", config_path),
+            patch("builtins.input", return_value="n"),
+        ):
             args = _make_args()
             result = _init_command(None, args)
 
@@ -230,8 +242,10 @@ class TestInitCommand:
             401,
             request=httpx.Request("GET", "https://api.navil.ai/v1/health"),
         )
-        with patch("navil.commands.init.httpx.get", return_value=mock_resp), \
-             patch("navil.commands.init.CONFIG_FILE", config_path):
+        with (
+            patch("navil.commands.init.httpx.get", return_value=mock_resp),
+            patch("navil.commands.init.CONFIG_FILE", config_path),
+        ):
             args = _make_args(api_key="navil_live_bad")
             result = _init_command(None, args)
 
@@ -241,10 +255,13 @@ class TestInitCommand:
     def test_no_internet(self, tmp_path: Path) -> None:
         config_path = tmp_path / ".navil" / "config.yaml"
 
-        with patch(
-            "navil.commands.init.httpx.get",
-            side_effect=httpx.ConnectError("Connection refused"),
-        ), patch("navil.commands.init.CONFIG_FILE", config_path):
+        with (
+            patch(
+                "navil.commands.init.httpx.get",
+                side_effect=httpx.ConnectError("Connection refused"),
+            ),
+            patch("navil.commands.init.CONFIG_FILE", config_path),
+        ):
             args = _make_args(api_key="navil_live_test")
             result = _init_command(None, args)
 
@@ -254,8 +271,10 @@ class TestInitCommand:
     def test_empty_api_key(self, tmp_path: Path) -> None:
         config_path = tmp_path / ".navil" / "config.yaml"
 
-        with patch("navil.commands.init.CONFIG_FILE", config_path), \
-             patch("builtins.input", return_value=""):
+        with (
+            patch("navil.commands.init.CONFIG_FILE", config_path),
+            patch("builtins.input", return_value=""),
+        ):
             args = _make_args(api_key=None)
             result = _init_command(None, args)
 
@@ -269,9 +288,11 @@ class TestInitCommand:
             200,
             request=httpx.Request("GET", "https://api.navil.ai/v1/health"),
         )
-        with patch("navil.commands.init.httpx.get", return_value=mock_resp), \
-             patch("navil.commands.init.CONFIG_FILE", config_path), \
-             patch("builtins.input", return_value="navil_live_prompted"):
+        with (
+            patch("navil.commands.init.httpx.get", return_value=mock_resp),
+            patch("navil.commands.init.CONFIG_FILE", config_path),
+            patch("builtins.input", return_value="navil_live_prompted"),
+        ):
             args = _make_args(api_key=None)
             result = _init_command(None, args)
 
@@ -287,8 +308,10 @@ class TestInitCommand:
             200,
             request=httpx.Request("GET", "https://api.navil.ai/v1/health"),
         )
-        with patch("navil.commands.init.httpx.get", return_value=mock_resp), \
-             patch("navil.commands.init.CONFIG_FILE", config_path):
+        with (
+            patch("navil.commands.init.httpx.get", return_value=mock_resp),
+            patch("navil.commands.init.CONFIG_FILE", config_path),
+        ):
             args = _make_args(with_policy=True, policy_path=policy_path)
             result = _init_command(None, args)
 
@@ -304,8 +327,10 @@ class TestInitCommand:
             200,
             request=httpx.Request("GET", "https://api.navil.ai/v1/health"),
         )
-        with patch("navil.commands.init.httpx.get", return_value=mock_resp), \
-             patch("navil.commands.init.CONFIG_FILE", config_path):
+        with (
+            patch("navil.commands.init.httpx.get", return_value=mock_resp),
+            patch("navil.commands.init.CONFIG_FILE", config_path),
+        ):
             args = _make_args()
             result = _init_command(None, args)
 

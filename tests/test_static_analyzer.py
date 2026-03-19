@@ -116,10 +116,7 @@ class TestSubprocessCheck:
 
     def test_js_child_process_detection(self, tmp_dir: Path) -> None:
         # INTENTIONALLY VULNERABLE test fixture -- detection target
-        code = (
-            'const cp = require("child_process");\n'
-            'child_process.exec("ls");\n'
-        )
+        code = 'const cp = require("child_process");\n' 'child_process.exec("ls");\n'
         p = _write_js(tmp_dir, code)
         findings = StaticAnalyzer().analyze_file(str(p))
         hits = _find(findings, "SA-EXEC-CHILD-PROCESS")
@@ -173,7 +170,7 @@ class TestSQLInjection:
         assert len(hits) == 0
 
     def test_js_template_literal_sql(self, tmp_dir: Path) -> None:
-        code = 'const query = `SELECT * FROM users WHERE name = \'${name}\'`;\n'
+        code = "const query = `SELECT * FROM users WHERE name = '${name}'`;\n"
         p = _write_js(tmp_dir, code)
         findings = StaticAnalyzer().analyze_file(str(p))
         hits = _find(findings, "SA-SQLI")
@@ -211,7 +208,7 @@ class TestPathTraversal:
         assert len(hits) >= 1
 
     def test_js_fs_read(self, tmp_dir: Path) -> None:
-        code = 'const data = fs.readFileSync(userPath);\n'
+        code = "const data = fs.readFileSync(userPath);\n"
         p = _write_js(tmp_dir, code)
         findings = StaticAnalyzer().analyze_file(str(p))
         hits = _find(findings, "SA-PATH-TRAVERSAL")
@@ -310,10 +307,7 @@ class TestInputValidation:
         assert len(hits) == 0
 
     def test_non_handler_no_finding(self, tmp_dir: Path) -> None:
-        code = (
-            "def process_data(data):\n"
-            "    return data.upper()\n"
-        )
+        code = "def process_data(data):\n" "    return data.upper()\n"
         p = _write_py(tmp_dir, code)
         findings = StaticAnalyzer().analyze_file(str(p))
         hits = _find(findings, "SA-INPUT-VALIDATION")
@@ -389,20 +383,14 @@ class TestCommandInjection:
 
     def test_concat_os_system(self, tmp_dir: Path) -> None:
         # INTENTIONALLY VULNERABLE test fixture
-        code = (
-            "import os\n"
-            "os.system('rm ' + filename)\n"
-        )
+        code = "import os\n" "os.system('rm ' + filename)\n"
         p = _write_py(tmp_dir, code)
         findings = StaticAnalyzer().analyze_file(str(p))
         hits = _find(findings, "SA-CMD-INJECTION")
         assert len(hits) >= 1
 
     def test_safe_list_args_no_finding(self, tmp_dir: Path) -> None:
-        code = (
-            "import subprocess\n"
-            "subprocess.run(['echo', name])\n"
-        )
+        code = "import subprocess\n" "subprocess.run(['echo', name])\n"
         p = _write_py(tmp_dir, code)
         findings = StaticAnalyzer().analyze_file(str(p))
         hits = _find(findings, "SA-CMD-INJECTION")
@@ -433,10 +421,7 @@ class TestErrorHandling:
         assert len(hits) == 0
 
     def test_handler_no_try(self, tmp_dir: Path) -> None:
-        code = (
-            "def tool_handler(arguments):\n"
-            "    return arguments['name'].upper()\n"
-        )
+        code = "def tool_handler(arguments):\n" "    return arguments['name'].upper()\n"
         p = _write_py(tmp_dir, code)
         findings = StaticAnalyzer().analyze_file(str(p))
         hits = _find(findings, "SA-ERROR-HANDLING-NO-TRY")
@@ -862,7 +847,7 @@ class TestTypeScript:
         assert len(hits) >= 1
 
     def test_ts_template_sql(self, tmp_dir: Path) -> None:
-        code = 'const query = `SELECT * FROM users WHERE id = ${userId}`;\n'
+        code = "const query = `SELECT * FROM users WHERE id = ${userId}`;\n"
         p = _write_ts(tmp_dir, code)
         findings = StaticAnalyzer().analyze_file(str(p))
         hits = _find(findings, "SA-SQLI")

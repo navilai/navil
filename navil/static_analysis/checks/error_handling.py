@@ -92,10 +92,7 @@ def _check_python_ts(ctx: SourceContext) -> list[Finding]:
             continue
 
         # Check if function body contains any try statement
-        has_try = any(
-            child.type == "try_statement"
-            for child in body.children
-        )
+        has_try = any(child.type == "try_statement" for child in body.children)
         if not has_try:
             snippet = get_code_snippet(ctx.lines, line_number(node))
             findings.append(
@@ -146,8 +143,7 @@ def _check_js_ts(ctx: SourceContext) -> list[Finding]:
                         file_path=ctx.file_path,
                         line_no=line_number(node),
                         remediation=(
-                            "Log the error or re-throw it. Never silently "
-                            "ignore exceptions."
+                            "Log the error or re-throw it. Never silently " "ignore exceptions."
                         ),
                         evidence=snippet,
                     )

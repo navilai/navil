@@ -339,11 +339,7 @@ class TestCVEBlocklistPatterns:
             assert (
                 "source" in pattern
             ), f"Pattern {pattern['pattern_id']} should have a 'source' field"
-            assert pattern[
-                "source"
-            ].startswith(
-                "CVE-"
-            ), (
+            assert pattern["source"].startswith("CVE-"), (
                 f"Pattern {pattern['pattern_id']} source should"
                 f" start with 'CVE-': got {pattern['source']}"
             )

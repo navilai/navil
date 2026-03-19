@@ -261,8 +261,10 @@ class TestRegistryCrawlerPyPI:
             return mock_simple_resp
 
         async with httpx.AsyncClient() as client:
-            with patch.object(client, "post", side_effect=mock_post), \
-                 patch.object(RegistryCrawler, "_fetch", mock_fetch):
+            with (
+                patch.object(client, "post", side_effect=mock_post),
+                patch.object(RegistryCrawler, "_fetch", mock_fetch),
+            ):
                 crawler._semaphore = asyncio.Semaphore(10)
                 results = await crawler._crawl_pypi(client)
 
@@ -291,8 +293,10 @@ class TestRegistryCrawlerIntegration:
         async def mock_post(*args: Any, **kwargs: Any) -> httpx.Response:
             return pypi_resp
 
-        with patch.object(RegistryCrawler, "_fetch", mock_get), \
-             patch("httpx.AsyncClient.post", side_effect=mock_post):
+        with (
+            patch.object(RegistryCrawler, "_fetch", mock_get),
+            patch("httpx.AsyncClient.post", side_effect=mock_post),
+        ):
             results = await crawler.crawl()
 
         assert len(results) <= 3
@@ -307,8 +311,10 @@ class TestRegistryCrawlerIntegration:
         async def mock_post(*args: Any, **kwargs: Any) -> httpx.Response:
             raise httpx.HTTPError("Everything is down")
 
-        with patch.object(RegistryCrawler, "_fetch", mock_get), \
-             patch("httpx.AsyncClient.post", side_effect=mock_post):
+        with (
+            patch.object(RegistryCrawler, "_fetch", mock_get),
+            patch("httpx.AsyncClient.post", side_effect=mock_post),
+        ):
             results = await crawler.crawl()
 
         assert results == []
