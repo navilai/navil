@@ -19,6 +19,7 @@ from __future__ import annotations
 
 import json
 import subprocess as sp
+import sys
 import tempfile
 from collections.abc import Generator
 from pathlib import Path
@@ -379,8 +380,12 @@ class TestCommandInjection:
         assert len(hits) >= 1
         assert hits[0].severity == "CRITICAL"
 
+    @pytest.mark.skipif(
+        sys.version_info < (3, 11),
+        reason="tree-sitter concat detection requires Python 3.11+",
+    )
     def test_concat_os_system(self, tmp_dir: Path) -> None:
-        # INTENTIONALLY VULNERABLE test fixture
+        # INTENTIONALLY VULNERABLE test fixture — tests that navil detects this pattern
         code = "import os\nos.system('rm ' + filename)\n"
         p = _write_py(tmp_dir, code)
         findings = StaticAnalyzer().analyze_file(str(p))
@@ -418,6 +423,10 @@ class TestErrorHandling:
         hits = _find(findings, "SA-ERROR-HANDLING-BARE-EXCEPT")
         assert len(hits) == 0
 
+    @pytest.mark.skipif(
+        sys.version_info < (3, 11),
+        reason="tree-sitter handler detection requires Python 3.11+",
+    )
     def test_handler_no_try(self, tmp_dir: Path) -> None:
         code = "def tool_handler(arguments):\n    return arguments['name'].upper()\n"
         p = _write_py(tmp_dir, code)
@@ -438,6 +447,10 @@ class TestErrorHandling:
         hits = _find(findings, "SA-ERROR-HANDLING-NO-TRY")
         assert len(hits) == 0
 
+    @pytest.mark.skipif(
+        sys.version_info < (3, 11),
+        reason="tree-sitter JS catch detection requires Python 3.11+",
+    )
     def test_js_empty_catch(self, tmp_dir: Path) -> None:
         code = "try { x = 1; } catch (e) { }\n"
         p = _write_js(tmp_dir, code)
@@ -680,6 +693,10 @@ class TestAnalyzerFeatures:
         findings = StaticAnalyzer().analyze_path(str(tmp_dir))
         assert len(findings) == 0
 
+    @pytest.mark.skipif(
+        sys.version_info < (3, 11),
+        reason="tree-sitter bindings require Python 3.11+",
+    )
     def test_tree_sitter_property(self) -> None:
         analyzer = StaticAnalyzer()
         # Should be True since we installed tree-sitter
