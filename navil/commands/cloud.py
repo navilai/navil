@@ -161,7 +161,7 @@ def _cloud_serve_command(cli: Any, args: argparse.Namespace) -> int:
 
     import uvicorn
 
-    app = create_app(demo=not getattr(args, "no_demo", False))
+    app = create_app(with_demo=not getattr(args, "no_demo", False))
     uvicorn.run(app, host=args.host, port=int(args.port), log_level="info")
     return 0
 

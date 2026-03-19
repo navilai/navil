@@ -125,8 +125,8 @@ class StaticAnalyzer:
             raise FileNotFoundError(f"Path not found: {path}")
 
         if target.is_file():
-            findings = self._analyze_single_file(target)
-            return self._filter_and_sort(findings)
+            file_findings = self._analyze_single_file(target)
+            return self._filter_and_sort(file_findings)
 
         # Directory: collect all supported files
         findings: list[Finding] = []
