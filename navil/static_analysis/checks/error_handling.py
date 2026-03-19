@@ -143,7 +143,7 @@ def _check_js_ts(ctx: SourceContext) -> list[Finding]:
                         file_path=ctx.file_path,
                         line_no=line_number(node),
                         remediation=(
-                            "Log the error or re-throw it. Never silently " "ignore exceptions."
+                            "Log the error or re-throw it. Never silently ignore exceptions."
                         ),
                         evidence=snippet,
                     )

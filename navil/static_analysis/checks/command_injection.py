@@ -201,7 +201,7 @@ def _check_js_ts(ctx: SourceContext) -> list[Finding]:
                         file_path=ctx.file_path,
                         line_no=line_number(node),
                         remediation=(
-                            "Use child_process.execFile() with arguments " "as a separate array."
+                            "Use child_process.execFile() with arguments as a separate array."
                         ),
                         evidence=snippet,
                     )

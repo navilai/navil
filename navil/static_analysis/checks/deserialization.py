@@ -100,9 +100,7 @@ def _check_python_ts(ctx: SourceContext) -> list[Finding]:
                         severity="CRITICAL",
                         file_path=ctx.file_path,
                         line_no=line_number(node),
-                        remediation=(
-                            "Use yaml.safe_load() or " "yaml.load(data, Loader=SafeLoader)."
-                        ),
+                        remediation=("Use yaml.safe_load() or yaml.load(data, Loader=SafeLoader)."),
                         evidence=snippet,
                     )
                 )

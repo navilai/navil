@@ -55,7 +55,7 @@ TOOLS = {
                     "installs": 12453,
                     "rating": 4.7,
                     "description": (
-                        "GitHub integration for code review," " PR management, and issue tracking"
+                        "GitHub integration for code review, PR management, and issue tracking"
                     ),
                     "category": "developer-tools",
                 },
@@ -241,7 +241,7 @@ TOOLS = {
                 "force": {
                     "type": "boolean",
                     "description": (
-                        "Force update even if breaking changes" " detected (default: false)"
+                        "Force update even if breaking changes detected (default: false)"
                     ),
                 },
                 "backup": {

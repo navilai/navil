@@ -190,8 +190,7 @@ def _check_sensitive_data_in_query(
                                 "Authorization header instead of a query parameter."
                             ),
                             evidence=(
-                                f"Sensitive parameter '{name}' in query"
-                                f" for {method.upper()} {path}"
+                                f"Sensitive parameter '{name}' in query for {method.upper()} {path}"
                             ),
                         )
                     )

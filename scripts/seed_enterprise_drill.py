@@ -54,9 +54,9 @@ ORG_SLUG = f"enterprise-drill-{secrets.token_hex(4)}"
 
 
 def _banner(msg: str) -> None:
-    print(f"\n{'='*60}")
+    print(f"\n{'=' * 60}")
     print(f"  {msg}")
-    print(f"{'='*60}")
+    print(f"{'=' * 60}")
 
 
 async def main() -> None:

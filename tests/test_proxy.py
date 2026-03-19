@@ -209,9 +209,9 @@ class TestIdentity:
             "x-agent-name": "attacker",
         }
         identity = proxy.extract_identity(headers, body=body)
-        assert (
-            identity["agent_name"] is None
-        ), "HMAC over empty body must not authenticate a non-empty request"
+        assert identity["agent_name"] is None, (
+            "HMAC over empty body must not authenticate a non-empty request"
+        )
 
 
 class TestHandleJsonRPC:

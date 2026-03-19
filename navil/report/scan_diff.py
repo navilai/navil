@@ -116,8 +116,7 @@ def render_scan_diff_markdown(diff: dict[str, Any]) -> str:
         lines.append("")
         for s in notable_improvements:
             lines.append(
-                f"- **{s['server_name']}**: {s['old_score']} -> {s['new_score']} "
-                f"(+{s['delta']})"
+                f"- **{s['server_name']}**: {s['old_score']} -> {s['new_score']} (+{s['delta']})"
             )
         lines.append("")
 
@@ -128,7 +127,7 @@ def render_scan_diff_markdown(diff: dict[str, Any]) -> str:
         lines.append("")
         for s in notable_regressions:
             lines.append(
-                f"- **{s['server_name']}**: {s['old_score']} -> {s['new_score']} " f"({s['delta']})"
+                f"- **{s['server_name']}**: {s['old_score']} -> {s['new_score']} ({s['delta']})"
             )
         lines.append("")
 

@@ -212,7 +212,7 @@ def render_trend_report_markdown(report: dict[str, Any]) -> str:
         lines.append("|--------|----------|---------|--------|")
         for s in improved[:5]:
             lines.append(
-                f"| {s['server_name']} | {s['old_score']} | " f"{s['new_score']} | +{s['delta']} |"
+                f"| {s['server_name']} | {s['old_score']} | {s['new_score']} | +{s['delta']} |"
             )
         lines.append("")
 
@@ -225,7 +225,7 @@ def render_trend_report_markdown(report: dict[str, Any]) -> str:
         lines.append("|--------|----------|---------|--------|")
         for s in degraded[:5]:
             lines.append(
-                f"| {s['server_name']} | {s['old_score']} | " f"{s['new_score']} | {s['delta']} |"
+                f"| {s['server_name']} | {s['old_score']} | {s['new_score']} | {s['delta']} |"
             )
         lines.append("")
 

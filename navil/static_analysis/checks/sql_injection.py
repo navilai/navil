@@ -121,7 +121,7 @@ def _check_python_ts(ctx: SourceContext) -> list[Finding]:
                                 file_path=ctx.file_path,
                                 line_no=line_number(node),
                                 remediation=(
-                                    "Use parameterized queries instead of " "string concatenation."
+                                    "Use parameterized queries instead of string concatenation."
                                 ),
                                 evidence=snippet,
                             )
@@ -176,8 +176,7 @@ def _check_js_ts(ctx: SourceContext) -> list[Finding]:
                     file_path=ctx.file_path,
                     line_no=line_number(node),
                     remediation=(
-                        "Use parameterized queries: "
-                        "db.query('SELECT * FROM t WHERE id = $1', [id])"
+                        "Use parameterized queries: db.query('SELECT * FROM t WHERE id = $1', [id])"
                     ),
                     evidence=snippet,
                 )
