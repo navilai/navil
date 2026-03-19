@@ -29,6 +29,13 @@ import pytest
 from navil.static_analysis.analyzer import StaticAnalyzer
 from navil.types import Finding
 
+try:
+    import tree_sitter  # noqa: F401
+
+    _has_tree_sitter = True
+except ImportError:
+    _has_tree_sitter = False
+
 # ---------------------------------------------------------------------------
 # Fixtures
 # ---------------------------------------------------------------------------
@@ -381,8 +388,8 @@ class TestCommandInjection:
         assert hits[0].severity == "CRITICAL"
 
     @pytest.mark.skipif(
-        sys.version_info < (3, 11),
-        reason="tree-sitter concat detection requires Python 3.11+",
+        not _has_tree_sitter,
+        reason="tree-sitter not installed",
     )
     def test_concat_os_system(self, tmp_dir: Path) -> None:
         # INTENTIONALLY VULNERABLE test fixture — tests that navil detects this pattern
@@ -424,8 +431,8 @@ class TestErrorHandling:
         assert len(hits) == 0
 
     @pytest.mark.skipif(
-        sys.version_info < (3, 11),
-        reason="tree-sitter handler detection requires Python 3.11+",
+        not _has_tree_sitter,
+        reason="tree-sitter not installed",
     )
     def test_handler_no_try(self, tmp_dir: Path) -> None:
         code = "def tool_handler(arguments):\n    return arguments['name'].upper()\n"
@@ -448,8 +455,8 @@ class TestErrorHandling:
         assert len(hits) == 0
 
     @pytest.mark.skipif(
-        sys.version_info < (3, 11),
-        reason="tree-sitter JS catch detection requires Python 3.11+",
+        not _has_tree_sitter,
+        reason="tree-sitter not installed",
     )
     def test_js_empty_catch(self, tmp_dir: Path) -> None:
         code = "try { x = 1; } catch (e) { }\n"
@@ -694,8 +701,8 @@ class TestAnalyzerFeatures:
         assert len(findings) == 0
 
     @pytest.mark.skipif(
-        sys.version_info < (3, 11),
-        reason="tree-sitter bindings require Python 3.11+",
+        not _has_tree_sitter,
+        reason="tree-sitter not installed",
     )
     def test_tree_sitter_property(self) -> None:
         analyzer = StaticAnalyzer()
