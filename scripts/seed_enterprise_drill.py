@@ -41,9 +41,7 @@ DATABASE_URL = os.environ.get(
 )
 
 # Optional webhook URLs
-TEST_SLACK_WEBHOOK = os.environ.get(
-    "TEST_SLACK_WEBHOOK", "https://httpbin.org/post"
-)
+TEST_SLACK_WEBHOOK = os.environ.get("TEST_SLACK_WEBHOOK", "https://httpbin.org/post")
 TEST_DISCORD_WEBHOOK = os.environ.get("TEST_DISCORD_WEBHOOK", "")
 
 # ---------------------------------------------------------------------------
@@ -215,9 +213,7 @@ async def main() -> None:
             try:
                 from cryptography.fernet import Fernet
 
-                encrypted = Fernet(fernet_key.encode()).encrypt(
-                    webhook_secret.encode()
-                ).decode()
+                encrypted = Fernet(fernet_key.encode()).encrypt(webhook_secret.encode()).decode()
             except Exception:
                 encrypted = webhook_secret
         else:

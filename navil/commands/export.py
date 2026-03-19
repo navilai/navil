@@ -48,6 +48,7 @@ def _report_command(cli, args: argparse.Namespace) -> int:  # type: ignore[no-un
 
 # ── LLM helpers ─────────────────────────────────────────────
 
+
 def _resolve_llm_api_key(args: argparse.Namespace) -> str | None:
     """Resolve API key from --api-key flag or environment variables."""
     if args.api_key:

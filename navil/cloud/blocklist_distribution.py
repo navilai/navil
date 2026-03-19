@@ -38,10 +38,10 @@ _DEFAULT_ENDPOINT = "https://api.navil.ai/v1/threat-intel/blocklist"
 
 # Tier delay policies (seconds between allowed fetches)
 _TIER_RATE_LIMITS: dict[str, float] = {
-    "community": 48 * 3600,      # 48 hours
-    "pro": 5 * 60,               # 5 minutes
-    "team": 60,                   # 1 minute
-    "enterprise": 30,             # 30 seconds
+    "community": 48 * 3600,  # 48 hours
+    "pro": 5 * 60,  # 5 minutes
+    "team": 60,  # 1 minute
+    "enterprise": 30,  # 30 seconds
 }
 
 # Community-tier content delay (patterns older than this threshold)

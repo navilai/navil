@@ -168,7 +168,10 @@ class TestLateralMovementThreshold:
         """4 servers in 5 min should NOT trigger lateral movement."""
         for i in range(4):
             detector.record_invocation(
-                "agent-a", "query", "call", duration_ms=50,
+                "agent-a",
+                "query",
+                "call",
+                duration_ms=50,
                 target_server=f"http://server-{i}:3000",
             )
         alerts = detector.get_alerts(agent_name="agent-a")
@@ -179,7 +182,10 @@ class TestLateralMovementThreshold:
         """7 servers in 5 min should NOT trigger lateral movement."""
         for i in range(7):
             detector.record_invocation(
-                "agent-a", "query", "call", duration_ms=50,
+                "agent-a",
+                "query",
+                "call",
+                duration_ms=50,
                 target_server=f"http://server-{i}:3000",
             )
         alerts = detector.get_alerts(agent_name="agent-a")
@@ -190,7 +196,10 @@ class TestLateralMovementThreshold:
         """9 servers in 5 min should trigger lateral movement (above 8 threshold)."""
         for i in range(9):
             detector.record_invocation(
-                "agent-a", "query", "call", duration_ms=50,
+                "agent-a",
+                "query",
+                "call",
+                duration_ms=50,
                 target_server=f"http://server-{i}:3000",
             )
         alerts = detector.get_alerts(agent_name="agent-a")
@@ -205,7 +214,10 @@ class TestReconnaissanceThreshold:
         """7 tools/list calls should NOT trigger reconnaissance."""
         for _ in range(7):
             detector.record_invocation(
-                "agent-a", "__tools_list__", "tools/list", duration_ms=10,
+                "agent-a",
+                "__tools_list__",
+                "tools/list",
+                duration_ms=10,
                 is_list_tools=True,
             )
         alerts = detector.get_alerts(agent_name="agent-a")
@@ -216,7 +228,10 @@ class TestReconnaissanceThreshold:
         """20 tools/list calls should NOT trigger reconnaissance (at threshold, not above)."""
         for _ in range(20):
             detector.record_invocation(
-                "agent-a", "__tools_list__", "tools/list", duration_ms=10,
+                "agent-a",
+                "__tools_list__",
+                "tools/list",
+                duration_ms=10,
                 is_list_tools=True,
             )
         alerts = detector.get_alerts(agent_name="agent-a")
@@ -227,7 +242,10 @@ class TestReconnaissanceThreshold:
         """25 tools/list calls should trigger reconnaissance (above 20 threshold)."""
         for _ in range(25):
             detector.record_invocation(
-                "agent-a", "__tools_list__", "tools/list", duration_ms=10,
+                "agent-a",
+                "__tools_list__",
+                "tools/list",
+                duration_ms=10,
                 is_list_tools=True,
             )
         alerts = detector.get_alerts(agent_name="agent-a")
@@ -244,8 +262,12 @@ class TestPersistenceIntervalException:
         for i in range(8):
             ts = base + timedelta(seconds=i * 90)
             detector.record_invocation(
-                "agent-a", "heartbeat", "ping", duration_ms=5,
-                data_accessed_bytes=0, success=True,
+                "agent-a",
+                "heartbeat",
+                "ping",
+                duration_ms=5,
+                data_accessed_bytes=0,
+                success=True,
                 timestamp=ts.isoformat(),
             )
         detector._detect_persistence("agent-a")
@@ -258,8 +280,12 @@ class TestPersistenceIntervalException:
         for i in range(8):
             ts = base + timedelta(seconds=i * 20)
             detector.record_invocation(
-                "agent-a", "heartbeat", "ping", duration_ms=5,
-                data_accessed_bytes=0, success=True,
+                "agent-a",
+                "heartbeat",
+                "ping",
+                duration_ms=5,
+                data_accessed_bytes=0,
+                success=True,
                 timestamp=ts.isoformat(),
             )
         detector._detect_persistence("agent-a")
@@ -276,8 +302,12 @@ class TestC2BeaconingMinimumCount:
         for i in range(5):
             ts = base + timedelta(seconds=i * 10)
             detector.record_invocation(
-                "agent-a", "status", "check", duration_ms=20,
-                data_accessed_bytes=0, success=True,
+                "agent-a",
+                "status",
+                "check",
+                duration_ms=20,
+                data_accessed_bytes=0,
+                success=True,
                 response_size_bytes=256,
                 timestamp=ts.isoformat(),
             )
@@ -291,8 +321,12 @@ class TestC2BeaconingMinimumCount:
         for i in range(8):
             ts = base + timedelta(seconds=i * 10)
             detector.record_invocation(
-                "agent-a", "status", "check", duration_ms=20,
-                data_accessed_bytes=0, success=True,
+                "agent-a",
+                "status",
+                "check",
+                duration_ms=20,
+                data_accessed_bytes=0,
+                success=True,
                 response_size_bytes=256,
                 timestamp=ts.isoformat(),
             )
@@ -306,8 +340,12 @@ class TestC2BeaconingMinimumCount:
         for i in range(12):
             ts = base + timedelta(seconds=i * 10)
             detector.record_invocation(
-                "agent-a", "status", "check", duration_ms=20,
-                data_accessed_bytes=0, success=True,
+                "agent-a",
+                "status",
+                "check",
+                duration_ms=20,
+                data_accessed_bytes=0,
+                success=True,
                 response_size_bytes=256,
                 timestamp=ts.isoformat(),
             )

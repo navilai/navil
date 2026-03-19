@@ -498,14 +498,18 @@ class TestContributionReceiver:
         receiver = ContributionReceiver()
         shared_uuid = str(uuid.uuid4())
 
-        receiver.receive([
-            {"contribution_uuid": str(uuid.uuid4())},
-            {"contribution_uuid": shared_uuid},
-        ])
-        receiver.receive([
-            {"contribution_uuid": shared_uuid},  # duplicate
-            {"source_ip": "bad"},  # rejected
-        ])
+        receiver.receive(
+            [
+                {"contribution_uuid": str(uuid.uuid4())},
+                {"contribution_uuid": shared_uuid},
+            ]
+        )
+        receiver.receive(
+            [
+                {"contribution_uuid": shared_uuid},  # duplicate
+                {"source_ip": "bad"},  # rejected
+            ]
+        )
 
         stats = receiver.stats
         assert stats["total_received"] == 4

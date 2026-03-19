@@ -252,7 +252,7 @@ def _init_command(cli: Any, args: argparse.Namespace) -> int:
     # Next steps
     print()
     print("Setup complete! Next steps:")
-    print('  Run `navil proxy start` to begin monitoring')
+    print("  Run `navil proxy start` to begin monitoring")
 
     return 0
 

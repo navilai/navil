@@ -56,15 +56,23 @@ DRY_RUN = os.environ.get("DRY_RUN", "") in ("1", "true", "yes")
 
 # Recognized anomaly types (must match cloud backend schema)
 ANOMALY_TYPES = {
-    "RECONNAISSANCE", "PERSISTENCE", "DEFENSE_EVASION",
-    "LATERAL_MOVEMENT", "COMMAND_AND_CONTROL", "SUPPLY_CHAIN",
-    "RUG_PULL", "DATA_EXFILTRATION", "PRIVILEGE_ESCALATION",
-    "RATE_SPIKE", "POLICY",
+    "RECONNAISSANCE",
+    "PERSISTENCE",
+    "DEFENSE_EVASION",
+    "LATERAL_MOVEMENT",
+    "COMMAND_AND_CONTROL",
+    "SUPPLY_CHAIN",
+    "RUG_PULL",
+    "DATA_EXFILTRATION",
+    "PRIVILEGE_ESCALATION",
+    "RATE_SPIKE",
+    "POLICY",
 }
 
 # ---------------------------------------------------------------------------
 # Helpers
 # ---------------------------------------------------------------------------
+
 
 def _ts(offset_seconds: int = 0) -> str:
     """ISO 8601 timestamp with optional offset from now.
@@ -101,6 +109,7 @@ def _phase(phase: str, mcp: str) -> None:
 # ---------------------------------------------------------------------------
 # Telemetry event builders
 # ---------------------------------------------------------------------------
+
 
 def build_raw_event(
     event_type: str,
@@ -150,6 +159,7 @@ def build_sync_event(
 # Virtual MCP Scenarios
 # ---------------------------------------------------------------------------
 
+
 class VirtualMCP:
     """Base class for a simulated MCP server's traffic pattern."""
 
@@ -187,9 +197,7 @@ class VirtualMCP:
             self.stats["sent"] += len(events)
             return
         try:
-            resp = await self.client.post(
-                f"{BACKEND_URL}/v1/telemetry/sync", json=payload
-            )
+            resp = await self.client.post(f"{BACKEND_URL}/v1/telemetry/sync", json=payload)
             if resp.status_code < 300:
                 self.stats["sent"] += len(events)
             else:
@@ -670,6 +678,7 @@ class GitHubMCP(VirtualMCP):
 # ---------------------------------------------------------------------------
 # Main Orchestrator
 # ---------------------------------------------------------------------------
+
 
 async def main() -> None:
     if not API_KEY:

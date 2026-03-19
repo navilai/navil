@@ -59,6 +59,7 @@ def _adaptive_export_command(cli, args: argparse.Namespace) -> int:  # type: ign
 
 # ── ML commands ─────────────────────────────────────────────
 
+
 def _ml_train_command(cli, args: argparse.Namespace) -> int:  # type: ignore[no-untyped-def]
     """Train the isolation forest model on recorded invocations."""
     import sys

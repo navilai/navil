@@ -92,9 +92,7 @@ def generate_trend_report(
             "avg_score": round(latest_scan.avg_score, 1),
         },
         "score_distribution": score_buckets,
-        "top_vulnerabilities": [
-            {"type": t, "count": c} for t, c in vuln_counter.most_common(10)
-        ],
+        "top_vulnerabilities": [{"type": t, "count": c} for t, c in vuln_counter.most_common(10)],
         "severity_breakdown": dict(severity_counter),
         "trend_data": trend_data,
     }
@@ -214,8 +212,7 @@ def render_trend_report_markdown(report: dict[str, Any]) -> str:
         lines.append("|--------|----------|---------|--------|")
         for s in improved[:5]:
             lines.append(
-                f"| {s['server_name']} | {s['old_score']} | "
-                f"{s['new_score']} | +{s['delta']} |"
+                f"| {s['server_name']} | {s['old_score']} | " f"{s['new_score']} | +{s['delta']} |"
             )
         lines.append("")
 
@@ -228,8 +225,7 @@ def render_trend_report_markdown(report: dict[str, Any]) -> str:
         lines.append("|--------|----------|---------|--------|")
         for s in degraded[:5]:
             lines.append(
-                f"| {s['server_name']} | {s['old_score']} | "
-                f"{s['new_score']} | {s['delta']} |"
+                f"| {s['server_name']} | {s['old_score']} | " f"{s['new_score']} | {s['delta']} |"
             )
         lines.append("")
 

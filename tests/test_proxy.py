@@ -177,9 +177,7 @@ class TestIdentity:
             "x-agent-name": "attacker",
         }
         identity = proxy.extract_identity(headers, body=body)
-        assert identity["agent_name"] is None, (
-            "Invalid HMAC signature must not authenticate"
-        )
+        assert identity["agent_name"] is None, "Invalid HMAC signature must not authenticate"
 
     def test_hmac_signature_over_wrong_body_rejected(self, proxy: MCPSecurityProxy) -> None:
         """HMAC signed over a different body must be rejected."""
@@ -192,9 +190,7 @@ class TestIdentity:
             "x-agent-name": "attacker",
         }
         identity = proxy.extract_identity(headers, body=actual_body)
-        assert identity["agent_name"] is None, (
-            "HMAC over different body must not authenticate"
-        )
+        assert identity["agent_name"] is None, "HMAC over different body must not authenticate"
 
     def test_hmac_empty_body_signature_rejected_for_nonempty_body(
         self, proxy: MCPSecurityProxy
@@ -213,9 +209,9 @@ class TestIdentity:
             "x-agent-name": "attacker",
         }
         identity = proxy.extract_identity(headers, body=body)
-        assert identity["agent_name"] is None, (
-            "HMAC over empty body must not authenticate a non-empty request"
-        )
+        assert (
+            identity["agent_name"] is None
+        ), "HMAC over empty body must not authenticate a non-empty request"
 
 
 class TestHandleJsonRPC:
@@ -506,9 +502,7 @@ class TestJWTAuthentication:
             "x-agent-name": "legitimate-agent",
         }
         identity = jwt_proxy.extract_identity(headers)
-        assert identity["agent_name"] is None, (
-            "Failed JWT must NOT fall back to x-agent-name"
-        )
+        assert identity["agent_name"] is None, "Failed JWT must NOT fall back to x-agent-name"
 
     def test_jwt_human_context_extraction(self, jwt_proxy: MCPSecurityProxy) -> None:
         """JWT with human_context should extract sub, email, roles."""
@@ -563,10 +557,14 @@ class TestJWTAuthentication:
             agent_name="expired-agent",
             exp_offset_hours=-1.0,
         )
-        body = json.dumps({
-            "jsonrpc": "2.0", "method": "tools/call",
-            "params": {"name": "read"}, "id": 1,
-        }).encode()
+        body = json.dumps(
+            {
+                "jsonrpc": "2.0",
+                "method": "tools/call",
+                "params": {"name": "read"},
+                "id": 1,
+            }
+        ).encode()
         result, _ = await jwt_proxy.handle_jsonrpc(body, {"authorization": f"Bearer {token}"})
         assert result["error"]["code"] == -32003
 
@@ -700,15 +698,17 @@ class TestHeaderInjection:
             agent_name="deploy-bot",
             human_context=human_ctx,
         )
-        body = json.dumps({
-            "jsonrpc": "2.0", "method": "tools/call",
-            "params": {"name": "read_file", "arguments": {}}, "id": 1,
-        }).encode()
+        body = json.dumps(
+            {
+                "jsonrpc": "2.0",
+                "method": "tools/call",
+                "params": {"name": "read_file", "arguments": {}},
+                "id": 1,
+            }
+        ).encode()
 
         upstream_response = {"jsonrpc": "2.0", "result": {}, "id": 1}
-        jwt_proxy._forward = AsyncMock(
-            return_value=(upstream_response, 10, {})
-        )
+        jwt_proxy._forward = AsyncMock(return_value=(upstream_response, 10, {}))
 
         await jwt_proxy.handle_jsonrpc(body, {"authorization": f"Bearer {token}"})
         await asyncio.sleep(0)
@@ -726,10 +726,14 @@ class TestHeaderInjection:
     async def test_hmac_headers_no_human_identity(self, proxy: MCPSecurityProxy) -> None:
         """HMAC-authenticated requests must NOT get human identity headers."""
         proxy.credential_manager.secret_key = "test-secret"
-        body = json.dumps({
-            "jsonrpc": "2.0", "method": "tools/call",
-            "params": {"name": "read_file", "arguments": {}}, "id": 1,
-        }).encode()
+        body = json.dumps(
+            {
+                "jsonrpc": "2.0",
+                "method": "tools/call",
+                "params": {"name": "read_file", "arguments": {}},
+                "id": 1,
+            }
+        ).encode()
         compact_body = proxy.sanitize_request(body)
         sig = hmac.new(b"test-secret", compact_body, hashlib.sha256).hexdigest()
 
@@ -764,9 +768,13 @@ class TestHeaderInjection:
             agent_name="delegated-bot",
             delegation_chain=chain,
         )
-        body = json.dumps({
-            "jsonrpc": "2.0", "method": "tools/list", "id": 1,
-        }).encode()
+        body = json.dumps(
+            {
+                "jsonrpc": "2.0",
+                "method": "tools/list",
+                "id": 1,
+            }
+        ).encode()
 
         upstream_response = {"jsonrpc": "2.0", "result": {"tools": []}, "id": 1}
         jwt_proxy._forward = AsyncMock(return_value=(upstream_response, 10, {}))
@@ -801,10 +809,14 @@ class TestTelemetry:
             redis_client=fake_redis,
         )
 
-        body = json.dumps({
-            "jsonrpc": "2.0", "method": "tools/call",
-            "params": {"name": "read_file", "arguments": {"path": "/tmp"}}, "id": 1,
-        }).encode()
+        body = json.dumps(
+            {
+                "jsonrpc": "2.0",
+                "method": "tools/call",
+                "params": {"name": "read_file", "arguments": {"path": "/tmp"}},
+                "id": 1,
+            }
+        ).encode()
 
         upstream_response = {"jsonrpc": "2.0", "result": {}, "id": 1}
         proxy._forward = _mock_forward(upstream_response)
@@ -815,6 +827,7 @@ class TestTelemetry:
         queue = fake_redis._data.get("navil:telemetry:queue", [])
         assert len(queue) > 0
         import orjson
+
         event = orjson.loads(queue[0])
         assert event["agent_name"] == "test-agent"
         assert event["tool_name"] == "read_file"
@@ -847,10 +860,14 @@ class TestTelemetry:
             delegation_chain=chain,
         )
 
-        body = json.dumps({
-            "jsonrpc": "2.0", "method": "tools/call",
-            "params": {"name": "deploy", "arguments": {}}, "id": 1,
-        }).encode()
+        body = json.dumps(
+            {
+                "jsonrpc": "2.0",
+                "method": "tools/call",
+                "params": {"name": "deploy", "arguments": {}},
+                "id": 1,
+            }
+        ).encode()
 
         upstream_response = {"jsonrpc": "2.0", "result": {}, "id": 1}
         proxy._forward = _mock_forward(upstream_response)
@@ -862,6 +879,7 @@ class TestTelemetry:
         queue = fake_redis._data.get("navil:telemetry:queue", [])
         assert len(queue) > 0
         import orjson
+
         event = orjson.loads(queue[0])
         assert event["agent_name"] == "deploy-bot"
         assert event.get("human_email") == "alice@example.com"

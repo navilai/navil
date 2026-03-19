@@ -87,15 +87,12 @@ class StaticAnalyzer:
         invalid = self._enabled_checks - valid_names
         if invalid:
             raise ValueError(
-                f"Unknown check name(s): {invalid}. "
-                f"Valid names: {sorted(valid_names)}"
+                f"Unknown check name(s): {invalid}. " f"Valid names: {sorted(valid_names)}"
             )
 
         # Build active check list
         self._checks = [
-            (name, module)
-            for name, module in _ALL_CHECKS
-            if name in self._enabled_checks
+            (name, module) for name, module in _ALL_CHECKS if name in self._enabled_checks
         ]
 
         self._use_tree_sitter = TREE_SITTER_AVAILABLE
@@ -143,8 +140,17 @@ class StaticAnalyzer:
             # Skip common non-production directories
             parts = file_path.parts
             skip_dirs = {
-                "node_modules", ".git", "__pycache__", ".tox", ".mypy_cache",
-                ".pytest_cache", "dist", "build", ".venv", "venv", "env",
+                "node_modules",
+                ".git",
+                "__pycache__",
+                ".tox",
+                ".mypy_cache",
+                ".pytest_cache",
+                "dist",
+                "build",
+                ".venv",
+                "venv",
+                "env",
             }
             if any(part in skip_dirs for part in parts):
                 continue
@@ -247,11 +253,7 @@ class StaticAnalyzer:
         """Apply severity filter and sort by severity (CRITICAL first)."""
         if self._severity_filter:
             min_idx = self._severity_order.index(self._severity_filter.upper())
-            findings = [
-                f
-                for f in findings
-                if self._severity_order.index(f.severity) >= min_idx
-            ]
+            findings = [f for f in findings if self._severity_order.index(f.severity) >= min_idx]
 
         # Sort: CRITICAL first, then HIGH, MEDIUM, LOW, INFO
         findings.sort(

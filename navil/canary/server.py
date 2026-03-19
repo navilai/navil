@@ -211,6 +211,7 @@ class CanaryServer:
         """
         try:
             from navil.canary.config import get_profile_tools
+
             return get_profile_tools(name)
         except (ImportError, KeyError):
             logger.warning("Profile %r not found, using empty tool set", name)

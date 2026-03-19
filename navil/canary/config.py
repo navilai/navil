@@ -58,9 +58,7 @@ PROFILES: dict[str, dict[str, Any]] = {
             },
         },
         "write_file": {
-            "description": (
-                "Write content to a file. Creates parent directories if needed."
-            ),
+            "description": ("Write content to a file. Creates parent directories if needed."),
             "response": {"status": "ok", "bytes_written": 256, "path": "/tmp/output.txt"},
         },
         "list_processes": {
@@ -172,9 +170,7 @@ def get_profile_tools(name: str) -> dict[str, Any]:
     """
     resolved = resolve_profile_name(name)
     if resolved not in PROFILES:
-        raise KeyError(
-            f"Unknown profile: {name!r}. Available: {', '.join(AVAILABLE_PROFILES)}"
-        )
+        raise KeyError(f"Unknown profile: {name!r}. Available: {', '.join(AVAILABLE_PROFILES)}")
     return PROFILES[resolved]
 
 

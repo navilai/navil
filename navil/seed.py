@@ -646,12 +646,14 @@ def export_scenarios(include_expanded: bool = True) -> list[dict[str, Any]]:
     """
     base_scenarios: list[dict[str, Any]] = []
     for name, _gen_fn in _SCENARIO_GENERATORS.items():
-        base_scenarios.append({
-            "name": name,
-            "source": "builtin",
-            "category": name.upper(),
-            "description": SCENARIOS.get(name, {}).get("description", ""),
-        })
+        base_scenarios.append(
+            {
+                "name": name,
+                "source": "builtin",
+                "category": name.upper(),
+                "description": SCENARIOS.get(name, {}).get("description", ""),
+            }
+        )
 
     if include_expanded:
         from navil.safemcp.generator import AttackVariantGenerator

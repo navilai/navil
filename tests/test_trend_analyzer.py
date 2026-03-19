@@ -45,56 +45,108 @@ def store(tmp_path: Path) -> ScanHistoryStore:
 def multi_scan_store(store: ScanHistoryStore) -> ScanHistoryStore:
     """Store with 4 scans showing clear trends."""
     # Scan 1
-    store.store_scan_results(_make_records([
-        {"name": "alpha", "score": 30, "vulnerabilities": [
-            {"id": "V-001", "risk_level": "CRITICAL"},
-            {"id": "V-002", "risk_level": "HIGH"},
-        ]},
-        {"name": "beta", "score": 80, "vulnerabilities": []},
-        {"name": "gamma", "score": 60, "vulnerabilities": [
-            {"id": "V-003", "risk_level": "MEDIUM"},
-        ]},
-    ]))
+    store.store_scan_results(
+        _make_records(
+            [
+                {
+                    "name": "alpha",
+                    "score": 30,
+                    "vulnerabilities": [
+                        {"id": "V-001", "risk_level": "CRITICAL"},
+                        {"id": "V-002", "risk_level": "HIGH"},
+                    ],
+                },
+                {"name": "beta", "score": 80, "vulnerabilities": []},
+                {
+                    "name": "gamma",
+                    "score": 60,
+                    "vulnerabilities": [
+                        {"id": "V-003", "risk_level": "MEDIUM"},
+                    ],
+                },
+            ]
+        )
+    )
 
     # Scan 2: alpha improves, gamma degrades
-    store.store_scan_results(_make_records([
-        {"name": "alpha", "score": 50, "vulnerabilities": [
-            {"id": "V-002", "risk_level": "HIGH"},
-        ]},
-        {"name": "beta", "score": 85, "vulnerabilities": []},
-        {"name": "gamma", "score": 45, "vulnerabilities": [
-            {"id": "V-003", "risk_level": "MEDIUM"},
-            {"id": "V-004", "risk_level": "HIGH"},
-        ]},
-        {"name": "delta", "score": 25, "vulnerabilities": [
-            {"id": "V-005", "risk_level": "CRITICAL"},
-        ]},
-    ]))
+    store.store_scan_results(
+        _make_records(
+            [
+                {
+                    "name": "alpha",
+                    "score": 50,
+                    "vulnerabilities": [
+                        {"id": "V-002", "risk_level": "HIGH"},
+                    ],
+                },
+                {"name": "beta", "score": 85, "vulnerabilities": []},
+                {
+                    "name": "gamma",
+                    "score": 45,
+                    "vulnerabilities": [
+                        {"id": "V-003", "risk_level": "MEDIUM"},
+                        {"id": "V-004", "risk_level": "HIGH"},
+                    ],
+                },
+                {
+                    "name": "delta",
+                    "score": 25,
+                    "vulnerabilities": [
+                        {"id": "V-005", "risk_level": "CRITICAL"},
+                    ],
+                },
+            ]
+        )
+    )
 
     # Scan 3: alpha continues improving, delta stays bad
-    store.store_scan_results(_make_records([
-        {"name": "alpha", "score": 70, "vulnerabilities": []},
-        {"name": "beta", "score": 82, "vulnerabilities": []},
-        {"name": "gamma", "score": 50, "vulnerabilities": [
-            {"id": "V-003", "risk_level": "MEDIUM"},
-        ]},
-        {"name": "delta", "score": 28, "vulnerabilities": [
-            {"id": "V-005", "risk_level": "CRITICAL"},
-            {"id": "V-006", "risk_level": "HIGH"},
-        ]},
-    ]))
+    store.store_scan_results(
+        _make_records(
+            [
+                {"name": "alpha", "score": 70, "vulnerabilities": []},
+                {"name": "beta", "score": 82, "vulnerabilities": []},
+                {
+                    "name": "gamma",
+                    "score": 50,
+                    "vulnerabilities": [
+                        {"id": "V-003", "risk_level": "MEDIUM"},
+                    ],
+                },
+                {
+                    "name": "delta",
+                    "score": 28,
+                    "vulnerabilities": [
+                        {"id": "V-005", "risk_level": "CRITICAL"},
+                        {"id": "V-006", "risk_level": "HIGH"},
+                    ],
+                },
+            ]
+        )
+    )
 
     # Scan 4: gamma removed, epsilon added
-    store.store_scan_results(_make_records([
-        {"name": "alpha", "score": 85, "vulnerabilities": []},
-        {"name": "beta", "score": 88, "vulnerabilities": []},
-        {"name": "delta", "score": 30, "vulnerabilities": [
-            {"id": "V-005", "risk_level": "CRITICAL"},
-        ]},
-        {"name": "epsilon", "score": 70, "vulnerabilities": [
-            {"id": "V-007", "risk_level": "LOW"},
-        ]},
-    ]))
+    store.store_scan_results(
+        _make_records(
+            [
+                {"name": "alpha", "score": 85, "vulnerabilities": []},
+                {"name": "beta", "score": 88, "vulnerabilities": []},
+                {
+                    "name": "delta",
+                    "score": 30,
+                    "vulnerabilities": [
+                        {"id": "V-005", "risk_level": "CRITICAL"},
+                    ],
+                },
+                {
+                    "name": "epsilon",
+                    "score": 70,
+                    "vulnerabilities": [
+                        {"id": "V-007", "risk_level": "LOW"},
+                    ],
+                },
+            ]
+        )
+    )
 
     return store
 
@@ -112,11 +164,19 @@ class TestTrendAnalyzer:
 
     def test_analyze_single_scan(self, store: ScanHistoryStore) -> None:
         """Single scan produces baseline result."""
-        store.store_scan_results(_make_records([
-            {"name": "solo", "score": 60, "vulnerabilities": [
-                {"id": "V-X", "risk_level": "MEDIUM"},
-            ]},
-        ]))
+        store.store_scan_results(
+            _make_records(
+                [
+                    {
+                        "name": "solo",
+                        "score": 60,
+                        "vulnerabilities": [
+                            {"id": "V-X", "risk_level": "MEDIUM"},
+                        ],
+                    },
+                ]
+            )
+        )
         analyzer = TrendAnalyzer(store)
         result = analyzer.analyze()
         assert result["scan_count"] == 1
@@ -233,11 +293,19 @@ class TestMarkdownRendering:
 
     def test_render_baseline(self, store: ScanHistoryStore) -> None:
         """Rendering baseline produces valid markdown."""
-        store.store_scan_results(_make_records([
-            {"name": "x", "score": 50, "vulnerabilities": [
-                {"id": "V", "risk_level": "LOW"},
-            ]},
-        ]))
+        store.store_scan_results(
+            _make_records(
+                [
+                    {
+                        "name": "x",
+                        "score": 50,
+                        "vulnerabilities": [
+                            {"id": "V", "risk_level": "LOW"},
+                        ],
+                    },
+                ]
+            )
+        )
         analyzer = TrendAnalyzer(store)
         data = analyzer.analyze()
         md = analyzer.render_markdown(data)
@@ -322,10 +390,13 @@ class TestCLIIntegration:
         from navil.cli import main
 
         # Point to empty DB
-        with patch(
-            "navil.crawler.scan_history.DEFAULT_DB_PATH",
-            tmp_path / "cli_test.db",
-        ), patch.object(sys, "argv", ["navil", "crawl", "history"]):
+        with (
+            patch(
+                "navil.crawler.scan_history.DEFAULT_DB_PATH",
+                tmp_path / "cli_test.db",
+            ),
+            patch.object(sys, "argv", ["navil", "crawl", "history"]),
+        ):
             exit_code = main()
         assert exit_code == 0
 
@@ -336,10 +407,13 @@ class TestCLIIntegration:
 
         from navil.cli import main
 
-        with patch(
-            "navil.crawler.scan_history.DEFAULT_DB_PATH",
-            tmp_path / "cli_test2.db",
-        ), patch.object(sys, "argv", ["navil", "crawl", "trend", "--last", "5"]):
+        with (
+            patch(
+                "navil.crawler.scan_history.DEFAULT_DB_PATH",
+                tmp_path / "cli_test2.db",
+            ),
+            patch.object(sys, "argv", ["navil", "crawl", "trend", "--last", "5"]),
+        ):
             exit_code = main()
         assert exit_code == 0
 
@@ -350,10 +424,13 @@ class TestCLIIntegration:
 
         from navil.cli import main
 
-        with patch(
-            "navil.crawler.scan_history.DEFAULT_DB_PATH",
-            tmp_path / "cli_test3.db",
-        ), patch.object(sys, "argv", ["navil", "crawl", "diff", "1", "2"]):
+        with (
+            patch(
+                "navil.crawler.scan_history.DEFAULT_DB_PATH",
+                tmp_path / "cli_test3.db",
+            ),
+            patch.object(sys, "argv", ["navil", "crawl", "diff", "1", "2"]),
+        ):
             exit_code = main()
         assert exit_code == 1
 
@@ -365,7 +442,8 @@ class TestCLIIntegration:
         from navil.cli import main
 
         with patch.object(
-            sys, "argv",
+            sys,
+            "argv",
             ["navil", "crawl", "schedule", "--interval", "daily", "--mode", "crontab"],
         ):
             exit_code = main()
@@ -381,7 +459,8 @@ class TestCLIIntegration:
         from navil.cli import main
 
         with patch.object(
-            sys, "argv",
+            sys,
+            "argv",
             ["navil", "crawl", "schedule", "--interval", "weekly", "--mode", "systemd"],
         ):
             exit_code = main()

@@ -252,9 +252,7 @@ def register(subparsers: argparse._SubParsersAction, cli_class: type) -> None:
         default=None,
         help="Comma-separated profiles to get logs for",
     )
-    logs_parser.add_argument(
-        "--tail", type=int, default=50, help="Number of log lines to show"
-    )
+    logs_parser.add_argument("--tail", type=int, default=50, help="Number of log lines to show")
     _add_common(logs_parser)
     logs_parser.set_defaults(func=_honeypot_logs)
 

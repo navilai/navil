@@ -235,9 +235,7 @@ class OpenAPIMCPServer:
 
         return _jsonrpc_response({"tools": tool_defs}, req_id)
 
-    async def _handle_tools_call(
-        self, params: dict[str, Any], req_id: Any
-    ) -> dict[str, Any]:
+    async def _handle_tools_call(self, params: dict[str, Any], req_id: Any) -> dict[str, Any]:
         """Handle ``tools/call`` — execute the HTTP request."""
         tool_name = params.get("name", "")
         arguments = params.get("arguments", {})

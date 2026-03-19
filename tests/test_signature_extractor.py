@@ -95,9 +95,9 @@ class TestSignatureExtractor:
         entries = extractor.analyze(records)
 
         for entry in entries:
-            assert entry.confidence >= 0.7, (
-                f"Entry {entry.pattern_id} has confidence {entry.confidence} < 0.7"
-            )
+            assert (
+                entry.confidence >= 0.7
+            ), f"Entry {entry.pattern_id} has confidence {entry.confidence} < 0.7"
 
     def test_custom_confidence_threshold(self):
         """Should respect custom minimum confidence threshold."""
@@ -240,9 +240,7 @@ class TestTimingPatterns:
 
     def test_timing_statistics(self):
         """Should calculate correct timing statistics."""
-        records = [
-            _make_record("tool", source_ip="10.0.0.1", ts_offset_s=i * 5) for i in range(5)
-        ]
+        records = [_make_record("tool", source_ip="10.0.0.1", ts_offset_s=i * 5) for i in range(5)]
         extractor = SignatureExtractor()
         timing = extractor.extract_timing_patterns(records)
 
@@ -295,9 +293,7 @@ class TestUserAgentPatterns:
 
     def test_empty_user_agent_skipped(self):
         """Records without user agent should be excluded from UA analysis."""
-        records = [
-            _make_record("tool", user_agent="", ts_offset_s=i) for i in range(5)
-        ]
+        records = [_make_record("tool", user_agent="", ts_offset_s=i) for i in range(5)]
         extractor = SignatureExtractor()
         ua_patterns = extractor.extract_user_agent_patterns(records)
         assert len(ua_patterns) == 0
