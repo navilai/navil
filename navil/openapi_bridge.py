@@ -21,7 +21,6 @@ from fnmatch import fnmatch
 from pathlib import Path
 from typing import Any
 
-
 # ---------------------------------------------------------------------------
 # Spec loading
 # ---------------------------------------------------------------------------
@@ -366,10 +365,7 @@ def write_mcp_config(result: dict[str, Any], output_dir: str | None = None) -> s
     mcp_config = result["mcp_config"]
     name = result["server_name"]
 
-    if output_dir:
-        out = Path(output_dir)
-    else:
-        out = Path(result["bridge_config_path"]).parent
+    out = Path(output_dir) if output_dir else Path(result["bridge_config_path"]).parent
 
     config_file = out / f"navil-openapi-{name}-mcp.json"
     config_file.write_text(json.dumps(mcp_config, indent=2) + "\n")

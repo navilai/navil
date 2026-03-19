@@ -101,9 +101,7 @@ pub async fn forward_request(
 
         // Use bytes_stream() to forward without buffering the entire response
         let stream = upstream_resp.bytes_stream().map(|result| {
-            result.map_err(|e| {
-                std::io::Error::new(std::io::ErrorKind::Other, format!("SSE stream error: {e}"))
-            })
+            result.map_err(|e| std::io::Error::other(format!("SSE stream error: {e}")))
         });
         let body = Body::from_stream(stream);
 
@@ -141,6 +139,7 @@ pub async fn forward_request(
 }
 
 /// Parse SSE response text to extract the first valid JSON-RPC object.
+#[allow(dead_code)]
 pub fn parse_sse_response(text: &str) -> Vec<u8> {
     for line in text.lines() {
         if let Some(data) = line.strip_prefix("data: ") {
@@ -167,7 +166,8 @@ mod tests {
 
     #[test]
     fn test_parse_sse_response_valid() {
-        let sse_text = "event: message\ndata: {\"jsonrpc\":\"2.0\",\"result\":{\"tools\":[]},\"id\":1}\n\n";
+        let sse_text =
+            "event: message\ndata: {\"jsonrpc\":\"2.0\",\"result\":{\"tools\":[]},\"id\":1}\n\n";
         let result = parse_sse_response(sse_text);
         let parsed: serde_json::Value = serde_json::from_slice(&result).unwrap();
         assert_eq!(parsed["jsonrpc"], "2.0");
@@ -240,8 +240,14 @@ mod tests {
 
         assert_eq!(forward_headers.get("x-agent-name").unwrap(), "deploy-bot");
         assert_eq!(forward_headers.get("x-delegation-depth").unwrap(), "2");
-        assert_eq!(forward_headers.get("x-human-identity").unwrap(), "google-oauth2|108234567890");
-        assert_eq!(forward_headers.get("x-human-email").unwrap(), "alice@example.com");
+        assert_eq!(
+            forward_headers.get("x-human-identity").unwrap(),
+            "google-oauth2|108234567890"
+        );
+        assert_eq!(
+            forward_headers.get("x-human-email").unwrap(),
+            "alice@example.com"
+        );
     }
 
     /// Test that HMAC-authenticated requests do NOT get human identity headers.

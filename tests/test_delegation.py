@@ -6,7 +6,7 @@ import time
 
 import pytest
 
-from navil.credential_manager import CredentialManager, CredentialStatus
+from navil.credential_manager import CredentialManager
 
 
 @pytest.fixture
@@ -49,7 +49,9 @@ class TestDelegationBasic:
         assert child_info["human_context"] == hc
 
     def test_delegation_chain_builds_correctly(self, cm: CredentialManager) -> None:
-        root = cm.issue_credential("root-agent", "read:tools write:logs admin:policy", ttl_seconds=7200)
+        root = cm.issue_credential(
+            "root-agent", "read:tools write:logs admin:policy", ttl_seconds=7200
+        )
         child1 = cm.delegate_credential(
             root["token_id"], "agent-1", "read:tools write:logs", ttl_seconds=3600
         )
@@ -108,9 +110,7 @@ class TestDelegationDepth:
         assert child_info["max_delegation_depth"] == 0
 
         with pytest.raises(ValueError, match="depth exhausted"):
-            cm.delegate_credential(
-                child["token_id"], "agent-c", "read:tools", ttl_seconds=1800
-            )
+            cm.delegate_credential(child["token_id"], "agent-c", "read:tools", ttl_seconds=1800)
 
     def test_global_depth_cap_10(self, cm: CredentialManager) -> None:
         """Build a chain of 10 and verify the 11th is rejected."""
@@ -122,16 +122,16 @@ class TestDelegationDepth:
         # Chain length is now 9 (9 parents), trying to delegate the 10th
         # should fail because chain + 1 >= MAX_DELEGATION_DEPTH(10)
         with pytest.raises(ValueError, match="global cap"):
-            cm.delegate_credential(
-                cred["token_id"], "agent-10", "read:tools", ttl_seconds=100
-            )
+            cm.delegate_credential(cred["token_id"], "agent-10", "read:tools", ttl_seconds=100)
 
 
 class TestDelegationScope:
     """Tests for scope subset enforcement."""
 
     def test_valid_subset_scope(self, cm: CredentialManager) -> None:
-        parent = cm.issue_credential("agent-a", "read:tools write:logs admin:policy", ttl_seconds=3600)
+        parent = cm.issue_credential(
+            "agent-a", "read:tools write:logs admin:policy", ttl_seconds=3600
+        )
         child = cm.delegate_credential(
             parent["token_id"], "agent-b", "read:tools", ttl_seconds=1800
         )
@@ -146,9 +146,7 @@ class TestDelegationScope:
 
     def test_empty_scope_allowed(self, cm: CredentialManager) -> None:
         parent = cm.issue_credential("agent-a", "read:tools write:logs", ttl_seconds=3600)
-        child = cm.delegate_credential(
-            parent["token_id"], "agent-b", "", ttl_seconds=1800
-        )
+        child = cm.delegate_credential(parent["token_id"], "agent-b", "", ttl_seconds=1800)
         assert child["scope"] == ""
 
     def test_superset_scope_rejected(self, cm: CredentialManager) -> None:
@@ -161,9 +159,7 @@ class TestDelegationScope:
     def test_disjoint_scope_rejected(self, cm: CredentialManager) -> None:
         parent = cm.issue_credential("agent-a", "read:tools", ttl_seconds=3600)
         with pytest.raises(ValueError, match="not a subset"):
-            cm.delegate_credential(
-                parent["token_id"], "agent-b", "write:logs", ttl_seconds=1800
-            )
+            cm.delegate_credential(parent["token_id"], "agent-b", "write:logs", ttl_seconds=1800)
 
 
 class TestDelegationTTL:
@@ -179,9 +175,7 @@ class TestDelegationTTL:
     def test_ttl_exceeds_parent_rejected(self, cm: CredentialManager) -> None:
         parent = cm.issue_credential("agent-a", "read:tools", ttl_seconds=1800)
         with pytest.raises(ValueError, match="exceeds parent's remaining TTL"):
-            cm.delegate_credential(
-                parent["token_id"], "agent-b", "read:tools", ttl_seconds=3600
-            )
+            cm.delegate_credential(parent["token_id"], "agent-b", "read:tools", ttl_seconds=3600)
 
 
 class TestDelegationParentStates:
@@ -191,35 +185,27 @@ class TestDelegationParentStates:
         parent = cm.issue_credential("agent-a", "read:tools", ttl_seconds=3600)
         cm.revoke_credential(parent["token_id"])
         with pytest.raises(ValueError, match="not active"):
-            cm.delegate_credential(
-                parent["token_id"], "agent-b", "read:tools", ttl_seconds=1800
-            )
+            cm.delegate_credential(parent["token_id"], "agent-b", "read:tools", ttl_seconds=1800)
 
     def test_expired_parent_rejected(self, cm: CredentialManager) -> None:
         parent = cm.issue_credential("agent-a", "read:tools", ttl_seconds=1)
         # Wait for expiry
-        import time
         time.sleep(1.1)
         with pytest.raises(ValueError, match="expired"):
-            cm.delegate_credential(
-                parent["token_id"], "agent-b", "read:tools", ttl_seconds=1800
-            )
+            cm.delegate_credential(parent["token_id"], "agent-b", "read:tools", ttl_seconds=1800)
 
     def test_nonexistent_parent_rejected(self, cm: CredentialManager) -> None:
         with pytest.raises(ValueError, match="not found"):
-            cm.delegate_credential(
-                "cred_nonexistent", "agent-b", "read:tools", ttl_seconds=1800
-            )
+            cm.delegate_credential("cred_nonexistent", "agent-b", "read:tools", ttl_seconds=1800)
 
     def test_inactive_parent_rejected(self, cm: CredentialManager) -> None:
         parent = cm.issue_credential("agent-a", "read:tools", ttl_seconds=3600)
         # Manually set status to INACTIVE
         from navil.credential_manager import _CRED_KEY_PREFIX
+
         cm._redis.hset(_CRED_KEY_PREFIX + parent["token_id"], mapping={"status": "INACTIVE"})
         with pytest.raises(ValueError, match="not active"):
-            cm.delegate_credential(
-                parent["token_id"], "agent-b", "read:tools", ttl_seconds=1800
-            )
+            cm.delegate_credential(parent["token_id"], "agent-b", "read:tools", ttl_seconds=1800)
 
 
 class TestDelegationScopeNarrowingOnly:
@@ -240,7 +226,7 @@ class TestDelegationScopeNarrowingOnly:
 
     def test_scope_narrowing_only_serialization_roundtrip(self, cm: CredentialManager) -> None:
         """Verify the field survives Redis hash serialization/deserialization."""
-        from navil.credential_manager import _credential_to_hash, _hash_to_credential, Credential
+        from navil.credential_manager import Credential, _credential_to_hash, _hash_to_credential
 
         cred = Credential(
             token_id="test-id",
@@ -299,8 +285,11 @@ class TestDelegationJWT:
 
     def test_jwt_contains_delegation_fields(self, cm: CredentialManager) -> None:
         import jwt as pyjwt
+
         parent = cm.issue_credential(
-            "agent-a", "read:tools write:logs", ttl_seconds=3600,
+            "agent-a",
+            "read:tools write:logs",
+            ttl_seconds=3600,
             human_context={"sub": "user1", "email": "a@b.com", "roles": ["admin"]},
         )
         child = cm.delegate_credential(
@@ -310,7 +299,9 @@ class TestDelegationJWT:
         # iat/exp are ISO strings (not numeric), so disable those checks
         child_cred = cm._load_credential(child["token_id"])
         payload = pyjwt.decode(
-            child_cred.token, cm.secret_key, algorithms=["HS256"],
+            child_cred.token,
+            cm.secret_key,
+            algorithms=["HS256"],
             options={"verify_exp": False, "verify_iat": False},
         )
         assert payload["human_context"] == {"sub": "user1", "email": "a@b.com", "roles": ["admin"]}

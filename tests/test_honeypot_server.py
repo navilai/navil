@@ -10,9 +10,8 @@ import urllib.request
 
 import pytest
 
-from navil.honeypot.server import HoneypotMCPServer, HoneypotRecord
 from navil.honeypot.collector import HoneypotCollector
-
+from navil.honeypot.server import HoneypotMCPServer, HoneypotRecord
 
 # -- HoneypotRecord ---------------------------------------------------------
 
@@ -422,7 +421,7 @@ class TestHoneypotCollector:
             record = HoneypotRecord(f"tool_{i}", {}, "1.2.3.4", {})
             collector.record(record)
         content = collector.export_jsonl()
-        lines = [l for l in content.strip().split("\n") if l]
+        lines = [line for line in content.strip().split("\n") if line]
         assert len(lines) == 3
         # Each line should be valid JSON
         for line in lines:
@@ -441,7 +440,7 @@ class TestHoneypotCollector:
         try:
             collector.export_jsonl(path)
             with open(path) as f:
-                lines = [l for l in f.read().strip().split("\n") if l]
+                lines = [line for line in f.read().strip().split("\n") if line]
             assert len(lines) == 3
         finally:
             os.unlink(path)
@@ -512,7 +511,7 @@ class TestHoneypotDeployer:
     """Tests for the deployment helper (unit tests, no Docker required)."""
 
     def test_import(self):
-        from navil.honeypot.deploy import HoneypotDeployer, AVAILABLE_PROFILES
+        from navil.honeypot.deploy import AVAILABLE_PROFILES
         assert "dev_tools" in AVAILABLE_PROFILES
         assert "cloud_creds" in AVAILABLE_PROFILES
         assert "db_admin" in AVAILABLE_PROFILES
@@ -539,6 +538,7 @@ class TestHoneypotCLICommand:
 
     def test_register(self):
         import argparse
+
         from navil.commands.honeypot import register
 
         parser = argparse.ArgumentParser()
@@ -555,6 +555,7 @@ class TestHoneypotCLICommand:
 
     def test_register_analyze_subcommand(self):
         import argparse
+
         from navil.commands.honeypot import register
 
         parser = argparse.ArgumentParser()

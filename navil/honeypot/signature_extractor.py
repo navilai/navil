@@ -12,12 +12,11 @@ a minimum confidence threshold of 0.7.
 
 from __future__ import annotations
 
-import hashlib
 import logging
 import re
 import statistics
 from collections import Counter, defaultdict
-from datetime import datetime, timezone
+from datetime import datetime
 from typing import Any
 
 logger = logging.getLogger(__name__)
@@ -156,7 +155,7 @@ class SignatureExtractor:
 
         sequence_counts: Counter[str] = Counter()
 
-        for ip, ip_records in by_ip.items():
+        for _ip, ip_records in by_ip.items():
             # Sort by timestamp
             sorted_records = sorted(ip_records, key=lambda r: r["timestamp"])
 

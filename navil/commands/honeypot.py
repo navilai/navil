@@ -22,7 +22,7 @@ def _honeypot_start(cli, args: argparse.Namespace) -> int:  # type: ignore[no-un
         print(f"\n  Error: {result['message']}\n", file=sys.stderr)
         return 1
 
-    print(f"\n  Honeypot Started")
+    print("\n  Honeypot Started")
     print(f"  {'Profiles:':<20} {', '.join(result['profiles'])}")
     print(f"  {'Compose file:':<20} {result['compose_file']}")
     print(f"  {'Log directory:':<20} {result['log_dir']}")
@@ -133,7 +133,7 @@ def _honeypot_analyze(cli, args: argparse.Namespace) -> int:  # type: ignore[no-
     if args.json_output:
         print(json.dumps([e.to_dict() for e in entries], indent=2))
     else:
-        print(f"\n  Honeypot Signature Analysis")
+        print("\n  Honeypot Signature Analysis")
         print(f"  {'Records analyzed:':<24} {loaded:>8}")
         print(f"  {'Signatures extracted:':<24} {len(entries):>8}")
         print(f"  {'Min confidence:':<24} {args.min_confidence:>8.2f}")
@@ -154,7 +154,7 @@ def _honeypot_analyze(cli, args: argparse.Namespace) -> int:  # type: ignore[no-
         # Timing analysis
         timing = extractor.extract_timing_patterns(collector.records)
         if timing:
-            print(f"  Timing Patterns:")
+            print("  Timing Patterns:")
             for ip, info in timing.items():
                 periodic_mark = "[PERIODIC]" if info["is_periodic"] else ""
                 print(

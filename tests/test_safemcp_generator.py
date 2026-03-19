@@ -8,12 +8,11 @@ import os
 import pytest
 
 from navil.safemcp.generator import (
-    AttackVariantGenerator,
     _CATEGORY_TO_GENERATOR,
+    AttackVariantGenerator,
     generate_all_variants,
     load_attack_catalog,
 )
-
 
 # ── Catalog Loading ──────────────────────────────────────────
 
@@ -46,20 +45,18 @@ class TestLoadAttackCatalog:
         attacks = load_attack_catalog()
         for attack in attacks:
             assert "indicators" in attack, f"Attack {attack['name']} missing 'indicators'"
-            assert len(attack["indicators"]) >= 1, (
-                f"Attack {attack['name']} has no indicators"
-            )
+            assert len(attack["indicators"]) >= 1, f"Attack {attack['name']} has no indicators"
 
     def test_each_attack_has_source_reference(self):
         """Every attack should cite a source reference."""
         attacks = load_attack_catalog()
         for attack in attacks:
-            assert "source_reference" in attack, (
-                f"Attack {attack['name']} missing 'source_reference'"
-            )
-            assert len(attack["source_reference"]) > 0, (
-                f"Attack {attack['name']} has empty source_reference"
-            )
+            assert (
+                "source_reference" in attack
+            ), f"Attack {attack['name']} missing 'source_reference'"
+            assert (
+                len(attack["source_reference"]) > 0
+            ), f"Attack {attack['name']} has empty source_reference"
 
     def test_categories_map_to_generators(self):
         """Every attack category should have a corresponding variant generator."""
@@ -73,9 +70,9 @@ class TestLoadAttackCatalog:
         valid = {"LOW", "MEDIUM", "HIGH", "CRITICAL"}
         attacks = load_attack_catalog()
         for attack in attacks:
-            assert attack["severity"] in valid, (
-                f"Invalid severity '{attack['severity']}' in attack '{attack['name']}'"
-            )
+            assert (
+                attack["severity"] in valid
+            ), f"Invalid severity '{attack['severity']}' in attack '{attack['name']}'"
 
     def test_no_duplicate_names(self):
         """Attack names must be unique."""
@@ -111,9 +108,7 @@ class TestLoadAttackCatalog:
             category_counts[cat] = category_counts.get(cat, 0) + 1
 
         for cat, count in category_counts.items():
-            assert count >= 2, (
-                f"Category '{cat}' has only {count} attack(s), need at least 2"
-            )
+            assert count >= 2, f"Category '{cat}' has only {count} attack(s), need at least 2"
 
     def test_known_attacks_present(self):
         """Key real-world attacks from research should be in the catalog."""
@@ -135,12 +130,12 @@ class TestLoadAttackCatalog:
         """Each attack_steps field must be a list."""
         attacks = load_attack_catalog()
         for attack in attacks:
-            assert isinstance(attack["attack_steps"], list), (
-                f"Attack {attack['name']} has non-list attack_steps"
-            )
-            assert len(attack["attack_steps"]) >= 1, (
-                f"Attack {attack['name']} has empty attack_steps"
-            )
+            assert isinstance(
+                attack["attack_steps"], list
+            ), f"Attack {attack['name']} has non-list attack_steps"
+            assert (
+                len(attack["attack_steps"]) >= 1
+            ), f"Attack {attack['name']} has empty attack_steps"
 
     def test_custom_catalog_path(self, tmp_path):
         """Should load from a custom path if provided."""
@@ -197,12 +192,12 @@ class TestAttackVariantGenerator:
         assert len(variants) >= 25  # some categories might not map
 
         for attack_name, variant_list in variants.items():
-            assert len(variant_list) >= 5, (
-                f"Attack '{attack_name}' produced only {len(variant_list)} variants (expected >=5)"
-            )
-            assert len(variant_list) <= 10, (
-                f"Attack '{attack_name}' produced {len(variant_list)} variants (expected <=10)"
-            )
+            assert (
+                len(variant_list) >= 5
+            ), f"Attack '{attack_name}' produced only {len(variant_list)} variants (expected >=5)"
+            assert (
+                len(variant_list) <= 10
+            ), f"Attack '{attack_name}' produced {len(variant_list)} variants (expected <=10)"
 
     def test_generate_variants_single(self, generator):
         """Should generate variants for a single named attack."""
@@ -237,16 +232,14 @@ class TestAttackVariantGenerator:
             assert len(result) >= 1, f"Generator {name} returned empty list"
 
             for inv in result:
-                assert inv["agent_name"] == "test-agent-42", (
-                    f"Generator {name} didn't override agent_name"
-                )
+                assert (
+                    inv["agent_name"] == "test-agent-42"
+                ), f"Generator {name} didn't override agent_name"
 
     def test_scenario_generators_50_plus_with_full_catalog(self, generator):
         """With the full catalog, should produce 50+ scenario generators."""
         generators = generator.generate_scenario_generators()
-        assert len(generators) >= 50, (
-            f"Expected 50+ generators, got {len(generators)}"
-        )
+        assert len(generators) >= 50, f"Expected 50+ generators, got {len(generators)}"
 
     def test_export_scenarios(self, generator):
         """Should produce JSON-serializable scenario definitions."""
@@ -301,9 +294,9 @@ class TestGenerateAllVariants:
         attacks = load_attack_catalog()
         # Every attack should have variants generated
         for attack in attacks:
-            assert attack["name"] in result, (
-                f"Attack '{attack['name']}' missing from generated variants"
-            )
+            assert (
+                attack["name"] in result
+            ), f"Attack '{attack['name']}' missing from generated variants"
 
 
 # ── Parameter Bounds ─────────────────────────────────────────
@@ -326,9 +319,9 @@ class TestParameterBounds:
                 if variant:
                     agents.add(variant[0]["agent_name"])
             # With random agent names, most should be unique
-            assert len(agents) >= 3, (
-                f"Attack '{attack_name}' has too few unique agents: {len(agents)}"
-            )
+            assert (
+                len(agents) >= 3
+            ), f"Attack '{attack_name}' has too few unique agents: {len(agents)}"
 
     def test_invocations_have_valid_durations(self, all_variants):
         """duration_ms should be positive."""
@@ -336,9 +329,7 @@ class TestParameterBounds:
             for variant in variant_list:
                 for inv in variant:
                     if "duration_ms" in inv:
-                        assert inv["duration_ms"] >= 0, (
-                            f"Negative duration in {attack_name}"
-                        )
+                        assert inv["duration_ms"] >= 0, f"Negative duration in {attack_name}"
 
     def test_arguments_size_non_negative(self, all_variants):
         """arguments_size_bytes should be non-negative when present."""
@@ -346,9 +337,9 @@ class TestParameterBounds:
             for variant in variant_list:
                 for inv in variant:
                     if "arguments_size_bytes" in inv:
-                        assert inv["arguments_size_bytes"] >= 0, (
-                            f"Negative arguments_size in {attack_name}"
-                        )
+                        assert (
+                            inv["arguments_size_bytes"] >= 0
+                        ), f"Negative arguments_size in {attack_name}"
 
     def test_response_size_non_negative(self, all_variants):
         """response_size_bytes should be non-negative when present."""
@@ -356,9 +347,9 @@ class TestParameterBounds:
             for variant in variant_list:
                 for inv in variant:
                     if "response_size_bytes" in inv:
-                        assert inv["response_size_bytes"] >= 0, (
-                            f"Negative response_size in {attack_name}"
-                        )
+                        assert (
+                            inv["response_size_bytes"] >= 0
+                        ), f"Negative response_size in {attack_name}"
 
     def test_data_accessed_bytes_non_negative(self, all_variants):
         """data_accessed_bytes should be non-negative when present."""
@@ -366,9 +357,9 @@ class TestParameterBounds:
             for variant in variant_list:
                 for inv in variant:
                     if "data_accessed_bytes" in inv:
-                        assert inv["data_accessed_bytes"] >= 0, (
-                            f"Negative data_accessed_bytes in {attack_name}"
-                        )
+                        assert (
+                            inv["data_accessed_bytes"] >= 0
+                        ), f"Negative data_accessed_bytes in {attack_name}"
 
 
 # ── Category-specific Variant Tests ──────────────────────────
@@ -409,9 +400,9 @@ class TestCategoryVariants:
             for variant in all_variants[name]:
                 for inv in variant:
                     if "data_accessed_bytes" in inv:
-                        assert inv["data_accessed_bytes"] >= 1000, (
-                            f"Low data volume in exfil variant {name}"
-                        )
+                        assert (
+                            inv["data_accessed_bytes"] >= 1000
+                        ), f"Low data volume in exfil variant {name}"
 
     def test_defense_evasion_has_large_payload(self, all_variants, attacks_by_category):
         """Defense evasion variants should have large argument payloads."""
@@ -421,9 +412,9 @@ class TestCategoryVariants:
             for variant in all_variants[name]:
                 for inv in variant:
                     if "arguments_size_bytes" in inv:
-                        assert inv["arguments_size_bytes"] >= 5000, (
-                            f"Small payload in defense evasion variant {name}"
-                        )
+                        assert (
+                            inv["arguments_size_bytes"] >= 5000
+                        ), f"Small payload in defense evasion variant {name}"
 
     def test_lateral_movement_has_target_server(self, all_variants, attacks_by_category):
         """Lateral movement variants should reference target servers."""
@@ -435,9 +426,9 @@ class TestCategoryVariants:
                 for inv in variant:
                     if "target_server" in inv:
                         servers_seen.add(inv["target_server"])
-                assert len(servers_seen) >= 4, (
-                    f"Lateral movement variant {name} only accessed {len(servers_seen)} servers"
-                )
+                assert (
+                    len(servers_seen) >= 4
+                ), f"Lateral movement variant {name} only accessed {len(servers_seen)} servers"
 
     def test_supply_chain_has_unregistered_tool(self, all_variants, attacks_by_category):
         """Supply chain variants should reference unregistered tools."""
@@ -449,9 +440,9 @@ class TestCategoryVariants:
                     if "_register_server" in inv:
                         # Should have a tool call to unregistered tool
                         registered = inv["_register_server"][1]
-                        assert inv["tool_name"] not in registered, (
-                            f"Tool '{inv['tool_name']}' should NOT be in registered list"
-                        )
+                        assert (
+                            inv["tool_name"] not in registered
+                        ), f"Tool '{inv['tool_name']}' should NOT be in registered list"
 
     def test_persistence_has_timestamps(self, all_variants, attacks_by_category):
         """Persistence variants should have _raw_timestamp for timing analysis."""
@@ -477,9 +468,9 @@ class TestCategoryVariants:
             if name not in all_variants:
                 continue
             for variant in all_variants[name]:
-                assert len(variant) >= 20, (
-                    f"Rate spike variant {name} has only {len(variant)} invocations"
-                )
+                assert (
+                    len(variant) >= 20
+                ), f"Rate spike variant {name} has only {len(variant)} invocations"
 
 
 # ── Blocklist Integration Tests ──────────────────────────────
@@ -490,17 +481,15 @@ class TestBlocklistV1:
 
     @pytest.fixture
     def blocklist(self):
-        path = os.path.join(
-            os.path.dirname(__file__), "..", "navil", "data", "blocklist_v1.json"
-        )
+        path = os.path.join(os.path.dirname(__file__), "..", "navil", "data", "blocklist_v1.json")
         with open(path) as f:
             return json.load(f)
 
     def test_blocklist_has_200_plus_patterns(self, blocklist):
         """Blocklist should contain 200+ signature patterns."""
-        assert len(blocklist["patterns"]) >= 200, (
-            f"Expected 200+ patterns, got {len(blocklist['patterns'])}"
-        )
+        assert (
+            len(blocklist["patterns"]) >= 200
+        ), f"Expected 200+ patterns, got {len(blocklist['patterns'])}"
 
     def test_blocklist_has_version(self, blocklist):
         """Blocklist should have a version field."""
@@ -513,13 +502,13 @@ class TestBlocklistV1:
         assert len(blocklist["description"]) > 0
 
     def test_each_pattern_has_required_fields(self, blocklist):
-        """Every pattern must have pattern_id, pattern_type, value, severity, description, confidence."""
+        """Every pattern must have the required fields."""
         required = {"pattern_id", "pattern_type", "value", "severity", "description", "confidence"}
         for pattern in blocklist["patterns"]:
             for field in required:
-                assert field in pattern, (
-                    f"Pattern {pattern.get('pattern_id', '?')} missing field: {field}"
-                )
+                assert (
+                    field in pattern
+                ), f"Pattern {pattern.get('pattern_id', '?')} missing field: {field}"
 
     def test_pattern_ids_are_unique(self, blocklist):
         """Pattern IDs must be unique."""
@@ -529,17 +518,17 @@ class TestBlocklistV1:
     def test_confidence_in_range(self, blocklist):
         """Confidence scores must be between 0.0 and 1.0."""
         for pattern in blocklist["patterns"]:
-            assert 0.0 <= pattern["confidence"] <= 1.0, (
-                f"Pattern {pattern['pattern_id']} confidence out of range: {pattern['confidence']}"
-            )
+            assert (
+                0.0 <= pattern["confidence"] <= 1.0
+            ), f"Pattern {pattern['pattern_id']} confidence out of range: {pattern['confidence']}"
 
     def test_severity_values_valid(self, blocklist):
         """Pattern severity must be one of LOW, MEDIUM, HIGH, CRITICAL."""
         valid = {"LOW", "MEDIUM", "HIGH", "CRITICAL"}
         for pattern in blocklist["patterns"]:
-            assert pattern["severity"] in valid, (
-                f"Invalid severity '{pattern['severity']}' in pattern {pattern['pattern_id']}"
-            )
+            assert (
+                pattern["severity"] in valid
+            ), f"Invalid severity '{pattern['severity']}' in pattern {pattern['pattern_id']}"
 
     def test_pattern_types_diverse(self, blocklist):
         """Blocklist should cover multiple pattern types."""

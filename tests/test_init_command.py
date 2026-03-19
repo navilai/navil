@@ -5,26 +5,22 @@ from __future__ import annotations
 import argparse
 from pathlib import Path
 from typing import Any
-from unittest.mock import MagicMock, patch
+from unittest.mock import patch
 
 import httpx
 import pytest
 import yaml
 
 from navil.commands.init import (
-    CONFIG_DIR,
-    CONFIG_FILE,
     DEFAULT_BACKEND_URL,
     DEFAULT_LISTEN_PORT,
     DEFAULT_POLICY_PATH,
-    STARTER_POLICY,
     _init_command,
     build_config,
     validate_api_key,
     write_config,
     write_starter_policy,
 )
-
 
 # ── build_config ──────────────────────────────────────────────
 
@@ -138,17 +134,15 @@ class TestValidateApiKey:
         with patch(
             "navil.commands.init.httpx.get",
             side_effect=httpx.ConnectError("Connection refused"),
-        ):
-            with pytest.raises(httpx.ConnectError):
-                validate_api_key("navil_live_test")
+        ), pytest.raises(httpx.ConnectError):
+            validate_api_key("navil_live_test")
 
     def test_timeout_error_raises(self) -> None:
         with patch(
             "navil.commands.init.httpx.get",
             side_effect=httpx.TimeoutException("timed out"),
-        ):
-            with pytest.raises(httpx.TimeoutException):
-                validate_api_key("navil_live_test")
+        ), pytest.raises(httpx.TimeoutException):
+            validate_api_key("navil_live_test")
 
     def test_custom_backend_url(self) -> None:
         mock_resp = httpx.Response(

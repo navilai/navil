@@ -73,7 +73,9 @@ class TestCascadeRevocationDeepChain:
 
     def test_revoke_root_revokes_entire_chain(self, cm: CredentialManager) -> None:
         creds = []
-        root = cm.issue_credential("agent-0", "read:tools write:logs admin:policy", ttl_seconds=36000)
+        root = cm.issue_credential(
+            "agent-0", "read:tools write:logs admin:policy", ttl_seconds=36000
+        )
         creds.append(root)
 
         for i in range(1, 5):
@@ -137,7 +139,12 @@ class TestCascadeRevocationBranching:
         count = cm.cascade_revoke(root["token_id"])
         assert count == 4  # root + child_a + child_b + grandchild
 
-        for tid in [root["token_id"], child_a["token_id"], child_b["token_id"], grandchild["token_id"]]:
+        for tid in [
+            root["token_id"],
+            child_a["token_id"],
+            child_b["token_id"],
+            grandchild["token_id"],
+        ]:
             info = cm.get_credential_info(tid)
             assert info["status"] == CredentialStatus.REVOKED
 
@@ -214,16 +221,19 @@ class TestCascadeRevocationPartialFailure:
         # root(1) + child_a(0, already revoked) + grandchild(1) + child_b(1) = 3
         assert count == 3
 
-        for tid in [root["token_id"], child_a["token_id"], child_b["token_id"], grandchild["token_id"]]:
+        for tid in [
+            root["token_id"],
+            child_a["token_id"],
+            child_b["token_id"],
+            grandchild["token_id"],
+        ]:
             info = cm.get_credential_info(tid)
             assert info["status"] == CredentialStatus.REVOKED
 
     def test_cascade_idempotent(self, cm: CredentialManager) -> None:
         """Running cascade revoke twice on the same root returns 0 the second time."""
         root = cm.issue_credential("root", "read:tools", ttl_seconds=3600)
-        child = cm.delegate_credential(
-            root["token_id"], "agent-a", "read:tools", ttl_seconds=1800
-        )
+        cm.delegate_credential(root["token_id"], "agent-a", "read:tools", ttl_seconds=1800)
         count1 = cm.cascade_revoke(root["token_id"])
         assert count1 == 2
 
@@ -282,6 +292,11 @@ class TestCascadeRevocationLuaScript:
         count = cm.cascade_revoke(root["token_id"])
         assert count == 4
 
-        for tid in [root["token_id"], child1["token_id"], child2["token_id"], grandchild["token_id"]]:
+        for tid in [
+            root["token_id"],
+            child1["token_id"],
+            child2["token_id"],
+            grandchild["token_id"],
+        ]:
             info = cm.get_credential_info(tid)
             assert info["status"] == CredentialStatus.REVOKED

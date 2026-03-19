@@ -5,7 +5,6 @@ from __future__ import annotations
 import json
 from pathlib import Path
 from typing import Any
-from unittest.mock import AsyncMock, patch
 
 import pytest
 import yaml
@@ -26,7 +25,6 @@ from navil.openapi_server import (
     _split_params,
 )
 from navil.types import Finding
-
 
 # ---------------------------------------------------------------------------
 # Fixtures — reusable OpenAPI specs
@@ -103,9 +101,7 @@ PETSTORE_SPEC: dict[str, Any] = {
                     "200": {
                         "description": "A pet",
                         "content": {
-                            "application/json": {
-                                "schema": {"$ref": "#/components/schemas/Pet"}
-                            }
+                            "application/json": {"schema": {"$ref": "#/components/schemas/Pet"}}
                         },
                     }
                 },
@@ -332,11 +328,7 @@ class TestBuildInputSchema:
         operation = {
             "requestBody": {
                 "required": True,
-                "content": {
-                    "application/json": {
-                        "schema": {"type": "string"}
-                    }
-                },
+                "content": {"application/json": {"schema": {"type": "string"}}},
             }
         }
         schema = _build_input_schema(PETSTORE_SPEC, operation, "/upload")
@@ -355,9 +347,7 @@ class TestBuildInputSchema:
                 "description": "Max results",
             }
         }
-        operation = {
-            "parameters": [{"$ref": "#/components/parameters/LimitParam"}]
-        }
+        operation = {"parameters": [{"$ref": "#/components/parameters/LimitParam"}]}
         schema = _build_input_schema(spec, operation, "/items")
         assert "limit" in schema["properties"]
         assert schema["properties"]["limit"]["description"] == "Max results"
@@ -406,9 +396,7 @@ class TestSpecToTools:
 
     def test_deprecated_flag_preserved(self) -> None:
         tools = spec_to_tools(INSECURE_SPEC)
-        debug_tool = next(
-            (t for t in tools if "/internal/debug" in t["path"]), None
-        )
+        debug_tool = next((t for t in tools if "/internal/debug" in t["path"]), None)
         assert debug_tool is not None
         assert debug_tool["deprecated"] is True
 
@@ -552,9 +540,7 @@ class TestOpenAPIMCPServer:
 
     @pytest.mark.asyncio
     async def test_initialize(self, server: OpenAPIMCPServer) -> None:
-        msg = json.dumps(
-            {"jsonrpc": "2.0", "method": "initialize", "params": {}, "id": 1}
-        ).encode()
+        msg = json.dumps({"jsonrpc": "2.0", "method": "initialize", "params": {}, "id": 1}).encode()
         resp_bytes = await server.handle_message(msg)
         assert resp_bytes is not None
         resp = json.loads(resp_bytes)
@@ -564,9 +550,7 @@ class TestOpenAPIMCPServer:
 
     @pytest.mark.asyncio
     async def test_tools_list(self, server: OpenAPIMCPServer) -> None:
-        msg = json.dumps(
-            {"jsonrpc": "2.0", "method": "tools/list", "params": {}, "id": 2}
-        ).encode()
+        msg = json.dumps({"jsonrpc": "2.0", "method": "tools/list", "params": {}, "id": 2}).encode()
         resp_bytes = await server.handle_message(msg)
         resp = json.loads(resp_bytes)
         tools = resp["result"]["tools"]
@@ -577,9 +561,7 @@ class TestOpenAPIMCPServer:
 
     @pytest.mark.asyncio
     async def test_tools_list_no_internal_fields(self, server: OpenAPIMCPServer) -> None:
-        msg = json.dumps(
-            {"jsonrpc": "2.0", "method": "tools/list", "params": {}, "id": 3}
-        ).encode()
+        msg = json.dumps({"jsonrpc": "2.0", "method": "tools/list", "params": {}, "id": 3}).encode()
         resp_bytes = await server.handle_message(msg)
         resp = json.loads(resp_bytes)
         for tool in resp["result"]["tools"]:
@@ -621,9 +603,7 @@ class TestOpenAPIMCPServer:
 
     @pytest.mark.asyncio
     async def test_ping(self, server: OpenAPIMCPServer) -> None:
-        msg = json.dumps(
-            {"jsonrpc": "2.0", "method": "ping", "params": {}, "id": 6}
-        ).encode()
+        msg = json.dumps({"jsonrpc": "2.0", "method": "ping", "params": {}, "id": 6}).encode()
         resp_bytes = await server.handle_message(msg)
         resp = json.loads(resp_bytes)
         assert resp["id"] == 6
@@ -742,9 +722,7 @@ class TestOpenAPIScanner:
     def test_clean_spec_minimal_findings(self) -> None:
         """A well-secured spec should produce only informational findings."""
         findings = scan_openapi_spec(PETSTORE_SPEC)
-        high_or_critical = [
-            f for f in findings if f.severity in ("CRITICAL", "HIGH")
-        ]
+        high_or_critical = [f for f in findings if f.severity in ("CRITICAL", "HIGH")]
         assert len(high_or_critical) == 0
 
     def test_scan_from_file(self, petstore_yaml: str) -> None:
@@ -805,9 +783,7 @@ class TestCLIRegistration:
         sub = parser.add_subparsers()
         register(sub, type)
 
-        args = parser.parse_args(
-            ["openapi", "serve", "api.yaml", "--filter", "GET*"]
-        )
+        args = parser.parse_args(["openapi", "serve", "api.yaml", "--filter", "GET*"])
         assert args.spec == "api.yaml"
         assert args.filter == "GET*"
 
@@ -820,14 +796,22 @@ class TestCLIRegistration:
         sub = parser.add_subparsers()
         register(sub, type)
 
-        args = parser.parse_args([
-            "openapi", "wrap", "spec.yaml",
-            "--output", "/tmp/out",
-            "--name", "my_api",
-            "--policy", "policy.yaml",
-            "--filter", "POST*",
-            "--dry-run",
-        ])
+        args = parser.parse_args(
+            [
+                "openapi",
+                "wrap",
+                "spec.yaml",
+                "--output",
+                "/tmp/out",
+                "--name",
+                "my_api",
+                "--policy",
+                "policy.yaml",
+                "--filter",
+                "POST*",
+                "--dry-run",
+            ]
+        )
         assert args.output == "/tmp/out"
         assert args.name == "my_api"
         assert args.policy == "policy.yaml"
@@ -997,8 +981,18 @@ class TestEdgeCases:
                 "/orgs/{orgId}/repos/{repoId}": {
                     "get": {
                         "parameters": [
-                            {"name": "orgId", "in": "path", "required": True, "schema": {"type": "string"}},
-                            {"name": "repoId", "in": "path", "required": True, "schema": {"type": "string"}},
+                            {
+                                "name": "orgId",
+                                "in": "path",
+                                "required": True,
+                                "schema": {"type": "string"},
+                            },
+                            {
+                                "name": "repoId",
+                                "in": "path",
+                                "required": True,
+                                "schema": {"type": "string"},
+                            },
                         ],
                         "responses": {"200": {"description": "OK"}},
                     }
@@ -1018,11 +1012,7 @@ class TestEdgeCases:
         spec = {
             "openapi": "3.0.0",
             "info": {"title": "Test", "version": "1"},
-            "paths": {
-                "/fire-and-forget": {
-                    "post": {"operationId": "fireAndForget"}
-                }
-            },
+            "paths": {"/fire-and-forget": {"post": {"operationId": "fireAndForget"}}},
         }
         tools = spec_to_tools(spec)
         assert len(tools) == 1

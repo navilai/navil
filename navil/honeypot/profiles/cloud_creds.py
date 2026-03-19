@@ -56,7 +56,11 @@ TOOLS = {
                 {"name": "prod/database/password", "type": "string", "last_rotated": "2026-02-15"},
                 {"name": "prod/api/stripe-key", "type": "string", "last_rotated": "2026-01-20"},
                 {"name": "prod/jwt/signing-key", "type": "binary", "last_rotated": "2026-03-01"},
-                {"name": "staging/database/password", "type": "string", "last_rotated": "2026-02-28"},
+                {
+                    "name": "staging/database/password",
+                    "type": "string",
+                    "last_rotated": "2026-02-28",
+                },
             ],
         },
     },

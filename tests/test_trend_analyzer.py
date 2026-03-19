@@ -12,7 +12,6 @@ from navil.crawler.scan_history import ScanHistoryStore
 from navil.report.trend_analyzer import TrendAnalyzer
 from navil.report.trend_report import generate_trend_report, render_trend_report_markdown
 
-
 # ── Fixtures ──────────────────────────────────────────────────
 
 
@@ -317,51 +316,52 @@ class TestTrendReport:
 class TestCLIIntegration:
     def test_crawl_history_no_data(self, tmp_path: Path) -> None:
         """History command with empty DB works."""
-        from unittest.mock import patch
         import sys
+        from unittest.mock import patch
+
         from navil.cli import main
 
         # Point to empty DB
         with patch(
             "navil.crawler.scan_history.DEFAULT_DB_PATH",
             tmp_path / "cli_test.db",
-        ):
-            with patch.object(sys, "argv", ["navil", "crawl", "history"]):
-                exit_code = main()
+        ), patch.object(sys, "argv", ["navil", "crawl", "history"]):
+            exit_code = main()
         assert exit_code == 0
 
     def test_crawl_trend_no_data(self, tmp_path: Path) -> None:
         """Trend command with empty DB works."""
-        from unittest.mock import patch
         import sys
+        from unittest.mock import patch
+
         from navil.cli import main
 
         with patch(
             "navil.crawler.scan_history.DEFAULT_DB_PATH",
             tmp_path / "cli_test2.db",
-        ):
-            with patch.object(sys, "argv", ["navil", "crawl", "trend", "--last", "5"]):
-                exit_code = main()
+        ), patch.object(sys, "argv", ["navil", "crawl", "trend", "--last", "5"]):
+            exit_code = main()
         assert exit_code == 0
 
     def test_crawl_diff_missing_scan(self, tmp_path: Path) -> None:
         """Diff command with missing scan IDs returns error."""
-        from unittest.mock import patch
         import sys
+        from unittest.mock import patch
+
         from navil.cli import main
 
         with patch(
             "navil.crawler.scan_history.DEFAULT_DB_PATH",
             tmp_path / "cli_test3.db",
-        ):
-            with patch.object(sys, "argv", ["navil", "crawl", "diff", "1", "2"]):
-                exit_code = main()
+        ), patch.object(sys, "argv", ["navil", "crawl", "diff", "1", "2"]):
+            exit_code = main()
         assert exit_code == 1
 
     def test_crawl_schedule_crontab(self, capsys) -> None:
         """Schedule command with crontab mode outputs an entry."""
-        from unittest.mock import patch
         import sys
+        from unittest.mock import patch
+
         from navil.cli import main
 
         with patch.object(
@@ -375,8 +375,9 @@ class TestCLIIntegration:
 
     def test_crawl_schedule_systemd(self, capsys) -> None:
         """Schedule command with systemd mode outputs unit files."""
-        from unittest.mock import patch
         import sys
+        from unittest.mock import patch
+
         from navil.cli import main
 
         with patch.object(

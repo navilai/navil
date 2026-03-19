@@ -42,7 +42,7 @@ pub struct HumanContext {
 #[derive(Debug)]
 pub enum AuthResult {
     /// JWT authentication succeeded.
-    Jwt(NavilClaims),
+    Jwt(Box<NavilClaims>),
     /// HMAC authentication succeeded.
     Hmac { agent_name: String },
     /// No authentication attempted, anonymous access.
@@ -68,10 +68,9 @@ pub fn authenticate(
             Err(_) => return AuthResult::Failed("Invalid Authorization header encoding".into()),
         };
 
-        if auth_str.starts_with("Bearer ") {
-            let token = &auth_str[7..];
+        if let Some(token) = auth_str.strip_prefix("Bearer ") {
             return match validate_jwt(token, jwt_secret) {
-                Ok(claims) => AuthResult::Jwt(claims),
+                Ok(claims) => AuthResult::Jwt(Box::new(claims)),
                 Err(msg) => AuthResult::Failed(msg),
             };
         }
@@ -159,7 +158,7 @@ pub fn verify_hmac(secret: &[u8], body: &[u8], signature: &str) -> bool {
 /// Hex-decode a signature string, stripping optional "sha256=" prefix.
 fn hex_decode(s: &str) -> Option<Vec<u8>> {
     let s = s.strip_prefix("sha256=").unwrap_or(s);
-    if s.len() % 2 != 0 {
+    if !s.len().is_multiple_of(2) {
         return None;
     }
     (0..s.len())
@@ -217,10 +216,7 @@ pub async fn verify_delegation_chain(
                 ));
             }
             None => {
-                return Err(format!(
-                    "Ancestor credential {} is not active",
-                    chain[i]
-                ));
+                return Err(format!("Ancestor credential {} is not active", chain[i]));
             }
         }
     }
@@ -392,7 +388,10 @@ mod tests {
         .unwrap();
 
         let mut headers = HeaderMap::new();
-        headers.insert("authorization", format!("Bearer {}", token).parse().unwrap());
+        headers.insert(
+            "authorization",
+            format!("Bearer {}", token).parse().unwrap(),
+        );
 
         match authenticate(&headers, b"body", None, secret) {
             AuthResult::Jwt(c) => assert_eq!(c.agent_name, "jwt-agent"),
@@ -447,7 +446,8 @@ mod tests {
         let exp = now + chrono::Duration::hours(1);
 
         let claims = NavilClaims {
-            token_id: "cred_a1b2c3d4e5f6a1b2c3d4e5f6a1b2c3d4e5f6a1b2c3d4e5f6a1b2c3d4e5f6a1b2".to_string(),
+            token_id: "cred_a1b2c3d4e5f6a1b2c3d4e5f6a1b2c3d4e5f6a1b2c3d4e5f6a1b2c3d4e5f6a1b2"
+                .to_string(),
             agent_name: "deploy-bot".to_string(),
             scope: "read:tools write:logs".to_string(),
             human_context: Some(HumanContext {
@@ -458,7 +458,9 @@ mod tests {
             delegation_chain: Some(vec![
                 "cred_0000000000000000000000000000000000000000000000000000000000000001".to_string(),
             ]),
-            parent_credential_id: Some("cred_0000000000000000000000000000000000000000000000000000000000000001".to_string()),
+            parent_credential_id: Some(
+                "cred_0000000000000000000000000000000000000000000000000000000000000001".to_string(),
+            ),
             iat: serde_json::Value::String(now.to_rfc3339()),
             exp: serde_json::Value::String(exp.to_rfc3339()),
         };
@@ -471,7 +473,10 @@ mod tests {
         .unwrap();
 
         let mut headers = HeaderMap::new();
-        headers.insert("authorization", format!("Bearer {}", token).parse().unwrap());
+        headers.insert(
+            "authorization",
+            format!("Bearer {}", token).parse().unwrap(),
+        );
 
         match authenticate(&headers, b"body", None, secret) {
             AuthResult::Jwt(c) => {
@@ -515,7 +520,10 @@ mod tests {
         .unwrap();
 
         let mut headers = HeaderMap::new();
-        headers.insert("authorization", format!("Bearer {}", token).parse().unwrap());
+        headers.insert(
+            "authorization",
+            format!("Bearer {}", token).parse().unwrap(),
+        );
 
         match authenticate(&headers, b"body", None, secret) {
             AuthResult::Jwt(c) => {
@@ -590,9 +598,7 @@ mod tests {
     #[test]
     fn test_chain_depth_limit() {
         // verify_delegation_chain is async, so we test the depth check directly
-        let chain: Vec<String> = (0..11)
-            .map(|i| format!("cred_{:064x}", i))
-            .collect();
+        let chain: Vec<String> = (0..11).map(|i| format!("cred_{:064x}", i)).collect();
         assert!(chain.len() > 10);
 
         // We can't easily test async in a sync test, but we can verify
@@ -602,9 +608,7 @@ mod tests {
     #[tokio::test]
     async fn test_chain_depth_exceeds_limit() {
         // This test verifies that chains > 10 are rejected without Redis
-        let chain: Vec<String> = (0..11)
-            .map(|i| format!("cred_{:064x}", i))
-            .collect();
+        let chain: Vec<String> = (0..11).map(|i| format!("cred_{:064x}", i)).collect();
 
         // We need a Redis client but the chain depth check happens before Redis
         // So we can use a dummy URL (it won't be called)

@@ -151,7 +151,7 @@ def sanitize_alert(
 
     # 5. Optional: hash the tool execution chain for pattern aggregation
     tool_seq = alert.get("tool_sequence")
-    if tool_seq and isinstance(tool_seq, (list, tuple)):
+    if tool_seq and isinstance(tool_seq, list | tuple):
         seq_str = ",".join(str(t) for t in tool_seq)
         out["tool_sequence_hash"] = hashlib.sha256(seq_str.encode()).hexdigest()
 

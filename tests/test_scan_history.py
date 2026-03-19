@@ -2,8 +2,6 @@
 
 from __future__ import annotations
 
-import json
-import sqlite3
 from pathlib import Path
 from typing import Any
 
@@ -11,7 +9,6 @@ import pytest
 
 from navil.crawler.scan_history import ScanHistoryStore, ScanRecord, ServerResult
 from navil.report.scan_diff import generate_scan_diff, render_scan_diff_markdown
-
 
 # ── Fixtures ──────────────────────────────────────────────────
 
@@ -53,49 +50,83 @@ def populated_store(store: ScanHistoryStore) -> ScanHistoryStore:
     """Store with 3 scan runs for trend testing."""
     # Scan 1: baseline
     store.store_scan_results(
-        _make_scan_records([
-            {"name": "server-a", "score": 40, "vulnerabilities": [
-                {"id": "VULN-001", "risk_level": "HIGH"},
-                {"id": "VULN-002", "risk_level": "MEDIUM"},
-            ]},
-            {"name": "server-b", "score": 70, "vulnerabilities": [
-                {"id": "VULN-001", "risk_level": "HIGH"},
-            ]},
-            {"name": "server-c", "score": 90, "vulnerabilities": []},
-        ]),
+        _make_scan_records(
+            [
+                {
+                    "name": "server-a",
+                    "score": 40,
+                    "vulnerabilities": [
+                        {"id": "VULN-001", "risk_level": "HIGH"},
+                        {"id": "VULN-002", "risk_level": "MEDIUM"},
+                    ],
+                },
+                {
+                    "name": "server-b",
+                    "score": 70,
+                    "vulnerabilities": [
+                        {"id": "VULN-001", "risk_level": "HIGH"},
+                    ],
+                },
+                {"name": "server-c", "score": 90, "vulnerabilities": []},
+            ]
+        ),
         source_file="scan_1.jsonl",
     )
 
     # Scan 2: server-a improves, server-d added
     store.store_scan_results(
-        _make_scan_records([
-            {"name": "server-a", "score": 60, "vulnerabilities": [
-                {"id": "VULN-002", "risk_level": "MEDIUM"},
-            ]},
-            {"name": "server-b", "score": 65, "vulnerabilities": [
-                {"id": "VULN-001", "risk_level": "HIGH"},
-                {"id": "VULN-003", "risk_level": "LOW"},
-            ]},
-            {"name": "server-c", "score": 90, "vulnerabilities": []},
-            {"name": "server-d", "score": 30, "vulnerabilities": [
-                {"id": "VULN-004", "risk_level": "CRITICAL"},
-            ]},
-        ]),
+        _make_scan_records(
+            [
+                {
+                    "name": "server-a",
+                    "score": 60,
+                    "vulnerabilities": [
+                        {"id": "VULN-002", "risk_level": "MEDIUM"},
+                    ],
+                },
+                {
+                    "name": "server-b",
+                    "score": 65,
+                    "vulnerabilities": [
+                        {"id": "VULN-001", "risk_level": "HIGH"},
+                        {"id": "VULN-003", "risk_level": "LOW"},
+                    ],
+                },
+                {"name": "server-c", "score": 90, "vulnerabilities": []},
+                {
+                    "name": "server-d",
+                    "score": 30,
+                    "vulnerabilities": [
+                        {"id": "VULN-004", "risk_level": "CRITICAL"},
+                    ],
+                },
+            ]
+        ),
         source_file="scan_2.jsonl",
     )
 
     # Scan 3: server-c removed, server-d still low
     store.store_scan_results(
-        _make_scan_records([
-            {"name": "server-a", "score": 75, "vulnerabilities": []},
-            {"name": "server-b", "score": 60, "vulnerabilities": [
-                {"id": "VULN-001", "risk_level": "HIGH"},
-            ]},
-            {"name": "server-d", "score": 35, "vulnerabilities": [
-                {"id": "VULN-004", "risk_level": "CRITICAL"},
-                {"id": "VULN-005", "risk_level": "HIGH"},
-            ]},
-        ]),
+        _make_scan_records(
+            [
+                {"name": "server-a", "score": 75, "vulnerabilities": []},
+                {
+                    "name": "server-b",
+                    "score": 60,
+                    "vulnerabilities": [
+                        {"id": "VULN-001", "risk_level": "HIGH"},
+                    ],
+                },
+                {
+                    "name": "server-d",
+                    "score": 35,
+                    "vulnerabilities": [
+                        {"id": "VULN-004", "risk_level": "CRITICAL"},
+                        {"id": "VULN-005", "risk_level": "HIGH"},
+                    ],
+                },
+            ]
+        ),
         source_file="scan_3.jsonl",
     )
 
@@ -118,12 +149,18 @@ class TestScanHistoryStore:
 
     def test_store_and_retrieve_results(self, store: ScanHistoryStore) -> None:
         """Store and retrieve scan results."""
-        records = _make_scan_records([
-            {"name": "test-server", "score": 85, "vulnerabilities": [
-                {"id": "V1", "risk_level": "LOW"},
-            ]},
-            {"name": "failing-server", "status": "error", "error": "connection refused"},
-        ])
+        records = _make_scan_records(
+            [
+                {
+                    "name": "test-server",
+                    "score": 85,
+                    "vulnerabilities": [
+                        {"id": "V1", "risk_level": "LOW"},
+                    ],
+                },
+                {"name": "failing-server", "status": "error", "error": "connection refused"},
+            ]
+        )
 
         scan_id = store.store_scan_results(records, source_file="test.jsonl")
         assert scan_id >= 1
@@ -143,9 +180,11 @@ class TestScanHistoryStore:
 
     def test_store_timeout_result(self, store: ScanHistoryStore) -> None:
         """Timeout results are tracked correctly."""
-        records = _make_scan_records([
-            {"name": "slow-server", "status": "timeout"},
-        ])
+        records = _make_scan_records(
+            [
+                {"name": "slow-server", "status": "timeout"},
+            ]
+        )
         scan_id = store.store_scan_results(records)
         scan = store.get_scan(scan_id)
         assert scan is not None
@@ -154,12 +193,8 @@ class TestScanHistoryStore:
 
     def test_multiple_scans(self, store: ScanHistoryStore) -> None:
         """Multiple scans get distinct IDs."""
-        id1 = store.store_scan_results(
-            _make_scan_records([{"name": "a", "score": 50}])
-        )
-        id2 = store.store_scan_results(
-            _make_scan_records([{"name": "b", "score": 60}])
-        )
+        id1 = store.store_scan_results(_make_scan_records([{"name": "a", "score": 50}]))
+        id2 = store.store_scan_results(_make_scan_records([{"name": "b", "score": 60}]))
         assert id1 != id2
         assert id2 > id1
 
@@ -276,7 +311,11 @@ class TestScanDiff:
         """generate_scan_diff returns enriched diff data."""
         diff = generate_scan_diff(populated_store, 1, 3)
         assert "error" not in diff
-        assert "notable_improvements" in diff or "notable_regressions" in diff or "score_changes" in diff
+        assert (
+            "notable_improvements" in diff
+            or "notable_regressions" in diff
+            or "score_changes" in diff
+        )
 
     def test_render_scan_diff_markdown(self, populated_store: ScanHistoryStore) -> None:
         """Rendered diff contains expected sections."""
@@ -293,9 +332,7 @@ class TestScanDiff:
 
     def test_generate_diff_single_scan(self, store: ScanHistoryStore) -> None:
         """Diff with a nonexistent scan returns error."""
-        store.store_scan_results(
-            _make_scan_records([{"name": "x", "score": 50}])
-        )
+        store.store_scan_results(_make_scan_records([{"name": "x", "score": 50}]))
         diff = generate_scan_diff(store, 1, 999)
         assert "error" in diff
 
@@ -346,9 +383,11 @@ class TestEdgeCases:
     def test_first_scan_no_history(self, store: ScanHistoryStore) -> None:
         """First scan produces valid results with no prior history."""
         scan_id = store.store_scan_results(
-            _make_scan_records([
-                {"name": "new-server", "score": 60},
-            ])
+            _make_scan_records(
+                [
+                    {"name": "new-server", "score": 60},
+                ]
+            )
         )
         assert scan_id == 1
         history = store.get_scan_history()
@@ -357,10 +396,12 @@ class TestEdgeCases:
     def test_all_failures(self, store: ScanHistoryStore) -> None:
         """Scan with all failures has avg_score 0."""
         scan_id = store.store_scan_results(
-            _make_scan_records([
-                {"name": "fail-1", "status": "error"},
-                {"name": "fail-2", "status": "timeout"},
-            ])
+            _make_scan_records(
+                [
+                    {"name": "fail-1", "status": "error"},
+                    {"name": "fail-2", "status": "timeout"},
+                ]
+            )
         )
         scan = store.get_scan(scan_id)
         assert scan is not None
@@ -369,9 +410,7 @@ class TestEdgeCases:
 
     def test_single_server_score_stats(self, store: ScanHistoryStore) -> None:
         """Single server: min == max == avg."""
-        scan_id = store.store_scan_results(
-            _make_scan_records([{"name": "only", "score": 72}])
-        )
+        scan_id = store.store_scan_results(_make_scan_records([{"name": "only", "score": 72}]))
         scan = store.get_scan(scan_id)
         assert scan is not None
         assert scan.min_score == 72
@@ -382,9 +421,7 @@ class TestEdgeCases:
         """Data persists after store is re-opened."""
         db_path = tmp_path / "persist.db"
         store1 = ScanHistoryStore(db_path=db_path)
-        store1.store_scan_results(
-            _make_scan_records([{"name": "persist-test", "score": 88}])
-        )
+        store1.store_scan_results(_make_scan_records([{"name": "persist-test", "score": 88}]))
 
         # Re-open
         store2 = ScanHistoryStore(db_path=db_path)

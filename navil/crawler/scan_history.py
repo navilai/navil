@@ -11,11 +11,12 @@ from __future__ import annotations
 import json
 import logging
 import sqlite3
+from collections.abc import Iterator
 from contextlib import contextmanager
-from dataclasses import asdict, dataclass, field
+from dataclasses import asdict, dataclass
 from datetime import datetime, timezone
 from pathlib import Path
-from typing import Any, Iterator
+from typing import Any
 
 logger = logging.getLogger(__name__)
 
@@ -198,7 +199,9 @@ class ScanHistoryStore:
             # Insert per-server results
             for rec in records:
                 scan_data = rec.get("scan", {})
-                score = int(scan_data.get("security_score", 0)) if rec.get("status") == "success" else 0
+                score = (
+                    int(scan_data.get("security_score", 0)) if rec.get("status") == "success" else 0
+                )
                 vulns = scan_data.get("vulnerabilities", [])
                 findings = scan_data.get("findings", [])
 
@@ -221,7 +224,9 @@ class ScanHistoryStore:
                     ),
                 )
 
-        logger.info("Stored scan %d: %d servers (%d successful)", scan_id, total, len(successful_recs))
+        logger.info(
+            "Stored scan %d: %d servers (%d successful)", scan_id, total, len(successful_recs)
+        )
         return scan_id
 
     # ── Read ──────────────────────────────────────────────────
@@ -260,9 +265,7 @@ class ScanHistoryStore:
     def get_scan(self, scan_id: int) -> ScanRecord | None:
         """Return a single scan record by ID."""
         with self._connect() as conn:
-            row = conn.execute(
-                "SELECT * FROM scans WHERE scan_id = ?", (scan_id,)
-            ).fetchone()
+            row = conn.execute("SELECT * FROM scans WHERE scan_id = ?", (scan_id,)).fetchone()
 
         if row is None:
             return None
@@ -442,7 +445,5 @@ class ScanHistoryStore:
     def get_latest_scan_id(self) -> int | None:
         """Return the scan_id of the most recent scan, or None if no scans."""
         with self._connect() as conn:
-            row = conn.execute(
-                "SELECT scan_id FROM scans ORDER BY scan_id DESC LIMIT 1"
-            ).fetchone()
+            row = conn.execute("SELECT scan_id FROM scans ORDER BY scan_id DESC LIMIT 1").fetchone()
         return row["scan_id"] if row else None

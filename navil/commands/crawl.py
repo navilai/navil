@@ -156,7 +156,7 @@ def _run_scan_command(cli, args: argparse.Namespace) -> int:  # type: ignore[no-
         print("No servers discovered from registries.", file=sys.stderr)
         return 1
 
-    print(f"\nScan complete:")
+    print("\nScan complete:")
     print(f"  Scan ID:    {result.get('scan_id')}")
     print(f"  Discovered: {result.get('servers_discovered', 0)} servers")
     stats = result.get("stats", {})
@@ -189,7 +189,9 @@ def _history_command(cli, args: argparse.Namespace) -> int:  # type: ignore[no-u
         print(json.dumps([s.to_dict() for s in scans], indent=2))
         return 0
 
-    print(f"{'ID':>4s}  {'Date':>10s}  {'Servers':>7s}  {'OK':>4s}  {'Fail':>4s}  {'Avg Score':>9s}")
+    print(
+        f"{'ID':>4s}  {'Date':>10s}  {'Servers':>7s}  {'OK':>4s}  {'Fail':>4s}  {'Avg Score':>9s}"
+    )
     print("-" * 50)
     for s in scans:
         ts = s.timestamp[:10] if len(s.timestamp) >= 10 else s.timestamp

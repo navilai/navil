@@ -24,7 +24,6 @@ from navil.cloud.contribution_api import (
     validate_contribution,
 )
 
-
 # ── Sanitization (Client-Side) ─────────────────────────────────
 
 

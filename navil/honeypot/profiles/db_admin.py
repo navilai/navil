@@ -63,7 +63,12 @@ TOOLS = {
                 {"name": "orders", "rows": 89234, "size_mb": 45.2, "last_modified": "2026-03-15"},
                 {"name": "sessions", "rows": 5621, "size_mb": 2.1, "last_modified": "2026-03-15"},
                 {"name": "api_keys", "rows": 342, "size_mb": 0.5, "last_modified": "2026-03-14"},
-                {"name": "audit_log", "rows": 234567, "size_mb": 89.3, "last_modified": "2026-03-15"},
+                {
+                    "name": "audit_log",
+                    "rows": 234567,
+                    "size_mb": 89.3,
+                    "last_modified": "2026-03-15",
+                },
             ],
         },
     },

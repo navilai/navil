@@ -3,9 +3,8 @@
 from __future__ import annotations
 
 import asyncio
-import re
 from typing import Any
-from unittest.mock import AsyncMock, MagicMock, patch
+from unittest.mock import patch
 
 import httpx
 import pytest
@@ -16,7 +15,6 @@ from navil.crawler.registry_crawler import (
     _DomainRateLimiter,
     _npm_config_example,
 )
-
 
 # ── CrawlResult ──────────────────────────────────────────────
 

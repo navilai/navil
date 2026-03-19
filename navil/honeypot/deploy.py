@@ -126,7 +126,7 @@ class HoneypotDeployer:
             env["HONEYPOT_LOG_PATH"] = log_path
 
         try:
-            result = self._run(cmd)
+            self._run(cmd)
             logger.info("Honeypot containers started: %s", profiles)
             return {
                 "status": "started",
@@ -164,7 +164,7 @@ class HoneypotDeployer:
             cmd = self._docker_compose_cmd() + ["down"]
 
         try:
-            result = self._run(cmd)
+            self._run(cmd)
             stopped = profiles or list(AVAILABLE_PROFILES)
             logger.info("Honeypot containers stopped: %s", stopped)
             return {

@@ -337,11 +337,7 @@ async fn handle_mcp(
                 .await;
             });
 
-            return (
-                StatusCode::UNAUTHORIZED,
-                jsonrpc_error(-32003, msg, req_id),
-            )
-                .into_response();
+            return (StatusCode::UNAUTHORIZED, jsonrpc_error(-32003, msg, req_id)).into_response();
         }
     };
 
@@ -352,10 +348,7 @@ async fn handle_mcp(
         match auth::verify_delegation_chain(&state.redis_client, &delegation_chain).await {
             Ok(()) => {}
             Err(msg) => {
-                return (
-                    StatusCode::UNAUTHORIZED,
-                    jsonrpc_error(-32003, msg, req_id),
-                )
+                return (StatusCode::UNAUTHORIZED, jsonrpc_error(-32003, msg, req_id))
                     .into_response();
             }
         }
@@ -459,11 +452,7 @@ async fn handle_mcp(
         Ok(result) => result,
         Err(e) => {
             error!("Upstream request failed: {}", e);
-            return (
-                StatusCode::BAD_GATEWAY,
-                jsonrpc_error(-32603, e, req_id),
-            )
-                .into_response();
+            return (StatusCode::BAD_GATEWAY, jsonrpc_error(-32603, e, req_id)).into_response();
         }
     };
 
@@ -543,13 +532,11 @@ async fn main() {
         .unwrap_or(8080);
 
     // JWT secret = HMAC secret (both use HS256)
-    let jwt_secret = hmac_secret
-        .clone()
-        .unwrap_or_else(|| {
-            std::env::var("NAVIL_JWT_SECRET")
-                .unwrap_or_default()
-                .into_bytes()
-        });
+    let jwt_secret = hmac_secret.clone().unwrap_or_else(|| {
+        std::env::var("NAVIL_JWT_SECRET")
+            .unwrap_or_default()
+            .into_bytes()
+    });
 
     let redis_client = redis::Client::open(redis_url.as_str()).expect("Invalid Redis URL");
     let http_client = reqwest::Client::builder()

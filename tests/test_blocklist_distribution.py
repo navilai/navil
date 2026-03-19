@@ -18,12 +18,11 @@ import pytest
 
 from navil.blocklist import BlocklistEntry, BlocklistManager
 from navil.cloud.blocklist_distribution import (
-    BlocklistDistributor,
     _COMMUNITY_CONTENT_DELAY_H,
     _REALTIME_TIERS,
     _TIER_RATE_LIMITS,
+    BlocklistDistributor,
 )
-
 
 # ── Fixtures ────────────────────────────────────────────────────
 

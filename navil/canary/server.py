@@ -25,7 +25,6 @@ from __future__ import annotations
 import json
 import logging
 import threading
-import time
 from collections import deque
 from datetime import datetime, timezone
 from http.server import BaseHTTPRequestHandler, HTTPServer

@@ -8,7 +8,6 @@ from unittest.mock import MagicMock, patch
 
 import jwt as pyjwt
 import pytest
-from cryptography.hazmat.primitives import serialization
 from cryptography.hazmat.primitives.asymmetric import rsa
 
 from navil.credential_manager import CredentialManager
@@ -113,9 +112,11 @@ class TestVerifyOIDCToken:
             assert claims["roles"] == ["engineer", "on-call"]
 
     def test_expired_token_raises(self, expired_oidc_token, jwks_data) -> None:
-        with patch("navil.oidc._fetch_jwks", return_value=jwks_data):
-            with pytest.raises(ValueError, match="expired"):
-                verify_oidc_token(expired_oidc_token, issuer="https://test-issuer.example.com")
+        with (
+            patch("navil.oidc._fetch_jwks", return_value=jwks_data),
+            pytest.raises(ValueError, match="expired"),
+        ):
+            verify_oidc_token(expired_oidc_token, issuer="https://test-issuer.example.com")
 
     def test_invalid_token_format(self) -> None:
         with pytest.raises(ValueError, match="Invalid OIDC token format"):
@@ -129,7 +130,9 @@ class TestVerifyOIDCToken:
             "iat": int(time.time()),
             "exp": int(time.time()) + 3600,
         }
-        token = pyjwt.encode(payload, private_key, algorithm="RS256", headers={"kid": "test-key-id"})
+        token = pyjwt.encode(
+            payload, private_key, algorithm="RS256", headers={"kid": "test-key-id"}
+        )
         with pytest.raises(ValueError, match="No issuer"):
             verify_oidc_token(token)
 
@@ -146,27 +149,32 @@ class TestVerifyOIDCToken:
 
     def test_wrong_audience_raises(self, oidc_token, jwks_data) -> None:
         """Token verification fails when the audience does not match."""
-        with patch("navil.oidc._fetch_jwks", return_value=jwks_data):
-            with pytest.raises(ValueError, match="verification failed"):
-                verify_oidc_token(
-                    oidc_token,
-                    issuer="https://test-issuer.example.com",
-                    audience="wrong-audience",
-                )
+        with (
+            patch("navil.oidc._fetch_jwks", return_value=jwks_data),
+            pytest.raises(ValueError, match="verification failed"),
+        ):
+            verify_oidc_token(
+                oidc_token,
+                issuer="https://test-issuer.example.com",
+                audience="wrong-audience",
+            )
 
     def test_wrong_signing_key_raises(self, oidc_token) -> None:
         """Token signed with key A, JWKS contains key B."""
         other_key = rsa.generate_private_key(public_exponent=65537, key_size=2048)
         other_pub = other_key.public_key()
         from jwt.algorithms import RSAAlgorithm
+
         jwk = json.loads(RSAAlgorithm.to_jwk(other_pub))
         jwk["kid"] = "test-key-id"
         jwk["use"] = "sig"
         wrong_jwks = {"keys": [jwk]}
 
-        with patch("navil.oidc._fetch_jwks", return_value=wrong_jwks):
-            with pytest.raises(ValueError, match="verification failed"):
-                verify_oidc_token(oidc_token, issuer="https://test-issuer.example.com")
+        with (
+            patch("navil.oidc._fetch_jwks", return_value=wrong_jwks),
+            pytest.raises(ValueError, match="verification failed"),
+        ):
+            verify_oidc_token(oidc_token, issuer="https://test-issuer.example.com")
 
 
 class TestExchangeOIDCToken:
@@ -189,9 +197,7 @@ class TestExchangeOIDCToken:
             assert result["human_context"]["email"] == "alice@example.com"
             assert result["human_context"]["roles"] == ["engineer", "on-call"]
 
-    def test_exchange_credential_is_stored(
-        self, oidc_token, jwks_data, cm
-    ) -> None:
+    def test_exchange_credential_is_stored(self, oidc_token, jwks_data, cm) -> None:
         with patch("navil.oidc._fetch_jwks", return_value=jwks_data):
             result = exchange_oidc_token(
                 oidc_token=oidc_token,
@@ -205,9 +211,7 @@ class TestExchangeOIDCToken:
             assert info["agent_name"] == "deploy-bot"
             assert info["human_context"]["email"] == "alice@example.com"
 
-    def test_exchange_jwt_contains_human_context(
-        self, oidc_token, jwks_data, cm
-    ) -> None:
+    def test_exchange_jwt_contains_human_context(self, oidc_token, jwks_data, cm) -> None:
         with patch("navil.oidc._fetch_jwks", return_value=jwks_data):
             result = exchange_oidc_token(
                 oidc_token=oidc_token,
@@ -219,24 +223,26 @@ class TestExchangeOIDCToken:
             # Decode the issued Navil JWT and check human_context
             # iat/exp are ISO strings (not numeric), so disable those checks
             payload = pyjwt.decode(
-                result["token"], cm.secret_key, algorithms=["HS256"],
+                result["token"],
+                cm.secret_key,
+                algorithms=["HS256"],
                 options={"verify_exp": False, "verify_iat": False},
             )
             assert payload["human_context"]["sub"] == "google-oauth2|108234567890"
             assert payload["human_context"]["email"] == "alice@example.com"
 
-    def test_exchange_with_expired_oidc_raises(
-        self, expired_oidc_token, jwks_data, cm
-    ) -> None:
-        with patch("navil.oidc._fetch_jwks", return_value=jwks_data):
-            with pytest.raises(ValueError, match="expired"):
-                exchange_oidc_token(
-                    oidc_token=expired_oidc_token,
-                    agent_name="deploy-bot",
-                    scope="read:tools",
-                    credential_manager=cm,
-                    issuer="https://test-issuer.example.com",
-                )
+    def test_exchange_with_expired_oidc_raises(self, expired_oidc_token, jwks_data, cm) -> None:
+        with (
+            patch("navil.oidc._fetch_jwks", return_value=jwks_data),
+            pytest.raises(ValueError, match="expired"),
+        ):
+            exchange_oidc_token(
+                oidc_token=expired_oidc_token,
+                agent_name="deploy-bot",
+                scope="read:tools",
+                credential_manager=cm,
+                issuer="https://test-issuer.example.com",
+            )
 
     def test_exchange_with_audience(self, oidc_token, jwks_data, cm) -> None:
         """Exchange succeeds when the correct audience is supplied."""
@@ -253,16 +259,18 @@ class TestExchangeOIDCToken:
 
     def test_exchange_wrong_audience_raises(self, oidc_token, jwks_data, cm) -> None:
         """Exchange fails when the audience does not match the token."""
-        with patch("navil.oidc._fetch_jwks", return_value=jwks_data):
-            with pytest.raises(ValueError, match="verification failed"):
-                exchange_oidc_token(
-                    oidc_token=oidc_token,
-                    agent_name="deploy-bot",
-                    scope="read:tools",
-                    credential_manager=cm,
-                    issuer="https://test-issuer.example.com",
-                    audience="wrong-audience",
-                )
+        with (
+            patch("navil.oidc._fetch_jwks", return_value=jwks_data),
+            pytest.raises(ValueError, match="verification failed"),
+        ):
+            exchange_oidc_token(
+                oidc_token=oidc_token,
+                agent_name="deploy-bot",
+                scope="read:tools",
+                credential_manager=cm,
+                issuer="https://test-issuer.example.com",
+                audience="wrong-audience",
+            )
 
     def test_exchange_roles_from_groups_claim(self, rsa_keypair, jwks_data, cm) -> None:
         """Some providers use 'groups' instead of 'roles'."""
@@ -275,7 +283,9 @@ class TestExchangeOIDCToken:
             "iat": int(time.time()),
             "exp": int(time.time()) + 3600,
         }
-        token = pyjwt.encode(payload, private_key, algorithm="RS256", headers={"kid": "test-key-id"})
+        token = pyjwt.encode(
+            payload, private_key, algorithm="RS256", headers={"kid": "test-key-id"}
+        )
 
         with patch("navil.oidc._fetch_jwks", return_value=jwks_data):
             result = exchange_oidc_token(
@@ -319,9 +329,11 @@ class TestJWKSCache:
         mock_resp.raise_for_status.side_effect = Exception("Not found")
 
         # First call to discovery endpoint returns 404
-        with patch("navil.oidc.requests.get", side_effect=Exception("Network error")):
-            with pytest.raises(ValueError, match="Failed to fetch JWKS"):
-                _fetch_jwks("https://bad-issuer.example.com")
+        with (
+            patch("navil.oidc.requests.get", side_effect=Exception("Network error")),
+            pytest.raises(ValueError, match="Failed to fetch JWKS"),
+        ):
+            _fetch_jwks("https://bad-issuer.example.com")
 
     def test_cache_expires_after_ttl(self, jwks_data) -> None:
         """JWKS cache entries expire after the 1-hour TTL."""
@@ -363,7 +375,9 @@ class TestExchangeRolesExtraction:
             "iat": int(time.time()),
             "exp": int(time.time()) + 3600,
         }
-        token = pyjwt.encode(payload, private_key, algorithm="RS256", headers={"kid": "test-key-id"})
+        token = pyjwt.encode(
+            payload, private_key, algorithm="RS256", headers={"kid": "test-key-id"}
+        )
 
         with patch("navil.oidc._fetch_jwks", return_value=jwks_data):
             result = exchange_oidc_token(
@@ -385,7 +399,9 @@ class TestExchangeRolesExtraction:
             "iat": int(time.time()),
             "exp": int(time.time()) + 3600,
         }
-        token = pyjwt.encode(payload, private_key, algorithm="RS256", headers={"kid": "test-key-id"})
+        token = pyjwt.encode(
+            payload, private_key, algorithm="RS256", headers={"kid": "test-key-id"}
+        )
 
         with patch("navil.oidc._fetch_jwks", return_value=jwks_data):
             result = exchange_oidc_token(
@@ -397,9 +413,7 @@ class TestExchangeRolesExtraction:
             )
             assert result["human_context"]["roles"] == []
 
-    def test_exchanged_credential_can_be_delegated(
-        self, oidc_token, jwks_data, cm
-    ) -> None:
+    def test_exchanged_credential_can_be_delegated(self, oidc_token, jwks_data, cm) -> None:
         """Credential obtained via OIDC exchange can be delegated to a sub-agent."""
         with patch("navil.oidc._fetch_jwks", return_value=jwks_data):
             parent = exchange_oidc_token(

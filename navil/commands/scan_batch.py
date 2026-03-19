@@ -24,7 +24,7 @@ def _scan_batch_command(cli, args: argparse.Namespace) -> int:  # type: ignore[n
 
     stats = scan_batch(input_dir, output, timeout_per_scan=timeout)
 
-    print(f"\nBatch scan complete:")
+    print("\nBatch scan complete:")
     print(f"  Total:      {stats.total}")
     print(f"  Successful: {stats.successful}")
     print(f"  Failed:     {stats.failed}")

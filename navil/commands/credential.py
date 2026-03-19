@@ -117,7 +117,7 @@ def _credential_exchange_command(cli, args: argparse.Namespace) -> int:  # type:
 
         hc = result.get("human_context")
         if hc:
-            print(f"\nHuman Identity:")
+            print("\nHuman Identity:")
             print(f"  Subject: {hc.get('sub', 'N/A')}")
             print(f"  Email: {hc.get('email', 'N/A')}")
             print(f"  Roles: {', '.join(hc.get('roles', []))}")

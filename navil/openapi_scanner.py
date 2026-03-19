@@ -129,8 +129,7 @@ def _check_permissive_cors(
 
     # Check for * in Access-Control-Allow-Origin or x-cors-allow-origin
     if re.search(
-        r"(?i)(access-control-allow-origin|x-cors-allow-origin|allowedOrigins)"
-        r"[\"':\s]+\*",
+        r"(?i)(access-control-allow-origin|x-cors-allow-origin|allowedOrigins)" r"[\"':\s]+\*",
         spec_str,
     ):
         findings.append(
@@ -190,7 +189,10 @@ def _check_sensitive_data_in_query(
                                 f"Move '{name}' to the request body or use an "
                                 "Authorization header instead of a query parameter."
                             ),
-                            evidence=f"Sensitive parameter '{name}' in query for {method.upper()} {path}",
+                            evidence=(
+                                f"Sensitive parameter '{name}' in query"
+                                f" for {method.upper()} {path}"
+                            ),
                         )
                     )
 
@@ -246,9 +248,7 @@ def _check_missing_input_validation(
                         severity="MEDIUM",
                         source="openapi-scanner",
                         affected_field=f"paths.{path}.{method}.requestBody.content",
-                        remediation=(
-                            "Add a schema under requestBody.content.application/json."
-                        ),
+                        remediation=("Add a schema under requestBody.content.application/json."),
                     )
                 )
 
@@ -354,10 +354,10 @@ def _check_missing_response_schemas(
 
             # Check if any success response has a schema
             has_schema = False
-            for status, resp in responses.items():
+            for _status, resp in responses.items():
                 resp = _deref(spec, resp)
                 content = resp.get("content", {})
-                for media_type, media in content.items():
+                for _media_type, media in content.items():
                     if media.get("schema"):
                         has_schema = True
                         break

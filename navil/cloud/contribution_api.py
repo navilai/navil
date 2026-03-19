@@ -98,7 +98,14 @@ def sanitize_record(record: dict[str, Any]) -> dict[str, Any]:
         out["tool_sequence_hash"] = hashlib.sha256(tool_name.encode()).hexdigest()
 
     # Copy allowed metadata
-    for key in ("anomaly_type", "severity", "confidence", "timestamp", "source_type", "profile_name"):
+    for key in (
+        "anomaly_type",
+        "severity",
+        "confidence",
+        "timestamp",
+        "source_type",
+        "profile_name",
+    ):
         if key in record:
             out[key] = record[key]
 
@@ -300,7 +307,7 @@ def validate_contribution(entry: dict[str, Any]) -> dict[str, Any]:
 
     if "confidence" in entry:
         val = entry["confidence"]
-        if not isinstance(val, (int, float)) or not (0.0 <= val <= 1.0):
+        if not isinstance(val, int | float) or not (0.0 <= val <= 1.0):
             raise ValidationError(
                 "Confidence must be a number between 0.0 and 1.0",
                 field="confidence",
@@ -344,7 +351,9 @@ def validate_batch(
         dicts with "index" and "error" keys.
     """
     if len(entries) > _MAX_BATCH_SIZE:
-        return [], [{"index": "batch", "error": f"Batch too large: {len(entries)} > {_MAX_BATCH_SIZE}"}]
+        return [], [
+            {"index": "batch", "error": f"Batch too large: {len(entries)} > {_MAX_BATCH_SIZE}"}
+        ]
 
     valid: list[dict[str, Any]] = []
     errors: list[dict[str, str]] = []
@@ -424,10 +433,12 @@ class ContributionReceiver:
 
                 # Mark as seen and queue
                 self._seen_uuids.add(contrib_uuid)
-                self._queue.append({
-                    **entry,
-                    "_received_at": datetime.now(timezone.utc).isoformat(),
-                })
+                self._queue.append(
+                    {
+                        **entry,
+                        "_received_at": datetime.now(timezone.utc).isoformat(),
+                    }
+                )
                 accepted += 1
 
             # Update stats

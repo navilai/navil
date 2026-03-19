@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import argparse
+import contextlib
 import json
 
 
@@ -15,7 +16,7 @@ def _blocklist_update(cli, args: argparse.Namespace) -> int:  # type: ignore[no-
         file_path=None,
     )
 
-    print(f"\n  Blocklist Update")
+    print("\n  Blocklist Update")
     print(f"  {'Patterns loaded:':<24} {result['loaded']:>8}")
     print(f"  {'Total patterns:':<24} {result['pattern_count']:>8}")
     print(f"  {'Version:':<24} {result['version']:>8}")
@@ -81,10 +82,8 @@ def _blocklist_add(cli, args: argparse.Namespace) -> int:  # type: ignore[no-unt
     if getattr(cli, "redis", None) is not None:
         mgr.load_from_redis()
     else:
-        try:
+        with contextlib.suppress(FileNotFoundError):
             mgr.load_from_file()
-        except FileNotFoundError:
-            pass  # Start fresh
 
     entry = BlocklistEntry(
         pattern_id=args.pattern_id,
@@ -167,7 +166,7 @@ def _blocklist_status(cli, args: argparse.Namespace) -> int:  # type: ignore[no-
     if args.json_output:
         print(json.dumps(status, indent=2))
     else:
-        print(f"\n  Blocklist Status")
+        print("\n  Blocklist Status")
         print(f"  {'Version:':<24} {status['version']:>8}")
         print(f"  {'Pattern count:':<24} {status['pattern_count']:>8}")
         print(f"  {'Last update:':<24} {status['last_update'][:19]:>24}")
@@ -265,34 +264,50 @@ def register(subparsers: argparse._SubParsersAction, cli_class: type) -> None:
     # list
     list_parser = bl_sub.add_parser("list", help="List all loaded patterns")
     list_parser.add_argument("--json", action="store_true", dest="json_output", help="Output JSON")
-    list_parser.add_argument("--type", choices=["tool_name", "tool_sequence", "argument_pattern"],
-                             help="Filter by pattern type")
+    list_parser.add_argument(
+        "--type",
+        choices=["tool_name", "tool_sequence", "argument_pattern"],
+        help="Filter by pattern type",
+    )
     list_parser.add_argument("--severity", help="Filter by severity (LOW, MEDIUM, HIGH, CRITICAL)")
     list_parser.set_defaults(func=_blocklist_list)
 
     # add
     add_parser = bl_sub.add_parser("add", help="Manually add a pattern")
     add_parser.add_argument("pattern_id", help="Unique pattern identifier (e.g. BL-CUSTOM-001)")
-    add_parser.add_argument("--type", required=True,
-                            choices=["tool_name", "tool_sequence", "argument_pattern"],
-                            help="Pattern type")
-    add_parser.add_argument("--value", required=True, help="Pattern value (tool name, sequence, or regex)")
-    add_parser.add_argument("--severity", default="HIGH",
-                            choices=["LOW", "MEDIUM", "HIGH", "CRITICAL"],
-                            help="Severity level (default: HIGH)")
-    add_parser.add_argument("--confidence", type=float, default=0.8,
-                            help="Confidence score 0.0-1.0 (default: 0.8)")
+    add_parser.add_argument(
+        "--type",
+        required=True,
+        choices=["tool_name", "tool_sequence", "argument_pattern"],
+        help="Pattern type",
+    )
+    add_parser.add_argument(
+        "--value", required=True, help="Pattern value (tool name, sequence, or regex)"
+    )
+    add_parser.add_argument(
+        "--severity",
+        default="HIGH",
+        choices=["LOW", "MEDIUM", "HIGH", "CRITICAL"],
+        help="Severity level (default: HIGH)",
+    )
+    add_parser.add_argument(
+        "--confidence", type=float, default=0.8, help="Confidence score 0.0-1.0 (default: 0.8)"
+    )
     add_parser.add_argument("--description", default="", help="Description of the pattern")
     add_parser.set_defaults(func=_blocklist_add)
 
     # version
     version_parser = bl_sub.add_parser("version", help="Show current blocklist version")
-    version_parser.add_argument("--json", action="store_true", dest="json_output", help="Output JSON")
+    version_parser.add_argument(
+        "--json", action="store_true", dest="json_output", help="Output JSON"
+    )
     version_parser.set_defaults(func=_blocklist_version)
 
     # status
     status_parser = bl_sub.add_parser("status", help="Show blocklist version and stats")
-    status_parser.add_argument("--json", action="store_true", dest="json_output", help="Output JSON")
+    status_parser.add_argument(
+        "--json", action="store_true", dest="json_output", help="Output JSON"
+    )
     status_parser.set_defaults(func=_blocklist_status)
 
     # load
@@ -303,7 +318,9 @@ def register(subparsers: argparse._SubParsersAction, cli_class: type) -> None:
     # search
     search_parser = bl_sub.add_parser("search", help="Search for matching entries")
     search_parser.add_argument("pattern", help="Search pattern (matches ID, value, description)")
-    search_parser.add_argument("--json", action="store_true", dest="json_output", help="Output JSON")
+    search_parser.add_argument(
+        "--json", action="store_true", dest="json_output", help="Output JSON"
+    )
     search_parser.set_defaults(func=_blocklist_search)
 
     # Default handler for bare "navil blocklist"

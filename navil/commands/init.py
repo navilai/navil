@@ -16,7 +16,6 @@ from typing import Any
 import httpx
 import yaml
 
-
 # ── Defaults ────────────────────────────────────────────────
 
 DEFAULT_BACKEND_URL = "https://api.navil.ai"

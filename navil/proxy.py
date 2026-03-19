@@ -18,7 +18,6 @@ from __future__ import annotations
 import asyncio
 import hashlib
 import hmac
-import json
 import logging
 import time
 from collections import deque
@@ -233,11 +232,10 @@ class MCPSecurityProxy:
                                 return result
                         except ValueError:
                             pass
-                    elif isinstance(exp_str, (int, float)):
+                    elif isinstance(exp_str, int | float) and exp_str < time.time():
                         # Numeric exp (standard JWT) — compare directly
-                        if exp_str < time.time():
-                            result["error"] = "Token has expired"
-                            return result
+                        result["error"] = "Token has expired"
+                        return result
 
                     result["agent_name"] = payload.get("agent_name")
                     result["human_context"] = payload.get("human_context")
@@ -448,12 +446,13 @@ class MCPSecurityProxy:
 
             # Forward to upstream
             response_data, response_bytes, upstream_hdrs = await self._forward(
-                    body, headers,
-                    agent_name=agent_name,
-                    human_context=human_context,
-                    delegation_chain=delegation_chain,
-                    is_jwt=is_jwt,
-                )
+                body,
+                headers,
+                agent_name=agent_name,
+                human_context=human_context,
+                delegation_chain=delegation_chain,
+                is_jwt=is_jwt,
+            )
             duration_ms = int((time.time() - start) * 1000)
 
             self.stats["forwarded"] += 1
@@ -463,7 +462,8 @@ class MCPSecurityProxy:
             human_email = human_context.get("email") if human_context else None
             delegation_depth = len(delegation_chain) if delegation_chain else 0
             logger.info(
-                "AUDIT tool_call agent=%s tool=%s human_email=%s delegation_depth=%d duration_ms=%d",
+                "AUDIT tool_call agent=%s tool=%s human_email=%s"
+                " delegation_depth=%d duration_ms=%d",
                 agent_name,
                 tool_name,
                 human_email or "(none)",
@@ -491,12 +491,13 @@ class MCPSecurityProxy:
         elif method == "tools/list":
             # Forward tools/list and track registered tools
             response_data, response_bytes, upstream_hdrs = await self._forward(
-                    body, headers,
-                    agent_name=agent_name,
-                    human_context=human_context,
-                    delegation_chain=delegation_chain,
-                    is_jwt=is_jwt,
-                )
+                body,
+                headers,
+                agent_name=agent_name,
+                human_context=human_context,
+                delegation_chain=delegation_chain,
+                is_jwt=is_jwt,
+            )
             duration_ms = int((time.time() - start) * 1000)
 
             # Extract tool names from response for supply chain tracking
@@ -527,12 +528,13 @@ class MCPSecurityProxy:
         else:
             # Forward all other methods transparently
             response_data, response_bytes, upstream_hdrs = await self._forward(
-                    body, headers,
-                    agent_name=agent_name,
-                    human_context=human_context,
-                    delegation_chain=delegation_chain,
-                    is_jwt=is_jwt,
-                )
+                body,
+                headers,
+                agent_name=agent_name,
+                human_context=human_context,
+                delegation_chain=delegation_chain,
+                is_jwt=is_jwt,
+            )
             duration_ms = int((time.time() - start) * 1000)
             self.stats["forwarded"] += 1
             self._log_traffic(agent_name, method, "", "FORWARDED", duration_ms, response_bytes)
