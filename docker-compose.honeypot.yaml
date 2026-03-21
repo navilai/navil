@@ -1,156 +1,44 @@
-# Docker Compose configuration for Navil Honeypot deployment
-#
-# Usage: docker compose -f docker-compose.honeypot.yaml up -d
-#
-# Architecture (Decision 9A):
-#   - Isolated Docker bridge network (navil-honeypot-net, internal: true)
-#   - Navil proxy is the sole gateway to honeypot containers
-#   - Honeypot containers can receive MCP requests via proxy but have NO internet
-#   - Does NOT use network_mode=none (would contradict proxy routing)
-#   - All containers: read-only filesystem, tmpfs /tmp with explicit size, CPU/mem limits
-#   - One container per profile (dev-tools, cloud-creds, db-admin)
-
-networks:
-  navil-honeypot-net:
-    driver: bridge
-    internal: true  # No internet access for containers on this network
-  navil-gateway-net:
-    driver: bridge
-    # Gateway network allows proxy to reach external services
+version: "3.8"
 
 services:
-  # -- Navil Proxy (Gateway) -----------------------------------------------
-  # The sole entry point; bridges external traffic to honeypot containers.
-  # Connected to BOTH networks so it can route external requests inward.
-  navil-proxy:
-    image: navil-proxy:latest
-    build:
-      context: .
-      dockerfile: Dockerfile.proxy
-    ports:
-      - "${HONEYPOT_PROXY_PORT:-8443}:8443"   # External endpoint
-    networks:
-      - navil-gateway-net
-      - navil-honeypot-net
-    environment:
-      NAVIL_MODE: honeypot
-      NAVIL_LOG_LEVEL: ${NAVIL_LOG_LEVEL:-info}
-      REDIS_URL: redis://redis:6379/0
-      # Upstream targets: honeypot container addresses
-      HONEYPOT_DEV_TOOLS_URL: http://honeypot-dev-tools:8080
-      HONEYPOT_CLOUD_CREDS_URL: http://honeypot-cloud-creds:8081
-      HONEYPOT_DB_ADMIN_URL: http://honeypot-db-admin:8082
-    depends_on:
-      - redis
-      - honeypot-dev-tools
-      - honeypot-cloud-creds
-      - honeypot-db-admin
-    restart: unless-stopped
-    read_only: true
-    tmpfs:
-      - /tmp:size=64M
-    deploy:
-      resources:
-        limits:
-          cpus: "1.0"
-          memory: 512M
-
-  # -- Redis (Collector Storage) --------------------------------------------
-  redis:
-    image: redis:7-alpine
-    networks:
-      - navil-honeypot-net
-    volumes:
-      - redis-data:/data
-    read_only: true
-    tmpfs:
-      - /tmp:size=32M
-    deploy:
-      resources:
-        limits:
-          cpus: "0.5"
-          memory: 256M
-    healthcheck:
-      test: ["CMD", "redis-cli", "ping"]
-      interval: 10s
-      timeout: 3s
-      retries: 5
-    restart: unless-stopped
-
-  # -- Honeypot: Dev Tools --------------------------------------------------
   honeypot-dev-tools:
-    image: navil-honeypot:latest
     build:
       context: .
       dockerfile: Dockerfile.honeypot
-    networks:
-      - navil-honeypot-net    # Internal only -- NO internet access
     environment:
-      HONEYPOT_PROFILE: dev_tools
-      HONEYPOT_PORT: "8080"
-      REDIS_URL: redis://redis:6379/0
-      HONEYPOT_LOG_PATH: /tmp/honeypot.jsonl
-    read_only: true
-    tmpfs:
-      - /tmp:size=64M
-    deploy:
-      resources:
-        limits:
-          cpus: "0.5"
-          memory: 256M
-    security_opt:
-      - no-new-privileges:true
+      - HONEYPOT_PROFILE=dev_tools
+      - HONEYPOT_PORT=8080
+    ports:
+      - "9001:8080"
+    volumes:
+      - honeypot-logs:/var/log/honeypot
     restart: unless-stopped
 
-  # -- Honeypot: Cloud Credentials ------------------------------------------
   honeypot-cloud-creds:
-    image: navil-honeypot:latest
     build:
       context: .
       dockerfile: Dockerfile.honeypot
-    networks:
-      - navil-honeypot-net    # Internal only -- NO internet access
     environment:
-      HONEYPOT_PROFILE: cloud_creds
-      HONEYPOT_PORT: "8081"
-      REDIS_URL: redis://redis:6379/0
-      HONEYPOT_LOG_PATH: /tmp/honeypot.jsonl
-    read_only: true
-    tmpfs:
-      - /tmp:size=64M
-    deploy:
-      resources:
-        limits:
-          cpus: "0.5"
-          memory: 256M
-    security_opt:
-      - no-new-privileges:true
+      - HONEYPOT_PROFILE=cloud_creds
+      - HONEYPOT_PORT=8080
+    ports:
+      - "9002:8080"
+    volumes:
+      - honeypot-logs:/var/log/honeypot
     restart: unless-stopped
 
-  # -- Honeypot: DB Admin ---------------------------------------------------
   honeypot-db-admin:
-    image: navil-honeypot:latest
     build:
       context: .
       dockerfile: Dockerfile.honeypot
-    networks:
-      - navil-honeypot-net    # Internal only -- NO internet access
     environment:
-      HONEYPOT_PROFILE: db_admin
-      HONEYPOT_PORT: "8082"
-      REDIS_URL: redis://redis:6379/0
-      HONEYPOT_LOG_PATH: /tmp/honeypot.jsonl
-    read_only: true
-    tmpfs:
-      - /tmp:size=64M
-    deploy:
-      resources:
-        limits:
-          cpus: "0.5"
-          memory: 256M
-    security_opt:
-      - no-new-privileges:true
+      - HONEYPOT_PROFILE=db_admin
+      - HONEYPOT_PORT=8080
+    ports:
+      - "9003:8080"
+    volumes:
+      - honeypot-logs:/var/log/honeypot
     restart: unless-stopped
 
 volumes:
-  redis-data:
+  honeypot-logs:

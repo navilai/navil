@@ -2,8 +2,25 @@ import { useEffect, useState, useCallback } from 'react'
 import { api, ProxyStatus, TrafficEntry } from '../api'
 import PageHeader from '../components/PageHeader'
 import StatCard from '../components/StatCard'
+import StatusBadge from '../components/StatusBadge'
 import Icon from '../components/Icon'
 import RelativeTime from '../components/RelativeTime'
+
+interface CLIEvent {
+  command: string
+  subcommand: string
+  agent: string
+  decision: string
+  duration: string
+  timestamp: string
+}
+
+const DEMO_CLI_EVENTS: CLIEvent[] = [
+  { command: 'gh', subcommand: 'pr list', agent: 'code-assistant', decision: 'ALLOW', duration: '120ms', timestamp: '2m ago' },
+  { command: 'kubectl', subcommand: 'get pods', agent: 'deploy-agent', decision: 'ALLOW', duration: '340ms', timestamp: '5m ago' },
+  { command: 'gh', subcommand: 'auth login', agent: 'code-assistant', decision: 'DENY', duration: '0ms', timestamp: '8m ago' },
+  { command: 'aws', subcommand: 's3 ls', agent: 'data-reader', decision: 'ALLOW', duration: '890ms', timestamp: '12m ago' },
+]
 
 const POLL_INTERVAL = 2000
 
@@ -293,6 +310,59 @@ export default function Gateway() {
                   )}
                 </tbody>
               </table>
+            </div>
+          </div>
+
+          {/* CLI Tool Calls */}
+          <div className="mt-6">
+            <h3 className="text-sm font-semibold text-[#f0f4fc] mb-3 flex items-center gap-2">
+              <Icon name="terminal" size={16} className="text-[#00e5c8]" />
+              CLI Tool Calls
+            </h3>
+
+            <div className="glass-card overflow-hidden">
+              <div className="overflow-x-auto">
+                <table className="w-full text-sm">
+                  <thead>
+                    <tr className="border-b border-[#2a3650] bg-[#111827]/60">
+                      <th className="text-left px-4 py-3 text-[#8b9bc0] font-medium text-xs uppercase tracking-wider">Command</th>
+                      <th className="text-left px-4 py-3 text-[#8b9bc0] font-medium text-xs uppercase tracking-wider">Subcommand</th>
+                      <th className="text-left px-4 py-3 text-[#8b9bc0] font-medium text-xs uppercase tracking-wider">Agent</th>
+                      <th className="text-left px-4 py-3 text-[#8b9bc0] font-medium text-xs uppercase tracking-wider">Decision</th>
+                      <th className="text-right px-4 py-3 text-[#8b9bc0] font-medium text-xs uppercase tracking-wider">Duration</th>
+                      <th className="text-right px-4 py-3 text-[#8b9bc0] font-medium text-xs uppercase tracking-wider">Time</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {DEMO_CLI_EVENTS.map((evt, i) => (
+                      <tr
+                        key={`${evt.command}-${evt.subcommand}-${evt.timestamp}`}
+                        className="border-b border-[#2a3650]/50 hover:bg-[#1f2a40] transition-colors duration-200 animate-fadeIn opacity-0"
+                        style={{ animationDelay: `${i * 0.03}s` }}
+                      >
+                        <td className="px-4 py-2.5 text-[#f0f4fc] font-mono font-semibold text-xs">
+                          {evt.command}
+                        </td>
+                        <td className="px-4 py-2.5 text-[#8b9bc0] font-mono text-xs">
+                          {evt.subcommand}
+                        </td>
+                        <td className="px-4 py-2.5 text-[#f0f4fc] text-xs">
+                          {evt.agent}
+                        </td>
+                        <td className="px-4 py-2.5">
+                          <StatusBadge status={evt.decision} />
+                        </td>
+                        <td className="px-4 py-2.5 text-[#5a6a8a] text-right font-mono text-xs">
+                          {evt.duration}
+                        </td>
+                        <td className="px-4 py-2.5 text-[#5a6a8a] text-right text-xs">
+                          {evt.timestamp}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
             </div>
           </div>
         </>
