@@ -129,6 +129,8 @@ select = ["E", "F", "W", "I", "N", "UP", "B", "A", "SIM"]
 "navil/cloud/email.py" = ["E501"]  # HTML email templates have long lines
 "tests/test_adversarial.py" = ["B017", "E402", "E501"]  # security tests: catch any exception; importorskip; long docstrings
 "tests/test_routes_validation.py" = ["E402"]  # imports after importorskip
+"scripts/navil_*_attacks.py" = ["E501", "UP031", "SIM108"]  # attack payloads: long strings, %-format, ternary ok
+"scripts/*.py" = ["E501", "UP031", "SIM108"]  # scripts are not production code
 "tests/test_ai_policy_builder.py" = ["E402"]  # imports after importorskip
 "tests/test_protocol_blitz.py" = ["E402"]  # sectioned imports for feature grouping
 "navil/api/local/routes/__init__.py" = ["E402"]  # re-exports after router setup
@@ -166,6 +168,12 @@ module = [
     "tree_sitter_typescript.*",
 ]
 ignore_missing_imports = true
+
+# Scripts are benchmarks/tools, not production code — relax type checking
+[[tool.mypy.overrides]]
+module = "scripts.*"
+disallow_untyped_defs = false
+ignore_errors = true
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
