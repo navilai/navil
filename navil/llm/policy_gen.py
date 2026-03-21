@@ -134,7 +134,7 @@ class PolicyGenerator:
                 "reason": str(result.get("reason", "LLM-generated suggestion")),
                 "reversible": bool(result.get("reversible", True)),
             }
-        except (ValueError, yaml.YAMLError, TypeError):
+        except Exception:
             # Conservative fallback — suggest rate limiting
             agent_name = alert.get("agent_name", "unknown")
             anomaly_type = alert.get("anomaly_type", "UNKNOWN")
