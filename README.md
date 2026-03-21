@@ -316,6 +316,18 @@ Community-sourced threat intel via the [Give-to-Get initiative](#community-threa
 ### Honeypot & Canary Kit
 Deploy decoy MCP servers to detect and study attackers in the wild. 3 built-in profiles: `dev-tools`, `cloud-creds`, and `db-admin`. A built-in `SignatureExtractor` analyzes collected interactions and auto-generates blocklist entries. Production deployment uses Docker Compose with isolated networking.
 
+### Tool Scoping
+Context-aware visibility control for MCP tools. Define scopes in `policy.yaml` to restrict which tools each agent *sees* in `tools/list` responses -- separate from policy enforcement (which controls what agents can *call*). Reduces schema token bloat by up to 94%. The Rust proxy reads scope definitions from Redis in O(1) and caches filtered responses with 60s TTL. Ships with community templates for GitHub, filesystem, and kubectl MCP servers.
+
+### AI Policy Builder
+Closed-loop policy generation from observed agent behavior. The system watches how agents use tools, detects anomalies, suggests policy rules with confidence scores, and auto-applies safe changes. Three CLI commands: `navil policy auto-generate` (bootstrap from baselines), `navil policy suggest` (review pending rules), and `navil policy rollback` (undo auto-generated changes). Machine-generated rules go to `policy.auto.yaml` -- your `policy.yaml` always takes precedence.
+
+### CLI Wrapping
+Extend governance beyond MCP to CLI tools. `navil wrap` creates PATH-prefix shims for `gh`, `kubectl`, `aws`, and other CLI binaries. Each shim logs invocations, checks policy rules, forwards to the real binary, and captures telemetry -- using the same pipeline as MCP events.
+
+### A2A Agent Card
+Publish a discoverable agent identity at `/.well-known/agent.json` per the Google A2A spec. Other agents can discover your Navil-protected agent's capabilities, authentication requirements, and governance metadata. Supports agent-to-agent task dispatch via the `/a2a` endpoint.
+
 ### Registry Scanning
 Discover and audit MCP servers at scale. `navil crawl registries` discovers servers from npm, PyPI, and awesome-mcp-servers lists. `navil scan-batch` bulk-scans crawl results and outputs JSONL.
 

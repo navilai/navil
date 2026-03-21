@@ -196,6 +196,8 @@ navil:agent:{name}:thresholds    HASH   max_payload_bytes, rate_limit_per_min, b
 navil:agent:{name}:rate:{bucket} STRING minute-bucketed counter (TTL 120s)
 navil:telemetry:queue            LIST   Rust-->Python telemetry events (LPUSH/BRPOP)
 navil:llm:cache:{sha256}         STRING Cached LLM responses (TTL 3600s)
+navil:scope:{scope_name}         STRING JSON array of tool names (written by Python, read by Rust)
+navil:scope_cache:{hash}         STRING Cached filtered tools/list responses (TTL 60s)
 ```
 
 ## Zero-Knowledge Telemetry
