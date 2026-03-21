@@ -267,11 +267,8 @@ mod tests {
 
     #[test]
     fn test_scope_violation_error() {
-        let error = scope_violation_error(
-            "github-pr-review",
-            "repos/delete",
-            &serde_json::json!(42),
-        );
+        let error =
+            scope_violation_error("github-pr-review", "repos/delete", &serde_json::json!(42));
         let parsed: Value = serde_json::from_slice(&error).unwrap();
         assert_eq!(parsed["error"]["code"], -32600);
         assert_eq!(parsed["id"], 42);

@@ -30,7 +30,7 @@ router.include_router(system_router)
 
 # Re-export models, helpers, and internal functions so that existing
 # ``from navil.api.local.routes import …`` imports keep working.
-from ._helpers import (  # noqa: F401 – public re-exports
+from ._helpers import (  # noqa: E402, F401 – public re-exports
     AnalyzeConfigRequest,
     ApplyActionRequest,
     AutoRemediateRequest,

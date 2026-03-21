@@ -58,24 +58,28 @@ def validate_policy(policy_path: Path) -> list[dict[str, Any]]:
     findings: list[dict[str, Any]] = []
 
     if not policy_path.exists():
-        findings.append({
-            "level": "note",
-            "message": f"Policy file not found: {policy_path}",
-            "line": 0,
-            "rule_id": "navil/policy-not-found",
-        })
+        findings.append(
+            {
+                "level": "note",
+                "message": f"Policy file not found: {policy_path}",
+                "line": 0,
+                "rule_id": "navil/policy-not-found",
+            }
+        )
         return findings
 
     try:
         with open(policy_path) as f:
             raw_content = f.read()
     except OSError as e:
-        findings.append({
-            "level": "error",
-            "message": f"Cannot read policy file: {e}",
-            "line": 0,
-            "rule_id": "navil/policy-read-error",
-        })
+        findings.append(
+            {
+                "level": "error",
+                "message": f"Cannot read policy file: {e}",
+                "line": 0,
+                "rule_id": "navil/policy-read-error",
+            }
+        )
         return findings
 
     try:
@@ -84,77 +88,89 @@ def validate_policy(policy_path: Path) -> list[dict[str, Any]]:
         line = 0
         if hasattr(e, "problem_mark") and e.problem_mark:
             line = e.problem_mark.line + 1
-        findings.append({
-            "level": "error",
-            "message": f"Invalid YAML syntax: {e}",
-            "line": line,
-            "rule_id": "navil/yaml-syntax-error",
-        })
+        findings.append(
+            {
+                "level": "error",
+                "message": f"Invalid YAML syntax: {e}",
+                "line": line,
+                "rule_id": "navil/yaml-syntax-error",
+            }
+        )
         return findings
 
     if not isinstance(policy, dict):
-        findings.append({
-            "level": "error",
-            "message": "Policy must be a YAML mapping (dict), not a scalar or list",
-            "line": 1,
-            "rule_id": "navil/policy-not-mapping",
-        })
+        findings.append(
+            {
+                "level": "error",
+                "message": "Policy must be a YAML mapping (dict), not a scalar or list",
+                "line": 1,
+                "rule_id": "navil/policy-not-mapping",
+            }
+        )
         return findings
 
     # Check required fields
     if "version" not in policy:
-        findings.append({
-            "level": "error",
-            "message": "Missing required field: version",
-            "line": 1,
-            "rule_id": "navil/missing-version",
-        })
+        findings.append(
+            {
+                "level": "error",
+                "message": "Missing required field: version",
+                "line": 1,
+                "rule_id": "navil/missing-version",
+            }
+        )
 
     # Check top-level field types
     for field_name, schema in POLICY_SCHEMA.items():
         if field_name in policy:
             expected_type = schema["type"]
             if not isinstance(policy[field_name], expected_type):
-                findings.append({
-                    "level": "error",
-                    "message": (
-                        f"Field '{field_name}' has wrong type: "
-                        f"expected {expected_type.__name__}, "
-                        f"got {type(policy[field_name]).__name__}"
-                    ),
-                    "line": 1,
-                    "rule_id": "navil/type-error",
-                })
+                findings.append(
+                    {
+                        "level": "error",
+                        "message": (
+                            f"Field '{field_name}' has wrong type: "
+                            f"expected {expected_type.__name__}, "
+                            f"got {type(policy[field_name]).__name__}"
+                        ),
+                        "line": 1,
+                        "rule_id": "navil/type-error",
+                    }
+                )
 
     # Check unknown top-level fields
     known_fields = set(POLICY_SCHEMA.keys())
     for field_name in policy:
         if field_name not in known_fields:
-            findings.append({
-                "level": "warning",
-                "message": f"Unknown top-level field: '{field_name}'",
-                "line": 1,
-                "rule_id": "navil/unknown-field",
-            })
+            findings.append(
+                {
+                    "level": "warning",
+                    "message": f"Unknown top-level field: '{field_name}'",
+                    "line": 1,
+                    "rule_id": "navil/unknown-field",
+                }
+            )
 
     # Validate agents section
     agents = policy.get("agents", {})
     if isinstance(agents, dict):
         for agent_name, agent_config in agents.items():
             if not isinstance(agent_config, dict):
-                findings.append({
-                    "level": "error",
-                    "message": f"Agent '{agent_name}' config must be a mapping",
-                    "line": 1,
-                    "rule_id": "navil/agent-not-mapping",
-                })
+                findings.append(
+                    {
+                        "level": "error",
+                        "message": f"Agent '{agent_name}' config must be a mapping",
+                        "line": 1,
+                        "rule_id": "navil/agent-not-mapping",
+                    }
+                )
                 continue
 
             # Security: warn about wildcard tool access
             tools_allowed = agent_config.get("tools_allowed", [])
-            if isinstance(tools_allowed, list) and "*" in tools_allowed:
-                if agent_name != "default":
-                    findings.append({
+            if isinstance(tools_allowed, list) and "*" in tools_allowed and agent_name != "default":
+                findings.append(
+                    {
                         "level": "warning",
                         "message": (
                             f"Agent '{agent_name}' has wildcard tool access. "
@@ -162,28 +178,33 @@ def validate_policy(policy_path: Path) -> list[dict[str, Any]]:
                         ),
                         "line": 1,
                         "rule_id": "navil/wildcard-access",
-                    })
+                    }
+                )
 
     # Validate scopes section
     scopes = policy.get("scopes", {})
     if isinstance(scopes, dict):
         for scope_name, scope_def in scopes.items():
             if not isinstance(scope_def, dict):
-                findings.append({
-                    "level": "error",
-                    "message": f"Scope '{scope_name}' must be a mapping with 'tools' key",
-                    "line": 1,
-                    "rule_id": "navil/scope-not-mapping",
-                })
+                findings.append(
+                    {
+                        "level": "error",
+                        "message": f"Scope '{scope_name}' must be a mapping with 'tools' key",
+                        "line": 1,
+                        "rule_id": "navil/scope-not-mapping",
+                    }
+                )
                 continue
 
             if "tools" not in scope_def:
-                findings.append({
-                    "level": "error",
-                    "message": f"Scope '{scope_name}' missing required 'tools' field",
-                    "line": 1,
-                    "rule_id": "navil/scope-missing-tools",
-                })
+                findings.append(
+                    {
+                        "level": "error",
+                        "message": f"Scope '{scope_name}' missing required 'tools' field",
+                        "line": 1,
+                        "rule_id": "navil/scope-missing-tools",
+                    }
+                )
 
     return findings
 
@@ -204,24 +225,30 @@ def findings_to_sarif(
 
         if rule_id not in seen_rules:
             seen_rules.add(rule_id)
-            rules.append({
-                "id": rule_id,
-                "shortDescription": {"text": rule_id.replace("navil/", "").replace("-", " ").title()},
-            })
-
-        results.append({
-            "ruleId": rule_id,
-            "level": level_map.get(finding["level"], "note"),
-            "message": {"text": finding["message"]},
-            "locations": [
+            rules.append(
                 {
-                    "physicalLocation": {
-                        "artifactLocation": {"uri": policy_path},
-                        "region": {"startLine": max(1, finding["line"])},
-                    }
+                    "id": rule_id,
+                    "shortDescription": {
+                        "text": rule_id.replace("navil/", "").replace("-", " ").title(),
+                    },
                 }
-            ],
-        })
+            )
+
+        results.append(
+            {
+                "ruleId": rule_id,
+                "level": level_map.get(finding["level"], "note"),
+                "message": {"text": finding["message"]},
+                "locations": [
+                    {
+                        "physicalLocation": {
+                            "artifactLocation": {"uri": policy_path},
+                            "region": {"startLine": max(1, finding["line"])},
+                        }
+                    }
+                ],
+            }
+        )
 
     return {
         "$schema": "https://raw.githubusercontent.com/oasis-tcs/sarif-spec/main/sarif-2.1/schema/sarif-schema-2.1.0.json",
@@ -245,8 +272,16 @@ def findings_to_sarif(
 def main() -> int:
     parser = argparse.ArgumentParser(description="Validate Navil policy YAML files")
     parser.add_argument("--policy", default="policy.yaml", help="Path to policy.yaml")
-    parser.add_argument("--auto-policy", default="policy.auto.yaml", help="Path to policy.auto.yaml")
-    parser.add_argument("--sarif-output", default="policy-validation.sarif", help="SARIF output file")
+    parser.add_argument(
+        "--auto-policy",
+        default="policy.auto.yaml",
+        help="Path to policy.auto.yaml",
+    )
+    parser.add_argument(
+        "--sarif-output",
+        default="policy-validation.sarif",
+        help="SARIF output file",
+    )
     args = parser.parse_args()
 
     all_findings: list[dict[str, Any]] = []

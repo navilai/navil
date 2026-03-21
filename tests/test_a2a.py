@@ -13,10 +13,7 @@ from __future__ import annotations
 import os
 from unittest.mock import patch
 
-import pytest
-
 from navil.a2a.agent_card import (
-    AgentCapabilities,
     AgentCard,
     AgentInterface,
     AgentProvider,

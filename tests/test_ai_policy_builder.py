@@ -11,13 +11,13 @@ Tests cover:
 
 from __future__ import annotations
 
-import tempfile
 from pathlib import Path
-from typing import Any
-from unittest.mock import MagicMock, patch
+from unittest.mock import MagicMock
 
 import pytest
 import yaml
+
+pytest.importorskip("anthropic", reason="LLM client requires anthropic SDK")
 
 from navil.adaptive.feedback import FeedbackLoop
 from navil.llm.policy_gen import PolicyGenerator
@@ -103,7 +103,10 @@ class TestFeedbackPolicyWiring:
             loop.submit_feedback(f"ts-c-{i}", "RATE_SPIKE", "agent-x", "confirmed")
 
         mock_gen = MagicMock()
-        mock_gen.refine.return_value = {"version": "1.0", "agents": {"agent-x": {"rate_limit_per_hour": 2000}}}
+        mock_gen.refine.return_value = {
+            "version": "1.0",
+            "agents": {"agent-x": {"rate_limit_per_hour": 2000}},
+        }
 
         result = loop.apply_adjustments_to_policy(
             mock_gen, {"version": "1.0"}, "RATE_SPIKE", "agent-x"
@@ -127,7 +130,10 @@ class TestFeedbackPolicyWiring:
             loop.submit_feedback(f"ts-d-{i}", "RATE_SPIKE", "agent-x", "dismissed")
 
         mock_gen = MagicMock()
-        mock_gen.refine.return_value = {"version": "1.0", "agents": {"agent-x": {"rate_limit_per_hour": 30}}}
+        mock_gen.refine.return_value = {
+            "version": "1.0",
+            "agents": {"agent-x": {"rate_limit_per_hour": 30}},
+        }
 
         result = loop.apply_adjustments_to_policy(
             mock_gen, {"version": "1.0"}, "RATE_SPIKE", "agent-x"
@@ -265,9 +271,16 @@ class TestCICDValidation:
         """A valid policy should produce no errors."""
         # Import the validation module
         import importlib.util
+
         spec = importlib.util.spec_from_file_location(
             "validate",
-            str(Path(__file__).parent.parent / ".github" / "actions" / "policy-validate" / "validate.py"),
+            str(
+                Path(__file__).parent.parent
+                / ".github"
+                / "actions"
+                / "policy-validate"
+                / "validate.py"
+            ),
         )
         if spec is None or spec.loader is None:
             pytest.skip("validate.py not found")
@@ -285,9 +298,16 @@ class TestCICDValidation:
     def test_missing_version_is_error(self, tmp_path: Path) -> None:
         """Missing version field should produce an error."""
         import importlib.util
+
         spec = importlib.util.spec_from_file_location(
             "validate",
-            str(Path(__file__).parent.parent / ".github" / "actions" / "policy-validate" / "validate.py"),
+            str(
+                Path(__file__).parent.parent
+                / ".github"
+                / "actions"
+                / "policy-validate"
+                / "validate.py"
+            ),
         )
         if spec is None or spec.loader is None:
             pytest.skip("validate.py not found")
@@ -305,9 +325,16 @@ class TestCICDValidation:
     def test_sarif_output_format(self, tmp_path: Path) -> None:
         """SARIF output must conform to expected structure."""
         import importlib.util
+
         spec = importlib.util.spec_from_file_location(
             "validate",
-            str(Path(__file__).parent.parent / ".github" / "actions" / "policy-validate" / "validate.py"),
+            str(
+                Path(__file__).parent.parent
+                / ".github"
+                / "actions"
+                / "policy-validate"
+                / "validate.py"
+            ),
         )
         if spec is None or spec.loader is None:
             pytest.skip("validate.py not found")

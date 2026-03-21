@@ -701,17 +701,16 @@ async fn health() -> Json<serde_json::Value> {
 async fn agent_card(State(_state): State<Arc<AppState>>) -> Json<serde_json::Value> {
     let base_url = format!(
         "http://{}",
-        std::env::var("NAVIL_BASE_URL").unwrap_or_else(|_| format!("localhost:{}",
+        std::env::var("NAVIL_BASE_URL").unwrap_or_else(|_| format!(
+            "localhost:{}",
             std::env::var("NAVIL_PORT").unwrap_or_else(|_| "8080".to_string())
         ))
     );
     let agent_name =
         std::env::var("NAVIL_AGENT_NAME").unwrap_or_else(|_| "navil-agent".to_string());
-    let agent_desc = std::env::var("NAVIL_AGENT_DESCRIPTION").unwrap_or_else(|_| {
-        "An agent protected by Navil agent governance middleware".to_string()
-    });
-    let provider_org =
-        std::env::var("NAVIL_PROVIDER_ORG").unwrap_or_default();
+    let agent_desc = std::env::var("NAVIL_AGENT_DESCRIPTION")
+        .unwrap_or_else(|_| "An agent protected by Navil agent governance middleware".to_string());
+    let provider_org = std::env::var("NAVIL_PROVIDER_ORG").unwrap_or_default();
 
     Json(serde_json::json!({
         "name": agent_name,

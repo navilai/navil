@@ -11,7 +11,6 @@ Tests cover:
 
 from __future__ import annotations
 
-import tempfile
 from pathlib import Path
 
 import pytest
@@ -119,9 +118,7 @@ class TestGetScopeTools:
         tools = engine.get_scope_tools("github-pr-review")
         assert tools == ["pulls/get", "pulls/list", "reviews/create"]
 
-    def test_unknown_scope_falls_through_to_default(
-        self, policy_with_scopes: Path
-    ) -> None:
+    def test_unknown_scope_falls_through_to_default(self, policy_with_scopes: Path) -> None:
         engine = PolicyEngine(policy_file=str(policy_with_scopes))
 
         tools = engine.get_scope_tools("nonexistent-scope")
@@ -149,9 +146,7 @@ class TestGetScopeTools:
 class TestAutoMerge:
     """Test policy.auto.yaml merging behavior."""
 
-    def test_auto_scopes_merged(
-        self, policy_with_scopes: Path, auto_policy_file: Path
-    ) -> None:
+    def test_auto_scopes_merged(self, policy_with_scopes: Path, auto_policy_file: Path) -> None:
         engine = PolicyEngine(
             policy_file=str(policy_with_scopes),
             auto_policy_file=str(auto_policy_file),
@@ -196,9 +191,7 @@ class TestSerializeToYaml:
         parsed = yaml.safe_load(content.split("\n\n", 1)[1])
         assert parsed["version"] == "1.0"
 
-    def test_serialize_no_output_path_returns_false(
-        self, policy_with_scopes: Path
-    ) -> None:
+    def test_serialize_no_output_path_returns_false(self, policy_with_scopes: Path) -> None:
         engine = PolicyEngine(policy_file=str(policy_with_scopes))
         # No auto_policy_file set
         result = engine.serialize_to_yaml()

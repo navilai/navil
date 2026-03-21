@@ -16,8 +16,10 @@ from unittest.mock import MagicMock, patch
 import pytest
 import yaml
 
-# ── Feature 1: Tool Scoping ──────────────────────────────────────────
+pytest.importorskip("fastapi", reason="Protocol blitz tests require fastapi")
+pytest.importorskip("pydantic", reason="Protocol blitz tests require pydantic")
 
+# ── Feature 1: Tool Scoping ──────────────────────────────────────────
 from navil.policy_engine import PolicyEngine
 
 
@@ -247,7 +249,7 @@ rule:
 
     def test_parse_yaml_strips_prose_before_yaml(self) -> None:
         """_parse_yaml strips leading prose text before YAML content."""
-        response = "Here is the suggested policy:\n\nversion: \"1.0\"\nagents:\n  test: {}"
+        response = 'Here is the suggested policy:\n\nversion: "1.0"\nagents:\n  test: {}'
         result = PolicyGenerator._parse_yaml(response)
         assert result["version"] == "1.0"
 
@@ -291,12 +293,14 @@ class TestCLIShim:
         }
         shim = StdioShim(cmd=["true"], agent_name="test-agent", policy_engine=pe)
 
-        payload = json.dumps({
-            "jsonrpc": "2.0",
-            "method": "tools/call",
-            "id": 1,
-            "params": {"name": "dangerous_tool", "arguments": {}},
-        }).encode()
+        payload = json.dumps(
+            {
+                "jsonrpc": "2.0",
+                "method": "tools/call",
+                "id": 1,
+                "params": {"name": "dangerous_tool", "arguments": {}},
+            }
+        ).encode()
 
         allowed, _, error = shim._check_request(payload)
         assert not allowed
@@ -314,12 +318,14 @@ class TestCLIShim:
         }
         shim = StdioShim(cmd=["true"], agent_name="test-agent", policy_engine=pe)
 
-        payload = json.dumps({
-            "jsonrpc": "2.0",
-            "method": "tools/call",
-            "id": 1,
-            "params": {"name": "read_file", "arguments": {"path": "/tmp"}},
-        }).encode()
+        payload = json.dumps(
+            {
+                "jsonrpc": "2.0",
+                "method": "tools/call",
+                "id": 1,
+                "params": {"name": "read_file", "arguments": {"path": "/tmp"}},
+            }
+        ).encode()
 
         allowed, _, error = shim._check_request(payload)
         assert allowed
@@ -330,12 +336,14 @@ class TestCLIShim:
         shim = StdioShim(cmd=["true"], agent_name="test-agent")
 
         for method in ["initialize", "tools/list", "notifications/initialized"]:
-            payload = json.dumps({
-                "jsonrpc": "2.0",
-                "method": method,
-                "id": 1,
-                "params": {},
-            }).encode()
+            payload = json.dumps(
+                {
+                    "jsonrpc": "2.0",
+                    "method": method,
+                    "id": 1,
+                    "params": {},
+                }
+            ).encode()
 
             allowed, _, error = shim._check_request(payload)
             assert allowed, f"{method} should pass without policy check"
@@ -376,6 +384,7 @@ class TestCLIShim:
         class FakeWriter:
             def __init__(self):
                 self.data = b""
+
             def write(self, data: bytes) -> None:
                 self.data += data
 
@@ -435,12 +444,8 @@ class TestShimCommandRegistration:
 # ── Feature 4: A2A Agent Cards ────────────────────────────────────────
 
 from navil.a2a.agent_card import (
-    AgentCapabilities,
     AgentCard,
-    AgentInterface,
     AgentProvider,
-    AgentSkill,
-    SecurityScheme,
     build_navil_agent_card,
 )
 from navil.a2a.tasks import Task, TaskArtifact, TaskMessage, TaskState, TaskStore
@@ -569,7 +574,7 @@ class TestA2ATaskLifecycle:
     def test_task_store_list_respects_limit(self) -> None:
         """list_tasks respects the limit parameter."""
         store = TaskStore()
-        for i in range(10):
+        for _i in range(10):
             store.create(Task(source_agent="a", target_agent="b"))
 
         results = store.list_tasks(limit=3)
@@ -719,11 +724,15 @@ class TestPolicyEngineUpdateStep:
     def test_serialize_and_reload_roundtrip(self, tmp_path: Path) -> None:
         """Policy can be serialized to YAML and reloaded correctly."""
         human_file = tmp_path / "policy.yaml"
-        human_file.write_text(yaml.dump({
-            "version": "1.0",
-            "agents": {"test": {"tools_allowed": ["*"]}},
-            "scopes": {"default": {"tools": "*"}},
-        }))
+        human_file.write_text(
+            yaml.dump(
+                {
+                    "version": "1.0",
+                    "agents": {"test": {"tools_allowed": ["*"]}},
+                    "scopes": {"default": {"tools": "*"}},
+                }
+            )
+        )
 
         auto_file = tmp_path / "policy.auto.yaml"
         engine = PolicyEngine(
