@@ -49,7 +49,7 @@ export default function DashboardLayout() {
         <div className="absolute inset-0 bg-gradient-to-b from-[#00e5c8]/[0.03] to-transparent pointer-events-none" />
 
         <div className="relative p-5 border-b border-[#2a3650]">
-          <Link to="/" className="text-xl font-extrabold flex items-center gap-2.5 hover:opacity-80 transition-opacity">
+          <Link to="/" className="text-xl font-extrabold flex items-center gap-2.5 py-1.5 hover:opacity-80 transition-opacity">
             <div className="relative">
               <div className="absolute inset-0 bg-[#00e5c8]/20 rounded-lg blur-sm animate-pulseGlow" />
               <Icon name="shield" size={24} className="text-[#00e5c8] relative" />
@@ -72,7 +72,7 @@ export default function DashboardLayout() {
               end={to === '/'}
               onClick={() => setSidebarOpen(false)}
               className={({ isActive }) =>
-                `flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm transition-all duration-200 nav-glow ${
+                `flex items-center gap-3 px-3 py-3 rounded-lg text-sm transition-all duration-200 min-h-[44px] nav-glow ${
                   isActive
                     ? 'nav-active-bar bg-[#00e5c8]/10 text-[#00e5c8] font-semibold'
                     : 'text-[#8b9bc0] hover:bg-[#1a2235] hover:text-[#f0f4fc]'
@@ -97,7 +97,7 @@ export default function DashboardLayout() {
                   to={to}
                   onClick={() => setSidebarOpen(false)}
                   className={({ isActive }) =>
-                    `flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm transition-all duration-200 nav-glow ${
+                    `flex items-center gap-3 px-3 py-3 rounded-lg text-sm transition-all duration-200 min-h-[44px] nav-glow ${
                       isActive
                         ? 'nav-active-bar bg-[#00e5c8]/10 text-[#00e5c8] font-semibold'
                         : 'text-[#8b9bc0] hover:bg-[#1a2235] hover:text-[#f0f4fc]'
