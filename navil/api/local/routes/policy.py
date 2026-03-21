@@ -123,12 +123,12 @@ def act_on_suggestion(suggestion_id: str, body: SuggestionAction) -> dict[str, A
 
     if body.action == "reject":
         _logger.info("Rejected policy suggestion: %s", suggestion_id)
-        s._dismissed_suggestions.add(suggestion_id)
+        s.dismiss_suggestion(suggestion_id)
         return {"status": "rejected", "suggestion_id": suggestion_id}
 
     # action == "approve"
     _logger.info("Approved policy suggestion: %s", suggestion_id)
-    s._dismissed_suggestions.add(suggestion_id)
+    s.dismiss_suggestion(suggestion_id)
 
     # Find the suggestion to get its details
     suggestion: dict[str, Any] | None = None
@@ -295,14 +295,9 @@ def save_policy(body: SavePolicyBody) -> dict[str, Any]:
             detail="Policy YAML must be a mapping (dict) at the top level",
         )
 
-    allowed_policy_keys = {"rules", "default_action", "version"}
-    unknown_keys = set(parsed.keys()) - allowed_policy_keys
-    if unknown_keys:
-        raise HTTPException(
-            status_code=400,
-            detail=f"Unknown top-level keys: {', '.join(sorted(unknown_keys))}. "
-            f"Allowed keys: {', '.join(sorted(allowed_policy_keys))}",
-        )
+    # Accept any valid top-level keys — auto-generated policies use keys like
+    # "agents", "scopes", "tools_allowed", "tools_denied", "rate_limit_per_hour",
+    # "data_clearance" in addition to "rules", "default_action", "version".
 
     # Resolve path: prefer ~/.navil/<name>, fall back to ./<name>
     navil_dir = Path(os.path.expanduser("~/.navil"))

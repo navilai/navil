@@ -4,8 +4,10 @@
 
 from __future__ import annotations
 
+import json
 import logging
 import os
+from pathlib import Path
 from typing import Any
 
 from navil._compat import has_llm
@@ -35,7 +37,7 @@ class AppState:
             pattern_store=self.pattern_store,
         )
         self.demo_seeded = False
-        self._dismissed_suggestions: set[str] = set()
+        self._dismissed_suggestions: set[str] = self._load_dismissed_suggestions()
 
         # Redis client (set at startup when NAVIL_REDIS_URL is configured)
         self.redis_client: Any | None = None
@@ -75,6 +77,35 @@ class AppState:
                 self._init_llm_components(provider, api_key)
             except (ImportError, ValueError, RuntimeError, TypeError) as e:
                 logger.warning(f"LLM initialization failed: {e}")
+
+    _DISMISSED_PATH = Path(os.path.expanduser("~/.navil/dismissed_suggestions.json"))
+
+    @staticmethod
+    def _load_dismissed_suggestions() -> set[str]:
+        """Load dismissed suggestion IDs from disk."""
+        path = AppState._DISMISSED_PATH
+        if path.exists():
+            try:
+                data = json.loads(path.read_text())
+                if isinstance(data, list):
+                    return set(data)
+            except (json.JSONDecodeError, OSError):
+                pass
+        return set()
+
+    def _save_dismissed_suggestions(self) -> None:
+        """Persist dismissed suggestion IDs to disk."""
+        path = self._DISMISSED_PATH
+        try:
+            path.parent.mkdir(parents=True, exist_ok=True)
+            path.write_text(json.dumps(sorted(self._dismissed_suggestions)))
+        except OSError as e:
+            logger.warning("Failed to save dismissed suggestions: %s", e)
+
+    def dismiss_suggestion(self, suggestion_id: str) -> None:
+        """Add a suggestion ID to the dismissed set and persist to disk."""
+        self._dismissed_suggestions.add(suggestion_id)
+        self._save_dismissed_suggestions()
 
     @staticmethod
     def _ollama_available() -> bool:
