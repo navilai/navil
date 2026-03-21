@@ -1237,7 +1237,7 @@ def get_policy_suggestions() -> dict[str, Any]:
             })
 
     # Also check for demo suggestions if no real ones
-    if not suggestions and s.demo_mode:
+    if not suggestions and getattr(s, "demo_seeded", False):
         suggestions = [
             {
                 "id": "demo-1",
@@ -1300,8 +1300,10 @@ def auto_generate_policy() -> dict[str, Any]:
     """Auto-generate a policy from observed agent baselines."""
     s = AppState.get()
 
-    # Collect baseline data from demo agents
-    agents = s.invocations.agents() if hasattr(s.invocations, "agents") else {}
+    # Collect baseline data from the anomaly detector's baselines
+    agents: dict[str, Any] = {}
+    if hasattr(s, "anomaly_detector") and s.anomaly_detector is not None:
+        agents = getattr(s.anomaly_detector, "_agent_baselines", {})
     policy: dict[str, Any] = {
         "version": "1.0",
         "agents": {},
@@ -1309,8 +1311,7 @@ def auto_generate_policy() -> dict[str, Any]:
     }
 
     for agent_name in agents:
-        stats = s.invocations.agent_stats(agent_name) if hasattr(s.invocations, "agent_stats") else {}
-        tools = stats.get("tools", [])
+        tools: list[str] = []
         policy["agents"][agent_name] = {
             "tools_allowed": tools if tools else ["*"],
             "tools_denied": [],
