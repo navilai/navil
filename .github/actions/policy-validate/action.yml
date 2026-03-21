@@ -1,0 +1,64 @@
+name: "Navil Policy Validation"
+description: "Validate policy.yaml syntax and output SARIF for GitHub Security tab"
+branding:
+  icon: "check-circle"
+  color: "green"
+
+inputs:
+  policy-path:
+    description: "Path to policy.yaml file"
+    required: false
+    default: "policy.yaml"
+  auto-policy-path:
+    description: "Path to policy.auto.yaml file (optional, validated if present)"
+    required: false
+    default: "policy.auto.yaml"
+  navil-version:
+    description: "Navil version to install (default: latest)"
+    required: false
+    default: ""
+
+outputs:
+  valid:
+    description: "Whether the policy is valid (true/false)"
+    value: ${{ steps.validate.outputs.valid }}
+  sarif-file:
+    description: "Path to the SARIF output file"
+    value: ${{ steps.validate.outputs.sarif-file }}
+  error-count:
+    description: "Number of validation errors found"
+    value: ${{ steps.validate.outputs.error-count }}
+
+runs:
+  using: "composite"
+  steps:
+    - name: Set up Python
+      uses: actions/setup-python@v5
+      with:
+        python-version: "3.12"
+
+    - name: Install Navil
+      shell: bash
+      run: |
+        if [ -n "${{ inputs.navil-version }}" ]; then
+          pip install "navil==${{ inputs.navil-version }}" --quiet
+        else
+          pip install navil --quiet
+        fi
+
+    - name: Validate policy
+      id: validate
+      shell: bash
+      run: |
+        python3 "${{ github.action_path }}/validate.py" \
+          --policy "${{ inputs.policy-path }}" \
+          --auto-policy "${{ inputs.auto-policy-path }}" \
+          --sarif-output "policy-validation.sarif"
+
+    - name: Upload SARIF
+      if: always()
+      uses: github/codeql-action/upload-sarif@v3
+      with:
+        sarif_file: policy-validation.sarif
+        category: navil-policy-validation
+      continue-on-error: true
