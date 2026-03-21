@@ -96,9 +96,13 @@ class SelfHealingEngine:
         return suggestions
 
     def apply_action(self, action: dict[str, Any], policy_engine: Any, detector: Any) -> bool:
-        """Apply a single remediation action.
+        """Apply a single remediation action and persist to policy.auto.yaml.
 
         Returns True if applied successfully.
+
+        Persistence: after modifying the in-memory policy, calls
+        policy_engine.serialize_to_yaml() to write to policy.auto.yaml.
+        This is the UPDATE step in the closed loop.
         """
         action_type = action.get("type", "")
         target = action.get("target", "")
@@ -136,6 +140,17 @@ class SelfHealingEngine:
 
             self.applied_actions.append(action)
             logger.info(f"Self-healing action applied: {action_type} on {target}")
+
+            # Persist policy changes to policy.auto.yaml
+            if action_type in ("policy_update", "agent_block"):
+                try:
+                    if hasattr(policy_engine, "serialize_to_yaml"):
+                        policy_engine.serialize_to_yaml()
+                        logger.info("Policy persisted to policy.auto.yaml")
+                except Exception as persist_err:
+                    logger.error(f"Failed to persist policy to YAML: {persist_err}")
+                    # Action was applied in-memory even if persistence failed
+
             return True
 
         except Exception as e:
