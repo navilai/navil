@@ -1,0 +1,90 @@
+version: "3.8"
+
+services:
+  # ── Honeypot: Dev Tools (filesystem, shell, env access) ──
+  honeypot-dev-tools:
+    build:
+      context: ../..
+      dockerfile: deploy/honeypot-oci/Dockerfile.honeypot
+    environment:
+      - HONEYPOT_PROFILE=dev_tools
+      - HONEYPOT_PORT=9001
+      - NAVIL_CLOUD_API=https://navil-cloud-api.onrender.com
+      - NAVIL_API_KEY=${NAVIL_API_KEY}
+      - MACHINE_ID=honeypot-dev-tools-oci
+    ports:
+      - "9001:9001"
+    restart: unless-stopped
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+  # ── Honeypot: Cloud Credentials (AWS, GCP, Azure keys) ──
+  honeypot-cloud-creds:
+    build:
+      context: ../..
+      dockerfile: deploy/honeypot-oci/Dockerfile.honeypot
+    environment:
+      - HONEYPOT_PROFILE=cloud_creds
+      - HONEYPOT_PORT=9002
+      - NAVIL_CLOUD_API=https://navil-cloud-api.onrender.com
+      - NAVIL_API_KEY=${NAVIL_API_KEY}
+      - MACHINE_ID=honeypot-cloud-creds-oci
+    ports:
+      - "9002:9002"
+    restart: unless-stopped
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+  # ── Honeypot: DB Admin (SQL, schema, data export) ──
+  honeypot-db-admin:
+    build:
+      context: ../..
+      dockerfile: deploy/honeypot-oci/Dockerfile.honeypot
+    environment:
+      - HONEYPOT_PROFILE=db_admin
+      - HONEYPOT_PORT=9003
+      - NAVIL_CLOUD_API=https://navil-cloud-api.onrender.com
+      - NAVIL_API_KEY=${NAVIL_API_KEY}
+      - MACHINE_ID=honeypot-db-admin-oci
+    ports:
+      - "9003:9003"
+    restart: unless-stopped
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+  # ── Cloudflare Tunnel (exposes all 3 honeypots) ──
+  cloudflared:
+    image: cloudflare/cloudflared:latest
+    command: tunnel --no-autoupdate run
+    environment:
+      - TUNNEL_TOKEN=${CLOUDFLARE_TUNNEL_TOKEN}
+    restart: unless-stopped
+    depends_on:
+      - honeypot-dev-tools
+      - honeypot-cloud-creds
+      - honeypot-db-admin
+
+  # ── Weekly crawl + scan (runs every Sunday 3am UTC) ──
+  weekly-scan:
+    build:
+      context: ../..
+      dockerfile: deploy/honeypot-oci/Dockerfile.scanner
+    environment:
+      - NAVIL_CLOUD_API=https://navil-cloud-api.onrender.com
+      - NAVIL_API_KEY=${NAVIL_API_KEY}
+    volumes:
+      - scan-data:/data/scans
+    entrypoint: ["crond", "-f", "-d", "8"]
+    restart: unless-stopped
+
+volumes:
+  scan-data:

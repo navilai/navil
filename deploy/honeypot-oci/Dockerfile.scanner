@@ -1,0 +1,22 @@
+FROM python:3.12-slim
+
+RUN apt-get update && apt-get install -y --no-install-recommends cron && rm -rf /var/lib/apt/lists/*
+
+WORKDIR /app
+
+# Install navil
+COPY pyproject.toml .
+COPY navil/ navil/
+RUN pip install --no-cache-dir -e .
+
+# Weekly scan cron job: Sunday 3am UTC
+# Crawl registries → batch scan → sync results to cloud
+RUN echo '0 3 * * 0 cd /app && navil crawl run-scan --output /data/scans/$(date +\%Y\%m\%d).jsonl 2>&1 | tee /var/log/navil-scan.log' > /etc/cron.d/navil-scan \
+    && chmod 0644 /etc/cron.d/navil-scan \
+    && crontab /etc/cron.d/navil-scan
+
+# Also run initial scan on first boot
+COPY deploy/honeypot-oci/scanner-entrypoint.sh /entrypoint.sh
+RUN chmod +x /entrypoint.sh
+
+ENTRYPOINT ["/entrypoint.sh"]

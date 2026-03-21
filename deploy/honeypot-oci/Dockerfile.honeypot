@@ -1,0 +1,14 @@
+FROM python:3.12-slim
+
+WORKDIR /app
+
+# Install navil
+COPY pyproject.toml .
+COPY navil/ navil/
+RUN pip install --no-cache-dir -e .
+
+# Honeypot entrypoint
+COPY deploy/honeypot-oci/honeypot-entrypoint.sh /entrypoint.sh
+RUN chmod +x /entrypoint.sh
+
+ENTRYPOINT ["/entrypoint.sh"]
