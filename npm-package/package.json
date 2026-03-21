@@ -1,0 +1,39 @@
+{
+  "name": "@navil/mcp-security",
+  "version": "0.2.1",
+  "description": "Agent governance middleware — runtime security proxy for MCP servers. Anomaly detection, threat intelligence, policy engine, credential management.",
+  "keywords": [
+    "mcp",
+    "mcp-server",
+    "mcp-security",
+    "model-context-protocol",
+    "ai-security",
+    "ai-agents",
+    "agent-governance",
+    "prompt-injection",
+    "threat-intelligence",
+    "security-proxy",
+    "openclaw",
+    "llm-security",
+    "runtime-security"
+  ],
+  "homepage": "https://navil.ai",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/ivanlkf/navil"
+  },
+  "bugs": {
+    "url": "https://github.com/ivanlkf/navil/issues"
+  },
+  "license": "MIT",
+  "bin": {
+    "navil-install": "install.sh"
+  },
+  "scripts": {
+    "postinstall": "echo '\\n  Navil installed! Run: pip install navil && navil wrap your_config.json\\n'"
+  },
+  "os": ["darwin", "linux", "win32"],
+  "engines": {
+    "node": ">=16"
+  }
+}
