@@ -1,0 +1,51 @@
+# Navil Community Scope Templates — GitHub MCP Server
+# These scopes define tool visibility for agents connecting to GitHub MCP.
+# Usage: reference in your policy.yaml scopes section, or copy into your own policy.
+
+scopes:
+  github-pr-review:
+    description: "Code review agent — read-only PR access + review creation"
+    tools:
+      - pulls/get
+      - pulls/list
+      - pulls/listFiles
+      - reviews/create
+      - reviews/list
+      - issues/listComments
+      - issues/createComment
+
+  github-issue-triage:
+    description: "Issue triage agent — read issues, label, assign, comment"
+    tools:
+      - issues/list
+      - issues/get
+      - issues/update
+      - issues/createComment
+      - issues/listComments
+      - issues/addLabels
+      - issues/removeLabel
+      - issues/addAssignees
+
+  github-deploy:
+    description: "Deploy agent — merge PRs, create releases, manage deployments"
+    tools:
+      - pulls/merge
+      - pulls/update
+      - repos/createRelease
+      - repos/listReleases
+      - repos/getLatestRelease
+      - actions/listWorkflowRuns
+      - actions/createWorkflowDispatch
+
+  github-read-only:
+    description: "Read-only agent — browse repos, PRs, issues without modifications"
+    tools:
+      - repos/get
+      - repos/listForOrg
+      - pulls/get
+      - pulls/list
+      - issues/get
+      - issues/list
+      - issues/listComments
+      - git/getTree
+      - repos/getContent

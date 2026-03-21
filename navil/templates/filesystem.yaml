@@ -1,0 +1,30 @@
+# Navil Community Scope Templates — Filesystem MCP Server
+# These scopes define tool visibility for agents connecting to Filesystem MCP.
+
+scopes:
+  filesystem-read-only:
+    description: "Read-only agent — browse and read files, no writes"
+    tools:
+      - read_file
+      - read_multiple_files
+      - list_directory
+      - directory_tree
+      - search_files
+      - get_file_info
+
+  filesystem-read-write:
+    description: "Read-write agent — read and create/edit files, no deletes"
+    tools:
+      - read_file
+      - read_multiple_files
+      - list_directory
+      - directory_tree
+      - search_files
+      - get_file_info
+      - write_file
+      - create_directory
+      - move_file
+
+  filesystem-admin:
+    description: "Full access agent — all file operations including delete"
+    tools: "*"

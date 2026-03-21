@@ -1,0 +1,28 @@
+# Navil Community Scope Templates — kubectl MCP Server
+# These scopes define tool visibility for agents interacting with Kubernetes.
+
+scopes:
+  kubectl-read-only:
+    description: "Read-only agent — inspect cluster state, no mutations"
+    tools:
+      - kubectl/get
+      - kubectl/describe
+      - kubectl/logs
+      - kubectl/top
+      - kubectl/api-resources
+      - kubectl/explain
+
+  kubectl-deploy:
+    description: "Deploy agent — apply manifests and manage rollouts"
+    tools:
+      - kubectl/get
+      - kubectl/describe
+      - kubectl/logs
+      - kubectl/apply
+      - kubectl/rollout
+      - kubectl/scale
+      - kubectl/set
+
+  kubectl-admin:
+    description: "Full access agent — all kubectl operations including delete"
+    tools: "*"
