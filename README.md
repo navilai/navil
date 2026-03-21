@@ -52,6 +52,15 @@ OpenClaw crossed 100K GitHub stars. It also has a massive, unfolding security pr
 
 **824+ malicious skills** found in the OpenClaw registry (out of 10,700+ total). **42,665 instances** exposed to the public internet. The attack surface is enormous and growing daily.
 
+The threat vectors are real and specific:
+
+- **Tool poisoning** -- malicious instructions embedded in tool descriptions that override agent behavior
+- **Tool shadowing** -- a rogue tool intercepts calls meant for legitimate tools via name collision
+- **Rug-pull attacks** -- a third-party MCP server silently changes behavior after you've integrated it
+- **Prompt injection** -- untrusted tool output overrides agent goals via natural language
+- **Data exfiltration** -- agent reads sensitive files and sends them to external endpoints
+- **Privilege escalation** -- agent chains tool calls to gain access it shouldn't have
+
 Navil fixes this in one command:
 
 ```bash
