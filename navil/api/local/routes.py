@@ -1435,11 +1435,26 @@ def save_policy(body: SavePolicyBody) -> dict[str, Any]:
             detail=f"Path must be one of: {', '.join(sorted(allowed_names))}",
         )
 
-    # Validate the YAML is parseable
+    # Validate the YAML is parseable and has valid schema
     try:
-        yaml.safe_load(body.yaml)
+        parsed = yaml.safe_load(body.yaml)
     except yaml.YAMLError as e:
         raise HTTPException(status_code=400, detail=f"Invalid YAML: {e}") from e
+
+    if not isinstance(parsed, dict):
+        raise HTTPException(
+            status_code=400,
+            detail="Policy YAML must be a mapping (dict) at the top level",
+        )
+
+    _ALLOWED_POLICY_KEYS = {"rules", "default_action", "version"}
+    unknown_keys = set(parsed.keys()) - _ALLOWED_POLICY_KEYS
+    if unknown_keys:
+        raise HTTPException(
+            status_code=400,
+            detail=f"Unknown top-level keys: {', '.join(sorted(unknown_keys))}. "
+            f"Allowed keys: {', '.join(sorted(_ALLOWED_POLICY_KEYS))}",
+        )
 
     # Resolve path: prefer ~/.navil/<name>, fall back to ./<name>
     navil_dir = Path(os.path.expanduser("~/.navil"))
