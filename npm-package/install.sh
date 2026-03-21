@@ -1,0 +1,13 @@
+#!/bin/bash
+echo ""
+echo "  Navil — Agent Governance Middleware"
+echo "  ===================================="
+echo ""
+echo "  Navil is a Python package. Install with:"
+echo ""
+echo "    pip install navil"
+echo "    navil wrap your_mcp_config.json"
+echo ""
+echo "  For cloud dashboard: navil cloud login"
+echo "  Docs: https://navil.ai/docs"
+echo ""
