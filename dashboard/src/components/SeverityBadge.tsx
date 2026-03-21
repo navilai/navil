@@ -5,6 +5,7 @@ const colors: Record<string, string> = {
   LOW: 'bg-[#60a5fa]/15 text-[#60a5fa] border-[#60a5fa]/30',
   INFO: 'bg-[#5a6a8a]/15 text-[#8b9bc0] border-[#5a6a8a]/30',
   OK: 'bg-[#34d399]/15 text-[#34d399] border-[#34d399]/30',
+  UNKNOWN: 'bg-[#5a6a8a]/15 text-[#8b9bc0] border-[#5a6a8a]/30',
 }
 
 const dotColors: Record<string, string> = {
@@ -14,6 +15,7 @@ const dotColors: Record<string, string> = {
   LOW: 'bg-[#60a5fa]',
   INFO: 'bg-[#8b9bc0]',
   OK: 'bg-[#34d399]',
+  UNKNOWN: 'bg-[#8b9bc0]',
 }
 
 export default function SeverityBadge({ severity }: { severity: string }) {

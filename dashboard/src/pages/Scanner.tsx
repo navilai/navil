@@ -259,10 +259,14 @@ export default function Scanner() {
 
             {(analysis || stream.result) && (() => {
               const a = analysis || stream.result!
+              // Normalize unknown severity — if scan found 0 vulns, override to OK
+              const displaySeverity = (a.severity?.toUpperCase() === 'UNKNOWN' && result?.total_vulnerabilities === 0)
+                ? 'OK'
+                : a.severity
               return (
               <div className="space-y-4 animate-fadeIn">
                 <div className="flex items-center gap-3">
-                  <SeverityBadge severity={a.severity} />
+                  <SeverityBadge severity={displaySeverity} />
                   {a.confidence !== undefined && (
                     <div className="flex items-center gap-2">
                       <MiniBar value={a.confidence * 100} max={100} color="bg-violet-500" height="h-1" className="w-20" />

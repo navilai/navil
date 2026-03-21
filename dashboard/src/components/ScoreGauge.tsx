@@ -46,8 +46,12 @@ export default function ScoreGauge({ score, size = 140, strokeWidth = 10, classN
           stroke={color}
           strokeWidth={strokeWidth}
           strokeLinecap="round"
+          strokeDasharray={circumference}
+          strokeDashoffset={offset}
           className="score-arc"
-          style={{ '--score-offset': offset } as React.CSSProperties}
+          style={{
+            transition: 'stroke-dashoffset 1.2s ease-out',
+          }}
           filter={`drop-shadow(0 0 6px ${glowColor})`}
         />
       </svg>
