@@ -1,9 +1,9 @@
 <p align="center">
   <h1 align="center">Navil</h1>
   <p align="center">
-    <strong>Community-powered MCP security.</strong>
+    <strong>The open-source agent governance middleware.</strong>
     <br />
-    One command secures every AI agent tool call. Every wrap makes the network smarter.
+    Observability, policy enforcement, and threat intelligence for AI agent tool calls -- whether your agents use MCP, CLI, or both.
   </p>
 </p>
 
@@ -82,23 +82,39 @@ navil cloud login    # OAuth device flow -- opens browser, no API key to paste
 
 This connects your local instance to [navil.ai](https://navil.ai) for dashboards, per-agent trust scores, and real-time access to the community threat network. The free tier works without it.
 
+## Who Is Navil For
+
+| Buyer | Problem | What Navil Does |
+|-------|---------|-----------------|
+| **Platform teams** deploying MCP servers for internal dev tooling | No visibility into what agents are doing across the fleet | Centralized observability + policy enforcement across all agents |
+| **SaaS companies** building MCP integrations for customers | Multi-tenant auth and credential lifecycle are table stakes | JWT credential management, per-tenant scoping, audit trails |
+| **Regulated industries** (finance, healthcare, government) | Audit trails and access controls aren't optional | Complete audit log, per-tool policy enforcement, anomaly alerting |
+| **Solo developers** using Claude/Cursor/OpenClaw | 824+ malicious skills, 8 CVEs, no auth on MCP servers | One-command security proxy with community threat intel |
+
+Navil works for solo developers (free, OSS, no account needed). But the architecture is built for teams and enterprises who need governance, not just scanning.
+
 ## How It Works
 
-Navil is a security proxy that sits between your MCP clients and servers. Like a community threat network sits between browsers and web servers, Navil sits between AI agents and tools.
+Bloomberg built auth, rate limiting, and AI guardrails internally to make MCP safe for enterprise. Block built Goose, an MCP-compatible agent with governance middleware. Most organizations can't build this in-house. Navil is the open-source version.
 
 ```
-                        The Proxy Model
+                    Agent Governance Layer
 
-  Agents ------> [ Navil Proxy ] ------> MCP Servers
+  AI Agents ------> [ Navil ] ------> Tools (MCP, CLI, API)
                        |
-                       | (side-effect)
+                       |  Observability: every tool call logged
+                       |  Policy: least-privilege enforcement
+                       |  Detection: anomaly + threat matching
+                       |  Sharing: community threat intelligence
                        v
               Community Threat Network
 
-  Using the proxy IS contributing to global security.
+  Using Navil IS contributing to global security.
   Every anomaly detected locally is anonymized and shared.
   Every shared pattern makes every other node smarter.
 ```
+
+MCP has real problems -- context bloat, no auth, no observability. The "MCP is dead" crowd is right about the problems, wrong about the solution. The answer isn't to abandon the protocol. It's to fix the operational layer. That's what Navil does.
 
 ### What `navil wrap` does
 
