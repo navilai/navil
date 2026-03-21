@@ -35,37 +35,31 @@ navil wrap ~/.cursor/mcp.json    # or claude_desktop_config.json, openclaw.json
 
 ---
 
-## The OpenClaw Security Crisis
+## Why Runtime Monitoring, Not Just Scanning
 
-OpenClaw crossed 100K GitHub stars. It also has a massive, unfolding security problem.
+Static scanning of MCP packages finds real issues -- but only 1.7% of them. We scanned 4,401 MCP packages and found 77 with actual code-level vulnerabilities. The packages themselves are mostly fine.
 
-**8+ critical CVEs in 6 weeks:**
+**The real threats are dynamic.** An MCP server can have perfectly clean source code and still be weaponized at runtime:
 
-| CVE | Impact |
-|-----|--------|
-| CVE-2026-31992 | Allowlist bypass |
-| CVE-2026-27566 | Wrapper bypass |
-| CVE-2026-22175 | Exec approval bypass |
-| CVE-2026-22171 | Path traversal |
-| CVE-2026-28461 | Memory bomb |
-| CVE-2026-27487 | Token theft |
+| Threat | Static scan catches it? | Runtime proxy catches it? |
+|--------|:-----------------------:|:------------------------:|
+| Code vulnerabilities in packages | Yes (1.7% found) | -- |
+| Prompt injection via tool calls | No | **Yes** |
+| Tool poisoning (malicious descriptions) | No | **Yes** |
+| Data exfiltration via tool responses | No | **Yes** |
+| Rug pull (server changes post-install) | No | **Yes** |
+| Credential exposure through tool calls | No | **Yes** |
+| Privilege escalation via tool chaining | No | **Yes** |
 
-**824+ malicious skills** found in the OpenClaw registry (out of 10,700+ total). **42,665 instances** exposed to the public internet. The attack surface is enormous and growing daily.
+Static scanning catches 1.7%. Runtime monitoring catches the other 98.3%. That's why Navil is a proxy, not just a scanner. The scanner is a nice-to-have. The proxy is the product.
 
-The threat vectors are real and specific:
-
-- **Tool poisoning** -- malicious instructions embedded in tool descriptions that override agent behavior
-- **Tool shadowing** -- a rogue tool intercepts calls meant for legitimate tools via name collision
-- **Rug-pull attacks** -- a third-party MCP server silently changes behavior after you've integrated it
-- **Prompt injection** -- untrusted tool output overrides agent goals via natural language
-- **Data exfiltration** -- agent reads sensitive files and sends them to external endpoints
-- **Privilege escalation** -- agent chains tool calls to gain access it shouldn't have
+**Meanwhile, the MCP protocol itself has real problems:** 8+ CVEs in 6 weeks (allowlist bypass, wrapper bypass, exec approval bypass, path traversal, memory bomb, token theft). 42,665+ instances exposed to the public internet with no authentication.
 
 Navil fixes this in one command:
 
 ```bash
 pip install navil
-navil wrap openclaw.json
+navil wrap your_mcp_config.json
 ```
 
 Every MCP server in your config is now behind a security proxy that monitors tool calls, enforces policies, detects anomalies, and blocks known attack patterns -- with [<3 us overhead per message](#performance). Your original config is backed up automatically.
@@ -98,7 +92,7 @@ This connects your local instance to [navil.ai](https://navil.ai) for dashboards
 | **Platform teams** deploying MCP servers for internal dev tooling | No visibility into what agents are doing across the fleet | Centralized observability + policy enforcement across all agents |
 | **SaaS companies** building MCP integrations for customers | Multi-tenant auth and credential lifecycle are table stakes | JWT credential management, per-tenant scoping, audit trails |
 | **Regulated industries** (finance, healthcare, government) | Audit trails and access controls aren't optional | Complete audit log, per-tool policy enforcement, anomaly alerting |
-| **Solo developers** using Claude/Cursor/OpenClaw | 824+ malicious skills, 8 CVEs, no auth on MCP servers | One-command security proxy with community threat intel |
+| **Solo developers** using Claude/Cursor/OpenClaw | Runtime threats invisible to static scanning, no auth on MCP servers | One-command security proxy with community threat intel |
 
 Navil works for solo developers (free, OSS, no account needed). But the architecture is built for teams and enterprises who need governance, not just scanning.
 
