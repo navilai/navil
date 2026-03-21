@@ -1,5 +1,5 @@
 {
-  "version": 1,
+  "version": 2,
   "description": "Navil blocklist v1 - signature patterns extracted from public MCP attack catalog",
   "created_at": "2026-03-15T00:00:00Z",
   "patterns": [
@@ -2307,7 +2307,6 @@
       "description": "Prompt injection instructing secrets exfiltration via OpenClaw API",
       "confidence": 0.92
     },
-
     {
       "pattern_id": "BL-VDB-001",
       "pattern_type": "description_injection",
@@ -2515,7 +2514,6 @@
       "confidence": 0.85,
       "source": "https://github.com/vineethsai/vulnerablemcp"
     },
-
     {
       "pattern_id": "BL-CVE-001",
       "pattern_type": "argument_content",
@@ -2660,7 +2658,6 @@
       "confidence": 0.82,
       "source": "CVE-2025-66414"
     },
-
     {
       "pattern_id": "BL-ACA-001",
       "pattern_type": "description_injection",
@@ -2805,8 +2802,6 @@
       "description": "MCPLIB: Multi-tool cooperation - tool B accesses data from tool A's context (arxiv 2508.12538)",
       "confidence": 0.8
     },
-
-
     {
       "pattern_id": "BL-BLG-001",
       "pattern_type": "mcp_specific",
@@ -2990,6 +2985,906 @@
       "severity": "LOW",
       "description": "Docker: Sleeper tool disguised as harmless utility (random fact generator pattern)",
       "confidence": 0.55
+    },
+    {
+      "id": "navil100_nts_adv_001",
+      "type": "behavioral",
+      "severity": "HIGH",
+      "description": "Batch Request: Benign + Malicious Mix \u2014 JSON-RPC batching sends multiple requests as an array. Many proxies only inspect the first element o",
+      "pattern": "batch_request:_benign_+_malicious_mix",
+      "source": "navil-100-benchmark",
+      "attack_id": "NTS-ADV-001"
+    },
+    {
+      "id": "navil100_nts_adv_002",
+      "type": "behavioral",
+      "severity": "HIGH",
+      "description": "Duplicate Key Override \u2014 JSON spec says duplicate keys have undefined behavior. Most parsers use last-wins, but some security",
+      "pattern": "duplicate_key_override",
+      "source": "navil-100-benchmark",
+      "attack_id": "NTS-ADV-002"
+    },
+    {
+      "id": "navil100_nts_adv_003",
+      "type": "behavioral",
+      "severity": "HIGH",
+      "description": "Null Byte Path Truncation \u2014 C-based string handling truncates at null bytes. The proxy sees '/tmp/safe.txt' but the backend's C ",
+      "pattern": "null_byte_path_truncation",
+      "source": "navil-100-benchmark",
+      "attack_id": "NTS-ADV-003"
+    },
+    {
+      "id": "navil100_nts_adv_004",
+      "type": "behavioral",
+      "severity": "HIGH",
+      "description": "Integer Overflow in RPC ID \u2014 JSON allows arbitrary precision integers. Rust's serde defaults to i64 which overflows at 2^63. This",
+      "pattern": "integer_overflow_in_rpc_id",
+      "source": "navil-100-benchmark",
+      "attack_id": "NTS-ADV-004"
+    },
+    {
+      "id": "navil100_nts_adv_005",
+      "type": "behavioral",
+      "severity": "HIGH",
+      "description": "JSON-RPC 1.0 Downgrade \u2014 JSON-RPC 1.0 has no 'jsonrpc' field and uses positional params (array). If the proxy only validates ",
+      "pattern": "json-rpc_1.0_downgrade",
+      "source": "navil-100-benchmark",
+      "attack_id": "NTS-ADV-005"
+    },
+    {
+      "id": "navil100_nts_adv_006",
+      "type": "behavioral",
+      "severity": "HIGH",
+      "description": "Notification Fire-and-Forget \u2014 JSON-RPC notifications (no 'id' field) don't expect a response. The proxy may not log or inspect not",
+      "pattern": "notification_fire-and-forget",
+      "source": "navil-100-benchmark",
+      "attack_id": "NTS-ADV-006"
+    },
+    {
+      "id": "navil100_nts_adv_007",
+      "type": "behavioral",
+      "severity": "HIGH",
+      "description": "Content-Type Smuggling (text/plain) \u2014 The proxy may only inspect requests with Content-Type: application/json. Sending valid JSON with tex",
+      "pattern": "content-type_smuggling_(text/plain)",
+      "source": "navil-100-benchmark",
+      "attack_id": "NTS-ADV-007"
+    },
+    {
+      "id": "navil100_nts_adv_008",
+      "type": "behavioral",
+      "severity": "HIGH",
+      "description": "GET Request with Body \u2014 Some servers process request bodies on GET requests even though the HTTP spec discourages it. Proxy ",
+      "pattern": "get_request_with_body",
+      "source": "navil-100-benchmark",
+      "attack_id": "NTS-ADV-008"
+    },
+    {
+      "id": "navil100_nts_adv_009",
+      "type": "behavioral",
+      "severity": "HIGH",
+      "description": "Split Payload via Chunked Encoding \u2014 Chunked Transfer-Encoding sends the payload in fragments. Some proxies reassemble before inspecting,",
+      "pattern": "split_payload_via_chunked_encoding",
+      "source": "navil-100-benchmark",
+      "attack_id": "NTS-ADV-009"
+    },
+    {
+      "id": "navil100_nts_adv_010",
+      "type": "behavioral",
+      "severity": "HIGH",
+      "description": "UTF-8 BOM + Whitespace Padding \u2014 UTF-8 BOM and leading whitespace may cause the proxy's JSON parser to fail while the backend's parse",
+      "pattern": "utf-8_bom_+_whitespace_padding",
+      "source": "navil-100-benchmark",
+      "attack_id": "NTS-ADV-010"
+    },
+    {
+      "id": "navil100_nts_adv_011",
+      "type": "argument_pattern",
+      "severity": "HIGH",
+      "description": "Path Traversal (../../etc/shadow) \u2014 Path normalization differs between the proxy and the OS. The proxy may allow paths starting with /tm",
+      "pattern": "path_traversal_(../../etc/shadow)",
+      "source": "navil-100-benchmark",
+      "attack_id": "NTS-ADV-011"
+    },
+    {
+      "id": "navil100_nts_adv_012",
+      "type": "argument_pattern",
+      "severity": "HIGH",
+      "description": "Symlink Follow to /etc/shadow \u2014 Create a symlink in an allowed directory pointing to a restricted file. The proxy checks the path (/",
+      "pattern": "symlink_follow_to_/etc/shadow",
+      "source": "navil-100-benchmark",
+      "attack_id": "NTS-ADV-012"
+    },
+    {
+      "id": "navil100_nts_adv_013",
+      "type": "argument_pattern",
+      "severity": "HIGH",
+      "description": "Tool Name Case Evasion \u2014 If the proxy's blocklist checks tool names case-sensitively ('exec_command') but the backend handles",
+      "pattern": "tool_name_case_evasion",
+      "source": "navil-100-benchmark",
+      "attack_id": "NTS-ADV-013"
+    },
+    {
+      "id": "navil100_nts_adv_014",
+      "type": "argument_pattern",
+      "severity": "HIGH",
+      "description": "Discovery Response Injection \u2014 The tools/list response contains tool descriptions. A malicious MCP server can embed prompt injectio",
+      "pattern": "discovery_response_injection",
+      "source": "navil-100-benchmark",
+      "attack_id": "NTS-ADV-014"
+    },
+    {
+      "id": "navil100_nts_adv_015",
+      "type": "argument_pattern",
+      "severity": "HIGH",
+      "description": "Polyglot File Write (JS in PNG) \u2014 Write a shell script with a PNG magic header. File type detection sees 'PNG' but execution treats it",
+      "pattern": "polyglot_file_write_(js_in_png)",
+      "source": "navil-100-benchmark",
+      "attack_id": "NTS-ADV-015"
+    },
+    {
+      "id": "navil100_nts_adv_016",
+      "type": "argument_pattern",
+      "severity": "HIGH",
+      "description": "Env Var Expansion in Path \u2014 The proxy checks the literal string '$HOME/.ssh/id_rsa' which doesn't match /root/ or /home/. But th",
+      "pattern": "env_var_expansion_in_path",
+      "source": "navil-100-benchmark",
+      "attack_id": "NTS-ADV-016"
+    },
+    {
+      "id": "navil100_nts_adv_017",
+      "type": "argument_pattern",
+      "severity": "HIGH",
+      "description": "File URI Scheme Bypass \u2014 Using file:// URI scheme instead of a plain path. The proxy's path validation may not handle URI sch",
+      "pattern": "file_uri_scheme_bypass",
+      "source": "navil-100-benchmark",
+      "attack_id": "NTS-ADV-017"
+    },
+    {
+      "id": "navil100_nts_adv_018",
+      "type": "argument_content",
+      "severity": "HIGH",
+      "description": "Base64 Command Obfuscation \u2014 The actual malicious command is Base64-encoded. The proxy sees 'echo ... | base64 -d | bash' which l",
+      "pattern": "base64_command_obfuscation",
+      "source": "navil-100-benchmark",
+      "attack_id": "NTS-ADV-018"
+    },
+    {
+      "id": "navil100_nts_adv_019",
+      "type": "argument_content",
+      "severity": "HIGH",
+      "description": "Hex-Encoded Sensitive Path \u2014 Uses printf with hex escapes to construct '/etc/shadow' at runtime. The proxy sees printf hex codes,",
+      "pattern": "hex-encoded_sensitive_path",
+      "source": "navil-100-benchmark",
+      "attack_id": "NTS-ADV-019"
+    },
+    {
+      "id": "navil100_nts_adv_020",
+      "type": "argument_content",
+      "severity": "HIGH",
+      "description": "Instruction Splitting (Part 1 of 2) \u2014 Split the malicious command across two tool calls. Part 1 writes a script fragment ('cat'). Part 2 a",
+      "pattern": "instruction_splitting_(part_1_of_2)",
+      "source": "navil-100-benchmark",
+      "attack_id": "NTS-ADV-020"
+    },
+    {
+      "id": "navil100_nts_adv_021",
+      "type": "argument_content",
+      "severity": "HIGH",
+      "description": "Instruction Splitting (Part 2 of 2) \u2014 Completes the staged attack: appends the target path and executes. The proxy sees 'echo something >>",
+      "pattern": "instruction_splitting_(part_2_of_2)",
+      "source": "navil-100-benchmark",
+      "attack_id": "NTS-ADV-021"
+    },
+    {
+      "id": "navil100_nts_adv_022",
+      "type": "argument_content",
+      "severity": "HIGH",
+      "description": "Persona Hijack in Argument \u2014 Injects system-level instructions into a seemingly innocent 'encoding' parameter. The proxy validate",
+      "pattern": "persona_hijack_in_argument",
+      "source": "navil-100-benchmark",
+      "attack_id": "NTS-ADV-022"
+    },
+    {
+      "id": "navil100_nts_adv_023",
+      "type": "argument_content",
+      "severity": "HIGH",
+      "description": "Unicode Homoglyph Tool Name \u2014 Replaces Latin 'e' with Cyrillic (visually identical). The proxy's allowlist checks 'read_file' but ",
+      "pattern": "unicode_homoglyph_tool_name",
+      "source": "navil-100-benchmark",
+      "attack_id": "NTS-ADV-023"
+    },
+    {
+      "id": "navil100_nts_adv_024",
+      "type": "argument_content",
+      "severity": "HIGH",
+      "description": "Basque Language Prompt Injection \u2014 Prompt injection in Basque (low-resource language). NLP-based detection models are trained primarily",
+      "pattern": "basque_language_prompt_injection",
+      "source": "navil-100-benchmark",
+      "attack_id": "NTS-ADV-024"
+    },
+    {
+      "id": "navil100_nts_adv_025",
+      "type": "argument_content",
+      "severity": "HIGH",
+      "description": "Recursive Sampling Loop \u2014 MCP's sampling capability allows servers to request LLM completions. This creates a recursive loop: ",
+      "pattern": "recursive_sampling_loop",
+      "source": "navil-100-benchmark",
+      "attack_id": "NTS-ADV-025"
+    },
+    {
+      "id": "navil100_nts_adv_026",
+      "type": "argument_content",
+      "severity": "HIGH",
+      "description": "Zero-Width Character Insertion \u2014 Zero-width spaces (U+200B) inserted between every character. The proxy's regex for 'cat /etc/shadow'",
+      "pattern": "zero-width_character_insertion",
+      "source": "navil-100-benchmark",
+      "attack_id": "NTS-ADV-026"
+    },
+    {
+      "id": "navil100_nts_adv_027",
+      "type": "argument_content",
+      "severity": "HIGH",
+      "description": "Backtick Command Substitution \u2014 Backticks cause shell expansion before the read_file tool processes the path. The proxy sees a path ",
+      "pattern": "backtick_command_substitution",
+      "source": "navil-100-benchmark",
+      "attack_id": "NTS-ADV-027"
+    },
+    {
+      "id": "navil100_nts_adv_028",
+      "type": "behavioral",
+      "severity": "HIGH",
+      "description": "Workspace Buffer Poisoning \u2014 In multi-agent setups, agents share a workspace directory. Writing a fake instructions file to the s",
+      "pattern": "workspace_buffer_poisoning",
+      "source": "navil-100-benchmark",
+      "attack_id": "NTS-ADV-028"
+    },
+    {
+      "id": "navil100_nts_adv_029",
+      "type": "behavioral",
+      "severity": "HIGH",
+      "description": "Agent Social Engineering via Tool Output \u2014 Creates a fake task in another agent's inbox directory. The receiving agent trusts messages from 'ad",
+      "pattern": "agent_social_engineering_via_tool_output",
+      "source": "navil-100-benchmark",
+      "attack_id": "NTS-ADV-029"
+    },
+    {
+      "id": "navil100_nts_adv_030",
+      "type": "behavioral",
+      "severity": "HIGH",
+      "description": "TOCTOU Race Condition \u2014 Time-of-check-to-time-of-use: copy a safe file, proxy validates it, then immediately replace it with",
+      "pattern": "toctou_race_condition",
+      "source": "navil-100-benchmark",
+      "attack_id": "NTS-ADV-030"
+    },
+    {
+      "id": "navil100_nts_adv_031",
+      "type": "behavioral",
+      "severity": "HIGH",
+      "description": "Context Inflation (100K+ padding) \u2014 Floods the context with 100K characters of padding. The malicious instruction is hidden after the pa",
+      "pattern": "context_inflation_(100k+_padding)",
+      "source": "navil-100-benchmark",
+      "attack_id": "NTS-ADV-031"
+    },
+    {
+      "id": "navil100_nts_adv_032",
+      "type": "behavioral",
+      "severity": "HIGH",
+      "description": "Concurrent Flood (1 malicious in 50) \u2014 Send 50 concurrent requests: 49 benign reads + 1 malicious exec. Under load, the proxy's async inspe",
+      "pattern": "concurrent_flood_(1_malicious_in_50)",
+      "source": "navil-100-benchmark",
+      "attack_id": "NTS-ADV-032"
+    },
+    {
+      "id": "navil100_nts_adv_033",
+      "type": "behavioral",
+      "severity": "HIGH",
+      "description": "Time-Based File Existence Oracle \u2014 If the file exists, response takes 3+ seconds. If not, instant. Attacker measures response time to i",
+      "pattern": "time-based_file_existence_oracle",
+      "source": "navil-100-benchmark",
+      "attack_id": "NTS-ADV-033"
+    },
+    {
+      "id": "navil100_nts_adv_034",
+      "type": "behavioral",
+      "severity": "CRITICAL",
+      "description": "DNS Tunneling Exfiltration \u2014 Encodes file contents as DNS subdomains. Each DNS lookup sends a chunk of data to the attacker's DNS",
+      "pattern": "dns_tunneling_exfiltration",
+      "source": "navil-100-benchmark",
+      "attack_id": "NTS-ADV-034"
+    },
+    {
+      "id": "navil100_nts_adv_035",
+      "type": "behavioral",
+      "severity": "HIGH",
+      "description": "Steganographic Data Encoding \u2014 XOR-encodes /etc/passwd contents and writes to a file disguised as image metadata. Content inspectio",
+      "pattern": "steganographic_data_encoding",
+      "source": "navil-100-benchmark",
+      "attack_id": "NTS-ADV-035"
+    },
+    {
+      "id": "navil100_nts_adv_036",
+      "type": "behavioral",
+      "severity": "HIGH",
+      "description": "Error Code Binary Channel \u2014 Reads one byte of /etc/shadow, converts to integer, exits with that code. The exit code leaks one by",
+      "pattern": "error_code_binary_channel",
+      "source": "navil-100-benchmark",
+      "attack_id": "NTS-ADV-036"
+    },
+    {
+      "id": "navil100_nts_adv_037",
+      "type": "behavioral",
+      "severity": "HIGH",
+      "description": "Pagination Size Leak \u2014 Doesn't read file contents -- only reads metadata (line count, byte count, permissions). Metadata is",
+      "pattern": "pagination_size_leak",
+      "source": "navil-100-benchmark",
+      "attack_id": "NTS-ADV-037"
+    },
+    {
+      "id": "navil100_nts_adv_038",
+      "type": "behavioral",
+      "severity": "CRITICAL",
+      "description": "HTTP Exfil via curl POST \u2014 Direct exfiltration via HTTP POST. The data leaves as a request body to an external URL. Simple but ",
+      "pattern": "http_exfil_via_curl_post",
+      "source": "navil-100-benchmark",
+      "attack_id": "NTS-ADV-038"
+    },
+    {
+      "id": "navil100_nts_adv_039",
+      "type": "behavioral",
+      "severity": "CRITICAL",
+      "description": "Process Substitution Exfil \u2014 Uses bash process substitution (<()) to read /etc/shadow. The proxy may not recognize <() as file ac",
+      "pattern": "process_substitution_exfil",
+      "source": "navil-100-benchmark",
+      "attack_id": "NTS-ADV-039"
+    },
+    {
+      "id": "navil100_nts_adv_040",
+      "type": "behavioral",
+      "severity": "HIGH",
+      "description": "Env Leak via Deliberate Error \u2014 Causes a Python exception that includes all environment variables in the error message. Error messag",
+      "pattern": "env_leak_via_deliberate_error",
+      "source": "navil-100-benchmark",
+      "attack_id": "NTS-ADV-040"
+    },
+    {
+      "id": "navil100_nts_adv_041",
+      "type": "tool_sequence",
+      "severity": "HIGH",
+      "description": "Git-to-Filesystem Pivot via Hook \u2014 Cloning a repo containing a post-checkout git hook that writes a reverse shell to /tmp. The Git MCP ",
+      "pattern": "git-to-filesystem_pivot_via_hook",
+      "source": "navil-100-benchmark",
+      "attack_id": "NTS-ADV-041"
+    },
+    {
+      "id": "navil100_nts_adv_042",
+      "type": "tool_sequence",
+      "severity": "HIGH",
+      "description": "Git Config Credential Harvesting \u2014 Sets the git credential.helper to a shell command that exfiltrates environment variables. Next time ",
+      "pattern": "git_config_credential_harvesting",
+      "source": "navil-100-benchmark",
+      "attack_id": "NTS-ADV-042"
+    },
+    {
+      "id": "navil100_nts_adv_043",
+      "type": "tool_sequence",
+      "severity": "HIGH",
+      "description": "MCP Server Identity Spoofing \u2014 Sends an initialize request impersonating the trusted filesystem-server. If the proxy trusts request",
+      "pattern": "mcp_server_identity_spoofing",
+      "source": "navil-100-benchmark",
+      "attack_id": "NTS-ADV-043"
+    },
+    {
+      "id": "navil100_nts_adv_044",
+      "type": "tool_sequence",
+      "severity": "CRITICAL",
+      "description": "Cross-Tool RCE Chain (write + cron) \u2014 Writes a cron job file directly. The write_file tool has no concept of cron -- it just writes. But t",
+      "pattern": "cross-tool_rce_chain_(write_+_cron)",
+      "source": "navil-100-benchmark",
+      "attack_id": "NTS-ADV-044"
+    },
+    {
+      "id": "navil100_nts_adv_045",
+      "type": "tool_sequence",
+      "severity": "HIGH",
+      "description": "Resource Template Injection \u2014 MCP resource URIs can contain template parameters. A malicious URI injects a template expression tha",
+      "pattern": "resource_template_injection",
+      "source": "navil-100-benchmark",
+      "attack_id": "NTS-ADV-045"
+    },
+    {
+      "id": "navil100_nts_adv_046",
+      "type": "tool_sequence",
+      "severity": "HIGH",
+      "description": "Notification Channel Hijack \u2014 Sends a fake tools/list_changed notification. The client re-fetches the tool list, and if the attack",
+      "pattern": "notification_channel_hijack",
+      "source": "navil-100-benchmark",
+      "attack_id": "NTS-ADV-046"
+    },
+    {
+      "id": "navil100_nts_adv_047",
+      "type": "tool_sequence",
+      "severity": "HIGH",
+      "description": "Fan-Out Amplification Attack \u2014 Chains tool calls across 3 different MCP servers sharing a filesystem. Each individual call is benig",
+      "pattern": "fan-out_amplification_attack",
+      "source": "navil-100-benchmark",
+      "attack_id": "NTS-ADV-047"
+    },
+    {
+      "id": "navil100_nts_adv_048",
+      "type": "tool_sequence",
+      "severity": "HIGH",
+      "description": "Capability Escalation via Re-Initialize \u2014 Sends a second initialize request mid-session with expanded capabilities (adds sampling and roots). ",
+      "pattern": "capability_escalation_via_re-initialize",
+      "source": "navil-100-benchmark",
+      "attack_id": "NTS-ADV-048"
+    },
+    {
+      "id": "navil100_nts_adv_049",
+      "type": "tool_sequence",
+      "severity": "HIGH",
+      "description": "Cross-Server Env Poisoning via /proc \u2014 Reads environment variables from PID 1 (the container init process) which contains all secrets injec",
+      "pattern": "cross-server_env_poisoning_via_/proc",
+      "source": "navil-100-benchmark",
+      "attack_id": "NTS-ADV-049"
+    },
+    {
+      "id": "navil100_nts_adv_050",
+      "type": "tool_sequence",
+      "severity": "HIGH",
+      "description": "Roots Boundary Escape \u2014 MCP roots define filesystem boundaries. Querying roots/list reveals the allowed root paths. Attacker",
+      "pattern": "roots_boundary_escape",
+      "source": "navil-100-benchmark",
+      "attack_id": "NTS-ADV-050"
+    },
+    {
+      "id": "navil100_nts_adv_051",
+      "type": "behavioral",
+      "severity": "HIGH",
+      "description": "Sampling Prompt Injection (System Override) \u2014 MCP sampling/createMessage allows servers to include a systemPrompt field. This field is injected di",
+      "pattern": "sampling_prompt_injection_(system_override)",
+      "source": "navil-100-benchmark",
+      "attack_id": "NTS-ADV-051"
+    },
+    {
+      "id": "navil100_nts_adv_052",
+      "type": "behavioral",
+      "severity": "HIGH",
+      "description": "Recursive Sampling DoS (Infinite Loop) \u2014 Instructs the LLM to recursively generate sampling requests. Each response triggers another sampling",
+      "pattern": "recursive_sampling_dos_(infinite_loop)",
+      "source": "navil-100-benchmark",
+      "attack_id": "NTS-ADV-052"
+    },
+    {
+      "id": "navil100_nts_adv_053",
+      "type": "behavioral",
+      "severity": "HIGH",
+      "description": "Method Alias Confusion (completion vs sampling) \u2014 The completion/complete method provides autocomplete suggestions. By using a traversal in the prompt",
+      "pattern": "method_alias_confusion_(completion_vs_sampling)",
+      "source": "navil-100-benchmark",
+      "attack_id": "NTS-ADV-053"
+    },
+    {
+      "id": "navil100_nts_adv_054",
+      "type": "behavioral",
+      "severity": "HIGH",
+      "description": "Token Budget Exhaustion \u2014 Sets maxTokens to near-max integer. The sampling request asks the LLM to generate a massive repetiti",
+      "pattern": "token_budget_exhaustion",
+      "source": "navil-100-benchmark",
+      "attack_id": "NTS-ADV-054"
+    },
+    {
+      "id": "navil100_nts_adv_055",
+      "type": "behavioral",
+      "severity": "HIGH",
+      "description": "Sampling Tool Escalation via Embedded Instructions \u2014 Embeds a multi-turn conversation in sampling messages where the attacker gradually escalates from be",
+      "pattern": "sampling_tool_escalation_via_embedded_instructions",
+      "source": "navil-100-benchmark",
+      "attack_id": "NTS-ADV-055"
+    },
+    {
+      "id": "navil100_nts_adv_056",
+      "type": "behavioral",
+      "severity": "HIGH",
+      "description": "Infinite Tool Loop via Resource Subscription \u2014 Subscribes to a resource that the attacker can modify. When the resource changes, the server notifie",
+      "pattern": "infinite_tool_loop_via_resource_subscription",
+      "source": "navil-100-benchmark",
+      "attack_id": "NTS-ADV-056"
+    },
+    {
+      "id": "navil100_nts_adv_057",
+      "type": "behavioral",
+      "severity": "HIGH",
+      "description": "Image Content Prompt Injection via Sampling \u2014 Encodes prompt injection text as base64 'image' data in a sampling message. The proxy may skip inspe",
+      "pattern": "image_content_prompt_injection_via_sampling",
+      "source": "navil-100-benchmark",
+      "attack_id": "NTS-ADV-057"
+    },
+    {
+      "id": "navil100_nts_adv_058",
+      "type": "behavioral",
+      "severity": "HIGH",
+      "description": "Chain-of-Thought Hijacking via Sampling \u2014 Uses chain-of-thought prompting to guide the LLM through a seemingly logical reasoning process that ",
+      "pattern": "chain-of-thought_hijacking_via_sampling",
+      "source": "navil-100-benchmark",
+      "attack_id": "NTS-ADV-058"
+    },
+    {
+      "id": "navil100_nts_adv_059",
+      "type": "behavioral",
+      "severity": "HIGH",
+      "description": "Method Typosquatting (sampling vs logging) \u2014 Uses logging/createMessage instead of sampling/createMessage. If the proxy only blocks sampling/ met",
+      "pattern": "method_typosquatting_(sampling_vs_logging)",
+      "source": "navil-100-benchmark",
+      "attack_id": "NTS-ADV-059"
+    },
+    {
+      "id": "navil100_nts_adv_060",
+      "type": "behavioral",
+      "severity": "HIGH",
+      "description": "Prompt Ref System Override \u2014 Requests a prompt named '__system__' via prompts/get, attempting to override the system prompt. The ",
+      "pattern": "prompt_ref_system_override",
+      "source": "navil-100-benchmark",
+      "attack_id": "NTS-ADV-060"
+    },
+    {
+      "id": "navil100_nts_adv_061",
+      "type": "url_pattern",
+      "severity": "HIGH",
+      "description": "DNS Rebinding to Localhost \u2014 Uses URL parsing ambiguity where the userinfo section contains a bracket that confuses parsers. Some",
+      "pattern": "dns_rebinding_to_localhost",
+      "source": "navil-100-benchmark",
+      "attack_id": "NTS-ADV-061"
+    },
+    {
+      "id": "navil100_nts_adv_062",
+      "type": "url_pattern",
+      "severity": "HIGH",
+      "description": "SSE Connection Exhaustion \u2014 Opens many SSE connections with aggressive heartbeat intervals. MCP over SSE transport uses Server-S",
+      "pattern": "sse_connection_exhaustion",
+      "source": "navil-100-benchmark",
+      "attack_id": "NTS-ADV-062"
+    },
+    {
+      "id": "navil100_nts_adv_063",
+      "type": "url_pattern",
+      "severity": "HIGH",
+      "description": "IPv6 Link-Local SSRF \u2014 Uses IPv6-mapped IPv4 address (::ffff:169.254.169.254) to reach the AWS metadata endpoint. Most SSRF",
+      "pattern": "ipv6_link-local_ssrf",
+      "source": "navil-100-benchmark",
+      "attack_id": "NTS-ADV-063"
+    },
+    {
+      "id": "navil100_nts_adv_064",
+      "type": "url_pattern",
+      "severity": "HIGH",
+      "description": "Cloud Metadata via Decimal IP \u2014 169.254.169.254 expressed as a single decimal integer (169*256^3 + 254*256^2 + 169*256 + 254 = 28520",
+      "pattern": "cloud_metadata_via_decimal_ip",
+      "source": "navil-100-benchmark",
+      "attack_id": "NTS-ADV-064"
+    },
+    {
+      "id": "navil100_nts_adv_065",
+      "type": "url_pattern",
+      "severity": "HIGH",
+      "description": "WebSocket Upgrade Hijack \u2014 Sends a WebSocket upgrade request to the MCP endpoint. If the proxy only inspects HTTP POST requests",
+      "pattern": "websocket_upgrade_hijack",
+      "source": "navil-100-benchmark",
+      "attack_id": "NTS-ADV-065"
+    },
+    {
+      "id": "navil100_nts_adv_066",
+      "type": "url_pattern",
+      "severity": "HIGH",
+      "description": "TTL-0 DNS Rebinding Attack \u2014 Uses a DNS rebinding service (nip.io) that first resolves to an external IP (passes allowlist check)",
+      "pattern": "ttl-0_dns_rebinding_attack",
+      "source": "navil-100-benchmark",
+      "attack_id": "NTS-ADV-066"
+    },
+    {
+      "id": "navil100_nts_adv_067",
+      "type": "url_pattern",
+      "severity": "HIGH",
+      "description": "Cloud Metadata via Open Redirect \u2014 Uses an open redirect on a trusted domain. The proxy checks the initial URL (example.com - allowed) ",
+      "pattern": "cloud_metadata_via_open_redirect",
+      "source": "navil-100-benchmark",
+      "attack_id": "NTS-ADV-067"
+    },
+    {
+      "id": "navil100_nts_adv_068",
+      "type": "url_pattern",
+      "severity": "HIGH",
+      "description": "Octal IP SSRF (0251.0376.0251.0376) \u2014 169.254.169.254 in octal notation. Leading zeros trigger octal interpretation in some IP parsers (02",
+      "pattern": "octal_ip_ssrf_(0251.0376.0251.0376)",
+      "source": "navil-100-benchmark",
+      "attack_id": "NTS-ADV-068"
+    },
+    {
+      "id": "navil100_nts_adv_069",
+      "type": "url_pattern",
+      "severity": "HIGH",
+      "description": "SSE Event Injection in Streamable HTTP \u2014 Sends raw SSE-formatted events directly. MCP's Streamable HTTP transport uses SSE for server-to-clie",
+      "pattern": "sse_event_injection_in_streamable_http",
+      "source": "navil-100-benchmark",
+      "attack_id": "NTS-ADV-069"
+    },
+    {
+      "id": "navil100_nts_adv_070",
+      "type": "url_pattern",
+      "severity": "HIGH",
+      "description": "Hex IP with Port Obfuscation \u2014 0x7f000001 is 127.0.0.1 in hexadecimal. Combined with an explicit port, this reaches the local MCP s",
+      "pattern": "hex_ip_with_port_obfuscation",
+      "source": "navil-100-benchmark",
+      "attack_id": "NTS-ADV-070"
+    },
+    {
+      "id": "navil100_nts_adv_071",
+      "type": "behavioral",
+      "severity": "HIGH",
+      "description": "Orchestrator Sudo Escalation via Context \u2014 Injects fake 'previous tool output' into the context parameter suggesting the admin has authorized s",
+      "pattern": "orchestrator_sudo_escalation_via_context",
+      "source": "navil-100-benchmark",
+      "attack_id": "NTS-ADV-071"
+    },
+    {
+      "id": "navil100_nts_adv_072",
+      "type": "behavioral",
+      "severity": "HIGH",
+      "description": "Trusted Agent Impersonation via Headers \u2014 Embeds fake agent metadata (_meta) claiming to be the system-monitor-agent with admin trust level. O",
+      "pattern": "trusted_agent_impersonation_via_headers",
+      "source": "navil-100-benchmark",
+      "attack_id": "NTS-ADV-072"
+    },
+    {
+      "id": "navil100_nts_adv_073",
+      "type": "behavioral",
+      "severity": "HIGH",
+      "description": "Tool Delegation Privilege Escalation \u2014 Uses a delegation tool to invoke exec_command on another server with run_as=root. The proxy checks t",
+      "pattern": "tool_delegation_privilege_escalation",
+      "source": "navil-100-benchmark",
+      "attack_id": "NTS-ADV-073"
+    },
+    {
+      "id": "navil100_nts_adv_074",
+      "type": "behavioral",
+      "severity": "HIGH",
+      "description": "Forged Capability Token in Tool Call \u2014 Includes a JWT token with alg=none (no signature verification). The payload claims admin/root role. ",
+      "pattern": "forged_capability_token_in_tool_call",
+      "source": "navil-100-benchmark",
+      "attack_id": "NTS-ADV-074"
+    },
+    {
+      "id": "navil100_nts_adv_075",
+      "type": "behavioral",
+      "severity": "HIGH",
+      "description": "Agent Identity Spoofing via Params \u2014 Injects clientInfo inside the params object (normally only in initialize). If the proxy reads client",
+      "pattern": "agent_identity_spoofing_via_params",
+      "source": "navil-100-benchmark",
+      "attack_id": "NTS-ADV-075"
+    },
+    {
+      "id": "navil100_nts_adv_076",
+      "type": "behavioral",
+      "severity": "HIGH",
+      "description": "Confused Deputy Resource Write-Back \u2014 Writes a 'report' file with hidden HTML comments containing instructions. When another agent reads t",
+      "pattern": "confused_deputy_resource_write-back",
+      "source": "navil-100-benchmark",
+      "attack_id": "NTS-ADV-076"
+    },
+    {
+      "id": "navil100_nts_adv_077",
+      "type": "behavioral",
+      "severity": "HIGH",
+      "description": "Orchestrator Memory Poisoning \u2014 Writes a fake session context file claiming all tools are approved and security is unrestricted. If ",
+      "pattern": "orchestrator_memory_poisoning",
+      "source": "navil-100-benchmark",
+      "attack_id": "NTS-ADV-077"
+    },
+    {
+      "id": "navil100_nts_adv_078",
+      "type": "behavioral",
+      "severity": "HIGH",
+      "description": "Multi-Hop Confused Deputy Chain \u2014 Uses a legitimate 'ask_agent' tool to request another agent to read /etc/shadow under the guise of a",
+      "pattern": "multi-hop_confused_deputy_chain",
+      "source": "navil-100-benchmark",
+      "attack_id": "NTS-ADV-078"
+    },
+    {
+      "id": "navil100_nts_adv_079",
+      "type": "behavioral",
+      "severity": "HIGH",
+      "description": "Temporal Privilege Window Exploit \u2014 First requests temporary admin access via a legitimate privilege escalation tool. Immediately follow",
+      "pattern": "temporal_privilege_window_exploit",
+      "source": "navil-100-benchmark",
+      "attack_id": "NTS-ADV-079"
+    },
+    {
+      "id": "navil100_nts_adv_080",
+      "type": "behavioral",
+      "severity": "HIGH",
+      "description": "Capability Token Replay Attack \u2014 Replays a captured session token from a previous admin session. If the proxy checks token format but",
+      "pattern": "capability_token_replay_attack",
+      "source": "navil-100-benchmark",
+      "attack_id": "NTS-ADV-080"
+    },
+    {
+      "id": "navil100_nts_adv_081",
+      "type": "argument_content",
+      "severity": "HIGH",
+      "description": "Proxy Log Deletion \u2014 Truncates all log files modified after a timestamp marker. The attacker first creates /tmp/timestamp",
+      "pattern": "proxy_log_deletion",
+      "source": "navil-100-benchmark",
+      "attack_id": "NTS-ADV-081"
+    },
+    {
+      "id": "navil100_nts_adv_082",
+      "type": "argument_content",
+      "severity": "HIGH",
+      "description": "Zero-Width Space in JSON Keys \u2014 Inserts zero-width spaces (U+200B) into JSON key names. The proxy's schema validator checks for 'nam",
+      "pattern": "zero-width_space_in_json_keys",
+      "source": "navil-100-benchmark",
+      "attack_id": "NTS-ADV-082"
+    },
+    {
+      "id": "navil100_nts_adv_083",
+      "type": "argument_content",
+      "severity": "HIGH",
+      "description": "JIT 3-Stage JSON Assembly \u2014 Splits the target path across 3 benign files: stage1 has '/etc/', stage2 has 'shadow'. Stage 3 merge",
+      "pattern": "jit_3-stage_json_assembly",
+      "source": "navil-100-benchmark",
+      "attack_id": "NTS-ADV-083"
+    },
+    {
+      "id": "navil100_nts_adv_084",
+      "type": "argument_content",
+      "severity": "HIGH",
+      "description": "Timestamp Backdating via touch \u2014 Sets the file timestamp to January 2023 before and after writing stolen data. Forensic analysis look",
+      "pattern": "timestamp_backdating_via_touch",
+      "source": "navil-100-benchmark",
+      "attack_id": "NTS-ADV-084"
+    },
+    {
+      "id": "navil100_nts_adv_085",
+      "type": "argument_content",
+      "severity": "HIGH",
+      "description": "Audit Trail Poisoning via Log Injection \u2014 Injects a fake 'all clear' message into syslog using the proxy's own log tag. Security operators rev",
+      "pattern": "audit_trail_poisoning_via_log_injection",
+      "source": "navil-100-benchmark",
+      "attack_id": "NTS-ADV-085"
+    },
+    {
+      "id": "navil100_nts_adv_086",
+      "type": "argument_content",
+      "severity": "HIGH",
+      "description": "Self-Deleting Payload (trap + rm) \u2014 Uses bash trap to self-delete the payload script on exit. Even if execution is interrupted, the trap",
+      "pattern": "self-deleting_payload_(trap_+_rm)",
+      "source": "navil-100-benchmark",
+      "attack_id": "NTS-ADV-086"
+    },
+    {
+      "id": "navil100_nts_adv_087",
+      "type": "argument_content",
+      "severity": "HIGH",
+      "description": "Bidi Override File Name Disguise \u2014 Uses Unicode bidirectional override (U+202E RLO, U+202C PDF) to disguise the file name. Visually app",
+      "pattern": "bidi_override_file_name_disguise",
+      "source": "navil-100-benchmark",
+      "attack_id": "NTS-ADV-087"
+    },
+    {
+      "id": "navil100_nts_adv_088",
+      "type": "argument_content",
+      "severity": "HIGH",
+      "description": "JSON/YAML Polyglot Config Injection \u2014 Creates a file that is valid as both JSON and YAML. JSON parser reads safe_mode:true and ignores the",
+      "pattern": "json/yaml_polyglot_config_injection",
+      "source": "navil-100-benchmark",
+      "attack_id": "NTS-ADV-088"
+    },
+    {
+      "id": "navil100_nts_adv_089",
+      "type": "argument_content",
+      "severity": "HIGH",
+      "description": "Memory-Only Payload via /dev/shm \u2014 Writes payload to /dev/shm (shared memory filesystem). Files in /dev/shm exist only in RAM, never to",
+      "pattern": "memory-only_payload_via_/dev/shm",
+      "source": "navil-100-benchmark",
+      "attack_id": "NTS-ADV-089"
+    },
+    {
+      "id": "navil100_nts_adv_090",
+      "type": "argument_content",
+      "severity": "HIGH",
+      "description": "Log Rotation Window Exploit \u2014 Waits for log rotation (proxy.log becomes proxy.log.1 and a new proxy.log is created). During the br",
+      "pattern": "log_rotation_window_exploit",
+      "source": "navil-100-benchmark",
+      "attack_id": "NTS-ADV-090"
+    },
+    {
+      "id": "navil100_nts_adv_091",
+      "type": "argument_content",
+      "severity": "CRITICAL",
+      "description": "File Descriptor Exfil via /proc/self/fd \u2014 Opens /etc/shadow as file descriptor 3, then reads it via /proc/self/fd/3 instead of the original pa",
+      "pattern": "file_descriptor_exfil_via_/proc/self/fd",
+      "source": "navil-100-benchmark",
+      "attack_id": "NTS-ADV-091"
+    },
+    {
+      "id": "navil100_nts_adv_092",
+      "type": "argument_content",
+      "severity": "HIGH",
+      "description": "Unicode Tag Characters Payload Hiding \u2014 Uses Unicode tag characters (U+E0000 block) which are invisible in most renderers. The visible comma",
+      "pattern": "unicode_tag_characters_payload_hiding",
+      "source": "navil-100-benchmark",
+      "attack_id": "NTS-ADV-092"
+    },
+    {
+      "id": "navil100_nts_adv_093",
+      "type": "argument_content",
+      "severity": "HIGH",
+      "description": "Delayed Execution via at Scheduler \u2014 Schedules a command via 'at' to run 5 minutes later. The proxy inspects the current tool call which ",
+      "pattern": "delayed_execution_via_at_scheduler",
+      "source": "navil-100-benchmark",
+      "attack_id": "NTS-ADV-093"
+    },
+    {
+      "id": "navil100_nts_adv_094",
+      "type": "argument_content",
+      "severity": "HIGH",
+      "description": "Env Var Smuggling in JSON String \u2014 Stores the base64-decoded path in an environment variable, then references it via $TARGET. The proxy",
+      "pattern": "env_var_smuggling_in_json_string",
+      "source": "navil-100-benchmark",
+      "attack_id": "NTS-ADV-094"
+    },
+    {
+      "id": "navil100_nts_adv_095",
+      "type": "argument_content",
+      "severity": "HIGH",
+      "description": "Binary Payload Assembly via printf \u2014 Assembles a shell script byte-by-byte using printf, writes to a hidden file, executes, and deletes. ",
+      "pattern": "binary_payload_assembly_via_printf",
+      "source": "navil-100-benchmark",
+      "attack_id": "NTS-ADV-095"
+    },
+    {
+      "id": "navil100_nts_adv_096",
+      "type": "argument_content",
+      "severity": "HIGH",
+      "description": "JSON5 Comment Injection \u2014 Inserts C-style comments into JSON (invalid in strict JSON but valid in JSON5/JSONC). If the proxy u",
+      "pattern": "json5_comment_injection",
+      "source": "navil-100-benchmark",
+      "attack_id": "NTS-ADV-096"
+    },
+    {
+      "id": "navil100_nts_adv_097",
+      "type": "argument_content",
+      "severity": "HIGH",
+      "description": "Trailing JSON in Request Body \u2014 Sends two JSON objects concatenated in one request body. The proxy parses the first (benign) object ",
+      "pattern": "trailing_json_in_request_body",
+      "source": "navil-100-benchmark",
+      "attack_id": "NTS-ADV-097"
+    },
+    {
+      "id": "navil100_nts_adv_098",
+      "type": "argument_content",
+      "severity": "HIGH",
+      "description": "Process Name Masquerading \u2014 Copies 'cat' to a file named 'systemd-helper' (looks like a system process). Process monitoring sees",
+      "pattern": "process_name_masquerading",
+      "source": "navil-100-benchmark",
+      "attack_id": "NTS-ADV-098"
+    },
+    {
+      "id": "navil100_nts_adv_099",
+      "type": "argument_content",
+      "severity": "HIGH",
+      "description": "Triple Encoding Chain Obfuscation \u2014 The malicious command is triple-encoded: first hex, then gzip compressed, then base64 encoded. Each ",
+      "pattern": "triple_encoding_chain_obfuscation",
+      "source": "navil-100-benchmark",
+      "attack_id": "NTS-ADV-099"
+    },
+    {
+      "id": "navil100_nts_adv_100",
+      "type": "argument_content",
+      "severity": "CRITICAL",
+      "description": "Nanosecond Timing Channel Exfil \u2014 Exfiltrates data via high-resolution timing. Each byte of /etc/shadow becomes a microsecond-precisio",
+      "pattern": "nanosecond_timing_channel_exfil",
+      "source": "navil-100-benchmark",
+      "attack_id": "NTS-ADV-100"
     }
   ]
 }

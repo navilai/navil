@@ -24,3 +24,4 @@ repos:
           - types-PyYAML>=6.0
           - types-requests>=2.31
         args: [--ignore-missing-imports]
+        exclude: ^scripts/
