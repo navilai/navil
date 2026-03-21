@@ -1290,10 +1290,6 @@ def act_on_suggestion(suggestion_id: str, body: SuggestionAction) -> dict[str, A
     """Approve or reject a policy suggestion."""
     s = AppState.get()
 
-    # Track dismissed suggestions on AppState
-    if not hasattr(s, "_dismissed_suggestions"):
-        s._dismissed_suggestions = set()
-
     if body.action == "reject":
         _logger.info("Rejected policy suggestion: %s", suggestion_id)
         s._dismissed_suggestions.add(suggestion_id)

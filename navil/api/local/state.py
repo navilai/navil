@@ -35,6 +35,7 @@ class AppState:
             pattern_store=self.pattern_store,
         )
         self.demo_seeded = False
+        self._dismissed_suggestions: set[str] = set()
 
         # Redis client (set at startup when NAVIL_REDIS_URL is configured)
         self.redis_client: Any | None = None
