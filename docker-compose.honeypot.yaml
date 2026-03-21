@@ -8,11 +8,21 @@ services:
     environment:
       - HONEYPOT_PROFILE=dev_tools
       - HONEYPOT_PORT=8080
-    ports:
-      - "9001:8080"
     volumes:
       - honeypot-logs:/var/log/honeypot
     restart: unless-stopped
+    read_only: true
+    security_opt:
+      - no-new-privileges:true
+    deploy:
+      resources:
+        limits:
+          cpus: '0.5'
+          memory: 256M
+    tmpfs:
+      - /tmp:size=50M
+    networks:
+      - honeypot-internal
 
   honeypot-cloud-creds:
     build:
@@ -21,11 +31,21 @@ services:
     environment:
       - HONEYPOT_PROFILE=cloud_creds
       - HONEYPOT_PORT=8080
-    ports:
-      - "9002:8080"
     volumes:
       - honeypot-logs:/var/log/honeypot
     restart: unless-stopped
+    read_only: true
+    security_opt:
+      - no-new-privileges:true
+    deploy:
+      resources:
+        limits:
+          cpus: '0.5'
+          memory: 256M
+    tmpfs:
+      - /tmp:size=50M
+    networks:
+      - honeypot-internal
 
   honeypot-db-admin:
     build:
@@ -34,11 +54,25 @@ services:
     environment:
       - HONEYPOT_PROFILE=db_admin
       - HONEYPOT_PORT=8080
-    ports:
-      - "9003:8080"
     volumes:
       - honeypot-logs:/var/log/honeypot
     restart: unless-stopped
+    read_only: true
+    security_opt:
+      - no-new-privileges:true
+    deploy:
+      resources:
+        limits:
+          cpus: '0.5'
+          memory: 256M
+    tmpfs:
+      - /tmp:size=50M
+    networks:
+      - honeypot-internal
 
 volumes:
   honeypot-logs:
+
+networks:
+  honeypot-internal:
+    internal: true
