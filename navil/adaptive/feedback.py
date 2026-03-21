@@ -114,6 +114,58 @@ class FeedbackLoop:
         elif delta < 0:
             baseline.true_positive_count += 1
 
+    def apply_adjustments_to_policy(
+        self,
+        policy_generator: Any,
+        current_policy: dict[str, Any],
+        anomaly_type: str,
+        agent_name: str,
+    ) -> dict[str, Any] | None:
+        """Apply feedback-driven policy refinement via PolicyGenerator.refine().
+
+        This wires the CONFIRM → UPDATE step in the closed loop:
+            OBSERVE → DETECT → SUGGEST → **CONFIRM** → **UPDATE** → LEARN
+
+        When operator confirms an alert, we refine the policy to be stricter.
+        When operator dismisses an alert, we refine to be more permissive.
+
+        Returns the refined policy dict, or None if no refinement needed.
+        """
+        adjustments = self.compute_adjustments(anomaly_type)
+        if not adjustments:
+            return None
+
+        # Build a natural language instruction from the feedback pattern
+        recent = [e for e in self.entries if e.anomaly_type == anomaly_type][-20:]
+        dismissed_count = sum(1 for e in recent if e.verdict == "dismissed")
+        confirmed_count = sum(1 for e in recent if e.verdict == "confirmed")
+        total = len(recent)
+
+        if dismissed_count > confirmed_count:
+            instruction = (
+                f"The '{anomaly_type}' detector for agent '{agent_name}' has a "
+                f"{dismissed_count}/{total} false positive rate. Make the policy more "
+                f"permissive for this agent's {anomaly_type.lower().replace('_', ' ')} pattern — "
+                f"increase rate limits or widen allowed tools as appropriate."
+            )
+        else:
+            instruction = (
+                f"The '{anomaly_type}' detector for agent '{agent_name}' has confirmed "
+                f"{confirmed_count}/{total} alerts. Tighten the policy for this agent — "
+                f"reduce rate limits, restrict tool access, or add suspicious patterns."
+            )
+
+        try:
+            refined = policy_generator.refine(current_policy, instruction)
+            logger.info(
+                f"Policy refined for {agent_name}/{anomaly_type}: "
+                f"{dismissed_count} dismissed, {confirmed_count} confirmed"
+            )
+            return refined
+        except Exception as e:
+            logger.error(f"Policy refinement failed: {e}")
+            return None
+
     def get_stats(self) -> dict[str, Any]:
         """Return feedback statistics."""
         by_type: dict[str, dict[str, int]] = {}

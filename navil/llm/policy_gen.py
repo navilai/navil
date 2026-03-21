@@ -89,3 +89,64 @@ class PolicyGenerator:
         prompt = f"Current policy:\n\n{policy_yaml}\n\nModification requested:\n{instruction}"
         response = self.client.complete(POLICY_GEN_SYSTEM_PROMPT, prompt)
         return self._parse_yaml(response)
+
+    def suggest_policy_rule(
+        self,
+        alert: dict[str, Any],
+        baseline: dict[str, Any] | None = None,
+    ) -> dict[str, Any]:
+        """Generate a policy rule suggestion from an anomaly alert + baseline stats.
+
+        This is the SUGGEST step in the closed loop:
+            OBSERVE → DETECT → **SUGGEST** → CONFIRM → UPDATE → LEARN
+
+        Returns a dict with:
+          - rule: the suggested policy change (YAML-compatible dict)
+          - confidence: float 0.0-1.0
+          - reason: human-readable explanation
+          - reversible: whether this change can be undone safely
+
+        If the LLM call fails, returns a conservative suggestion.
+        """
+        context = {
+            "alert": alert,
+            "baseline": baseline or {},
+        }
+
+        prompt = (
+            "Based on this anomaly alert and baseline data, suggest a specific "
+            "policy rule change. Respond with ONLY valid YAML containing:\n"
+            "  rule: {the policy change as a YAML dict}\n"
+            "  confidence: 0.0-1.0\n"
+            "  reason: one sentence\n"
+            "  reversible: true/false\n\n"
+            f"Alert and baseline data:\n{yaml.dump(context, default_flow_style=False)}"
+        )
+
+        try:
+            response = self.client.complete(POLICY_GEN_SYSTEM_PROMPT, prompt)
+            result = self._parse_yaml(response)
+
+            # Ensure required fields exist with defaults
+            return {
+                "rule": result.get("rule", {}),
+                "confidence": float(result.get("confidence", 0.5)),
+                "reason": str(result.get("reason", "LLM-generated suggestion")),
+                "reversible": bool(result.get("reversible", True)),
+            }
+        except Exception:
+            # Conservative fallback — suggest rate limiting
+            agent_name = alert.get("agent_name", "unknown")
+            anomaly_type = alert.get("anomaly_type", "UNKNOWN")
+            return {
+                "rule": {
+                    "agents": {
+                        agent_name: {
+                            "rate_limit_per_hour": 60,
+                        }
+                    }
+                },
+                "confidence": 0.3,
+                "reason": f"Fallback: rate-limit {agent_name} after {anomaly_type} alert",
+                "reversible": True,
+            }
