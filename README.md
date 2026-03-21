@@ -116,6 +116,27 @@ Bloomberg built auth, rate limiting, and AI guardrails internally to make MCP sa
 
 MCP has real problems -- context bloat, no auth, no observability. The "MCP is dead" crowd is right about the problems, wrong about the solution. The answer isn't to abandon the protocol. It's to fix the operational layer. That's what Navil does.
 
+### The Token Cost Problem
+
+MCP servers expose ALL tools to ALL agents. GitHub MCP alone dumps 90+ tool schemas consuming 50,000+ tokens before the model even starts thinking. At scale -- 2,500 API endpoints via MCP -- that's 244,000 tokens just for tool definitions, exceeding most model context limits.
+
+This isn't just a performance problem. It's a cost problem. Every wasted token is money spent on inference that adds zero value. And it's a security problem -- exposing tools an agent doesn't need violates least privilege.
+
+Navil's policy engine fixes both:
+
+```yaml
+# ~/.navil/policy.yaml — only expose what the agent needs
+scopes:
+  code-review:
+    allow: [get_pull_request, list_files, create_review_comment]
+  deploy:
+    allow: [create_deployment, get_deployment_status]
+  default:
+    allow: "*"   # backward compatible
+```
+
+A code review agent sees 3 tools instead of 90. That's a **94% reduction in schema tokens** -- cheaper inference, faster responses, and a smaller attack surface. Security and cost optimization from the same configuration.
+
 ### What `navil wrap` does
 
 ```
