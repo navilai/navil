@@ -694,6 +694,73 @@ async fn health() -> Json<serde_json::Value> {
     }))
 }
 
+/// Serve A2A Agent Card at /.well-known/agent.json
+///
+/// Per Google A2A spec v0.2: agents publish a JSON metadata document
+/// at this well-known URI for discovery by other agents.
+async fn agent_card(State(_state): State<Arc<AppState>>) -> Json<serde_json::Value> {
+    let base_url = format!(
+        "http://{}",
+        std::env::var("NAVIL_BASE_URL").unwrap_or_else(|_| format!("localhost:{}",
+            std::env::var("NAVIL_PORT").unwrap_or_else(|_| "8080".to_string())
+        ))
+    );
+    let agent_name =
+        std::env::var("NAVIL_AGENT_NAME").unwrap_or_else(|_| "navil-agent".to_string());
+    let agent_desc = std::env::var("NAVIL_AGENT_DESCRIPTION").unwrap_or_else(|_| {
+        "An agent protected by Navil agent governance middleware".to_string()
+    });
+    let provider_org =
+        std::env::var("NAVIL_PROVIDER_ORG").unwrap_or_default();
+
+    Json(serde_json::json!({
+        "name": agent_name,
+        "description": agent_desc,
+        "provider": {
+            "organization": provider_org,
+            "url": std::env::var("NAVIL_PROVIDER_URL").unwrap_or_default(),
+        },
+        "version": "1.0.0",
+        "capabilities": {
+            "streaming": true,
+            "pushNotifications": false,
+            "extendedAgentCard": true,
+        },
+        "skills": [{
+            "id": "mcp-tool-execution",
+            "name": "MCP Tool Execution",
+            "description": "Execute MCP server tools with governance and policy enforcement",
+            "tags": ["mcp", "tools", "governance"],
+        }],
+        "securitySchemes": {
+            "navil_jwt": {
+                "type": "http",
+                "scheme": "bearer",
+                "bearerFormat": "JWT",
+                "description": "Navil-issued JWT with agent identity and delegation chain",
+            },
+        },
+        "security": [{"navil_jwt": []}],
+        "interfaces": [{
+            "protocol": "jsonrpc",
+            "url": format!("{}/a2a", base_url),
+            "contentTypes": ["application/json"],
+        }],
+        "documentationUrl": "https://github.com/nicholasgriffintn/navil",
+        "extensions": [{
+            "name": "navil-governance",
+            "version": "1.0.0",
+            "description": "Navil agent governance — policy enforcement, tool scoping, anomaly detection",
+            "fields": {
+                "governance_endpoint": format!("{}/mcp", base_url),
+                "policy_version": "1.0",
+                "supports_scoping": true,
+                "supports_threat_detection": true,
+            },
+        }],
+    }))
+}
+
 // ── Main ─────────────────────────────────────────────────────────
 
 #[tokio::main]
@@ -740,6 +807,8 @@ async fn main() {
 
     let app = Router::new()
         .route("/mcp", post(handle_mcp))
+        .route("/a2a", post(handle_mcp)) // A2A task dispatch uses same handler
+        .route("/.well-known/agent.json", get(agent_card))
         .route("/health", get(health))
         .with_state(state);
 
