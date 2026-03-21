@@ -79,6 +79,7 @@ export default function Policy() {
   const [copied, setCopied] = useState(false)
   const [genError, setGenError] = useState<{ message: string; type: string } | null>(null)
   const [saving, setSaving] = useState(false)
+  const [saved, setSaved] = useState(false)
   const [toast, setToast] = useState<{ message: string; type: 'success' | 'error' } | null>(null)
   const genStream = useNavilStream<GeneratedPolicy>()
   const refineStream = useNavilStream<GeneratedPolicy>()
@@ -93,16 +94,19 @@ export default function Policy() {
 
   const showToast = (message: string, type: 'success' | 'error') => {
     setToast({ message, type })
-    setTimeout(() => setToast(null), 3000)
+    setTimeout(() => setToast(null), 5000)
   }
 
   const handleSavePolicy = async (yamlContent: string) => {
     setSaving(true)
+    setSaved(false)
     try {
       await api.savePolicy(yamlContent)
-      showToast('Policy saved to policy.auto.yaml', 'success')
+      setSaved(true)
+      showToast('Policy saved to ~/.navil/policy.auto.yaml', 'success')
+      setTimeout(() => setSaved(false), 4000)
     } catch {
-      showToast('Failed to save policy', 'error')
+      showToast('Failed to save policy — is the backend running?', 'error')
     } finally {
       setSaving(false)
     }
@@ -381,7 +385,7 @@ export default function Policy() {
                   className="px-3 py-1.5 text-xs bg-[#00e5c8] text-[#0a0e17] rounded-lg font-semibold hover:bg-[#00b8a0] disabled:opacity-40 disabled:cursor-not-allowed flex items-center gap-1.5 transition-all duration-200"
                 >
                   <Icon name="shield" size={12} />
-                  {saving ? 'Saving...' : 'Save to policy.auto.yaml'}
+                  {saving ? 'Saving...' : saved ? 'Saved!' : 'Save to policy.auto.yaml'}
                 </button>
               </div>
             </div>
@@ -487,7 +491,7 @@ export default function Policy() {
                   className="px-3 py-1.5 text-xs bg-[#00e5c8] text-[#0a0e17] rounded-lg font-semibold hover:bg-[#00b8a0] disabled:opacity-40 disabled:cursor-not-allowed flex items-center gap-1.5 transition-all duration-200"
                 >
                   <Icon name="shield" size={12} />
-                  {saving ? 'Saving...' : 'Save to policy.auto.yaml'}
+                  {saving ? 'Saving...' : saved ? 'Saved!' : 'Save to policy.auto.yaml'}
                 </button>
               </div>
             </div>

@@ -1239,7 +1239,9 @@ def get_policy_suggestions() -> dict[str, Any]:
 
     # Also check for demo suggestions if no real ones
     if not suggestions and getattr(s, "demo_seeded", False):
-        suggestions = [
+        # Track which demo suggestions have been acted on
+        dismissed: set[str] = getattr(s, "_dismissed_suggestions", set())
+        demo_all = [
             {
                 "id": "demo-1",
                 "rule_type": "deny",
@@ -1274,6 +1276,7 @@ def get_policy_suggestions() -> dict[str, Any]:
                 "timestamp": "",
             },
         ]
+        suggestions = [d for d in demo_all if d["id"] not in dismissed]
 
     return {"suggestions": suggestions, "count": len(suggestions)}
 
@@ -1287,31 +1290,41 @@ def act_on_suggestion(suggestion_id: str, body: SuggestionAction) -> dict[str, A
     """Approve or reject a policy suggestion."""
     s = AppState.get()
 
-    if body.action == "approve":
-        _logger.info("Approved policy suggestion: %s", suggestion_id)
+    # Track dismissed suggestions on AppState
+    if not hasattr(s, "_dismissed_suggestions"):
+        s._dismissed_suggestions = set()
 
-        # Find the suggestion to get its details
-        suggestion: dict[str, Any] | None = None
-        if hasattr(s, "self_healing") and s.self_healing is not None:
-            pending = getattr(s.self_healing, "pending_actions", [])
-            for i, action in enumerate(pending):
-                if f"suggestion-{i}" == suggestion_id:
-                    suggestion = {
-                        "rule_type": getattr(action, "action_type", "deny"),
-                        "agent": getattr(action, "agent_name", "unknown"),
-                        "tool": getattr(action, "tool_name", ""),
-                        "description": getattr(action, "description", str(action)),
-                    }
-                    break
+    if body.action == "reject":
+        _logger.info("Rejected policy suggestion: %s", suggestion_id)
+        s._dismissed_suggestions.add(suggestion_id)
+        return {"status": "rejected", "suggestion_id": suggestion_id}
 
-        # Fall back to demo suggestions
-        if suggestion is None and getattr(s, "demo_seeded", False):
-            demo_suggestions = {
-                "demo-1": {"rule_type": "deny", "agent": "monitoring-agent", "tool": "admin_panel", "description": "Deny admin_panel access"},
-                "demo-2": {"rule_type": "rate_limit", "agent": "data-reader", "tool": "files", "description": "Rate limit to 30 req/hr"},
-                "demo-3": {"rule_type": "scope", "agent": "code-assistant", "tool": "terminal", "description": "Scope to read-only"},
-            }
-            suggestion = demo_suggestions.get(suggestion_id)
+    # action == "approve"
+    _logger.info("Approved policy suggestion: %s", suggestion_id)
+    s._dismissed_suggestions.add(suggestion_id)
+
+    # Find the suggestion to get its details
+    suggestion: dict[str, Any] | None = None
+    if hasattr(s, "self_healing") and s.self_healing is not None:
+        pending = getattr(s.self_healing, "pending_actions", [])
+        for i, action in enumerate(pending):
+            if f"suggestion-{i}" == suggestion_id:
+                suggestion = {
+                    "rule_type": getattr(action, "action_type", "deny"),
+                    "agent": getattr(action, "agent_name", "unknown"),
+                    "tool": getattr(action, "tool_name", ""),
+                    "description": getattr(action, "description", str(action)),
+                }
+                break
+
+    # Fall back to demo suggestions
+    if suggestion is None and getattr(s, "demo_seeded", False):
+        demo_suggestions = {
+            "demo-1": {"rule_type": "deny", "agent": "monitoring-agent", "tool": "admin_panel", "description": "Deny admin_panel access"},
+            "demo-2": {"rule_type": "rate_limit", "agent": "data-reader", "tool": "files", "description": "Rate limit to 30 req/hr"},
+            "demo-3": {"rule_type": "scope", "agent": "code-assistant", "tool": "terminal", "description": "Scope to read-only"},
+        }
+        suggestion = demo_suggestions.get(suggestion_id)
 
         if suggestion is None:
             return {"status": "approved", "suggestion_id": suggestion_id}
@@ -1371,9 +1384,6 @@ def act_on_suggestion(suggestion_id: str, body: SuggestionAction) -> dict[str, A
         _logger.info("Policy updated at %s", policy_path)
 
         return {"status": "approved", "suggestion_id": suggestion_id, "policy": policy}
-    else:
-        _logger.info("Rejected policy suggestion: %s", suggestion_id)
-        return {"status": "rejected", "suggestion_id": suggestion_id}
 
 
 @router.post("/policy/auto-generate")
