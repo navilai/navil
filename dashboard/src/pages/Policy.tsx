@@ -45,8 +45,13 @@ export default function Policy() {
     try {
       await api.actOnSuggestion(id, action)
       setSuggestions(prev => prev.filter(s => s.id !== id))
+      if (action === 'approve') {
+        showToast('Rule applied to policy.auto.yaml', 'success')
+      }
     } catch {
-      // silently fail
+      if (action === 'approve') {
+        showToast('Failed to apply rule', 'error')
+      }
     } finally {
       setActingOn(null)
     }
@@ -73,6 +78,8 @@ export default function Policy() {
   const [refining, setRefining] = useState(false)
   const [copied, setCopied] = useState(false)
   const [genError, setGenError] = useState<{ message: string; type: string } | null>(null)
+  const [saving, setSaving] = useState(false)
+  const [toast, setToast] = useState<{ message: string; type: 'success' | 'error' } | null>(null)
   const genStream = useNavilStream<GeneratedPolicy>()
   const refineStream = useNavilStream<GeneratedPolicy>()
 
@@ -83,6 +90,23 @@ export default function Policy() {
   }
 
   useEffect(loadDecisions, [])
+
+  const showToast = (message: string, type: 'success' | 'error') => {
+    setToast({ message, type })
+    setTimeout(() => setToast(null), 3000)
+  }
+
+  const handleSavePolicy = async (yamlContent: string) => {
+    setSaving(true)
+    try {
+      await api.savePolicy(yamlContent)
+      showToast('Policy saved to policy.auto.yaml', 'success')
+    } catch {
+      showToast('Failed to save policy', 'error')
+    } finally {
+      setSaving(false)
+    }
+  }
 
   const handleCheck = async () => {
     if (!agentName || !toolName || !action) return
@@ -102,6 +126,18 @@ export default function Policy() {
 
   return (
     <div className="space-y-6">
+      {toast && (
+        <div className={`fixed top-4 right-4 z-50 px-4 py-3 rounded-lg text-sm font-medium shadow-lg animate-slideUp ${
+          toast.type === 'success'
+            ? 'bg-[#34d399]/15 text-[#34d399] border border-[#34d399]/30'
+            : 'bg-[#ff4d6a]/15 text-[#ff4d6a] border border-[#ff4d6a]/30'
+        }`}>
+          <div className="flex items-center gap-2">
+            <Icon name={toast.type === 'success' ? 'check' : 'x'} size={14} />
+            {toast.message}
+          </div>
+        </div>
+      )}
       <PageHeader title="Policy Engine" subtitle="Check permissions and review decisions" />
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
@@ -332,12 +368,22 @@ export default function Policy() {
           <div className="mt-4 space-y-2 animate-fadeIn">
             <div className="flex items-center justify-between">
               <p className="text-xs text-[#5a6a8a]">Auto-generated policy from observed baselines</p>
-              <button
-                onClick={() => { navigator.clipboard.writeText(autoGenYaml); }}
-                className="px-2 py-1 text-xs text-[#8b9bc0] hover:text-[#f0f4fc] border border-[#2a3650] rounded hover:border-[#5a6a8a] flex items-center gap-1 transition-colors"
-              >
-                <Icon name="terminal" size={12} /> Copy
-              </button>
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={() => { navigator.clipboard.writeText(autoGenYaml); }}
+                  className="px-2 py-1 text-xs text-[#8b9bc0] hover:text-[#f0f4fc] border border-[#2a3650] rounded hover:border-[#5a6a8a] flex items-center gap-1 transition-colors"
+                >
+                  <Icon name="terminal" size={12} /> Copy
+                </button>
+                <button
+                  onClick={() => handleSavePolicy(autoGenYaml)}
+                  disabled={saving}
+                  className="px-3 py-1.5 text-xs bg-[#00e5c8] text-[#0a0e17] rounded-lg font-semibold hover:bg-[#00b8a0] disabled:opacity-40 disabled:cursor-not-allowed flex items-center gap-1.5 transition-all duration-200"
+                >
+                  <Icon name="shield" size={12} />
+                  {saving ? 'Saving...' : 'Save to policy.auto.yaml'}
+                </button>
+              </div>
             </div>
             <pre className="bg-[#0d1117] border border-[#2a3650] rounded-[12px] p-4 text-sm text-[#f0f4fc] font-mono overflow-x-auto max-h-60 overflow-y-auto whitespace-pre-wrap">
               {autoGenYaml}
@@ -423,17 +469,27 @@ export default function Policy() {
           <div className="mt-4 space-y-3 animate-fadeIn">
             <div className="flex items-center justify-between">
               <p className="text-xs text-[#5a6a8a]">Generated YAML</p>
-              <button
-                onClick={() => {
-                  navigator.clipboard.writeText(generatedYaml)
-                  setCopied(true)
-                  setTimeout(() => setCopied(false), 2000)
-                }}
-                className="px-2 py-1 text-xs text-[#8b9bc0] hover:text-[#f0f4fc] border border-[#2a3650] rounded hover:border-[#5a6a8a] flex items-center gap-1 transition-colors"
-              >
-                <Icon name={copied ? 'check' : 'terminal'} size={12} />
-                {copied ? 'Copied!' : 'Copy'}
-              </button>
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={() => {
+                    navigator.clipboard.writeText(generatedYaml)
+                    setCopied(true)
+                    setTimeout(() => setCopied(false), 2000)
+                  }}
+                  className="px-2 py-1 text-xs text-[#8b9bc0] hover:text-[#f0f4fc] border border-[#2a3650] rounded hover:border-[#5a6a8a] flex items-center gap-1 transition-colors"
+                >
+                  <Icon name={copied ? 'check' : 'terminal'} size={12} />
+                  {copied ? 'Copied!' : 'Copy'}
+                </button>
+                <button
+                  onClick={() => handleSavePolicy(generatedYaml)}
+                  disabled={saving}
+                  className="px-3 py-1.5 text-xs bg-[#00e5c8] text-[#0a0e17] rounded-lg font-semibold hover:bg-[#00b8a0] disabled:opacity-40 disabled:cursor-not-allowed flex items-center gap-1.5 transition-all duration-200"
+                >
+                  <Icon name="shield" size={12} />
+                  {saving ? 'Saving...' : 'Save to policy.auto.yaml'}
+                </button>
+              </div>
             </div>
             <pre className={`bg-[#0d1117] border border-[#2a3650] rounded-[12px] p-4 text-sm text-[#f0f4fc] font-mono overflow-x-auto max-h-80 overflow-y-auto whitespace-pre-wrap transition-opacity ${generating || refineStream.streaming ? 'opacity-30' : ''}`}>
               {generatedYaml}

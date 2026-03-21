@@ -365,6 +365,8 @@ export const api = {
   actOnSuggestion: (id: string, action: 'approve' | 'reject') =>
     post<{ status: string; suggestion_id: string }>(`/policy/suggestions/${id}`, { action }),
   autoGeneratePolicy: () => post<{ policy: Record<string, unknown>; yaml: string; source: string }>('/policy/auto-generate', {}),
+  savePolicy: (yaml: string, path?: string) =>
+    post<{ status: string; path: string }>('/policy/save', { yaml, path: path || 'policy.auto.yaml' }),
   getAutoPolicyHistory: () => get<{ entries: unknown[]; count: number; message: string }>('/policy/auto-history'),
   submitFeedback: (data: {
     alert_timestamp: string; anomaly_type: string; agent_name: string;

@@ -22,8 +22,10 @@ import Scanner from './pages/Scanner'
 import Alerts from './pages/Alerts'
 import Credentials from './pages/Credentials'
 import Policy from './pages/Policy'
+import Scoping from './pages/Scoping'
 import Feedback from './pages/Feedback'
 import SelfHealing from './pages/SelfHealing'
+import AgentCard from './pages/AgentCard'
 import Settings from './pages/Settings'
 import Analytics from './pages/Analytics'
 import Billing from './pages/Billing'
@@ -92,8 +94,10 @@ export default function App() {
         <Route path="alerts" element={<Alerts />} />
         <Route path="credentials" element={<Credentials />} />
         <Route path="policy" element={<Policy />} />
+        <Route path="scoping" element={<Scoping />} />
         <Route path="feedback" element={<Feedback />} />
         <Route path="self-healing" element={<SelfHealing />} />
+        <Route path="agent-card" element={<AgentCard />} />
         <Route path="settings" element={<Settings />} />
         {/* Cloud management pages — guarded for local mode */}
         <Route path="analytics" element={<CloudGuard title="Analytics" subtitle="Threat detection analytics"><Analytics /></CloudGuard>} />

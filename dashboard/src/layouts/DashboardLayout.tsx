@@ -14,8 +14,10 @@ const navItems: { to: string; label: string; icon: IconName }[] = [
   { to: '/alerts',       label: 'Alerts',       icon: 'alert' },
   { to: '/credentials',  label: 'Credentials',  icon: 'key' },
   { to: '/policy',       label: 'Policy',       icon: 'shield' },
+  { to: '/scoping',      label: 'Scoping',      icon: 'layers' },
   { to: '/feedback',     label: 'Feedback',     icon: 'activity' },
   { to: '/self-healing', label: 'Self-Healing', icon: 'sparkles' },
+  { to: '/agent-card',   label: 'A2A',           icon: 'link' },
   { to: '/settings',     label: 'Settings',     icon: 'settings' },
 ]
 

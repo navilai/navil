@@ -320,3 +320,18 @@ class HoneypotMCPServer:
                 pass
 
         return _Handler
+
+
+if __name__ == "__main__":
+    import os
+
+    logging.basicConfig(level=logging.INFO)
+    profile = os.environ.get("HONEYPOT_PROFILE", "dev_tools")
+    port = int(os.environ.get("HONEYPOT_PORT", "8080"))
+
+    server = HoneypotMCPServer(
+        profile=profile,
+        port=port,
+    )
+    logger.info("Starting honeypot: profile=%s port=%d", profile, port)
+    server.start()

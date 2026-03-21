@@ -1,0 +1,17 @@
+FROM python:3.12-slim
+
+WORKDIR /app
+
+COPY pyproject.toml .
+COPY navil/ navil/
+
+RUN pip install --no-cache-dir -e .
+
+# Each container runs a single honeypot profile (set via HONEYPOT_PROFILE env)
+ENV HONEYPOT_PROFILE=dev_tools
+ENV HONEYPOT_PORT=8080
+ENV HONEYPOT_LOG_DIR=/var/log/honeypot
+
+RUN mkdir -p /var/log/honeypot
+
+CMD ["python", "-m", "navil.honeypot.server"]
