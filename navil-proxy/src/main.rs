@@ -19,13 +19,14 @@
 
 mod auth;
 mod proxy;
+mod scope;
 mod telemetry;
 
 use std::sync::Arc;
 use std::time::{Instant, SystemTime, UNIX_EPOCH};
 
 use axum::{
-    body::Bytes,
+    body::{Body, Bytes},
     extract::State,
     http::{HeaderMap, StatusCode},
     response::{IntoResponse, Json},
@@ -287,6 +288,12 @@ async fn handle_mcp(
         .unwrap_or("")
         .to_string();
 
+    // Parse X-Navil-Scope header for context-aware tool scoping
+    let scope_name = headers
+        .get("x-navil-scope")
+        .and_then(|v| v.to_str().ok())
+        .map(|s| s.to_string());
+
     // 3. Authenticate: JWT → HMAC → Anonymous
     let auth_result = auth::authenticate(
         &headers,
@@ -354,7 +361,134 @@ async fn handle_mcp(
         }
     }
 
-    // 5. For tools/call: Redis threshold + rate check
+    // 5a. Scope enforcement: check if tool is visible in the active scope
+    //     Scope = VISIBILITY (what tools agent sees), enforced before forwarding.
+    let mut scope_tools: Option<Vec<String>> = None;
+    if let Some(ref sn) = scope_name {
+        let scope_check = async {
+            let mut conn = state
+                .redis_client
+                .get_multiplexed_async_connection()
+                .await
+                .ok();
+            if let Some(ref mut conn) = conn {
+                scope::get_scope_tools(conn, sn).await
+            } else {
+                None
+            }
+        }
+        .await;
+
+        match scope_check {
+            Some(tools) => {
+                // For tools/call: deny if tool is not in scope
+                if method == "tools/call"
+                    && !tool_name.is_empty()
+                    && !scope::is_tool_in_scope(&tools, &tool_name)
+                {
+                    let req_id_val = req_id.clone().unwrap_or(serde_json::Value::Null);
+                    let error_body = scope::scope_violation_error(sn, &tool_name, &req_id_val);
+
+                    // Emit telemetry for scope violation
+                    let duration_ms = start.elapsed().as_millis() as u64;
+                    let tele_state = state.clone();
+                    let tele_agent = agent_name.clone();
+                    let tele_tool = tool_name.clone();
+                    let tele_method = method.clone();
+                    let tele_target = state.target_url.clone();
+                    tokio::spawn(async move {
+                        publish_telemetry(
+                            &tele_state.redis_client,
+                            TelemetryEvent {
+                                agent_name: tele_agent,
+                                tool_name: tele_tool,
+                                method: tele_method,
+                                action: "BLOCKED_SCOPE".to_string(),
+                                payload_bytes,
+                                response_bytes: 0,
+                                duration_ms,
+                                timestamp: iso8601_now(),
+                                target_server: tele_target,
+                                human_email: None,
+                                delegation_depth: None,
+                            },
+                        )
+                        .await;
+                    });
+
+                    return (
+                        StatusCode::OK,
+                        [(axum::http::header::CONTENT_TYPE, "application/json")],
+                        Body::from(error_body),
+                    )
+                        .into_response();
+                }
+                scope_tools = Some(tools);
+            }
+            None => {
+                // Unknown scope: fall through to default (all tools visible)
+                warn!("Unknown scope '{}', falling through to default", sn);
+            }
+        }
+    }
+
+    // 5b. For tools/list with scope: check cache first
+    if method == "tools/list" {
+        if let Some(ref sn) = scope_name {
+            let cache_check = async {
+                let mut conn = state
+                    .redis_client
+                    .get_multiplexed_async_connection()
+                    .await
+                    .ok();
+                if let Some(ref mut conn) = conn {
+                    scope::get_cached_response(conn, &state.target_url, sn).await
+                } else {
+                    None
+                }
+            }
+            .await;
+
+            if let Some(cached) = cache_check {
+                let duration_ms = start.elapsed().as_millis() as u64;
+                let cached_len = cached.len();
+
+                // Emit telemetry for cache hit
+                let tele_state = state.clone();
+                let tele_agent = agent_name.clone();
+                let tele_method = method.clone();
+                let tele_target = state.target_url.clone();
+                tokio::spawn(async move {
+                    publish_telemetry(
+                        &tele_state.redis_client,
+                        TelemetryEvent {
+                            agent_name: tele_agent,
+                            tool_name: String::new(),
+                            method: tele_method,
+                            action: "SCOPE_CACHE_HIT".to_string(),
+                            payload_bytes,
+                            response_bytes: cached_len,
+                            duration_ms,
+                            timestamp: iso8601_now(),
+                            target_server: tele_target,
+                            human_email: None,
+                            delegation_depth: None,
+                        },
+                    )
+                    .await;
+                });
+
+                return (
+                    StatusCode::OK,
+                    [(axum::http::header::CONTENT_TYPE, "application/json")],
+                    Body::from(cached),
+                )
+                    .into_response();
+            }
+        }
+    }
+
+    // 5c. For tools/call: Redis threshold + rate check
     if method == "tools/call" {
         let redis_check = async {
             let mut conn = state
@@ -458,7 +592,59 @@ async fn handle_mcp(
 
     let response_bytes = forward_result.response_bytes;
     let upstream_headers = forward_result.headers;
-    let resp_body = forward_result.body;
+    let mut resp_body = forward_result.body;
+
+    // 6b. Post-forward: filter tools/list response if scope is active
+    //     Only for non-streaming (JSON) responses with a defined scope.
+    if method == "tools/list" && scope_tools.is_some() {
+        if let Some(ref tools) = scope_tools {
+            // We need to read the body bytes to filter, then reconstruct
+            // This only applies to buffered JSON responses (not SSE streams)
+            let body_bytes = match axum::body::to_bytes(resp_body, 10 * 1024 * 1024).await {
+                Ok(b) => b,
+                Err(e) => {
+                    error!("Failed to read tools/list response body: {}", e);
+                    return (
+                        StatusCode::BAD_GATEWAY,
+                        jsonrpc_error(-32603, format!("Body read error: {e}"), req_id),
+                    )
+                        .into_response();
+                }
+            };
+
+            match scope::filter_tools_list(&body_bytes, tools) {
+                Ok(filtered) => {
+                    // Cache the filtered response
+                    if let Some(ref sn) = scope_name {
+                        let cache_state = state.clone();
+                        let cache_scope = sn.clone();
+                        let cache_data = filtered.clone();
+                        tokio::spawn(async move {
+                            if let Ok(mut conn) = cache_state
+                                .redis_client
+                                .get_multiplexed_async_connection()
+                                .await
+                            {
+                                scope::set_cached_response(
+                                    &mut conn,
+                                    &cache_state.target_url,
+                                    &cache_scope,
+                                    &cache_data,
+                                )
+                                .await;
+                            }
+                        });
+                    }
+
+                    resp_body = Body::from(filtered);
+                }
+                Err(e) => {
+                    warn!("Scope filtering failed, returning unfiltered: {}", e);
+                    resp_body = Body::from(body_bytes);
+                }
+            }
+        }
+    }
 
     let duration_ms = start.elapsed().as_millis() as u64;
 

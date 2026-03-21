@@ -3,14 +3,23 @@ Runtime Policy Engine
 
 Evaluates tool calls against security policies defined in YAML format.
 Enforces least-privilege access, detects suspicious patterns, and logs all decisions.
+
+Scope vs Policy Semantics (from eng review):
+  - Scope = VISIBILITY: what tools an agent SEES in tools/list responses.
+    Controlled by X-Navil-Scope header + scopes section in policy.yaml.
+    Enforcement point: Rust proxy filters tools/list response.
+  - Policy = PERMISSION: what tools an agent can CALL.
+    Controlled by agents section in policy.yaml (tools_allowed/tools_denied).
+    Enforcement point: Python PolicyEngine check_tool_call().
 """
 
 from __future__ import annotations
 
+import json
 import logging
 import threading
 import time
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from datetime import datetime, timezone
 from enum import Enum
 from pathlib import Path
@@ -19,6 +28,9 @@ from typing import Any
 import yaml
 
 logger = logging.getLogger(__name__)
+
+# Redis key prefix for scope definitions (read by Rust proxy)
+SCOPE_REDIS_PREFIX = "navil:scope"
 
 
 class PolicyDecision(Enum):
@@ -56,25 +68,41 @@ class PolicyEngine:
     - Suspicious pattern detection
     """
 
-    def __init__(self, policy_file: str = "default_policy.yaml") -> None:
+    def __init__(
+        self,
+        policy_file: str = "default_policy.yaml",
+        auto_policy_file: str | None = None,
+        redis_client: Any | None = None,
+    ) -> None:
         """
         Initialize policy engine.
 
         Args:
-            policy_file: Path to YAML policy file
+            policy_file: Path to human-owned YAML policy file
+            auto_policy_file: Path to machine-owned policy.auto.yaml (optional)
+            redis_client: async Redis client for pushing scope defs to Rust proxy
         """
         self.policy_file = Path(policy_file)
+        self.auto_policy_file = Path(auto_policy_file) if auto_policy_file else None
+        self.redis = redis_client
         self.policy: dict[str, Any] = {}
+        self.scopes: dict[str, list[str]] = {}  # scope_name -> [tool_names]
         self.decisions_log: list[PolicyEvaluationResult] = []
         self.rate_limits: dict[tuple[str, str], dict[str, int]] = {}
         self._rate_limit_lock = threading.Lock()
         self._load_policy()
 
     def _load_policy(self) -> None:
-        """Load policy from YAML file."""
+        """Load policy from YAML file(s) and extract scope definitions.
+
+        Loads the human-owned policy.yaml first, then merges machine-owned
+        policy.auto.yaml on top (human policy takes precedence for conflicts).
+        Extracts scope definitions into self.scopes for Redis sync.
+        """
         if not self.policy_file.exists():
             logger.warning(f"Policy file not found: {self.policy_file}, using defaults")
             self.policy = self._get_default_policy()
+            self._extract_scopes()
             return
 
         try:
@@ -84,6 +112,103 @@ class PolicyEngine:
         except Exception as e:
             logger.error(f"Failed to load policy: {e}, using defaults")
             self.policy = self._get_default_policy()
+
+        # Merge auto-generated policy (machine-owned) if it exists
+        if self.auto_policy_file and self.auto_policy_file.exists():
+            try:
+                with open(self.auto_policy_file) as f:
+                    auto_policy = yaml.safe_load(f) or {}
+                self._merge_auto_policy(auto_policy)
+                logger.info(f"Merged auto policy from {self.auto_policy_file}")
+            except Exception as e:
+                logger.error(f"Failed to load auto policy: {e}, skipping")
+
+        self._extract_scopes()
+
+    def _merge_auto_policy(self, auto_policy: dict[str, Any]) -> None:
+        """Merge machine-owned auto policy into the main policy.
+
+        Human-owned policy.yaml takes precedence: if the same key exists
+        in both, the human-owned value wins.
+        """
+        for section_key, section_val in auto_policy.items():
+            if section_key not in self.policy:
+                self.policy[section_key] = section_val
+            elif isinstance(section_val, dict) and isinstance(self.policy[section_key], dict):
+                # Merge dicts: human keys win
+                for k, v in section_val.items():
+                    if k not in self.policy[section_key]:
+                        self.policy[section_key][k] = v
+
+    def _extract_scopes(self) -> None:
+        """Extract scope definitions from policy into self.scopes.
+
+        Scope format in policy.yaml:
+            scopes:
+              github-pr-review:
+                description: "Code review agent"
+                tools: [pulls/get, pulls/list, reviews/create]
+              default:
+                tools: "*"
+        """
+        raw_scopes = self.policy.get("scopes", {})
+        self.scopes = {}
+
+        for scope_name, scope_def in raw_scopes.items():
+            if isinstance(scope_def, dict):
+                tools = scope_def.get("tools", "*")
+            else:
+                tools = scope_def
+
+            if tools == "*":
+                self.scopes[scope_name] = ["*"]
+            elif isinstance(tools, list):
+                self.scopes[scope_name] = [str(t) for t in tools]
+            else:
+                logger.warning(f"Invalid scope tools for '{scope_name}': {tools}")
+                self.scopes[scope_name] = ["*"]
+
+        logger.info(f"Extracted {len(self.scopes)} scope definitions")
+
+    async def sync_scopes_to_redis(self) -> int:
+        """Push scope definitions to Redis for the Rust proxy to read.
+
+        Redis keys: navil:scope:{scope_name} → JSON array of tool names
+        Returns the number of scopes synced.
+        """
+        if self.redis is None:
+            logger.debug("No Redis client, skipping scope sync")
+            return 0
+
+        synced = 0
+        try:
+            for scope_name, tools in self.scopes.items():
+                key = f"{SCOPE_REDIS_PREFIX}:{scope_name}"
+                tools_json = json.dumps(tools)
+                await self.redis.set(key, tools_json)
+                synced += 1
+            logger.info(f"Synced {synced} scope definitions to Redis")
+        except Exception as e:
+            logger.error(f"Failed to sync scopes to Redis: {e}")
+
+        return synced
+
+    def get_scope_tools(self, scope_name: str) -> list[str] | None:
+        """Get the list of tools allowed for a given scope.
+
+        Returns None if the scope is not defined (caller should fall through
+        to default scope). Returns ["*"] if all tools are allowed.
+        """
+        if scope_name in self.scopes:
+            return self.scopes[scope_name]
+
+        # Fall through to default scope
+        default_tools = self.scopes.get("default")
+        if default_tools is not None:
+            return default_tools
+
+        # No default scope defined → all tools allowed
+        return None
 
     def check_tool_call(
         self,
@@ -358,6 +483,39 @@ class PolicyEngine:
             for d in self.decisions_log
         ]
 
+    def serialize_to_yaml(self, output_path: Path | None = None) -> bool:
+        """Write current policy state to a YAML file.
+
+        By default writes to policy.auto.yaml (machine-owned).
+        Includes a versioned comment header.
+
+        Returns True on success, False on failure.
+        """
+        target = output_path or self.auto_policy_file
+        if target is None:
+            logger.error("No output path for serialize_to_yaml")
+            return False
+
+        try:
+            timestamp = datetime.now(timezone.utc).isoformat()
+            header = (
+                f"# auto-generated by navil at {timestamp}\n"
+                "# Do not edit manually — use 'navil policy suggest' to manage\n"
+                "# Human-owned rules go in policy.yaml (takes precedence)\n\n"
+            )
+            yaml_content = yaml.dump(self.policy, default_flow_style=False, sort_keys=False)
+
+            target.parent.mkdir(parents=True, exist_ok=True)
+            with open(target, "w") as f:
+                f.write(header)
+                f.write(yaml_content)
+
+            logger.info(f"Serialized policy to {target}")
+            return True
+        except Exception as e:
+            logger.error(f"Failed to serialize policy to {target}: {e}")
+            return False
+
     def _get_default_policy(self) -> dict[str, Any]:
         """Get default security policy."""
         return {
@@ -380,6 +538,12 @@ class PolicyEngine:
                 },
                 "database": {
                     "allowed_actions": ["read"],
+                },
+            },
+            "scopes": {
+                "default": {
+                    "description": "Default scope — all tools visible",
+                    "tools": "*",
                 },
             },
             "suspicious_patterns": [],
