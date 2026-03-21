@@ -10,16 +10,17 @@ repos:
       - id: check-merge-conflict
 
   - repo: https://github.com/astral-sh/ruff-pre-commit
-    rev: v0.4.4
+    rev: v0.15.6
     hooks:
       - id: ruff
         args: [--fix]
       - id: ruff-format
 
   - repo: https://github.com/pre-commit/mirrors-mypy
-    rev: v1.10.0
+    rev: v1.19.0
     hooks:
       - id: mypy
         additional_dependencies:
           - types-PyYAML>=6.0
+          - types-requests>=2.31
         args: [--ignore-missing-imports]
