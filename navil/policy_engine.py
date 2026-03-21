@@ -19,7 +19,7 @@ import json
 import logging
 import threading
 import time
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from datetime import datetime, timezone
 from enum import Enum
 from pathlib import Path
@@ -155,10 +155,7 @@ class PolicyEngine:
         self.scopes = {}
 
         for scope_name, scope_def in raw_scopes.items():
-            if isinstance(scope_def, dict):
-                tools = scope_def.get("tools", "*")
-            else:
-                tools = scope_def
+            tools = scope_def.get("tools", "*") if isinstance(scope_def, dict) else scope_def
 
             if tools == "*":
                 self.scopes[scope_name] = ["*"]

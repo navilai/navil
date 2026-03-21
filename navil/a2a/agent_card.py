@@ -217,7 +217,9 @@ def build_navil_agent_card(
             {
                 "name": "navil-governance",
                 "version": "1.0.0",
-                "description": "Navil agent governance — policy enforcement, tool scoping, anomaly detection",
+                "description": (
+                    "Navil agent governance — policy enforcement, tool scoping, anomaly detection"
+                ),
                 "fields": {
                     "governance_endpoint": f"{url}/mcp",
                     "policy_version": "1.0",
