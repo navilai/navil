@@ -199,6 +199,18 @@ export interface PolicyCheckResult {
   reason: string
 }
 
+export interface PolicySuggestion {
+  id: string
+  rule_type: string
+  agent: string
+  tool: string
+  description: string
+  confidence: number
+  source: string
+  auto_applied: boolean
+  timestamp: string
+}
+
 export interface PolicyDecision {
   decision: string
   rule: string
@@ -349,6 +361,11 @@ export const api = {
   checkPolicy: (agent_name: string, tool_name: string, action: string) =>
     post<PolicyCheckResult>('/policy/check', { agent_name, tool_name, action }),
   getPolicyDecisions: () => get<PolicyDecision[]>('/policy/decisions'),
+  getPolicySuggestions: () => get<{ suggestions: PolicySuggestion[]; count: number }>('/policy/suggestions'),
+  actOnSuggestion: (id: string, action: 'approve' | 'reject') =>
+    post<{ status: string; suggestion_id: string }>(`/policy/suggestions/${id}`, { action }),
+  autoGeneratePolicy: () => post<{ policy: Record<string, unknown>; yaml: string; source: string }>('/policy/auto-generate', {}),
+  getAutoPolicyHistory: () => get<{ entries: unknown[]; count: number; message: string }>('/policy/auto-history'),
   submitFeedback: (data: {
     alert_timestamp: string; anomaly_type: string; agent_name: string;
     verdict: string; operator_notes?: string

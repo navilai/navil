@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { api, PolicyCheckResult, PolicyDecision, GeneratedPolicy } from '../api'
+import { api, PolicyCheckResult, PolicyDecision, PolicySuggestion, GeneratedPolicy } from '../api'
 import useNavilStream from '../hooks/useNavilStream'
 import PageHeader from '../components/PageHeader'
 import StatusBadge from '../components/StatusBadge'
@@ -24,6 +24,45 @@ export default function Policy() {
   const [action, setAction] = useState('')
   const [checking, setChecking] = useState(false)
   const [result, setResult] = useSessionState<PolicyCheckResult | null>('policy_check', null)
+
+  // AI Policy Builder — Suggestions
+  const [suggestions, setSuggestions] = useState<PolicySuggestion[]>([])
+  const [suggestionsLoaded, setSuggestionsLoaded] = useState(false)
+  const [actingOn, setActingOn] = useState<string | null>(null)
+  const [autoGenYaml, setAutoGenYaml] = useSessionState('auto_gen_yaml', '')
+  const [autoGenerating, setAutoGenerating] = useState(false)
+
+  const loadSuggestions = () => {
+    api.getPolicySuggestions()
+      .then(res => { setSuggestions(res.suggestions); setSuggestionsLoaded(true) })
+      .catch(() => setSuggestionsLoaded(true))
+  }
+
+  useEffect(loadSuggestions, [])
+
+  const handleSuggestionAction = async (id: string, action: 'approve' | 'reject') => {
+    setActingOn(id)
+    try {
+      await api.actOnSuggestion(id, action)
+      setSuggestions(prev => prev.filter(s => s.id !== id))
+    } catch {
+      // silently fail
+    } finally {
+      setActingOn(null)
+    }
+  }
+
+  const handleAutoGenerate = async () => {
+    setAutoGenerating(true)
+    try {
+      const res = await api.autoGeneratePolicy()
+      setAutoGenYaml(res.yaml)
+    } catch {
+      setAutoGenYaml('')
+    } finally {
+      setAutoGenerating(false)
+    }
+  }
 
   // AI Policy Generator
   const [genDescription, setGenDescription] = useSessionState('policy_desc', '')
@@ -198,6 +237,113 @@ export default function Policy() {
             )
           )}
         </div>
+      </div>
+
+      {/* AI Policy Builder — Suggestions */}
+      <div className="glass-card p-5">
+        <div className="flex items-center justify-between mb-4">
+          <h3 className="text-sm font-semibold text-[#f0f4fc] flex items-center gap-2">
+            <Icon name="sparkles" size={16} className="text-[#00e5c8]" />
+            Policy Suggestions
+            {suggestions.length > 0 && (
+              <span className="px-1.5 py-0.5 text-[10px] font-bold rounded bg-[#00e5c8]/15 text-[#00e5c8]">
+                {suggestions.length}
+              </span>
+            )}
+          </h3>
+          <button
+            onClick={handleAutoGenerate}
+            disabled={autoGenerating}
+            className="px-3 py-1.5 text-xs bg-[#00e5c8]/15 text-[#00e5c8] border border-[#00e5c8]/30 rounded-lg hover:bg-[#00e5c8]/25 flex items-center gap-1.5 disabled:opacity-40 transition-colors"
+          >
+            <Icon name="zap" size={12} className={autoGenerating ? 'animate-spin' : ''} />
+            {autoGenerating ? 'Generating...' : 'Auto-Generate from Baselines'}
+          </button>
+        </div>
+
+        {!suggestionsLoaded ? <SkeletonTable rows={3} cols={4} /> : (
+          suggestions.length === 0 ? (
+            <div className="text-center py-6">
+              <Icon name="check" size={24} className="text-[#34d399] mx-auto mb-2" />
+              <p className="text-sm text-[#5a6a8a]">No pending suggestions. Your policy is up to date.</p>
+            </div>
+          ) : (
+            <div className="space-y-2">
+              {suggestions.map(s => (
+                <div
+                  key={s.id}
+                  className="flex items-start gap-3 p-3 rounded-lg bg-[#111827] border border-[#2a3650] hover:border-[#00e5c8]/30 transition-colors"
+                >
+                  <div className="shrink-0 mt-0.5">
+                    <div className={`w-8 h-8 rounded-lg flex items-center justify-center ${
+                      s.rule_type === 'deny' ? 'bg-[#ff4d6a]/15 text-[#ff4d6a]' :
+                      s.rule_type === 'rate_limit' ? 'bg-[#f59e0b]/15 text-[#f59e0b]' :
+                      'bg-[#00e5c8]/15 text-[#00e5c8]'
+                    }`}>
+                      <Icon name={s.rule_type === 'deny' ? 'x' : s.rule_type === 'rate_limit' ? 'activity' : 'shield'} size={14} />
+                    </div>
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-2 mb-1">
+                      <span className="text-xs font-semibold text-[#f0f4fc]">{s.agent}</span>
+                      <span className="text-[#5a6a8a] text-xs">→</span>
+                      <span className="text-xs font-mono text-[#8b9bc0]">{s.tool}</span>
+                      <span className={`px-1.5 py-0.5 text-[10px] font-medium rounded ${
+                        s.rule_type === 'deny' ? 'bg-[#ff4d6a]/10 text-[#ff4d6a]' :
+                        s.rule_type === 'rate_limit' ? 'bg-[#f59e0b]/10 text-[#f59e0b]' :
+                        'bg-[#00e5c8]/10 text-[#00e5c8]'
+                      }`}>
+                        {s.rule_type.toUpperCase()}
+                      </span>
+                    </div>
+                    <p className="text-xs text-[#8b9bc0] leading-relaxed">{s.description}</p>
+                    <div className="flex items-center gap-3 mt-2">
+                      <span className="text-[10px] text-[#5a6a8a]">
+                        Confidence: <span className={s.confidence >= 0.9 ? 'text-[#34d399]' : s.confidence >= 0.7 ? 'text-[#f59e0b]' : 'text-[#8b9bc0]'}>
+                          {Math.round(s.confidence * 100)}%
+                        </span>
+                      </span>
+                      <span className="text-[10px] text-[#5a6a8a]">Source: {s.source}</span>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-1.5 shrink-0">
+                    <button
+                      onClick={() => handleSuggestionAction(s.id, 'approve')}
+                      disabled={actingOn === s.id}
+                      className="px-2.5 py-1.5 text-xs bg-[#34d399]/15 text-[#34d399] border border-[#34d399]/30 rounded-lg hover:bg-[#34d399]/25 disabled:opacity-40 transition-colors min-h-[36px]"
+                    >
+                      Approve
+                    </button>
+                    <button
+                      onClick={() => handleSuggestionAction(s.id, 'reject')}
+                      disabled={actingOn === s.id}
+                      className="px-2.5 py-1.5 text-xs bg-[#ff4d6a]/10 text-[#ff4d6a] border border-[#ff4d6a]/30 rounded-lg hover:bg-[#ff4d6a]/20 disabled:opacity-40 transition-colors min-h-[36px]"
+                    >
+                      Reject
+                    </button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )
+        )}
+
+        {autoGenYaml && (
+          <div className="mt-4 space-y-2 animate-fadeIn">
+            <div className="flex items-center justify-between">
+              <p className="text-xs text-[#5a6a8a]">Auto-generated policy from observed baselines</p>
+              <button
+                onClick={() => { navigator.clipboard.writeText(autoGenYaml); }}
+                className="px-2 py-1 text-xs text-[#8b9bc0] hover:text-[#f0f4fc] border border-[#2a3650] rounded hover:border-[#5a6a8a] flex items-center gap-1 transition-colors"
+              >
+                <Icon name="terminal" size={12} /> Copy
+              </button>
+            </div>
+            <pre className="bg-[#0d1117] border border-[#2a3650] rounded-[12px] p-4 text-sm text-[#f0f4fc] font-mono overflow-x-auto max-h-60 overflow-y-auto whitespace-pre-wrap">
+              {autoGenYaml}
+            </pre>
+          </div>
+        )}
       </div>
 
       {/* AI Policy Generator */}

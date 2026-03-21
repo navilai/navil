@@ -1195,3 +1195,148 @@ def health_check() -> dict[str, Any]:
         "components": components,
         "version": "0.1.0",
     }
+
+
+# ── AI Policy Builder ────────────────────────────────────────
+
+
+class PolicySuggestion(BaseModel):
+    """A pending policy rule suggestion from the AI Policy Builder."""
+
+    id: str
+    rule_type: str  # "deny", "allow", "rate_limit", "scope"
+    agent: str
+    tool: str
+    description: str
+    confidence: float
+    source: str  # "anomaly", "baseline", "operator"
+    auto_applied: bool = False
+    timestamp: str = ""
+
+
+@router.get("/policy/suggestions")
+def get_policy_suggestions() -> dict[str, Any]:
+    """Get pending policy suggestions from SelfHealingEngine."""
+    s = AppState.get()
+    suggestions: list[dict[str, Any]] = []
+
+    # Pull from SelfHealingEngine if available
+    if hasattr(s, "self_healing") and s.self_healing is not None:
+        pending = getattr(s.self_healing, "pending_actions", [])
+        for i, action in enumerate(pending):
+            suggestions.append({
+                "id": f"suggestion-{i}",
+                "rule_type": getattr(action, "action_type", "deny"),
+                "agent": getattr(action, "agent_name", "unknown"),
+                "tool": getattr(action, "tool_name", ""),
+                "description": getattr(action, "description", str(action)),
+                "confidence": getattr(action, "confidence", 0.0),
+                "source": "anomaly",
+                "auto_applied": getattr(action, "applied", False),
+                "timestamp": getattr(action, "timestamp", ""),
+            })
+
+    # Also check for demo suggestions if no real ones
+    if not suggestions and s.demo_mode:
+        suggestions = [
+            {
+                "id": "demo-1",
+                "rule_type": "deny",
+                "agent": "monitoring-agent",
+                "tool": "admin_panel",
+                "description": "Agent accessed admin tools 47 times, baseline is 3. Suggest denying admin_panel access.",
+                "confidence": 0.95,
+                "source": "anomaly",
+                "auto_applied": False,
+                "timestamp": "",
+            },
+            {
+                "id": "demo-2",
+                "rule_type": "rate_limit",
+                "agent": "data-reader",
+                "tool": "files",
+                "description": "Data volume 5.2x above baseline. Suggest rate limiting to 30 req/hr.",
+                "confidence": 0.82,
+                "source": "baseline",
+                "auto_applied": False,
+                "timestamp": "",
+            },
+            {
+                "id": "demo-3",
+                "rule_type": "scope",
+                "agent": "code-assistant",
+                "tool": "terminal",
+                "description": "Agent only uses read-related tools. Suggest scoping to read-only.",
+                "confidence": 0.71,
+                "source": "baseline",
+                "auto_applied": False,
+                "timestamp": "",
+            },
+        ]
+
+    return {"suggestions": suggestions, "count": len(suggestions)}
+
+
+class SuggestionAction(BaseModel):
+    action: str = Field(..., pattern="^(approve|reject)$")
+
+
+@router.post("/policy/suggestions/{suggestion_id}")
+def act_on_suggestion(suggestion_id: str, body: SuggestionAction) -> dict[str, str]:
+    """Approve or reject a policy suggestion."""
+    s = AppState.get()
+
+    if body.action == "approve":
+        # In production: apply via PolicyEngine.serialize_to_yaml()
+        _logger.info("Approved policy suggestion: %s", suggestion_id)
+        return {"status": "approved", "suggestion_id": suggestion_id}
+    else:
+        _logger.info("Rejected policy suggestion: %s", suggestion_id)
+        return {"status": "rejected", "suggestion_id": suggestion_id}
+
+
+@router.post("/policy/auto-generate")
+def auto_generate_policy() -> dict[str, Any]:
+    """Auto-generate a policy from observed agent baselines."""
+    s = AppState.get()
+
+    # Collect baseline data from demo agents
+    agents = s.invocations.agents() if hasattr(s.invocations, "agents") else {}
+    policy: dict[str, Any] = {
+        "version": "1.0",
+        "agents": {},
+        "scopes": {"default": {"description": "Default scope", "tools": "*"}},
+    }
+
+    for agent_name in agents:
+        stats = s.invocations.agent_stats(agent_name) if hasattr(s.invocations, "agent_stats") else {}
+        tools = stats.get("tools", [])
+        policy["agents"][agent_name] = {
+            "tools_allowed": tools if tools else ["*"],
+            "tools_denied": [],
+            "rate_limit_per_hour": 100,
+            "data_clearance": "PUBLIC",
+        }
+
+    if not policy["agents"]:
+        # Fallback: permissive default
+        policy["agents"]["default"] = {
+            "tools_allowed": ["*"],
+            "tools_denied": [],
+            "rate_limit_per_hour": 1000,
+            "data_clearance": "PUBLIC",
+        }
+
+    yaml_str = yaml.dump(policy, default_flow_style=False, sort_keys=False)
+    return {"policy": policy, "yaml": yaml_str, "source": "baselines"}
+
+
+@router.get("/policy/auto-history")
+def get_auto_policy_history() -> dict[str, Any]:
+    """Get history of auto-generated policy changes for rollback."""
+    # In production: read from policy.auto.yaml git history or changelog
+    return {
+        "entries": [],
+        "count": 0,
+        "message": "No auto-generated policy changes yet.",
+    }
