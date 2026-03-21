@@ -26,8 +26,10 @@ export default function AgentCard() {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [copied, setCopied] = useState(false)
+  const [saving, setSaving] = useState(false)
+  const [saveStatus, setSaveStatus] = useState<'idle' | 'success' | 'error'>('idle')
 
-  // Config fields (read-only for now, sourced from env vars)
+  // Config fields
   const [agentName, setAgentName] = useState('')
   const [agentDescription, setAgentDescription] = useState('')
   const [providerOrg, setProviderOrg] = useState('')
@@ -200,21 +202,45 @@ export default function AgentCard() {
             </p>
           </div>
 
-          {/* Save button — disabled with tooltip */}
-          <div className="pt-1">
-            <div className="relative group inline-block">
-              <button
-                disabled
-                className="px-4 py-2.5 bg-[#00e5c8] text-[#0a0e17] rounded-lg text-sm font-semibold disabled:opacity-40 disabled:cursor-not-allowed flex items-center gap-2 transition-all duration-200"
-              >
-                <Icon name="check" size={14} />
-                Save Configuration
-              </button>
-              <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-3 py-1.5 bg-[#1a2235] border border-[#2a3650] rounded-lg text-xs text-[#8b9bc0] whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none">
-                Coming soon — set via environment variables
-                <div className="absolute top-full left-1/2 -translate-x-1/2 -mt-1 w-2 h-2 bg-[#1a2235] border-r border-b border-[#2a3650] rotate-45" />
-              </div>
-            </div>
+          {/* Save button */}
+          <div className="pt-1 flex items-center gap-3">
+            <button
+              disabled={saving}
+              onClick={async () => {
+                setSaving(true)
+                setSaveStatus('idle')
+                try {
+                  const res = await fetch('/api/local/settings/agent-card', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                      name: agentName,
+                      description: agentDescription,
+                      provider_org: providerOrg,
+                      provider_url: providerUrl,
+                    }),
+                  })
+                  if (!res.ok) throw new Error(`HTTP ${res.status}`)
+                  setSaveStatus('success')
+                  setTimeout(() => setSaveStatus('idle'), 3000)
+                } catch {
+                  setSaveStatus('error')
+                  setTimeout(() => setSaveStatus('idle'), 3000)
+                } finally {
+                  setSaving(false)
+                }
+              }}
+              className="px-4 py-2.5 bg-[#00e5c8] text-[#0a0e17] rounded-lg text-sm font-semibold disabled:opacity-60 disabled:cursor-not-allowed hover:bg-[#00ccb3] flex items-center gap-2 transition-all duration-200"
+            >
+              <Icon name={saving ? 'activity' : 'check'} size={14} className={saving ? 'animate-spin' : ''} />
+              {saving ? 'Saving...' : 'Save Configuration'}
+            </button>
+            {saveStatus === 'success' && (
+              <span className="text-xs text-[#34d399]">Saved successfully</span>
+            )}
+            {saveStatus === 'error' && (
+              <span className="text-xs text-[#f87171]">Failed to save — is the proxy running?</span>
+            )}
           </div>
         </div>
       </div>

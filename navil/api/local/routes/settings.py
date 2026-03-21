@@ -1,13 +1,15 @@
 # Copyright (c) 2026 Pantheon Lab Pte Ltd
 # Licensed under the Business Source License 1.1 (see LICENSE.cloud)
-"""LLM and telemetry settings endpoints."""
+"""LLM, telemetry, and agent card settings endpoints."""
 
 from __future__ import annotations
 
 import os
 from typing import Any
 
+import yaml
 from fastapi import APIRouter, HTTPException
+from pydantic import BaseModel
 
 from navil.api.local.state import AppState
 
@@ -157,4 +159,53 @@ def update_telemetry_settings(req: TelemetrySettingsRequest) -> dict[str, Any]:
         "cloud_sync_enabled": req.enabled,
         "api_key_present": api_key_present,
         "mode": get_intel_mode(),
+    }
+
+
+# ── Agent Card configuration ──
+
+
+class AgentCardConfigRequest(BaseModel):
+    name: str = ""
+    description: str = ""
+    provider_org: str = ""
+    provider_url: str = ""
+
+
+@router.get("/settings/agent-card")
+def get_agent_card_settings() -> dict[str, Any]:
+    """Return current agent card configuration from config file."""
+    from navil.commands.init import CONFIG_FILE, load_config
+
+    config = load_config(CONFIG_FILE)
+    agent = config.get("agent", {})
+    return {
+        "name": agent.get("name", ""),
+        "description": agent.get("description", ""),
+        "provider_org": agent.get("provider_org", ""),
+        "provider_url": agent.get("provider_url", ""),
+    }
+
+
+@router.post("/settings/agent-card")
+def update_agent_card_settings(req: AgentCardConfigRequest) -> dict[str, Any]:
+    """Save agent card configuration to ~/.navil/config.yaml."""
+    from navil.commands.init import CONFIG_FILE, load_config
+
+    config = load_config(CONFIG_FILE)
+    config.setdefault("agent", {})
+    config["agent"]["name"] = req.name
+    config["agent"]["description"] = req.description
+    config["agent"]["provider_org"] = req.provider_org
+    config["agent"]["provider_url"] = req.provider_url
+
+    CONFIG_FILE.parent.mkdir(parents=True, exist_ok=True)
+    CONFIG_FILE.write_text(yaml.dump(config, default_flow_style=False))
+
+    return {
+        "status": "saved",
+        "name": req.name,
+        "description": req.description,
+        "provider_org": req.provider_org,
+        "provider_url": req.provider_url,
     }
