@@ -15,6 +15,16 @@ Our core objective is ultra-low latency. We are transitioning the architecture t
 - FastAPI, `httpx`, `orjson`, SQLAlchemy.
 - Code must be clean, modular, and prioritize memory safety (no unbounded lists).
 ## Commands
-- Run tests: `pytest`
-- Run linting: `ruff check .`
-- Type checking: `mypy navil`
+- Run ALL checks before pushing: `make check`
+- Run tests: `pytest tests/ --timeout=30`
+- Run linting: `ruff check . --fix && ruff format .`
+- Type checking: `mypy navil/ --ignore-missing-imports`
+- Install pre-commit hooks: `make install-hooks`
+
+## CI Guard Rules
+**Every push to main runs 15 CI jobs. To avoid breaking CI:**
+1. Run `make check` before pushing — it runs the same lint/format/typecheck/tests as CI
+2. Pre-commit hooks auto-run ruff + mypy on every commit (install with `make install-hooks`)
+3. New imports from optional packages (fastapi, pydantic, anthropic, openai, scikit-learn) MUST be guarded with `try/except ImportError` or `pytest.importorskip()` in tests
+4. Rust changes: run `make rust-check` before pushing
+5. Never use `datetime.utcnow()` — use `datetime.now(datetime.timezone.utc)` instead
