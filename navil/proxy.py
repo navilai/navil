@@ -873,8 +873,9 @@ def create_proxy_app(proxy: MCPSecurityProxy) -> Any:
     from contextlib import asynccontextmanager
 
     from fastapi import FastAPI
-    from starlette.requests import Request
     from fastapi.responses import JSONResponse
+    from starlette.requests import Request
+    from starlette.routing import Route
 
     @asynccontextmanager
     async def lifespan(app: FastAPI):  # type: ignore[no-untyped-def]
@@ -889,8 +890,8 @@ def create_proxy_app(proxy: MCPSecurityProxy) -> Any:
         lifespan=lifespan,
     )
 
-    @app.post("/mcp")
     async def handle_mcp(request: Request) -> JSONResponse:
+        """Handle MCP JSON-RPC requests — registered via Starlette Route to avoid FastAPI/Pydantic conflict."""
         # Early byte-length check before reading the full body into memory
         content_length = int(request.headers.get("content-length", 0))
         if content_length > MCPSecurityProxy.MAX_PAYLOAD_BYTES:
@@ -912,6 +913,10 @@ def create_proxy_app(proxy: MCPSecurityProxy) -> Any:
         headers = dict(request.headers)
         result, upstream_headers = await proxy.handle_jsonrpc(body, headers)
         return JSONResponse(content=result, headers=upstream_headers)
+
+    # Register /mcp via Starlette Route to avoid FastAPI/Pydantic 2.12 conflict
+    # where FastAPI treats `request: Request` as a query parameter
+    app.routes.insert(0, Route("/mcp", handle_mcp, methods=["POST"]))
 
     @app.get("/health")
     async def health() -> dict[str, Any]:
