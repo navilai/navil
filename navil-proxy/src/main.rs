@@ -804,9 +804,21 @@ async fn main() {
         jwt_secret,
     });
 
+    // Reject non-POST on MCP endpoints — closes the GET query-string bypass (NTS-ADV-008)
+    async fn reject_non_post() -> impl IntoResponse {
+        warn!("Rejected non-POST request on MCP endpoint");
+        (
+            StatusCode::METHOD_NOT_ALLOWED,
+            [(axum::http::header::CONTENT_TYPE, "application/json")],
+            Body::from(
+                r#"{"jsonrpc":"2.0","error":{"code":-32600,"message":"Only POST is allowed on MCP endpoints"},"id":null}"#,
+            ),
+        )
+    }
+
     let app = Router::new()
-        .route("/mcp", post(handle_mcp))
-        .route("/a2a", post(handle_mcp)) // A2A task dispatch uses same handler
+        .route("/mcp", post(handle_mcp).get(reject_non_post).put(reject_non_post).delete(reject_non_post))
+        .route("/a2a", post(handle_mcp).get(reject_non_post).put(reject_non_post).delete(reject_non_post))
         .route("/.well-known/agent.json", get(agent_card))
         .route("/health", get(health))
         .with_state(state);
