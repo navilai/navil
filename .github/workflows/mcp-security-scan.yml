@@ -26,7 +26,7 @@ jobs:
 
       - name: Comment on PR
         if: always()
-        uses: actions/github-script@v7
+        uses: actions/github-script@v8
         env:
           SCAN_SCORE: ${{ steps.scan.outputs.score }}
           SCAN_FINDINGS: ${{ steps.scan.outputs.findings }}
