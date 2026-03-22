@@ -1,9 +1,11 @@
-"""Crawl command -- discover MCP servers from public registries.
+# Cron setup on Hetzner: 0 3 * * 0 navil crawl threat-scan
+"""Crawl command -- discover MCP servers from public registries and threat intel sources.
 
 Extended commands:
   navil crawl registries         — discover MCP servers
   navil crawl schedule           — set up recurring scan
   navil crawl run-scan           — run a one-off full scan pipeline
+  navil crawl threat-scan        — crawl threat intel sources for novel attack vectors
   navil crawl history            — show scan history
   navil crawl diff <s1> <s2>     — compare two scans
   navil crawl trend              — show trend over recent scans
@@ -284,6 +286,203 @@ def _trend_report_command(cli, args: argparse.Namespace) -> int:  # type: ignore
     return 0
 
 
+# ── Threat intel sources ──────────────────────────────────────
+
+THREAT_INTEL_SOURCES: list[dict[str, str | list[str]]] = [
+    {
+        "name": "arXiv",
+        "url_pattern": "https://arxiv.org/search/?query=MCP+attack&searchtype=all&categories=cs.CR+cs.AI",
+        "keywords": [
+            "MCP",
+            "model context protocol",
+            "prompt injection",
+            "agent attack",
+            "LLM security",
+        ],
+    },
+    {
+        "name": "GitHub Advisory Database",
+        "url_pattern": "https://github.com/advisories?query=MCP+server",
+        "keywords": ["CVE", "advisory", "MCP", "tool server", "vulnerability"],
+    },
+    {
+        "name": "GitHub Search",
+        "url_pattern": "https://github.com/search?q=MCP+exploit+attack&type=repositories",
+        "keywords": ["exploit", "attack", "MCP", "proof of concept", "security tool"],
+    },
+    {
+        "name": "Invariant Labs Blog",
+        "url_pattern": "https://invariantlabs.ai/blog",
+        "keywords": ["MCP", "agent", "security", "vulnerability", "attack vector"],
+    },
+    {
+        "name": "Trail of Bits Blog",
+        "url_pattern": "https://blog.trailofbits.com",
+        "keywords": ["MCP", "LLM", "agent", "supply chain", "security"],
+    },
+    {
+        "name": "HuggingFace Reports",
+        "url_pattern": "https://huggingface.co/blog?tag=security",
+        "keywords": ["model", "security", "attack", "adversarial", "poisoning"],
+    },
+    {
+        "name": "NIST NVD",
+        "url_pattern": "https://services.nvd.nist.gov/rest/json/cves/2.0?keywordSearch=MCP+server",
+        "keywords": ["CVE", "NVD", "MCP", "tool server", "protocol"],
+    },
+]
+
+
+def _dedup_against_existing(
+    new_descriptions: list[dict[str, str]],
+    existing_vectors_path: str | None = None,
+) -> list[dict[str, str]]:
+    """Deduplicate new discoveries against existing vectors using keyword overlap.
+
+    Each item in new_descriptions should have at least 'description' and 'source' keys.
+    Returns only items that are considered novel.
+    """
+    import os
+
+    import yaml
+
+    # Load existing vectors
+    existing_descriptions: list[str] = []
+    data_dir = os.path.join(os.path.dirname(__file__), "..", "data")
+    discovered_path = existing_vectors_path or os.path.join(data_dir, "discovered_vectors.yaml")
+
+    if os.path.exists(discovered_path):
+        with open(discovered_path) as f:
+            data = yaml.safe_load(f)
+            if data and isinstance(data, dict):
+                for vec in data.get("vectors", []):
+                    existing_descriptions.append(vec.get("description", "").lower())
+
+    # Also check public_attacks.yaml
+    public_path = os.path.join(data_dir, "public_attacks.yaml")
+    if os.path.exists(public_path):
+        with open(public_path) as f:
+            data = yaml.safe_load(f)
+            if data and isinstance(data, dict):
+                for atk in data.get("attacks", []):
+                    existing_descriptions.append(atk.get("description", "").lower())
+
+    # Deduplicate by keyword overlap
+    novel: list[dict[str, str]] = []
+    for item in new_descriptions:
+        desc_lower = item.get("description", "").lower()
+        desc_words = set(desc_lower.split())
+        is_dup = False
+        for existing in existing_descriptions:
+            existing_words = set(existing.split())
+            if not desc_words or not existing_words:
+                continue
+            overlap = len(desc_words & existing_words)
+            # Consider duplicate if > 60% keyword overlap
+            min_len = min(len(desc_words), len(existing_words))
+            if min_len > 0 and overlap / min_len > 0.6:
+                is_dup = True
+                break
+        if not is_dup:
+            novel.append(item)
+    return novel
+
+
+def _fetch_source_results(source: dict[str, str | list[str]]) -> list[dict[str, str]]:
+    """Fetch and parse results from a single threat intel source.
+
+    Returns a list of dicts with 'description', 'source', and 'url' keys.
+    """
+    import urllib.request
+
+    name = source["name"]
+    url = str(source["url_pattern"])
+
+    try:
+        req = urllib.request.Request(url, method="GET")
+        req.add_header("User-Agent", "Navil-ThreatIntel/1.0")
+        with urllib.request.urlopen(req, timeout=15) as resp:
+            _body = resp.read().decode("utf-8", errors="replace")
+    except Exception as exc:
+        print(f"  Warning: Could not fetch {name}: {exc}")
+        return []
+
+    # TODO: Implement source-specific parsers for each threat intel source.
+    # Each parser should extract attack descriptions from the response body.
+    # For now, return empty results as the HTML/API parsing is source-specific.
+    results: list[dict[str, str]] = []
+
+    # Placeholder: source-specific parsing would go here
+    # if name == "arXiv":
+    #     results = _parse_arxiv(body)
+    # elif name == "GitHub Advisory Database":
+    #     results = _parse_github_advisories(body)
+    # elif name == "NIST NVD":
+    #     results = _parse_nvd_json(body)
+    # ...
+
+    return results
+
+
+def _threat_scan_command(cli, args: argparse.Namespace) -> int:  # type: ignore[no-untyped-def]
+    """Handle `navil crawl threat-scan`."""
+    import os
+    from datetime import datetime, timezone
+
+    import yaml
+
+    print("Scanning threat intel sources for novel attack vectors...")
+    print(f"Sources: {len(THREAT_INTEL_SOURCES)}")
+    print()
+
+    all_discoveries: list[dict[str, str]] = []
+    for source in THREAT_INTEL_SOURCES:
+        name = source["name"]
+        print(f"  Crawling {name}...")
+        results = _fetch_source_results(source)
+        if results:
+            print(f"    Found {len(results)} candidates")
+            all_discoveries.extend(results)
+        else:
+            print("    No results (parser not yet implemented)")
+
+    if not all_discoveries:
+        print("\nNo new attack vectors discovered.")
+        print("Note: Source-specific parsers are not yet implemented.")
+        return 0
+
+    # Dedup against existing vectors
+    novel = _dedup_against_existing(all_discoveries)
+    print(f"\nNovel vectors after dedup: {len(novel)} (from {len(all_discoveries)} candidates)")
+
+    if not novel:
+        print("All discovered vectors already known.")
+        return 0
+
+    # Append to discovered_vectors.yaml
+    data_dir = os.path.join(os.path.dirname(__file__), "..", "data")
+    os.makedirs(data_dir, exist_ok=True)
+    discovered_path = os.path.join(data_dir, "discovered_vectors.yaml")
+
+    existing_data: dict[str, list[dict[str, str]]] = {"vectors": []}
+    if os.path.exists(discovered_path):
+        with open(discovered_path) as f:
+            loaded = yaml.safe_load(f)
+            if loaded and isinstance(loaded, dict):
+                existing_data = loaded
+
+    timestamp = datetime.now(timezone.utc).isoformat()
+    for vec in novel:
+        vec["discovered_at"] = timestamp
+        existing_data["vectors"].append(vec)
+
+    with open(discovered_path, "w") as f:
+        yaml.dump(existing_data, f, default_flow_style=False, sort_keys=False)
+
+    print(f"Appended {len(novel)} vectors to {discovered_path}")
+    return 0
+
+
 # ── Registration ──────────────────────────────────────────────
 
 
@@ -488,3 +687,10 @@ def register(subparsers: argparse._SubParsersAction, cli_class: type) -> None:
         help="Output file path for report",
     )
     tr_parser.set_defaults(func=lambda cli, args: _trend_report_command(cli, args))
+
+    # ── crawl threat-scan ────────────────────────────────────
+    threat_parser = crawl_sub.add_parser(
+        "threat-scan",
+        help="Crawl threat intel sources for novel attack vectors",
+    )
+    threat_parser.set_defaults(func=lambda cli, args: _threat_scan_command(cli, args))

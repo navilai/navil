@@ -369,9 +369,242 @@ def _variants_rate_spike(attack: dict[str, Any], n: int = 7) -> list[list[dict[s
     return variants
 
 
+# ── Agent-native category variant generators ─────────────────────
+
+
+def _variants_handshake(attack: dict[str, Any], n: int = 7) -> list[list[dict[str, Any]]]:
+    """Generate handshake hijacking variants — MCP init probes, OAuth flow, transport switching."""
+    variants: list[list[dict[str, Any]]] = []
+    transport_actions = [
+        "initialize",
+        "oauth_token",
+        "sse_connect",
+        "transport_switch",
+        "pkce_exchange",
+    ]
+    for _ in range(n):
+        agent = _random_agent()
+        net_tool = random.choice(_TOOL_POOLS["network"])
+        n_probes = _fuzz_int(4, 1, lo=3, hi=7)
+        base = datetime.now(timezone.utc) - timedelta(minutes=5)
+        invocations = [
+            {
+                "_raw_timestamp": (
+                    base + timedelta(seconds=i * random.uniform(1.0, 4.0))
+                ).isoformat(),
+                "agent_name": agent,
+                "tool_name": net_tool,
+                "action": random.choice(transport_actions),
+                "duration_ms": _fuzz_int(30, 15, lo=5),
+                "arguments_size_bytes": _fuzz_int(800, 300, lo=200),
+                "response_size_bytes": _fuzz_int(1200, 400, lo=300),
+                "arguments_hash": _random_hash(),
+            }
+            for i in range(n_probes)
+        ]
+        variants.append(invocations)
+    return variants
+
+
+def _variants_rag_poison(attack: dict[str, Any], n: int = 7) -> list[list[dict[str, Any]]]:
+    """Generate RAG/memory poisoning variants — adversarial embeddings, retrieval manipulation."""
+    variants: list[list[dict[str, Any]]] = []
+    for _ in range(n):
+        agent = _random_agent()
+        query_tool = random.choice(_TOOL_POOLS["query"])
+        n_queries = _fuzz_int(4, 1, lo=3, hi=6)
+        invocations = [
+            {
+                "agent_name": agent,
+                "tool_name": query_tool,
+                "action": random.choice(["embed", "upsert", "query", "retrieve"]),
+                "duration_ms": _fuzz_int(120, 50, lo=20),
+                "arguments_size_bytes": _fuzz_int(5000, 1500, lo=2000),
+                "response_size_bytes": _fuzz_int(3000, 1000, lo=800),
+                "data_accessed_bytes": _fuzz_int(4000, 1500, lo=1000),
+                "arguments_hash": _random_hash(),
+            }
+            for _ in range(n_queries)
+        ]
+        variants.append(invocations)
+    return variants
+
+
+def _variants_collusion(attack: dict[str, Any], n: int = 7) -> list[list[dict[str, Any]]]:
+    """Generate agent collusion variants — multi-agent relay, delegation chains, sybil patterns."""
+    variants: list[list[dict[str, Any]]] = []
+    for _ in range(n):
+        # Multiple agents collaborating
+        agents = [_random_agent() for _ in range(_fuzz_int(3, 1, lo=2, hi=5))]
+        net_tool = random.choice(_TOOL_POOLS["network"])
+        base = datetime.now(timezone.utc) - timedelta(minutes=8)
+        invocations = []
+        for i, agent in enumerate(agents):
+            n_calls = _fuzz_int(2, 1, lo=1, hi=4)
+            for j in range(n_calls):
+                invocations.append(
+                    {
+                        "_raw_timestamp": (base + timedelta(seconds=i * 3 + j * 0.5)).isoformat(),
+                        "agent_name": agent,
+                        "tool_name": net_tool,
+                        "action": random.choice(["relay", "delegate", "forward", "call"]),
+                        "duration_ms": _fuzz_int(40, 15, lo=10),
+                        "arguments_size_bytes": _fuzz_int(2000, 800, lo=500),
+                        "response_size_bytes": _fuzz_int(1500, 500, lo=300),
+                        "target_server": random.choice(_MCP_SERVERS),
+                    }
+                )
+        variants.append(invocations)
+    return variants
+
+
+def _variants_cognitive(attack: dict[str, Any], n: int = 7) -> list[list[dict[str, Any]]]:
+    """Cognitive exploitation variants: CoT hijacking, persona drift."""
+    variants: list[list[dict[str, Any]]] = []
+    for _ in range(n):
+        agent = _random_agent()
+        query_tool = random.choice(_TOOL_POOLS["query"])
+        n_probes = _fuzz_int(4, 1, lo=3, hi=6)
+        base = datetime.now(timezone.utc) - timedelta(minutes=10)
+        invocations = [
+            {
+                "_raw_timestamp": (
+                    base + timedelta(seconds=i * random.uniform(2.0, 6.0))
+                ).isoformat(),
+                "agent_name": agent,
+                "tool_name": query_tool,
+                "action": random.choice(["prompt", "instruct", "inject", "override"]),
+                "duration_ms": _fuzz_int(80, 30, lo=15),
+                "arguments_size_bytes": _fuzz_int(6000, 2000, lo=3000),
+                "response_size_bytes": _fuzz_int(4000, 1500, lo=1000),
+                "arguments_hash": _random_hash(),
+            }
+            for i in range(n_probes)
+        ]
+        variants.append(invocations)
+    return variants
+
+
+def _variants_temporal(attack: dict[str, Any], n: int = 7) -> list[list[dict[str, Any]]]:
+    """Generate temporal/stateful attack variants — delayed activation, state corruption."""
+    variants: list[list[dict[str, Any]]] = []
+    for _ in range(n):
+        agent = _random_agent()
+        admin_tool = random.choice(_TOOL_POOLS["admin"])
+        # Long delay between setup and trigger
+        delay_s = _fuzz_int(300, 100, lo=120, hi=600)
+        base = datetime.now(timezone.utc) - timedelta(minutes=20)
+        setup_inv = {
+            "_raw_timestamp": base.isoformat(),
+            "agent_name": agent,
+            "tool_name": admin_tool,
+            "action": random.choice(["store", "checkpoint", "persist", "schedule"]),
+            "duration_ms": _fuzz_int(50, 20, lo=10),
+            "arguments_size_bytes": _fuzz_int(1500, 500, lo=500),
+            "response_size_bytes": _fuzz_int(500, 200, lo=100),
+        }
+        trigger_inv = {
+            "_raw_timestamp": (base + timedelta(seconds=delay_s)).isoformat(),
+            "agent_name": agent,
+            "tool_name": admin_tool,
+            "action": random.choice(["trigger", "activate", "execute", "corrupt"]),
+            "duration_ms": _fuzz_int(100, 40, lo=20),
+            "arguments_size_bytes": _fuzz_int(2000, 700, lo=500),
+            "response_size_bytes": _fuzz_int(1000, 400, lo=200),
+            "arguments_hash": _random_hash(),
+        }
+        variants.append([setup_inv, trigger_inv])
+    return variants
+
+
+def _variants_output_weapon(attack: dict[str, Any], n: int = 7) -> list[list[dict[str, Any]]]:
+    """Generate output weaponization variants — code backdoors, report bias injection."""
+    variants: list[list[dict[str, Any]]] = []
+    for _ in range(n):
+        agent = _random_agent()
+        exec_tool = random.choice(_TOOL_POOLS["execute"])
+        n_outputs = _fuzz_int(3, 1, lo=2, hi=5)
+        invocations = [
+            {
+                "agent_name": agent,
+                "tool_name": exec_tool,
+                "action": random.choice(["generate", "render", "compile", "emit"]),
+                "duration_ms": _fuzz_int(150, 60, lo=30),
+                "arguments_size_bytes": _fuzz_int(4000, 1500, lo=2000),
+                "response_size_bytes": _fuzz_int(8000, 3000, lo=3000),
+                "arguments_hash": _random_hash(),
+            }
+            for _ in range(n_outputs)
+        ]
+        variants.append(invocations)
+    return variants
+
+
+def _variants_infra(attack: dict[str, Any], n: int = 7) -> list[list[dict[str, Any]]]:
+    """Infrastructure/runtime variants: container escape, DNS rebinding."""
+    variants: list[list[dict[str, Any]]] = []
+    for _ in range(n):
+        agent = _random_agent()
+        admin_tool = random.choice(_TOOL_POOLS["admin"])
+        n_steps = _fuzz_int(3, 1, lo=2, hi=5)
+        base = datetime.now(timezone.utc) - timedelta(minutes=5)
+        invocations = [
+            {
+                "_raw_timestamp": (
+                    base + timedelta(seconds=i * random.uniform(1.5, 5.0))
+                ).isoformat(),
+                "agent_name": agent,
+                "tool_name": admin_tool,
+                "action": random.choice(["escape", "rebind", "poison_cache", "syscall"]),
+                "duration_ms": _fuzz_int(60, 25, lo=10),
+                "arguments_size_bytes": _fuzz_int(2500, 1000, lo=800),
+                "response_size_bytes": _fuzz_int(1500, 600, lo=400),
+                "arguments_hash": _random_hash(),
+            }
+            for i in range(n_steps)
+        ]
+        variants.append(invocations)
+    return variants
+
+
+def _variants_covert_channel(attack: dict[str, Any], n: int = 7) -> list[list[dict[str, Any]]]:
+    """Generate covert channel variants — steganographic output, encoding channel establishment."""
+    variants: list[list[dict[str, Any]]] = []
+    for _ in range(n):
+        agent = _random_agent()
+        exec_tool = random.choice(_TOOL_POOLS["execute"])
+        n_msgs = _fuzz_int(6, 2, lo=4, hi=10)
+        base = datetime.now(timezone.utc) - timedelta(minutes=12)
+        # Covert channels use small, consistent payload sizes to encode data
+        payload_size = _fuzz_int(64, 8, lo=32, hi=128)
+        invocations = [
+            {
+                "_raw_timestamp": (
+                    base + timedelta(seconds=i * random.uniform(2.0, 8.0))
+                ).isoformat(),
+                "agent_name": agent,
+                "tool_name": exec_tool,
+                "action": random.choice(["encode", "emit", "signal", "modulate"]),
+                "duration_ms": _fuzz_int(15, 5, lo=3),
+                "arguments_size_bytes": _fuzz_int(payload_size, 4, lo=max(16, payload_size - 20)),
+                "response_size_bytes": _fuzz_int(payload_size, 4, lo=max(16, payload_size - 20)),
+                "arguments_hash": _random_hash(),
+            }
+            for i in range(n_msgs)
+        ]
+        variants.append(invocations)
+    return variants
+
+
 # ── Category dispatcher ──────────────────────────────────────────
 
+# NOTE: The keys below are abbreviated uppercase dispatch keys used internally
+# by the generator. They are NOT the canonical taxonomy names from categories.py
+# (which are lowercase_snake_case, e.g. "reconnaissance", "handshake_hijacking").
+# The mapping from catalog category strings to these keys happens in
+# AttackVariantGenerator.generate_variants() via the attack dict's "category" field.
 _CATEGORY_TO_GENERATOR: dict[str, Any] = {
+    # Original 10
     "RECONNAISSANCE": _variants_reconnaissance,
     "DATA_EXFILTRATION": _variants_data_exfiltration,
     "DEFENSE_EVASION": _variants_defense_evasion,
@@ -382,6 +615,15 @@ _CATEGORY_TO_GENERATOR: dict[str, Any] = {
     "PERSISTENCE": _variants_persistence,
     "COMMAND_AND_CONTROL": _variants_c2,
     "RATE_SPIKE": _variants_rate_spike,
+    # 8 new agent-native categories
+    "HANDSHAKE": _variants_handshake,
+    "RAG_POISON": _variants_rag_poison,
+    "COLLUSION": _variants_collusion,
+    "COGNITIVE": _variants_cognitive,
+    "TEMPORAL": _variants_temporal,
+    "OUTPUT_WEAPON": _variants_output_weapon,
+    "INFRA": _variants_infra,
+    "COVERT_CHANNEL": _variants_covert_channel,
 }
 
 

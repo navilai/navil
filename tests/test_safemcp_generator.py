@@ -665,6 +665,35 @@ class TestEdgeCases:
         for cat, gen_fn in _CATEGORY_TO_GENERATOR.items():
             assert callable(gen_fn), f"Generator for {cat} is not callable"
 
+    def test_all_18_categories_have_generators(self):
+        """All 18 categories (10 existing + 8 new) must have generators."""
+        expected = {
+            # Original 10
+            "RECONNAISSANCE",
+            "DATA_EXFILTRATION",
+            "DEFENSE_EVASION",
+            "LATERAL_MOVEMENT",
+            "SUPPLY_CHAIN",
+            "RUG_PULL",
+            "PRIVILEGE_ESCALATION",
+            "PERSISTENCE",
+            "COMMAND_AND_CONTROL",
+            "RATE_SPIKE",
+            # 8 new agent-native
+            "HANDSHAKE",
+            "RAG_POISON",
+            "COLLUSION",
+            "COGNITIVE",
+            "TEMPORAL",
+            "OUTPUT_WEAPON",
+            "INFRA",
+            "COVERT_CHANNEL",
+        }
+        actual = set(_CATEGORY_TO_GENERATOR.keys())
+        missing = expected - actual
+        assert not missing, f"Missing generators for categories: {missing}"
+        assert len(actual) == 18, f"Expected 18 generators, got {len(actual)}"
+
     def test_all_category_generators_produce_variants(self):
         """Each category generator should produce valid variant lists."""
         dummy_attack = {
@@ -680,3 +709,155 @@ class TestEdgeCases:
             for variant in variants:
                 assert isinstance(variant, list), f"Variant from {cat} is not a list"
                 assert len(variant) >= 1, f"Variant from {cat} is empty"
+
+
+# ── New Agent-Native Generator Tests ─────────────────────────────
+
+
+class TestNewVariantGenerators:
+    """Tests for the 8 new _variants_* generator functions."""
+
+    _DUMMY_ATTACK: dict = {
+        "name": "test",
+        "category": "TEST",
+        "severity": "HIGH",
+        "attack_steps": [{"method": "tools/call"}],
+    }
+
+    def _get_gen(self, category: str):
+        return _CATEGORY_TO_GENERATOR[category]
+
+    def _assert_well_formed(self, variants, category: str):
+        """Common assertions for well-formed invocation lists."""
+        assert isinstance(variants, list), f"{category}: not a list"
+        for variant in variants:
+            assert isinstance(variant, list), f"{category}: variant not a list"
+            assert len(variant) >= 1, f"{category}: empty variant"
+            for inv in variant:
+                assert isinstance(inv, dict), f"{category}: invocation not a dict"
+                assert "agent_name" in inv, f"{category}: missing agent_name"
+                assert "tool_name" in inv, f"{category}: missing tool_name"
+                assert "action" in inv, f"{category}: missing action"
+
+    def test_handshake_well_formed(self):
+        gen = self._get_gen("HANDSHAKE")
+        variants = gen(self._DUMMY_ATTACK, n=5)
+        self._assert_well_formed(variants, "HANDSHAKE")
+        assert len(variants) == 5
+
+    def test_handshake_has_timestamps(self):
+        gen = self._get_gen("HANDSHAKE")
+        variants = gen(self._DUMMY_ATTACK, n=3)
+        for variant in variants:
+            assert any("_raw_timestamp" in inv for inv in variant)
+
+    def test_rag_poison_well_formed(self):
+        gen = self._get_gen("RAG_POISON")
+        variants = gen(self._DUMMY_ATTACK, n=5)
+        self._assert_well_formed(variants, "RAG_POISON")
+        assert len(variants) == 5
+
+    def test_rag_poison_has_data_accessed(self):
+        gen = self._get_gen("RAG_POISON")
+        variants = gen(self._DUMMY_ATTACK, n=3)
+        for variant in variants:
+            for inv in variant:
+                assert "data_accessed_bytes" in inv
+                assert inv["data_accessed_bytes"] >= 0
+
+    def test_collusion_well_formed(self):
+        gen = self._get_gen("COLLUSION")
+        variants = gen(self._DUMMY_ATTACK, n=5)
+        self._assert_well_formed(variants, "COLLUSION")
+        assert len(variants) == 5
+
+    def test_collusion_has_multiple_agents(self):
+        gen = self._get_gen("COLLUSION")
+        variants = gen(self._DUMMY_ATTACK, n=5)
+        for variant in variants:
+            agents = {inv["agent_name"] for inv in variant}
+            assert len(agents) >= 2, "Collusion variant should have multiple agents"
+
+    def test_collusion_has_target_servers(self):
+        gen = self._get_gen("COLLUSION")
+        variants = gen(self._DUMMY_ATTACK, n=3)
+        for variant in variants:
+            assert any("target_server" in inv for inv in variant)
+
+    def test_cognitive_well_formed(self):
+        gen = self._get_gen("COGNITIVE")
+        variants = gen(self._DUMMY_ATTACK, n=5)
+        self._assert_well_formed(variants, "COGNITIVE")
+        assert len(variants) == 5
+
+    def test_cognitive_has_large_payloads(self):
+        gen = self._get_gen("COGNITIVE")
+        variants = gen(self._DUMMY_ATTACK, n=3)
+        for variant in variants:
+            for inv in variant:
+                assert inv["arguments_size_bytes"] >= 1000, (
+                    "Cognitive exploitation should use large prompts"
+                )
+
+    def test_temporal_well_formed(self):
+        gen = self._get_gen("TEMPORAL")
+        variants = gen(self._DUMMY_ATTACK, n=5)
+        self._assert_well_formed(variants, "TEMPORAL")
+        assert len(variants) == 5
+
+    def test_temporal_has_setup_and_trigger(self):
+        gen = self._get_gen("TEMPORAL")
+        variants = gen(self._DUMMY_ATTACK, n=3)
+        for variant in variants:
+            assert len(variant) == 2, "Temporal variant should have setup + trigger"
+            assert "_raw_timestamp" in variant[0]
+            assert "_raw_timestamp" in variant[1]
+
+    def test_output_weapon_well_formed(self):
+        gen = self._get_gen("OUTPUT_WEAPON")
+        variants = gen(self._DUMMY_ATTACK, n=5)
+        self._assert_well_formed(variants, "OUTPUT_WEAPON")
+        assert len(variants) == 5
+
+    def test_output_weapon_has_large_responses(self):
+        gen = self._get_gen("OUTPUT_WEAPON")
+        variants = gen(self._DUMMY_ATTACK, n=3)
+        for variant in variants:
+            for inv in variant:
+                assert inv["response_size_bytes"] >= 1000, (
+                    "Output weaponization should produce large outputs"
+                )
+
+    def test_infra_well_formed(self):
+        gen = self._get_gen("INFRA")
+        variants = gen(self._DUMMY_ATTACK, n=5)
+        self._assert_well_formed(variants, "INFRA")
+        assert len(variants) == 5
+
+    def test_infra_has_timestamps(self):
+        gen = self._get_gen("INFRA")
+        variants = gen(self._DUMMY_ATTACK, n=3)
+        for variant in variants:
+            assert any("_raw_timestamp" in inv for inv in variant)
+
+    def test_covert_channel_well_formed(self):
+        gen = self._get_gen("COVERT_CHANNEL")
+        variants = gen(self._DUMMY_ATTACK, n=5)
+        self._assert_well_formed(variants, "COVERT_CHANNEL")
+        assert len(variants) == 5
+
+    def test_covert_channel_has_consistent_payload_sizes(self):
+        """Covert channels should use small, consistent payload sizes."""
+        gen = self._get_gen("COVERT_CHANNEL")
+        variants = gen(self._DUMMY_ATTACK, n=3)
+        for variant in variants:
+            sizes = [inv["arguments_size_bytes"] for inv in variant]
+            # Should be small payloads
+            for s in sizes:
+                assert s <= 200, "Covert channel payloads should be small"
+
+    def test_covert_channel_has_multiple_messages(self):
+        gen = self._get_gen("COVERT_CHANNEL")
+        variants = gen(self._DUMMY_ATTACK, n=3)
+        for variant in variants:
+            assert len(variant) >= 4, "Covert channel should have multiple messages"
