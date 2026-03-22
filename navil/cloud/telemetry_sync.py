@@ -213,6 +213,7 @@ class CloudSyncWorker:
         self._running = False
         self._last_sync_idx = 0  # tracks how far we've consumed detector.alerts
         self._synced_count = 0
+        self._synced_blocked: set[str] = set()  # dedup keys for blocked invocations
         self._http_client: Any = None
 
     @property
@@ -285,7 +286,7 @@ class CloudSyncWorker:
         self._running = False
 
     async def sync_once(self) -> int:
-        """Gather new alerts, sanitize, and POST to cloud.
+        """Gather new alerts + blocked events, sanitize, and POST to cloud.
 
         Returns the number of events sent (0 if nothing new).
         """
@@ -298,7 +299,11 @@ class CloudSyncWorker:
             self._last_sync_idx = 0
         alert_snapshot = list(alerts)
         new_alerts = alert_snapshot[self._last_sync_idx :]
-        if not new_alerts:
+
+        # Also collect blocked invocations (action starts with "BLOCKED")
+        blocked_dicts = self._collect_blocked_invocations()
+
+        if not new_alerts and not blocked_dicts:
             return 0
 
         # Convert AnomalyAlert dataclasses to dicts
@@ -309,6 +314,9 @@ class CloudSyncWorker:
             if self.machine_id and "machine_id" not in d:
                 d["machine_id"] = self.machine_id
             raw_dicts.append(d)
+
+        # Add blocked invocations
+        raw_dicts.extend(blocked_dicts)
 
         sanitized = sanitize_batch(raw_dicts, self.deployment_secret)
         if not sanitized:
@@ -337,6 +345,65 @@ class CloudSyncWorker:
         await self._check_blocklist_updates()
 
         return len(sanitized)
+
+    def _collect_blocked_invocations(self) -> list[dict[str, Any]]:
+        """Collect blocked invocations from the detector's invocation log.
+
+        Scans recent invocations for actions starting with "BLOCKED" and
+        converts them to sync-ready dicts. Tracks which invocations have
+        already been synced to avoid duplicates.
+        """
+        try:
+            invocations = self.detector.invocations
+        except Exception:
+            return []
+
+        blocked: list[dict[str, Any]] = []
+        for inv in invocations:
+            action = getattr(inv, "action", "") or ""
+            if not action.startswith("BLOCKED"):
+                continue
+
+            # Build a unique key to avoid re-syncing
+            ts = getattr(inv, "timestamp", "") or ""
+            tool = getattr(inv, "tool_name", "") or ""
+            agent = getattr(inv, "agent_name", "") or ""
+            dedup_key = f"{agent}:{tool}:{ts}:{action}"
+
+            if dedup_key in self._synced_blocked:
+                continue
+            self._synced_blocked.add(dedup_key)
+
+            # Map blocked action to anomaly type
+            action_to_anomaly = {
+                "BLOCKED_AUTH": "PRIVILEGE_ESCALATION",
+                "BLOCKED_RATE": "RATE_SPIKE",
+                "BLOCKED_SCOPE": "DEFENSE_EVASION",
+                "BLOCKED_POLICY": "POLICY",
+                "BLOCKED_BLOCKLIST": "RECONNAISSANCE",
+            }
+            anomaly_type = action_to_anomaly.get(
+                action, "DEFENSE_EVASION"
+            )
+
+            d: dict[str, Any] = {
+                "agent_name": agent,
+                "tool_name": tool,
+                "anomaly_type": anomaly_type,
+                "severity": "high",
+                "confidence": 1.0,
+                "timestamp": ts,
+                "action": action,
+                "payload_bytes": getattr(inv, "arguments_size_bytes", 0) or 0,
+                "response_bytes": 0,
+                "duration_ms": getattr(inv, "duration_ms", 0) or 0,
+                "mcp_server_name": getattr(inv, "target_server", None),
+            }
+            if self.machine_id:
+                d["machine_id"] = self.machine_id
+            blocked.append(d)
+
+        return blocked
 
     async def _check_blocklist_updates(self) -> None:
         """Check for and apply blocklist updates from the cloud.
