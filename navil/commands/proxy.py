@@ -58,18 +58,36 @@ def _proxy_start(cli, args: argparse.Namespace) -> int:  # type: ignore[no-untyp
         print(f"  Cloud: {args.cloud_url} (telemetry enabled)")
     print(f"  Health: http://{args.host}:{port}/health\n")
 
-    # Start cloud telemetry background tasks
-    if cloud_client:
+    # Start CloudSyncWorker for threat intel sharing
+    from navil.cloud.telemetry_sync import CloudSyncWorker
+    from navil.commands.init import load_config
+
+    config = load_config()
+    api_key = args.cloud_key or config.get("cloud", {}).get("api_key", "")
+    machine_id = config.get("machine", {}).get("id", "")
+    cloud_url = args.cloud_url or "https://navil-cloud-api.onrender.com"
+
+    sync_worker = CloudSyncWorker(
+        detector=cli.anomaly_detector,
+        api_url=f"{cloud_url}/v1/telemetry/sync",
+        api_key=api_key,
+        machine_id=machine_id,
+        sync_interval=60,
+        enabled=bool(api_key or machine_id),
+    )
+
+    if sync_worker.enabled:
         import asyncio
+        import threading
 
-        async def _start_cloud() -> None:
-            await cloud_client.start(proxy_status_fn=proxy.get_status)
+        def _run_sync() -> None:
+            loop = asyncio.new_event_loop()
+            asyncio.set_event_loop(loop)
+            loop.run_until_complete(sync_worker.run())
 
-        try:
-            loop = asyncio.get_event_loop()
-            loop.run_until_complete(_start_cloud())
-        except RuntimeError:
-            asyncio.run(_start_cloud())
+        sync_thread = threading.Thread(target=_run_sync, daemon=True)
+        sync_thread.start()
+        print(f"  Cloud sync: enabled (→ {cloud_url})")
 
     uvicorn.run(app, host=args.host, port=port, log_level="info")
     return 0
