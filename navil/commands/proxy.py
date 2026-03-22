@@ -40,25 +40,7 @@ def _proxy_start(cli, args: argparse.Namespace) -> int:  # type: ignore[no-untyp
                 file=sys.stderr,
             )
 
-    proxy = MCPSecurityProxy(
-        target_url=args.target,
-        policy_engine=cli.policy_engine,
-        anomaly_detector=cli.anomaly_detector,
-        credential_manager=cli.credential_manager,
-        require_auth=not args.no_auth,
-        cloud_client=cloud_client,
-    )
-    app = create_proxy_app(proxy)
-    port = int(args.port)
-    print("\n  Navil MCP Security Proxy")
-    print(f"  Target: {args.target}")
-    print(f"  Listening: http://{args.host}:{port}")
-    print(f"  Auth: {'required' if not args.no_auth else 'disabled'}")
-    if cloud_client:
-        print(f"  Cloud: {args.cloud_url} (telemetry enabled)")
-    print(f"  Health: http://{args.host}:{port}/health\n")
-
-    # Start CloudSyncWorker for threat intel sharing
+    # Set up CloudSyncWorker early so proxy can reference it
     from navil.cloud.telemetry_sync import CloudSyncWorker
     from navil.commands.init import load_config
 
@@ -76,6 +58,26 @@ def _proxy_start(cli, args: argparse.Namespace) -> int:  # type: ignore[no-untyp
         enabled=bool(api_key or machine_id),
     )
 
+    proxy = MCPSecurityProxy(
+        target_url=args.target,
+        policy_engine=cli.policy_engine,
+        anomaly_detector=cli.anomaly_detector,
+        credential_manager=cli.credential_manager,
+        require_auth=not args.no_auth,
+        cloud_client=cloud_client,
+        cloud_sync_worker=sync_worker,
+    )
+    app = create_proxy_app(proxy)
+    port = int(args.port)
+    print("\n  Navil MCP Security Proxy")
+    print(f"  Target: {args.target}")
+    print(f"  Listening: http://{args.host}:{port}")
+    print(f"  Auth: {'required' if not args.no_auth else 'disabled'}")
+    if cloud_client:
+        print(f"  Cloud: {args.cloud_url} (telemetry enabled)")
+    print(f"  Health: http://{args.host}:{port}/health\n")
+
+    # Start CloudSyncWorker background thread
     if sync_worker.enabled:
         import asyncio
         import threading

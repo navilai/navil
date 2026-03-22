@@ -214,6 +214,7 @@ class CloudSyncWorker:
         self._last_sync_idx = 0  # tracks how far we've consumed detector.alerts
         self._synced_count = 0
         self._synced_blocked: set[str] = set()  # dedup keys for blocked invocations
+        self._blocked_queue: list[dict[str, Any]] = []  # direct blocked event queue
         self._http_client: Any = None
 
     @property
@@ -300,8 +301,12 @@ class CloudSyncWorker:
         alert_snapshot = list(alerts)
         new_alerts = alert_snapshot[self._last_sync_idx :]
 
-        # Also collect blocked invocations (action starts with "BLOCKED")
-        blocked_dicts = self._collect_blocked_invocations()
+        # Drain the blocked queue (events queued by proxy via record_blocked)
+        blocked_dicts = list(self._blocked_queue)
+        self._blocked_queue.clear()
+
+        # Also collect blocked invocations from detector
+        blocked_dicts.extend(self._collect_blocked_invocations())
 
         if not new_alerts and not blocked_dicts:
             return 0
@@ -345,6 +350,32 @@ class CloudSyncWorker:
         await self._check_blocklist_updates()
 
         return len(sanitized)
+
+    def record_blocked(
+        self,
+        tool_name: str = "unknown",
+        action: str = "BLOCKED",
+        anomaly_type: str = "DEFENSE_EVASION",
+    ) -> None:
+        """Queue a blocked event for cloud sync. Thread-safe.
+
+        Called by the proxy when it blocks a request. The event will be
+        included in the next sync batch.
+        """
+        from datetime import datetime as dt
+        from datetime import timezone as tz
+
+        self._blocked_queue.append({
+            "agent_id": "blocked-caller",
+            "tool_name": tool_name,
+            "anomaly_type": anomaly_type,
+            "severity": "high",
+            "confidence": 1.0,
+            "action": action,
+            "timestamp": dt.now(tz.utc).strftime("%Y-%m-%dT%H:%M:%SZ"),
+            "event_uuid": str(uuid.uuid4()),
+            "machine_id": self.machine_id or "unknown",
+        })
 
     def _collect_blocked_invocations(self) -> list[dict[str, Any]]:
         """Collect blocked invocations from the detector's invocation log.

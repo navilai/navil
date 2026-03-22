@@ -62,12 +62,14 @@ class MCPSecurityProxy:
         require_auth: bool = True,
         cloud_client: Any | None = None,
         redis_client: Any | None = None,
+        cloud_sync_worker: Any | None = None,
     ) -> None:
         self.target_url = target_url.rstrip("/")
         self.policy_engine = policy_engine
         self.detector = anomaly_detector
         self.credential_manager = credential_manager
         self.require_auth = require_auth
+        self.cloud_sync = cloud_sync_worker  # CloudSyncWorker for blocked event reporting
         self.cloud_client = cloud_client  # NavilCloudClient for telemetry
         self.redis_client = redis_client  # async Redis for LPUSH telemetry path
 
@@ -89,7 +91,23 @@ class MCPSecurityProxy:
         action: str,
         duration_ms: int = 0,
     ) -> None:
-        """Record a blocked event in the detector so CloudSyncWorker can sync it."""
+        """Record a blocked event for cloud sync."""
+        # Queue directly in CloudSyncWorker (most reliable path)
+        if self.cloud_sync and hasattr(self.cloud_sync, "record_blocked"):
+            try:
+                self.cloud_sync.record_blocked(
+                    tool_name=tool_name or "unknown",
+                    action=action,
+                    anomaly_type={
+                        "BLOCKED_AUTH": "PRIVILEGE_ESCALATION",
+                        "BLOCKED_POLICY": "DEFENSE_EVASION",
+                        "BLOCKED_ANOMALY": "RECONNAISSANCE",
+                        "BLOCKED_SCHEMA": "DEFENSE_EVASION",
+                    }.get(action, "DEFENSE_EVASION"),
+                )
+            except Exception:
+                pass
+        # Also record in detector for local tracking
         try:
             await self.detector.record_invocation_async(
                 agent_name=agent_name or "anonymous",
@@ -101,7 +119,7 @@ class MCPSecurityProxy:
                 target_server=self.target_url,
             )
         except Exception:
-            pass  # best-effort — don't break the block path
+            pass
 
     async def init_client(self) -> None:
         """Initialize the shared httpx.AsyncClient (call on app startup)."""
@@ -389,12 +407,16 @@ class MCPSecurityProxy:
         try:
             body = self.sanitize_request(body)
         except ValueError as e:
+            self.stats["blocked"] += 1
+            await self._record_blocked("anonymous", "unknown", "BLOCKED_SCHEMA")
             return self._jsonrpc_error(-32700, f"Request rejected: {e}", None), {}
 
         # Parse JSON-RPC
         try:
             parsed = self.parse_jsonrpc(body)
         except ValueError as e:
+            self.stats["blocked"] += 1
+            await self._record_blocked("anonymous", "unknown", "BLOCKED_SCHEMA")
             return self._jsonrpc_error(-32700, f"Parse error: {e}", None), {}
 
         req_id = parsed["id"]
