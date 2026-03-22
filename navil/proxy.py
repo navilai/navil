@@ -872,7 +872,8 @@ def create_proxy_app(proxy: MCPSecurityProxy) -> Any:
     """
     from contextlib import asynccontextmanager
 
-    from fastapi import FastAPI, Request
+    from fastapi import FastAPI
+    from starlette.requests import Request
     from fastapi.responses import JSONResponse
 
     @asynccontextmanager
