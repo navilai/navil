@@ -57,5 +57,5 @@ Navil is the open-source version.
 
 MIT licensed. Works with Claude Desktop, Cursor, Continue.dev, OpenClaw.
 
-github.com/ivanlkf/navil
+github.com/navilai/navil
 navil.ai/radar (live threat data)

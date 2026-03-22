@@ -6,7 +6,7 @@ If you discover a security vulnerability in Navil, please report it responsibly.
 
 **Do not open a public issue.**
 
-Instead, use [GitHub Security Advisories](https://github.com/ivanlkf/navil/security/advisories/new) or email **security@navil.ai** with:
+Instead, use [GitHub Security Advisories](https://github.com/navilai/navil/security/advisories/new) or email **security@navil.ai** with:
 
 - A description of the vulnerability
 - Steps to reproduce

@@ -30,7 +30,7 @@ What it does:
 
 We also deployed honeypots and within hours had automated scanners probing for credentials and attempting reverse shells.
 
-GitHub: https://github.com/ivanlkf/navil
+GitHub: https://github.com/navilai/navil
 Live threat radar: https://navil.ai/radar
 
 Built by a small team in Singapore. Happy to answer questions about MCP security, the threat landscape, or the architecture.

@@ -6,7 +6,7 @@ Thank you for your interest in contributing to Navil! This document explains how
 
 ```bash
 # Clone the repository
-git clone https://github.com/ivanlkf/navil.git
+git clone https://github.com/navilai/navil.git
 cd navil
 
 # Install in development mode
@@ -83,7 +83,7 @@ test: add policy engine rate-limiting edge cases
 
 ## Reporting Issues
 
-Open an issue at [github.com/ivanlkf/navil/issues](https://github.com/ivanlkf/navil/issues) with:
+Open an issue at [github.com/navilai/navil/issues](https://github.com/navilai/navil/issues) with:
 
 - A clear description of the problem
 - Steps to reproduce

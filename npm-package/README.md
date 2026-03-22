@@ -23,6 +23,6 @@ Navil sits between your AI agent and MCP servers, detecting and blocking threats
 
 ## Links
 
-- [GitHub](https://github.com/ivanlkf/navil)
+- [GitHub](https://github.com/navilai/navil)
 - [Cloud Dashboard](https://navil.ai)
 - [Documentation](https://navil.ai/docs)

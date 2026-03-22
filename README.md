@@ -8,7 +8,7 @@
 </p>
 
 <p align="center">
-  <a href="https://github.com/ivanlkf/navil/actions/workflows/ci.yml"><img src="https://github.com/ivanlkf/navil/actions/workflows/ci.yml/badge.svg" alt="CI" /></a>
+  <a href="https://github.com/navilai/navil/actions/workflows/ci.yml"><img src="https://github.com/navilai/navil/actions/workflows/ci.yml/badge.svg" alt="CI" /></a>
   <a href="https://www.python.org/downloads/"><img src="https://img.shields.io/badge/python-3.10%2B-blue.svg" alt="Python 3.10+" /></a>
   <a href="https://www.rust-lang.org/"><img src="https://img.shields.io/badge/rust-stable-orange.svg" alt="Rust" /></a>
   <a href="LICENSE"><img src="https://img.shields.io/badge/License-Apache_2.0-blue.svg" alt="License: Apache 2.0" /></a>
@@ -495,7 +495,7 @@ pip install navil[all]         # Everything
 ### From source
 
 ```bash
-git clone https://github.com/ivanlkf/navil.git
+git clone https://github.com/navilai/navil.git
 cd navil
 pip install -e ".[dev]"
 ```
@@ -529,5 +529,5 @@ See [SECURITY.md](SECURITY.md) for our vulnerability disclosure policy.
 ---
 
 <p align="center">
-  Built by <a href="https://github.com/ivanlkf/navil"><strong>Pantheon Lab</strong></a>
+  Built by <a href="https://github.com/navilai/navil"><strong>Pantheon Lab</strong></a>
 </p>

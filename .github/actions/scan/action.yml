@@ -127,7 +127,7 @@ runs:
                 "tool": {
                     "driver": {
                         "name": "Navil",
-                        "informationUri": "https://github.com/ivanlkf/navil",
+                        "informationUri": "https://github.com/navilai/navil",
                         "version": result.get("version", "0.2.1"),
                         "rules": rules,
                     }

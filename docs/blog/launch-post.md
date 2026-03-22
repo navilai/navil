@@ -100,7 +100,7 @@ navil wrap claude_desktop_config.json
 
 That's it. Your agents are now protected. Every tool call is monitored. Threats are blocked in real-time. And you're contributing to the community threat network that protects everyone.
 
-- **GitHub:** https://github.com/ivanlkf/navil
+- **GitHub:** https://github.com/navilai/navil
 - **Cloud Dashboard:** https://navil.ai
 - **Threat Radar (public):** https://navil.ai/radar
 - **Docs:** https://navil.ai/docs

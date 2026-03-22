@@ -115,7 +115,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - uses: ivanlkf/navil/.github/actions/scan@main
+      - uses: navilai/navil/.github/actions/scan@main
         with:
           config: openclaw.json
           fail-on: high
@@ -153,7 +153,7 @@ The agent doesn't know Navil is there. The MCP server doesn't know Navil is ther
 
 ## Links
 
-- [Navil GitHub](https://github.com/ivanlkf/navil)
+- [Navil GitHub](https://github.com/navilai/navil)
 - [Navil Cloud Dashboard](https://navil.ai)
 - [Navil Radar (public threat intel)](https://navil.ai/radar)
-- [Report an issue](https://github.com/ivanlkf/navil/issues)
+- [Report an issue](https://github.com/navilai/navil/issues)

@@ -80,6 +80,6 @@ Run **Developer: Reload Window** from the VS Code command palette (`Cmd+Shift+P`
 
 ## What's Next?
 
-- [Full documentation](https://github.com/ivanlkf/navil#readme)
-- [Policy engine reference](https://github.com/ivanlkf/navil#policy-enforcement)
-- [Anomaly detection details](https://github.com/ivanlkf/navil#behavioral-anomaly-detection)
+- [Full documentation](https://github.com/navilai/navil#readme)
+- [Policy engine reference](https://github.com/navilai/navil#policy-enforcement)
+- [Anomaly detection details](https://github.com/navilai/navil#behavioral-anomaly-detection)

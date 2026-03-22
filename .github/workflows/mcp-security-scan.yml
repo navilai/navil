@@ -13,7 +13,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - uses: ivanlkf/navil/.github/actions/scan@main
+      - uses: navilai/navil/.github/actions/scan@main
         id: scan
         with:
           fail-on: critical
