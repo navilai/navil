@@ -14,6 +14,13 @@
   <a href="LICENSE"><img src="https://img.shields.io/badge/License-Apache_2.0-blue.svg" alt="License: Apache 2.0" /></a>
 </p>
 
+<p align="center">
+  <a href="https://navil.ai/radar"><img src="https://navil-cloud-api.onrender.com/v1/badge/events_7d.svg" alt="Threats Detected" /></a>
+  <a href="https://navil.ai/radar"><img src="https://navil-cloud-api.onrender.com/v1/badge/machines.svg" alt="Active Machines" /></a>
+  <a href="https://navil.ai/radar"><img src="https://navil-cloud-api.onrender.com/v1/badge/patterns.svg" alt="Blocklist" /></a>
+  <a href="https://navil.ai/radar"><img src="https://navil-cloud-api.onrender.com/v1/badge/blocked.svg" alt="Detection Rate" /></a>
+</p>
+
 ```bash
 pip install navil
 navil wrap ~/.cursor/mcp.json    # or claude_desktop_config.json, openclaw.json

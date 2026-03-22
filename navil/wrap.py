@@ -211,6 +211,10 @@ def print_summary(result: dict[str, Any], undo: bool = False) -> None:
     if wrapped:
         print(
             "Your MCP servers are now protected. "
-            "Run your agent as usual — navil shim is transparent.",
+            "Run your agent as usual \u2014 navil shim is transparent.",
+            file=sys.stderr,
+        )
+        print(
+            "Contributing to community threat pool (468 patterns) \u2192 https://navil.ai/radar",
             file=sys.stderr,
         )

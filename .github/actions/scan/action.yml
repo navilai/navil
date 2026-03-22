@@ -68,6 +68,7 @@ runs:
 
         echo "Security Score: $SCORE/100"
         echo "Findings: $FINDINGS"
+        echo "View community threat intelligence → https://navil.ai/radar"
 
     - name: Generate SARIF
       shell: bash
