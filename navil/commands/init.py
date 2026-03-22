@@ -253,6 +253,8 @@ def _init_command(cli: Any, args: argparse.Namespace) -> int:
     print()
     print("Setup complete! Next steps:")
     print("  Run `navil proxy start` to begin monitoring")
+    print()
+    print("Contributing to community threat pool \u2192 https://navil.ai/radar")
 
     return 0
 
