@@ -16,6 +16,7 @@ Architecture:
 from __future__ import annotations
 
 import asyncio
+import contextlib
 import hashlib
 import hmac
 import logging
@@ -94,7 +95,7 @@ class MCPSecurityProxy:
         """Record a blocked event for cloud sync."""
         # Queue directly in CloudSyncWorker (most reliable path)
         if self.cloud_sync and hasattr(self.cloud_sync, "record_blocked"):
-            try:
+            with contextlib.suppress(Exception):
                 self.cloud_sync.record_blocked(
                     tool_name=tool_name or "unknown",
                     action=action,
@@ -105,10 +106,8 @@ class MCPSecurityProxy:
                         "BLOCKED_SCHEMA": "DEFENSE_EVASION",
                     }.get(action, "DEFENSE_EVASION"),
                 )
-            except Exception:
-                pass
         # Also record in detector for local tracking
-        try:
+        with contextlib.suppress(Exception):
             await self.detector.record_invocation_async(
                 agent_name=agent_name or "anonymous",
                 tool_name=tool_name or "unknown",
@@ -118,8 +117,6 @@ class MCPSecurityProxy:
                 success=False,
                 target_server=self.target_url,
             )
-        except Exception:
-            pass
 
     async def init_client(self) -> None:
         """Initialize the shared httpx.AsyncClient (call on app startup)."""
