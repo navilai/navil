@@ -332,7 +332,56 @@ class CloudSyncWorker:
             logger.debug("Cloud sync POST failed (endpoint may be unreachable)")
 
         self._last_sync_idx = current_len
+
+        # After successful sync, check for blocklist updates
+        await self._check_blocklist_updates()
+
         return len(sanitized)
+
+    async def _check_blocklist_updates(self) -> None:
+        """Check for and apply blocklist updates from the cloud.
+
+        Called after each successful telemetry sync. Reads configuration
+        from ``~/.navil/config.yaml`` to determine whether auto-updates
+        are enabled and which endpoint to use.
+        """
+        try:
+            from navil.cloud.blocklist_updater import (
+                check_for_updates_async,
+                get_blocklist_config,
+                get_local_version,
+                merge_patterns,
+            )
+
+            config = get_blocklist_config()
+            if not config.get("auto_update", True):
+                return
+
+            api_url = config.get("update_url", "")
+            if not api_url:
+                return
+
+            blocklist_path = os.path.join(
+                os.path.dirname(os.path.dirname(__file__)),
+                "data",
+                "blocklist_v1.json",
+            )
+
+            local_version = get_local_version(blocklist_path)
+            headers: dict[str, str] = {}
+            if self.api_key:
+                headers["Authorization"] = f"Bearer {self.api_key}"
+
+            new_patterns = await check_for_updates_async(api_url, local_version, headers)
+            if new_patterns:
+                result = merge_patterns(blocklist_path, new_patterns)
+                logger.info(
+                    "Blocklist updated: %d new, %d updated patterns",
+                    result["added"],
+                    result["updated"],
+                )
+        except Exception as exc:
+            logger.debug("Blocklist update check failed: %s", exc)
 
     async def close(self) -> None:
         self._running = False

@@ -83,7 +83,7 @@ class TestFilesLoad:
         assert len(blocklist["patterns"]) > 0
 
     def test_blocklist_json_valid_structure(self, blocklist: dict) -> None:
-        assert blocklist["version"] == 1
+        assert blocklist["version"] >= 1
         assert isinstance(blocklist["patterns"], list)
 
 
