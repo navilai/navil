@@ -8,7 +8,7 @@
 </p>
 
 <p align="center">
-  <a href="https://github.com/navilai/navil/actions/workflows/ci.yml"><img src="https://github.com/navilai/navil/actions/workflows/ci.yml/badge.svg" alt="CI" /></a>
+  <a href="https://github.com/ivanlkf/navil/actions/workflows/ci.yml"><img src="https://github.com/ivanlkf/navil/actions/workflows/ci.yml/badge.svg" alt="CI" /></a>
   <a href="https://www.python.org/downloads/"><img src="https://img.shields.io/badge/python-3.10%2B-blue.svg" alt="Python 3.10+" /></a>
   <a href="https://www.rust-lang.org/"><img src="https://img.shields.io/badge/rust-stable-orange.svg" alt="Rust" /></a>
   <a href="LICENSE"><img src="https://img.shields.io/badge/License-Apache_2.0-blue.svg" alt="License: Apache 2.0" /></a>
@@ -195,21 +195,20 @@ AI threats evolve in minutes, not months. A prompt injection discovered on one m
 
 ### Tiered Access
 
-| Tier | Price | Sharing | Blocklist Access |
-|------|-------|---------|------------------|
-| **Community (OSS)** | $0/mo | Required (anonymized) | Full access, 48h delay |
-| **Dark Site (OSS)** | $0/mo | Disabled | Local-only, no global updates |
-| **Pro** | $49/mo | Optional | Real-time + verified feed |
-| **Growth** | $99/mo | Optional | Real-time + 5 custom rules |
-| **Team** | $249/mo | Optional | Real-time + unlimited rules |
-| **Enterprise** | Custom | Optional | Real-time + dedicated feed |
+| Tier | Price | Sharing | Blocklist Access | Limits |
+|------|-------|---------|------------------|--------|
+| **Community (OSS)** | $0/mo | Required (anonymized) | Full access, 48h delay | 25 agents · 25 keys · 60 req/min |
+| **Pro** | $59/mo | Optional | Real-time + verified feed | 50 agents · 50 keys · 1,000 req/min |
+| **Growth** | $129/mo | Optional | Real-time + OIDC + 5 custom rules | 100 agents · 100 keys · 5,000 req/min |
+| **Team** | $299/mo | Optional | Real-time + full OIDC + unlimited rules | 250 agents · 500 keys · 10,000 req/min |
+| **Enterprise** | Custom | Optional | Real-time + dedicated feed + on-prem | 10,000 agents · 10,000 keys · 100,000 req/min |
 
 ```bash
 # Community mode (default): share and receive
 navil wrap config.json
 
 # Paid mode: receive without sharing
-NAVIL_API_KEY=nvl_your_key NAVIL_DISABLE_CLOUD_SYNC=true navil cloud serve
+NAVIL_API_KEY=navil_live_your_key NAVIL_DISABLE_CLOUD_SYNC=true navil wrap config.json
 ```
 
 ## Works With
@@ -318,7 +317,7 @@ OIDC token exchange converts external identity tokens into Navil credentials wit
 Issue, rotate, and revoke JWT tokens with JIT provisioning, configurable TTL, usage tracking, and immutable audit logs. Hardened with a global active-credential cap (500), auto-purge of expired credentials, and thread-safe rotation.
 
 ### Threat Intelligence & Blocklist Engine
-Community-sourced threat intel via the [Give-to-Get initiative](#community-threat-network), backed by a local blocklist engine for pattern matching. Ships with 28 curated patterns. The public attack catalog (`public_attacks.yaml`) contains 32 cataloged attack patterns across 10 categories, expanded to 200+ parameterized variants for ML baseline training.
+Community-sourced threat intel via the [Give-to-Get initiative](#community-threat-network), backed by a local blocklist engine for pattern matching. Ships with 568 detection patterns across 16 attack categories (v3 blocklist). The Navil-200 attack benchmark validates proxy detection across protocol manipulation, tool shadowing, context smuggling, multi-agent exploits, RAG poisoning, supply chain attacks, privilege escalation, and anti-forensics vectors.
 
 ### Honeypot & Canary Kit
 Deploy decoy MCP servers to detect and study attackers in the wild. 3 built-in profiles: `dev-tools`, `cloud-creds`, and `db-admin`. A built-in `SignatureExtractor` analyzes collected interactions and auto-generates blocklist entries. Production deployment uses Docker Compose with isolated networking.
@@ -495,7 +494,7 @@ pip install navil[all]         # Everything
 ### From source
 
 ```bash
-git clone https://github.com/navilai/navil.git
+git clone https://github.com/ivanlkf/navil.git
 cd navil
 pip install -e ".[dev]"
 ```
@@ -529,5 +528,5 @@ See [SECURITY.md](SECURITY.md) for our vulnerability disclosure policy.
 ---
 
 <p align="center">
-  Built by <a href="https://github.com/navilai/navil"><strong>Pantheon Lab</strong></a>
+  Built by <a href="https://github.com/ivanlkf/navil"><strong>Pantheon Lab</strong></a>
 </p>
