@@ -3,7 +3,7 @@
 # Run this on a fresh OCI ARM instance (Ubuntu 22.04)
 #
 # Usage:
-#   curl -fsSL https://raw.githubusercontent.com/ivanlkf/navil/main/deploy/honeypot-oci/setup-oci.sh | bash
+#   curl -fsSL https://raw.githubusercontent.com/navilai/navil/main/deploy/honeypot-oci/setup-oci.sh | bash
 #   OR
 #   scp this file to the instance and run: bash setup-oci.sh
 #
@@ -50,7 +50,7 @@ echo "Docker Compose: $(docker compose version)"
 echo ""
 echo "[4/6] Cloning Navil repository..."
 if [ ! -d ~/navil ]; then
-  git clone https://github.com/ivanlkf/navil.git ~/navil
+  git clone https://github.com/navilai/navil.git ~/navil
 else
   cd ~/navil && git pull origin main
 fi

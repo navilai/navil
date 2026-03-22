@@ -23,7 +23,7 @@ navil wrap your_config.json
 
 Works with Claude Desktop, Cursor, Continue.dev, OpenClaw. MIT licensed.
 
-GitHub: https://github.com/ivanlkf/navil
+GitHub: https://github.com/navilai/navil
 Live threat radar: https://navil.ai/radar
 
 Happy to share more details about the honeypot findings or threat landscape.
@@ -48,7 +48,7 @@ Within hours of deployment:
 
 MCP is becoming an attack surface that most orgs don't even know they have. AI agents with tool access + no security boundary = the new shadow IT.
 
-We built an open-source runtime security proxy for this: https://github.com/ivanlkf/navil
+We built an open-source runtime security proxy for this: https://github.com/navilai/navil
 
 Key data points:
 - 4,401 MCP packages scanned, only 1.7% with static vulnerabilities

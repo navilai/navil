@@ -97,7 +97,7 @@ def findings_to_sarif(findings: list[Finding]) -> dict[str, Any]:
                     "driver": {
                         "name": "navil",
                         "version": navil.__version__,
-                        "informationUri": "https://github.com/ivanlkf/navil",
+                        "informationUri": "https://github.com/navilai/navil",
                         "rules": list(rules_by_id.values()),
                     }
                 },

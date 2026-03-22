@@ -97,11 +97,11 @@ all = [
 navil = "navil.cli:main"
 
 [project.urls]
-Homepage = "https://github.com/ivanlkf/navil"
-Repository = "https://github.com/ivanlkf/navil"
-Documentation = "https://github.com/ivanlkf/navil#readme"
-Issues = "https://github.com/ivanlkf/navil/issues"
-Changelog = "https://github.com/ivanlkf/navil/blob/main/CHANGELOG.md"
+Homepage = "https://github.com/navilai/navil"
+Repository = "https://github.com/navilai/navil"
+Documentation = "https://github.com/navilai/navil#readme"
+Issues = "https://github.com/navilai/navil/issues"
+Changelog = "https://github.com/navilai/navil/blob/main/CHANGELOG.md"
 
 [tool.setuptools.packages.find]
 include = ["navil*"]

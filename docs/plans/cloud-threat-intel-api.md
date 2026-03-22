@@ -2,7 +2,7 @@
 
 ## Context
 
-Navil is an open-source MCP security gateway. The OSS repo (`ivanlkf/navil`) has three client-side components that talk to this cloud backend:
+Navil is an open-source MCP security gateway. The OSS repo (`navilai/navil`) has three client-side components that talk to this cloud backend:
 
 ### 1. Outbound (Give): `CloudSyncWorker`
 
