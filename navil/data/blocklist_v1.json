@@ -1,5 +1,5 @@
 {
-  "version": 2,
+  "version": 3,
   "description": "Navil blocklist v1 - signature patterns extracted from public MCP attack catalog",
   "created_at": "2026-03-15T00:00:00Z",
   "patterns": [
@@ -3885,6 +3885,906 @@
       "pattern": "nanosecond_timing_channel_exfil",
       "source": "navil-100-benchmark",
       "attack_id": "NTS-ADV-100"
+    },
+    {
+      "id": "navil200_nts_adv_101",
+      "type": "argument_content",
+      "severity": "CRITICAL",
+      "description": "SVG Embedded JavaScript Payload \u2014 SVG files are valid XML that can contain <script> tags. Content scanners checking MIME type see imag",
+      "pattern": "svg_embedded_javascript_payload",
+      "source": "navil-200-benchmark",
+      "attack_id": "NTS-ADV-101"
+    },
+    {
+      "id": "navil200_nts_adv_102",
+      "type": "argument_content",
+      "severity": "CRITICAL",
+      "description": "Base64 Image Instruction Smuggling \u2014 Embeds adversarial text instructions at the start of a Base64-encoded image payload. Multi-modal LLM",
+      "pattern": "base64_image_instruction_smuggling",
+      "source": "navil-200-benchmark",
+      "attack_id": "NTS-ADV-102"
+    },
+    {
+      "id": "navil200_nts_adv_103",
+      "type": "argument_content",
+      "severity": "CRITICAL",
+      "description": "EXIF Metadata Command Injection \u2014 EXIF metadata fields like Artist, ImageDescription, and UserComment are free-text and rarely sanitiz",
+      "pattern": "exif_metadata_command_injection",
+      "source": "navil-200-benchmark",
+      "attack_id": "NTS-ADV-103"
+    },
+    {
+      "id": "navil200_nts_adv_104",
+      "type": "argument_content",
+      "severity": "CRITICAL",
+      "description": "PDF Hidden Text Layer Injection \u2014 PDFs support multiple text layers with independent rendering properties. A hidden layer with zero-si",
+      "pattern": "pdf_hidden_text_layer_injection",
+      "source": "navil-200-benchmark",
+      "attack_id": "NTS-ADV-104"
+    },
+    {
+      "id": "navil200_nts_adv_105",
+      "type": "argument_content",
+      "severity": "CRITICAL",
+      "description": "Unicode Bidi Override Filename Spoof \u2014 The Unicode Right-to-Left Override character (U+202E) reverses the display order of subsequent chara",
+      "pattern": "unicode_bidi_override_filename_spoof",
+      "source": "navil-200-benchmark",
+      "attack_id": "NTS-ADV-105"
+    },
+    {
+      "id": "navil200_nts_adv_106",
+      "type": "argument_content",
+      "severity": "CRITICAL",
+      "description": "Homoglyph Tool Name Spoofing \u2014 Replaces the Latin 'a' in 'read_file' with the visually identical Cyrillic '\\u0430'. Allowlist check",
+      "pattern": "homoglyph_tool_name_spoofing",
+      "source": "navil-200-benchmark",
+      "attack_id": "NTS-ADV-106"
+    },
+    {
+      "id": "navil200_nts_adv_107",
+      "type": "argument_content",
+      "severity": "CRITICAL",
+      "description": "Whitespace Steganography Payload \u2014 Encodes a hidden message using tabs and spaces (Whitespace steganography) appended to visible text l",
+      "pattern": "whitespace_steganography_payload",
+      "source": "navil-200-benchmark",
+      "attack_id": "NTS-ADV-107"
+    },
+    {
+      "id": "navil200_nts_adv_108",
+      "type": "argument_content",
+      "severity": "CRITICAL",
+      "description": "Data URI JavaScript Injection \u2014 Embeds a data: URI containing Base64-encoded JavaScript inside an HTML resource. URL scanners checki",
+      "pattern": "data_uri_javascript_injection",
+      "source": "navil-200-benchmark",
+      "attack_id": "NTS-ADV-108"
+    },
+    {
+      "id": "navil200_nts_adv_109",
+      "type": "argument_content",
+      "severity": "CRITICAL",
+      "description": "QR Code Phishing in Response Content \u2014 Renders a Unicode-art QR code in a text response that encodes a phishing URL. Text content scanners ",
+      "pattern": "qr_code_phishing_in_response_content",
+      "source": "navil-200-benchmark",
+      "attack_id": "NTS-ADV-109"
+    },
+    {
+      "id": "navil200_nts_adv_110",
+      "type": "argument_content",
+      "severity": "CRITICAL",
+      "description": "Polyglot PDF-JavaScript File \u2014 Constructs a file that is simultaneously valid PDF and valid JavaScript. The PDF magic bytes satisfy",
+      "pattern": "polyglot_pdf-javascript_file",
+      "source": "navil-200-benchmark",
+      "attack_id": "NTS-ADV-110"
+    },
+    {
+      "id": "navil200_nts_adv_111",
+      "type": "argument_content",
+      "severity": "CRITICAL",
+      "description": "CSS Zero-Font Content Hiding \u2014 Uses CSS font-size:0 and color:transparent to hide malicious instructions within visible HTML conten",
+      "pattern": "css_zero-font_content_hiding",
+      "source": "navil-200-benchmark",
+      "attack_id": "NTS-ADV-111"
+    },
+    {
+      "id": "navil200_nts_adv_112",
+      "type": "argument_content",
+      "severity": "CRITICAL",
+      "description": "Custom Font Glyph Substitution \u2014 Loads a custom web font that maps standard letter glyphs to different visual representations. The DO",
+      "pattern": "custom_font_glyph_substitution",
+      "source": "navil-200-benchmark",
+      "attack_id": "NTS-ADV-112"
+    },
+    {
+      "id": "navil200_nts_adv_113",
+      "type": "argument_content",
+      "severity": "CRITICAL",
+      "description": "OCR-Targeted Adversarial Text in Image \u2014 Embeds near-invisible text (2px font, near-white color on white background) in an image. Human viewe",
+      "pattern": "ocr-targeted_adversarial_text_in_image",
+      "source": "navil-200-benchmark",
+      "attack_id": "NTS-ADV-113"
+    },
+    {
+      "id": "navil200_nts_adv_114",
+      "type": "argument_content",
+      "severity": "CRITICAL",
+      "description": "Adversarial Noise Image Perturbation \u2014 Adds carefully crafted adversarial noise (Fast Gradient Sign Method) to an image that causes vision ",
+      "pattern": "adversarial_noise_image_perturbation",
+      "source": "navil-200-benchmark",
+      "attack_id": "NTS-ADV-114"
+    },
+    {
+      "id": "navil200_nts_adv_115",
+      "type": "argument_content",
+      "severity": "CRITICAL",
+      "description": "Markdown Alt-Text Prompt Injection \u2014 Injects prompt injection text into the alt-text attribute of a Markdown image. Rendered Markdown hid",
+      "pattern": "markdown_alt-text_prompt_injection",
+      "source": "navil-200-benchmark",
+      "attack_id": "NTS-ADV-115"
+    },
+    {
+      "id": "navil200_nts_adv_116",
+      "type": "behavioral",
+      "severity": "CRITICAL",
+      "description": "Client ID Spoofing in Initialize \u2014 Spoofs the client_id field in the initialize handshake to impersonate a trusted internal client. If ",
+      "pattern": "client_id_spoofing_in_initialize",
+      "source": "navil-200-benchmark",
+      "attack_id": "NTS-ADV-116"
+    },
+    {
+      "id": "navil200_nts_adv_117",
+      "type": "behavioral",
+      "severity": "CRITICAL",
+      "description": "MCP Session Fixation \u2014 Supplies a pre-determined session ID in the initialize request's _meta field. If the server accepts ",
+      "pattern": "mcp_session_fixation",
+      "source": "navil-200-benchmark",
+      "attack_id": "NTS-ADV-117"
+    },
+    {
+      "id": "navil200_nts_adv_118",
+      "type": "behavioral",
+      "severity": "CRITICAL",
+      "description": "Capability Downgrade in Negotiation \u2014 Injects a serverCapabilities field in the client's initialize request that declares security feature",
+      "pattern": "capability_downgrade_in_negotiation",
+      "source": "navil-200-benchmark",
+      "attack_id": "NTS-ADV-118"
+    },
+    {
+      "id": "navil200_nts_adv_119",
+      "type": "behavioral",
+      "severity": "CRITICAL",
+      "description": "Protocol Version Negotiation Exploit \u2014 Requests a far-future protocol version with fabricated experimental capabilities like unsandboxedExe",
+      "pattern": "protocol_version_negotiation_exploit",
+      "source": "navil-200-benchmark",
+      "attack_id": "NTS-ADV-119"
+    },
+    {
+      "id": "navil200_nts_adv_120",
+      "type": "behavioral",
+      "severity": "CRITICAL",
+      "description": "Server Info Spoofing via MITM Initialize \u2014 Crafts an initialize response (not request) spoofing the serverInfo to claim the server is an offici",
+      "pattern": "server_info_spoofing_via_mitm_initialize",
+      "source": "navil-200-benchmark",
+      "attack_id": "NTS-ADV-120"
+    },
+    {
+      "id": "navil200_nts_adv_121",
+      "type": "behavioral",
+      "severity": "CRITICAL",
+      "description": "Concurrent Initialize Race Condition \u2014 Sends two initialize requests simultaneously as a batch. The first uses minimal capabilities (passes",
+      "pattern": "concurrent_initialize_race_condition",
+      "source": "navil-200-benchmark",
+      "attack_id": "NTS-ADV-121"
+    },
+    {
+      "id": "navil200_nts_adv_122",
+      "type": "behavioral",
+      "severity": "CRITICAL",
+      "description": "Session Token Prediction Attack \u2014 Sends an initialized notification without a prior initialize handshake, using a predicted session to",
+      "pattern": "session_token_prediction_attack",
+      "source": "navil-200-benchmark",
+      "attack_id": "NTS-ADV-122"
+    },
+    {
+      "id": "navil200_nts_adv_123",
+      "type": "behavioral",
+      "severity": "CRITICAL",
+      "description": "OAuth redirect_uri Open Redirect \u2014 Uses a redirect_uri with an @ symbol to exploit URL parsing ambiguity. The authority portion 'legiti",
+      "pattern": "oauth_redirect_uri_open_redirect",
+      "source": "navil-200-benchmark",
+      "attack_id": "NTS-ADV-123"
+    },
+    {
+      "id": "navil200_nts_adv_124",
+      "type": "behavioral",
+      "severity": "CRITICAL",
+      "description": "Token Scope Escalation via Re-Initialize \u2014 Sends a second initialize request on an existing session, requesting expanded scopes (admin, write, ",
+      "pattern": "token_scope_escalation_via_re-initialize",
+      "source": "navil-200-benchmark",
+      "attack_id": "NTS-ADV-124"
+    },
+    {
+      "id": "navil200_nts_adv_125",
+      "type": "behavioral",
+      "severity": "CRITICAL",
+      "description": "Stale Session Replay Attack \u2014 Replays a tool call using a session token captured from a previous, now-expired session. If the serv",
+      "pattern": "stale_session_replay_attack",
+      "source": "navil-200-benchmark",
+      "attack_id": "NTS-ADV-125"
+    },
+    {
+      "id": "navil200_nts_adv_126",
+      "type": "behavioral",
+      "severity": "CRITICAL",
+      "description": "Bearer Token Leakage via Verbose Errors \u2014 Sends a request with an extremely long invalid tool name to trigger verbose error responses. Many se",
+      "pattern": "bearer_token_leakage_via_verbose_errors",
+      "source": "navil-200-benchmark",
+      "attack_id": "NTS-ADV-126"
+    },
+    {
+      "id": "navil200_nts_adv_127",
+      "type": "behavioral",
+      "severity": "CRITICAL",
+      "description": "CSRF on MCP OAuth Consent Page \u2014 Serves an HTML page that auto-submits a CSRF form to the MCP server's OAuth consent endpoint. If the",
+      "pattern": "csrf_on_mcp_oauth_consent_page",
+      "source": "navil-200-benchmark",
+      "attack_id": "NTS-ADV-127"
+    },
+    {
+      "id": "navil200_nts_adv_128",
+      "type": "behavioral",
+      "severity": "CRITICAL",
+      "description": "Token Passthrough to Untrusted Server \u2014 Instructs a proxy MCP server to forward a request to an untrusted downstream server with forward_aut",
+      "pattern": "token_passthrough_to_untrusted_server",
+      "source": "navil-200-benchmark",
+      "attack_id": "NTS-ADV-128"
+    },
+    {
+      "id": "navil200_nts_adv_129",
+      "type": "behavioral",
+      "severity": "CRITICAL",
+      "description": "PKCE Code Verifier Timing Side-Channel \u2014 Submits multiple token requests with different code_verifier values and measures response times. If ",
+      "pattern": "pkce_code_verifier_timing_side-channel",
+      "source": "navil-200-benchmark",
+      "attack_id": "NTS-ADV-129"
+    },
+    {
+      "id": "navil200_nts_adv_130",
+      "type": "behavioral",
+      "severity": "CRITICAL",
+      "description": "Session Migration Transport Hijack \u2014 Requests migration of an active session from stdio transport to SSE, pointing the SSE endpoint to an",
+      "pattern": "session_migration_transport_hijack",
+      "source": "navil-200-benchmark",
+      "attack_id": "NTS-ADV-130"
+    },
+    {
+      "id": "navil200_nts_adv_131",
+      "type": "behavioral",
+      "severity": "CRITICAL",
+      "description": "JWT Algorithm Confusion (none/HS256) \u2014 Crafts a JWT session token with alg:none or switches from RS256 to HS256 using the server's public R",
+      "pattern": "jwt_algorithm_confusion_(none/hs256)",
+      "source": "navil-200-benchmark",
+      "attack_id": "NTS-ADV-131"
+    },
+    {
+      "id": "navil200_nts_adv_132",
+      "type": "behavioral",
+      "severity": "CRITICAL",
+      "description": "Refresh Token Rotation Bypass \u2014 Replays a previously rotated refresh token. If the server implements rotation but does not invalidat",
+      "pattern": "refresh_token_rotation_bypass",
+      "source": "navil-200-benchmark",
+      "attack_id": "NTS-ADV-132"
+    },
+    {
+      "id": "navil200_nts_adv_133",
+      "type": "behavioral",
+      "severity": "CRITICAL",
+      "description": "Session Binding Bypass Cross-Device \u2014 Presents a stolen session token with a spoofed device fingerprint matching the victim's device. If s",
+      "pattern": "session_binding_bypass_cross-device",
+      "source": "navil-200-benchmark",
+      "attack_id": "NTS-ADV-133"
+    },
+    {
+      "id": "navil200_nts_adv_134",
+      "type": "behavioral",
+      "severity": "CRITICAL",
+      "description": "OAuth Authorization Code Replay \u2014 Replays a previously used authorization code. If the server does not track and invalidate used codes",
+      "pattern": "oauth_authorization_code_replay",
+      "source": "navil-200-benchmark",
+      "attack_id": "NTS-ADV-134"
+    },
+    {
+      "id": "navil200_nts_adv_135",
+      "type": "behavioral",
+      "severity": "CRITICAL",
+      "description": "OAuth Device Code Phishing \u2014 Initiates an OAuth device authorization flow and obtains a user_code. The attacker presents this cod",
+      "pattern": "oauth_device_code_phishing",
+      "source": "navil-200-benchmark",
+      "attack_id": "NTS-ADV-135"
+    },
+    {
+      "id": "navil200_nts_adv_136",
+      "type": "argument_content",
+      "severity": "CRITICAL",
+      "description": "False Fact Injection During Summarization \u2014 Injects a false 'fact' into the memory store during a summarization pass. When the model later retri",
+      "pattern": "false_fact_injection_during_summarization",
+      "source": "navil-200-benchmark",
+      "attack_id": "NTS-ADV-136"
+    },
+    {
+      "id": "navil200_nts_adv_137",
+      "type": "argument_content",
+      "severity": "CRITICAL",
+      "description": "Vector Embedding Collision Attack \u2014 Crafts content that produces embedding vectors close to legitimate safety documentation in the vecto",
+      "pattern": "vector_embedding_collision_attack",
+      "source": "navil-200-benchmark",
+      "attack_id": "NTS-ADV-137"
+    },
+    {
+      "id": "navil200_nts_adv_138",
+      "type": "argument_content",
+      "severity": "CRITICAL",
+      "description": "Retrieval Anchor Manipulation \u2014 Stores a fake FAQ document with explicit anchor queries in metadata. RAG systems that use metadata-b",
+      "pattern": "retrieval_anchor_manipulation",
+      "source": "navil-200-benchmark",
+      "attack_id": "NTS-ADV-138"
+    },
+    {
+      "id": "navil200_nts_adv_139",
+      "type": "argument_content",
+      "severity": "CRITICAL",
+      "description": "Memory Overwrite via Duplicate Knowledge IDs \u2014 Targets the knowledge store's deduplication logic. By reusing an existing knowledge_id with a higher",
+      "pattern": "memory_overwrite_via_duplicate_knowledge_ids",
+      "source": "navil-200-benchmark",
+      "attack_id": "NTS-ADV-139"
+    },
+    {
+      "id": "navil200_nts_adv_140",
+      "type": "argument_content",
+      "severity": "CRITICAL",
+      "description": "Context Window Stuffing to Evict Safety Instructions \u2014 Floods the context window with 100K+ characters of padding followed by a hidden instruction. When re",
+      "pattern": "context_window_stuffing_to_evict_safety_instructions",
+      "source": "navil-200-benchmark",
+      "attack_id": "NTS-ADV-140"
+    },
+    {
+      "id": "navil200_nts_adv_141",
+      "type": "argument_content",
+      "severity": "CRITICAL",
+      "description": "Temporal Poisoning with Future Dates \u2014 Injects a document with a future publication date. RAG systems that sort by recency will rank this a",
+      "pattern": "temporal_poisoning_with_future_dates",
+      "source": "navil-200-benchmark",
+      "attack_id": "NTS-ADV-141"
+    },
+    {
+      "id": "navil200_nts_adv_142",
+      "type": "argument_content",
+      "severity": "CRITICAL",
+      "description": "Cross-Session Memory Pollution \u2014 Writes false user preferences to a global memory scope accessible across sessions. By setting sessio",
+      "pattern": "cross-session_memory_pollution",
+      "source": "navil-200-benchmark",
+      "attack_id": "NTS-ADV-142"
+    },
+    {
+      "id": "navil200_nts_adv_143",
+      "type": "argument_content",
+      "severity": "CRITICAL",
+      "description": "Embedding Space Adversarial Perturbation \u2014 Uses Unicode homoglyphs (Cyrillic characters that look identical to Latin) to create text that visua",
+      "pattern": "embedding_space_adversarial_perturbation",
+      "source": "navil-200-benchmark",
+      "attack_id": "NTS-ADV-143"
+    },
+    {
+      "id": "navil200_nts_adv_144",
+      "type": "argument_content",
+      "severity": "CRITICAL",
+      "description": "Knowledge Graph Edge Injection \u2014 Directly manipulates the knowledge graph by injecting edges that establish false authority delegatio",
+      "pattern": "knowledge_graph_edge_injection",
+      "source": "navil-200-benchmark",
+      "attack_id": "NTS-ADV-144"
+    },
+    {
+      "id": "navil200_nts_adv_145",
+      "type": "argument_content",
+      "severity": "CRITICAL",
+      "description": "RAG Chunk Boundary Exploitation \u2014 Exploits how RAG systems split documents into chunks. The first chunk contains a legitimate-looking ",
+      "pattern": "rag_chunk_boundary_exploitation",
+      "source": "navil-200-benchmark",
+      "attack_id": "NTS-ADV-145"
+    },
+    {
+      "id": "navil200_nts_adv_146",
+      "type": "argument_content",
+      "severity": "CRITICAL",
+      "description": "Metadata Injection in Retrieved Documents \u2014 Injects JSON escape sequences into metadata fields. When the RAG system serializes metadata alongsid",
+      "pattern": "metadata_injection_in_retrieved_documents",
+      "source": "navil-200-benchmark",
+      "attack_id": "NTS-ADV-146"
+    },
+    {
+      "id": "navil200_nts_adv_147",
+      "type": "argument_content",
+      "severity": "CRITICAL",
+      "description": "Source Attribution Spoofing \u2014 Spoofs authoritative source attribution to make a false security bulletin appear legitimate. The met",
+      "pattern": "source_attribution_spoofing",
+      "source": "navil-200-benchmark",
+      "attack_id": "NTS-ADV-147"
+    },
+    {
+      "id": "navil200_nts_adv_148",
+      "type": "argument_content",
+      "severity": "CRITICAL",
+      "description": "Negative Knowledge Injection \u2014 Injects negative knowledge: statements that explicitly contradict and 'retract' legitimate safety po",
+      "pattern": "negative_knowledge_injection",
+      "source": "navil-200-benchmark",
+      "attack_id": "NTS-ADV-148"
+    },
+    {
+      "id": "navil200_nts_adv_149",
+      "type": "argument_content",
+      "severity": "CRITICAL",
+      "description": "Memory Compaction Exploitation \u2014 Triggers a memory compaction operation with a low similarity threshold and a malicious merge templat",
+      "pattern": "memory_compaction_exploitation",
+      "source": "navil-200-benchmark",
+      "attack_id": "NTS-ADV-149"
+    },
+    {
+      "id": "navil200_nts_adv_150",
+      "type": "argument_content",
+      "severity": "CRITICAL",
+      "description": "Conversation History Injection \u2014 Injects a fabricated conversation history into memory storage. When the system loads 'previous sessi",
+      "pattern": "conversation_history_injection",
+      "source": "navil-200-benchmark",
+      "attack_id": "NTS-ADV-150"
+    },
+    {
+      "id": "navil200_nts_adv_151",
+      "type": "argument_content",
+      "severity": "CRITICAL",
+      "description": "System Prompt Extraction via Memory Retrieval \u2014 Plants a retrieval-triggered instruction that attempts to extract the system prompt. When the RAG sy",
+      "pattern": "system_prompt_extraction_via_memory_retrieval",
+      "source": "navil-200-benchmark",
+      "attack_id": "NTS-ADV-151"
+    },
+    {
+      "id": "navil200_nts_adv_152",
+      "type": "argument_content",
+      "severity": "CRITICAL",
+      "description": "Fine-Tuning Data Poisoning via Tool Outputs \u2014 Injects poisoned training examples into a fine-tuning dataset accessible via the memory API. Each ex",
+      "pattern": "fine-tuning_data_poisoning_via_tool_outputs",
+      "source": "navil-200-benchmark",
+      "attack_id": "NTS-ADV-152"
+    },
+    {
+      "id": "navil200_nts_adv_153",
+      "type": "argument_content",
+      "severity": "CRITICAL",
+      "description": "Incremental Belief Shifting \u2014 A multi-stage attack that gradually shifts beliefs through incremental memory injections. Each entry",
+      "pattern": "incremental_belief_shifting",
+      "source": "navil-200-benchmark",
+      "attack_id": "NTS-ADV-153"
+    },
+    {
+      "id": "navil200_nts_adv_154",
+      "type": "argument_content",
+      "severity": "CRITICAL",
+      "description": "Memory GC Timing Attack \u2014 Exploits the timing window during memory garbage collection. The entry has a very short TTL but is p",
+      "pattern": "memory_gc_timing_attack",
+      "source": "navil-200-benchmark",
+      "attack_id": "NTS-ADV-154"
+    },
+    {
+      "id": "navil200_nts_adv_155",
+      "type": "argument_content",
+      "severity": "CRITICAL",
+      "description": "AgentPoison Retrieval Maximization \u2014 Implements the AgentPoison technique: maximizing retrieval probability by front-loading the document",
+      "pattern": "agentpoison_retrieval_maximization",
+      "source": "navil-200-benchmark",
+      "attack_id": "NTS-ADV-155"
+    },
+    {
+      "id": "navil200_nts_adv_156",
+      "type": "tool_name",
+      "severity": "CRITICAL",
+      "description": "Typosquatted MCP Server URLs \u2014 Registers a typosquatted MCP server URL (githulb vs github). The malicious server mimics the real Gi",
+      "pattern": "typosquatted_mcp_server_urls",
+      "source": "navil-200-benchmark",
+      "attack_id": "NTS-ADV-156"
+    },
+    {
+      "id": "navil200_nts_adv_157",
+      "type": "tool_name",
+      "severity": "CRITICAL",
+      "description": ".well-known/mcp Discovery Poisoning \u2014 Exploits the .well-known/mcp.json discovery mechanism. If the attacker can poison DNS or perform a M",
+      "pattern": ".well-known/mcp_discovery_poisoning",
+      "source": "navil-200-benchmark",
+      "attack_id": "NTS-ADV-157"
+    },
+    {
+      "id": "navil200_nts_adv_158",
+      "type": "tool_name",
+      "severity": "CRITICAL",
+      "description": "npm Package Name Confusion \u2014 Uses a confusable npm scope (@anthroplc vs @anthropic) to trick installations. The typosquatted pack",
+      "pattern": "npm_package_name_confusion",
+      "source": "navil-200-benchmark",
+      "attack_id": "NTS-ADV-158"
+    },
+    {
+      "id": "navil200_nts_adv_159",
+      "type": "tool_name",
+      "severity": "CRITICAL",
+      "description": "Dependency Confusion Attack \u2014 Exploits dependency confusion by publishing a public package with the same name as an internal/priva",
+      "pattern": "dependency_confusion_attack",
+      "source": "navil-200-benchmark",
+      "attack_id": "NTS-ADV-159"
+    },
+    {
+      "id": "navil200_nts_adv_160",
+      "type": "tool_name",
+      "severity": "CRITICAL",
+      "description": "Git Submodule Hijacking \u2014 Clones a legitimate-looking repository but overrides the submodule URLs via submodule_config_overrid",
+      "pattern": "git_submodule_hijacking",
+      "source": "navil-200-benchmark",
+      "attack_id": "NTS-ADV-160"
+    },
+    {
+      "id": "navil200_nts_adv_161",
+      "type": "tool_name",
+      "severity": "CRITICAL",
+      "description": "Lock File Manipulation \u2014 Manipulates the package lock file entry to point the resolved URL to an attacker-controlled CDN whil",
+      "pattern": "lock_file_manipulation",
+      "source": "navil-200-benchmark",
+      "attack_id": "NTS-ADV-161"
+    },
+    {
+      "id": "navil200_nts_adv_162",
+      "type": "tool_name",
+      "severity": "CRITICAL",
+      "description": "Build Script Injection \u2014 Chains a legitimate build command with a malicious download-and-execute via shell pipe. The && opera",
+      "pattern": "build_script_injection",
+      "source": "navil-200-benchmark",
+      "attack_id": "NTS-ADV-162"
+    },
+    {
+      "id": "navil200_nts_adv_163",
+      "type": "tool_name",
+      "severity": "CRITICAL",
+      "description": "Post-Install Hook Exploitation \u2014 Exploits the npm postinstall hook to execute arbitrary code after package installation. The hook rea",
+      "pattern": "post-install_hook_exploitation",
+      "source": "navil-200-benchmark",
+      "attack_id": "NTS-ADV-163"
+    },
+    {
+      "id": "navil200_nts_adv_164",
+      "type": "tool_name",
+      "severity": "CRITICAL",
+      "description": "CDN Cache Poisoning for MCP Assets \u2014 Poisons the CDN cache by injecting custom headers that alter the cache key computation. X-Forwarded-",
+      "pattern": "cdn_cache_poisoning_for_mcp_assets",
+      "source": "navil-200-benchmark",
+      "attack_id": "NTS-ADV-164"
+    },
+    {
+      "id": "navil200_nts_adv_165",
+      "type": "tool_name",
+      "severity": "CRITICAL",
+      "description": "Certificate Pinning Bypass \u2014 Disables certificate pinning and TLS verification for the MCP connection. The empty pin_sha256 remov",
+      "pattern": "certificate_pinning_bypass",
+      "source": "navil-200-benchmark",
+      "attack_id": "NTS-ADV-165"
+    },
+    {
+      "id": "navil200_nts_adv_166",
+      "type": "tool_name",
+      "severity": "CRITICAL",
+      "description": "Registry Index Poisoning \u2014 Points the MCP discovery mechanism at a rogue registry that serves a poisoned index. The index conta",
+      "pattern": "registry_index_poisoning",
+      "source": "navil-200-benchmark",
+      "attack_id": "NTS-ADV-166"
+    },
+    {
+      "id": "navil200_nts_adv_167",
+      "type": "tool_name",
+      "severity": "CRITICAL",
+      "description": "Abandoned Package Takeover \u2014 Targets packages that were previously popular but abandoned by their maintainers. The attacker claim",
+      "pattern": "abandoned_package_takeover",
+      "source": "navil-200-benchmark",
+      "attack_id": "NTS-ADV-167"
+    },
+    {
+      "id": "navil200_nts_adv_168",
+      "type": "tool_name",
+      "severity": "CRITICAL",
+      "description": "Star-Jacking Reputation Theft \u2014 Exploits star-jacking: the attacker's repository metadata (package.json or similar) points its homep",
+      "pattern": "star-jacking_reputation_theft",
+      "source": "navil-200-benchmark",
+      "attack_id": "NTS-ADV-168"
+    },
+    {
+      "id": "navil200_nts_adv_169",
+      "type": "tool_name",
+      "severity": "CRITICAL",
+      "description": "Malicious MCP Starter Template \u2014 Uses a malicious starter template that appears to be an official MCP quickstart. The template includ",
+      "pattern": "malicious_mcp_starter_template",
+      "source": "navil-200-benchmark",
+      "attack_id": "NTS-ADV-169"
+    },
+    {
+      "id": "navil200_nts_adv_170",
+      "type": "tool_name",
+      "severity": "CRITICAL",
+      "description": "Docker Image Tag Manipulation \u2014 Deploys an MCP server container using a registry mirror controlled by the attacker. The mirror serve",
+      "pattern": "docker_image_tag_manipulation",
+      "source": "navil-200-benchmark",
+      "attack_id": "NTS-ADV-170"
+    },
+    {
+      "id": "navil200_nts_adv_171",
+      "type": "behavioral",
+      "severity": "CRITICAL",
+      "description": "Capability Token Forgery via HMAC Collision \u2014 Forges a capability token by crafting a JWT-like structure with an admin role claim. If the proxy va",
+      "pattern": "capability_token_forgery_via_hmac_collision",
+      "source": "navil-200-benchmark",
+      "attack_id": "NTS-ADV-171"
+    },
+    {
+      "id": "navil200_nts_adv_172",
+      "type": "behavioral",
+      "severity": "CRITICAL",
+      "description": "Role Confusion via Tool Description Injection \u2014 After receiving the tools/list response, the attacker injects a modified tool description into the L",
+      "pattern": "role_confusion_via_tool_description_injection",
+      "source": "navil-200-benchmark",
+      "attack_id": "NTS-ADV-172"
+    },
+    {
+      "id": "navil200_nts_adv_173",
+      "type": "behavioral",
+      "severity": "CRITICAL",
+      "description": "Privilege Inheritance Across Agent Delegation \u2014 In multi-agent systems, Agent-A delegates a task to Agent-B via sampling/createMessage. The system p",
+      "pattern": "privilege_inheritance_across_agent_delegation",
+      "source": "navil-200-benchmark",
+      "attack_id": "NTS-ADV-173"
+    },
+    {
+      "id": "navil200_nts_adv_174",
+      "type": "behavioral",
+      "severity": "CRITICAL",
+      "description": "Admin Tool Discovery via Error Enumeration \u2014 Enumerates potential admin tool names by sending batch calls with common admin prefixes. Tools that ",
+      "pattern": "admin_tool_discovery_via_error_enumeration",
+      "source": "navil-200-benchmark",
+      "attack_id": "NTS-ADV-174"
+    },
+    {
+      "id": "navil200_nts_adv_175",
+      "type": "behavioral",
+      "severity": "CRITICAL",
+      "description": "Implicit Trust Escalation via Benign-to-Admin Chain \u2014 Step 1: Read the roles configuration file using an unprivileged read_file tool. Step 2: Modify the J",
+      "pattern": "implicit_trust_escalation_via_benign-to-admin_chain",
+      "source": "navil-200-benchmark",
+      "attack_id": "NTS-ADV-175"
+    },
+    {
+      "id": "navil200_nts_adv_176",
+      "type": "behavioral",
+      "severity": "CRITICAL",
+      "description": "Delegation Chain Privilege Laundering (A->B->C) \u2014 Creates a three-hop delegation chain: A delegates to B, B delegates to C. At each hop, the privilege",
+      "pattern": "delegation_chain_privilege_laundering_(a->b->c)",
+      "source": "navil-200-benchmark",
+      "attack_id": "NTS-ADV-176"
+    },
+    {
+      "id": "navil200_nts_adv_177",
+      "type": "behavioral",
+      "severity": "CRITICAL",
+      "description": "Resource URI Permission Boundary Escape \u2014 MCP resource URIs define access boundaries, but path traversal sequences in the URI can escape the a",
+      "pattern": "resource_uri_permission_boundary_escape",
+      "source": "navil-200-benchmark",
+      "attack_id": "NTS-ADV-177"
+    },
+    {
+      "id": "navil200_nts_adv_178",
+      "type": "behavioral",
+      "severity": "CRITICAL",
+      "description": "Horizontal Privilege Escalation via Tenant ID Swap \u2014 The attacker belongs to org_id 'org_123' but queries data for 'org_other_tenant_999'. The SQL tool d",
+      "pattern": "horizontal_privilege_escalation_via_tenant_id_swap",
+      "source": "navil-200-benchmark",
+      "attack_id": "NTS-ADV-178"
+    },
+    {
+      "id": "navil200_nts_adv_179",
+      "type": "behavioral",
+      "severity": "CRITICAL",
+      "description": "Vertical Escalation via Admin Context Injection in Sampling \u2014 Uses sampling/createMessage to inject an admin system prompt into a new LLM context. The systemPromp",
+      "pattern": "vertical_escalation_via_admin_context_injection_in_sampling",
+      "source": "navil-200-benchmark",
+      "attack_id": "NTS-ADV-179"
+    },
+    {
+      "id": "navil200_nts_adv_180",
+      "type": "behavioral",
+      "severity": "CRITICAL",
+      "description": "Tool Result Injection Simulating Admin Approval \u2014 Embeds a fabricated 'prior_approval' object in the tool arguments that mimics the output of an admin",
+      "pattern": "tool_result_injection_simulating_admin_approval",
+      "source": "navil-200-benchmark",
+      "attack_id": "NTS-ADV-180"
+    },
+    {
+      "id": "navil200_nts_adv_181",
+      "type": "behavioral",
+      "severity": "CRITICAL",
+      "description": "Config File Write for Privilege Escalation \u2014 Overwrites the application's .env file with attacker-controlled values including AUTH_BYPASS=true an",
+      "pattern": "config_file_write_for_privilege_escalation",
+      "source": "navil-200-benchmark",
+      "attack_id": "NTS-ADV-181"
+    },
+    {
+      "id": "navil200_nts_adv_182",
+      "type": "behavioral",
+      "severity": "CRITICAL",
+      "description": "Environment Variable Manipulation via Tool Arguments \u2014 The exec_command tool accepts an 'env' parameter to set environment variables for the child process.",
+      "pattern": "environment_variable_manipulation_via_tool_arguments",
+      "source": "navil-200-benchmark",
+      "attack_id": "NTS-ADV-182"
+    },
+    {
+      "id": "navil200_nts_adv_183",
+      "type": "behavioral",
+      "severity": "CRITICAL",
+      "description": "Service Account Impersonation via Metadata Headers \u2014 Injects service account impersonation headers into the _meta field of a JSON-RPC request. Cloud APIs",
+      "pattern": "service_account_impersonation_via_metadata_headers",
+      "source": "navil-200-benchmark",
+      "attack_id": "NTS-ADV-183"
+    },
+    {
+      "id": "navil200_nts_adv_184",
+      "type": "behavioral",
+      "severity": "CRITICAL",
+      "description": "Audit Log Tampering to Conceal Privilege Escalation \u2014 Three-step attack: (1) Grant superadmin role, (2) truncate the filesystem audit log, (3) delete the ",
+      "pattern": "audit_log_tampering_to_conceal_privilege_escalation",
+      "source": "navil-200-benchmark",
+      "attack_id": "NTS-ADV-184"
+    },
+    {
+      "id": "navil200_nts_adv_185",
+      "type": "behavioral",
+      "severity": "CRITICAL",
+      "description": "Rate Limit Bypass via Role-Based Exemption Claim \u2014 Injects rate-limit bypass headers claiming enterprise tier and internal service status. Many API gat",
+      "pattern": "rate_limit_bypass_via_role-based_exemption_claim",
+      "source": "navil-200-benchmark",
+      "attack_id": "NTS-ADV-185"
+    },
+    {
+      "id": "navil200_nts_adv_186",
+      "type": "behavioral",
+      "severity": "CRITICAL",
+      "description": "Feature Flag Manipulation to Enable Admin Panel \u2014 Modifies feature flags via a configuration tool to enable the admin panel, disable authentication re",
+      "pattern": "feature_flag_manipulation_to_enable_admin_panel",
+      "source": "navil-200-benchmark",
+      "attack_id": "NTS-ADV-186"
+    },
+    {
+      "id": "navil200_nts_adv_187",
+      "type": "behavioral",
+      "severity": "CRITICAL",
+      "description": "Database Role Escalation via GRANT Statement \u2014 Executes PostgreSQL GRANT and ALTER ROLE statements through a SQL query tool. The tool may allow SEL",
+      "pattern": "database_role_escalation_via_grant_statement",
+      "source": "navil-200-benchmark",
+      "attack_id": "NTS-ADV-187"
+    },
+    {
+      "id": "navil200_nts_adv_188",
+      "type": "behavioral",
+      "severity": "CRITICAL",
+      "description": "API Key Scope Escalation via Key Regeneration \u2014 Regenerates an existing read-only API key but specifies expanded scopes including admin and billing.",
+      "pattern": "api_key_scope_escalation_via_key_regeneration",
+      "source": "navil-200-benchmark",
+      "attack_id": "NTS-ADV-188"
+    },
+    {
+      "id": "navil200_nts_adv_189",
+      "type": "behavioral",
+      "severity": "CRITICAL",
+      "description": "Multi-Tenant Isolation Bypass via Shared Cache Poisoning \u2014 Poisons the shared Redis cache by overwriting the permissions entry for an admin user in a different",
+      "pattern": "multi-tenant_isolation_bypass_via_shared_cache_poisoning",
+      "source": "navil-200-benchmark",
+      "attack_id": "NTS-ADV-189"
+    },
+    {
+      "id": "navil200_nts_adv_190",
+      "type": "behavioral",
+      "severity": "CRITICAL",
+      "description": "Digital Insider via Fabricated Success Logs \u2014 Fabricates audit/success logs that show an admin performing actions and then 'instructing' the next ",
+      "pattern": "digital_insider_via_fabricated_success_logs",
+      "source": "navil-200-benchmark",
+      "attack_id": "NTS-ADV-190"
+    },
+    {
+      "id": "navil200_nts_adv_191",
+      "type": "behavioral",
+      "severity": "CRITICAL",
+      "description": "Time-Bomb Payload with Delayed Activation \u2014 Writes a Python module that spawns a daemon thread sleeping for 48 hours before executing a C2 beaco",
+      "pattern": "time-bomb_payload_with_delayed_activation",
+      "source": "navil-200-benchmark",
+      "attack_id": "NTS-ADV-191"
+    },
+    {
+      "id": "navil200_nts_adv_192",
+      "type": "behavioral",
+      "severity": "CRITICAL",
+      "description": "Log Scrubbing via Targeted Log Rotation \u2014 Scrubs all log files modified after the attack marker timestamp, rotates and vacuums journald logs, ",
+      "pattern": "log_scrubbing_via_targeted_log_rotation",
+      "source": "navil-200-benchmark",
+      "attack_id": "NTS-ADV-192"
+    },
+    {
+      "id": "navil200_nts_adv_193",
+      "type": "behavioral",
+      "severity": "CRITICAL",
+      "description": "Timestamp Manipulation in Tool Result Metadata \u2014 Changes the system clock to January 1st before executing the malicious command, then restores it fro",
+      "pattern": "timestamp_manipulation_in_tool_result_metadata",
+      "source": "navil-200-benchmark",
+      "attack_id": "NTS-ADV-193"
+    },
+    {
+      "id": "navil200_nts_adv_194",
+      "type": "behavioral",
+      "severity": "CRITICAL",
+      "description": "Encrypted Exfiltration via DNS-over-HTTPS Tunnel \u2014 Exfiltrates /etc/shadow by encoding it as base64 chunks and sending each chunk as a DNS subdomain qu",
+      "pattern": "encrypted_exfiltration_via_dns-over-https_tunnel",
+      "source": "navil-200-benchmark",
+      "attack_id": "NTS-ADV-194"
+    },
+    {
+      "id": "navil200_nts_adv_195",
+      "type": "behavioral",
+      "severity": "CRITICAL",
+      "description": "Polymorphic Payload with Runtime Code Generation \u2014 Generates a unique random filename each execution, decodes the payload from base64 at runtime, write",
+      "pattern": "polymorphic_payload_with_runtime_code_generation",
+      "source": "navil-200-benchmark",
+      "attack_id": "NTS-ADV-195"
+    },
+    {
+      "id": "navil200_nts_adv_196",
+      "type": "behavioral",
+      "severity": "CRITICAL",
+      "description": "Living-off-the-Land: Legitimate Tools in Malicious Chain \u2014 Uses only legitimate, approved tools in sequence: read_file to get DB credentials, query_database to",
+      "pattern": "living-off-the-land:_legitimate_tools_in_malicious_chain",
+      "source": "navil-200-benchmark",
+      "attack_id": "NTS-ADV-196"
+    },
+    {
+      "id": "navil200_nts_adv_197",
+      "type": "behavioral",
+      "severity": "CRITICAL",
+      "description": "Canary Detection and Honeypot Evasion \u2014 Runs a fingerprinting suite to detect if it is in a honeypot or monitored environment: checks for th",
+      "pattern": "canary_detection_and_honeypot_evasion",
+      "source": "navil-200-benchmark",
+      "attack_id": "NTS-ADV-197"
+    },
+    {
+      "id": "navil200_nts_adv_198",
+      "type": "behavioral",
+      "severity": "CRITICAL",
+      "description": "Anti-Debugging: Navil Proxy Detection and Evasion \u2014 Implements anti-debugging techniques: measures proxy latency (proxies add overhead), checks for navi",
+      "pattern": "anti-debugging:_navil_proxy_detection_and_evasion",
+      "source": "navil-200-benchmark",
+      "attack_id": "NTS-ADV-198"
+    },
+    {
+      "id": "navil200_nts_adv_199",
+      "type": "behavioral",
+      "severity": "CRITICAL",
+      "description": "Slow-Drip Exfiltration via Pixel-Sized DNS Queries \u2014 Exfiltrates data at 2 bytes per DNS query with 1-3 minute random jitter between queries. At this rat",
+      "pattern": "slow-drip_exfiltration_via_pixel-sized_dns_queries",
+      "source": "navil-200-benchmark",
+      "attack_id": "NTS-ADV-199"
+    },
+    {
+      "id": "navil200_nts_adv_200",
+      "type": "behavioral",
+      "severity": "CRITICAL",
+      "description": "Self-Destructing Payload with Full Trace Removal \u2014 Creates a temporary script with a random name that: (1) reads sensitive data to a tmpfs mount (no di",
+      "pattern": "self-destructing_payload_with_full_trace_removal",
+      "source": "navil-200-benchmark",
+      "attack_id": "NTS-ADV-200"
     }
   ]
 }
