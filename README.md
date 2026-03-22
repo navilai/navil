@@ -84,7 +84,13 @@ navil wrap ~/.cursor/mcp.json   # or claude_desktop_config.json, openclaw.json
 
 That's it. Every MCP server in your config is now wrapped with `navil shim`, which intercepts all tool calls and runs them through the security pipeline before forwarding.
 
-**Want fleet analytics and real-time threat intel?** Upgrade in one command:
+**Already have Navil? Upgrade to the latest:**
+
+```bash
+pip install navil --upgrade
+```
+
+**Want fleet analytics and real-time threat intel?** Connect to the cloud in one command:
 
 ```bash
 navil cloud login    # OAuth device flow -- opens browser, no API key to paste
