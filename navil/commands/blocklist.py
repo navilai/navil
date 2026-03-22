@@ -8,19 +8,63 @@ import json
 
 
 def _blocklist_update(cli, args: argparse.Namespace) -> int:  # type: ignore[no-untyped-def]
-    """Fetch and merge latest blocklist."""
-    from navil.blocklist_updater import update_blocklist_sync
-
-    result = update_blocklist_sync(
-        redis_client=getattr(cli, "redis", None),
-        file_path=None,
+    """Fetch and merge latest blocklist from the cloud."""
+    from navil.cloud.blocklist_updater import (
+        check_for_updates,
+        get_blocklist_config,
+        get_local_version,
+        merge_patterns,
     )
 
-    print("\n  Blocklist Update")
-    print(f"  {'Patterns loaded:':<24} {result['loaded']:>8}")
-    print(f"  {'Total patterns:':<24} {result['pattern_count']:>8}")
-    print(f"  {'Version:':<24} {result['version']:>8}")
-    print(f"  {'Saved to Redis:':<24} {'yes' if result['saved_to_redis'] else 'no':>8}")
+    config = get_blocklist_config()
+    api_url = config["update_url"]
+
+    # Determine blocklist path
+    import os
+
+    blocklist_path = os.path.join(
+        os.path.dirname(os.path.dirname(__file__)),
+        "data",
+        "blocklist_v1.json",
+    )
+
+    current_version = get_local_version(blocklist_path)
+    print(f"\n  Current version: {current_version}")
+    print(f"  Update URL:      {api_url}")
+    print("  Checking for updates...")
+
+    # Build auth headers
+    api_key = os.environ.get("NAVIL_API_KEY", "")
+    headers: dict[str, str] = {}
+    if api_key:
+        headers["Authorization"] = f"Bearer {api_key}"
+
+    new_patterns = check_for_updates(api_url, current_version, headers)
+
+    if new_patterns is None:
+        print("  Blocklist is already up to date.")
+        print()
+        return 0
+
+    print(f"  Found {len(new_patterns)} new patterns")
+    result = merge_patterns(blocklist_path, new_patterns)
+
+    print("\n  Blocklist Update Applied")
+    print(f"  {'Patterns added:':<24} {result['added']:>8}")
+    print(f"  {'Patterns updated:':<24} {result['updated']:>8}")
+    print(f"  {'Total patterns:':<24} {result['total']:>8}")
+    print(f"  {'New version:':<24} {result['new_version']:>8}")
+
+    # Also update Redis if available
+    saved_to_redis = False
+    if getattr(cli, "redis", None) is not None:
+        from navil.blocklist import BlocklistManager
+
+        mgr = BlocklistManager(redis_client=cli.redis)
+        mgr.load_from_file(blocklist_path)
+        saved_to_redis = mgr.save_to_redis()
+
+    print(f"  {'Saved to Redis:':<24} {'yes' if saved_to_redis else 'no':>8}")
     print()
     return 0
 
@@ -145,7 +189,7 @@ def _blocklist_version(cli, args: argparse.Namespace) -> int:  # type: ignore[no
 
 
 def _blocklist_status(cli, args: argparse.Namespace) -> int:  # type: ignore[no-untyped-def]
-    """Show blocklist status."""
+    """Show blocklist status including auto-update configuration."""
     from navil.blocklist import BlocklistManager
 
     mgr = BlocklistManager(redis_client=getattr(cli, "redis", None))
@@ -163,13 +207,24 @@ def _blocklist_status(cli, args: argparse.Namespace) -> int:  # type: ignore[no-
 
     status = mgr.status()
 
+    # Get auto-update config
+    from navil.cloud.blocklist_updater import get_blocklist_config
+
+    bl_config = get_blocklist_config()
+
     if args.json_output:
+        status["auto_update"] = bl_config["auto_update"]
+        status["update_url"] = bl_config["update_url"]
         print(json.dumps(status, indent=2))
     else:
         print("\n  Blocklist Status")
         print(f"  {'Version:':<24} {status['version']:>8}")
         print(f"  {'Pattern count:':<24} {status['pattern_count']:>8}")
-        print(f"  {'Last update:':<24} {status['last_update'][:19]:>24}")
+        last_update_display = status["last_update"][:19] if status["last_update"] else "never"
+        print(f"  {'Last update:':<24} {last_update_display:>24}")
+        auto_str = "enabled" if bl_config["auto_update"] else "disabled"
+        print(f"  {'Auto-update:':<24} {auto_str:>8}")
+        print(f"  {'Next auto-update:':<24} {'on next sync':>14}")
         print()
         if status["by_type"]:
             print("  By type:")

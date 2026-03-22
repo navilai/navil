@@ -86,6 +86,8 @@ def build_config(
     policy_path: str = DEFAULT_POLICY_PATH,
     sync_enabled: bool = True,
     machine_label: str | None = None,
+    blocklist_auto_update: bool = True,
+    blocklist_update_url: str = "https://navil-cloud-api.onrender.com/v1/threat-intel/blocklist",
 ) -> dict[str, Any]:
     """Build the Navil configuration dictionary."""
     return {
@@ -103,6 +105,10 @@ def build_config(
         "machine": {
             "id": str(uuid.uuid4()),
             "label": machine_label,
+        },
+        "blocklist": {
+            "auto_update": blocklist_auto_update,
+            "update_url": blocklist_update_url,
         },
     }
 
