@@ -82,6 +82,27 @@ class MCPSecurityProxy:
         }
         self.start_time = time.time()
 
+    async def _record_blocked(
+        self,
+        agent_name: str,
+        tool_name: str,
+        action: str,
+        duration_ms: int = 0,
+    ) -> None:
+        """Record a blocked event in the detector so CloudSyncWorker can sync it."""
+        try:
+            await self.detector.record_invocation_async(
+                agent_name=agent_name or "anonymous",
+                tool_name=tool_name or "unknown",
+                action=action,
+                duration_ms=duration_ms,
+                data_accessed_bytes=0,
+                success=False,
+                target_server=self.target_url,
+            )
+        except Exception:
+            pass  # best-effort — don't break the block path
+
     async def init_client(self) -> None:
         """Initialize the shared httpx.AsyncClient (call on app startup)."""
         self.http_client = httpx.AsyncClient(timeout=30.0)
@@ -391,6 +412,7 @@ class MCPSecurityProxy:
         if auth_error:
             self.stats["blocked"] += 1
             self._log_traffic(agent_name, method, "", "AUTH_REQUIRED", 0, 0)
+            await self._record_blocked(agent_name, "", "BLOCKED_AUTH")
             return self._jsonrpc_error(-32003, auth_error, req_id), {}
 
         if self.require_auth and not agent_name:
@@ -429,6 +451,7 @@ class MCPSecurityProxy:
                     self.stats["blocked"] += 1
                     duration_ms = int((time.time() - start) * 1000)
                     self._log_traffic(agent_name, method, tool_name, "DENIED", duration_ms, 0)
+                    await self._record_blocked(agent_name, tool_name, "BLOCKED_POLICY", duration_ms)
                     return self._jsonrpc_error(
                         -32001,
                         f"Blocked by policy: {deny_reason}",
@@ -441,6 +464,7 @@ class MCPSecurityProxy:
                 self.stats["blocked"] += 1
                 duration_ms = int((time.time() - start) * 1000)
                 self._log_traffic(agent_name, method, tool_name, "ANOMALY_BLOCKED", duration_ms, 0)
+                await self._record_blocked(agent_name, tool_name, "BLOCKED_ANOMALY", duration_ms)
                 msg = f"Blocked by anomaly detector: {reason}"
                 return self._jsonrpc_error(-32002, msg, req_id), {}
 
