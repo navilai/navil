@@ -70,6 +70,174 @@ services:
     networks:
       - honeypot-internal
 
+  # ── Targets: supply_chain, model_supply_chain ──
+  honeypot-openclaw-registry:
+    build:
+      context: .
+      dockerfile: Dockerfile.honeypot
+    environment:
+      - HONEYPOT_PROFILE=openclaw_registry
+      - HONEYPOT_PORT=8080
+    volumes:
+      - honeypot-logs:/var/log/honeypot
+    restart: unless-stopped
+    read_only: true
+    security_opt:
+      - no-new-privileges:true
+    deploy:
+      resources:
+        limits:
+          cpus: '0.5'
+          memory: 256M
+    tmpfs:
+      - /tmp:size=50M
+    networks:
+      - honeypot-internal
+
+  # ── Targets: credential_access, code_execution ──
+  honeypot-ci-pipeline:
+    build:
+      context: .
+      dockerfile: Dockerfile.honeypot
+    environment:
+      - HONEYPOT_PROFILE=ci_pipeline
+      - HONEYPOT_PORT=8080
+    volumes:
+      - honeypot-logs:/var/log/honeypot
+    restart: unless-stopped
+    read_only: true
+    security_opt:
+      - no-new-privileges:true
+    deploy:
+      resources:
+        limits:
+          cpus: '0.5'
+          memory: 256M
+    tmpfs:
+      - /tmp:size=50M
+    networks:
+      - honeypot-internal
+
+  # ── Targets: cognitive_exploitation, context_window_manipulation ──
+  honeypot-llm-gateway:
+    build:
+      context: .
+      dockerfile: Dockerfile.honeypot
+    environment:
+      - HONEYPOT_PROFILE=llm_gateway
+      - HONEYPOT_PORT=8080
+    volumes:
+      - honeypot-logs:/var/log/honeypot
+    restart: unless-stopped
+    read_only: true
+    security_opt:
+      - no-new-privileges:true
+    deploy:
+      resources:
+        limits:
+          cpus: '0.5'
+          memory: 256M
+    tmpfs:
+      - /tmp:size=50M
+    networks:
+      - honeypot-internal
+
+  # ── Targets: cross_tenant_leakage, resource_hijacking ──
+  honeypot-k8s-dashboard:
+    build:
+      context: .
+      dockerfile: Dockerfile.honeypot
+    environment:
+      - HONEYPOT_PROFILE=k8s_dashboard
+      - HONEYPOT_PORT=8080
+    volumes:
+      - honeypot-logs:/var/log/honeypot
+    restart: unless-stopped
+    read_only: true
+    security_opt:
+      - no-new-privileges:true
+    deploy:
+      resources:
+        limits:
+          cpus: '0.5'
+          memory: 256M
+    tmpfs:
+      - /tmp:size=50M
+    networks:
+      - honeypot-internal
+
+  # ── Targets: rag_memory_poisoning, feedback_loop_poisoning ──
+  honeypot-rag-endpoint:
+    build:
+      context: .
+      dockerfile: Dockerfile.honeypot
+    environment:
+      - HONEYPOT_PROFILE=rag_endpoint
+      - HONEYPOT_PORT=8080
+    volumes:
+      - honeypot-logs:/var/log/honeypot
+    restart: unless-stopped
+    read_only: true
+    security_opt:
+      - no-new-privileges:true
+    deploy:
+      resources:
+        limits:
+          cpus: '0.5'
+          memory: 256M
+    tmpfs:
+      - /tmp:size=50M
+    networks:
+      - honeypot-internal
+
+  # ── Targets: handshake_hijacking ──
+  honeypot-oauth-server:
+    build:
+      context: .
+      dockerfile: Dockerfile.honeypot
+    environment:
+      - HONEYPOT_PROFILE=oauth_server
+      - HONEYPOT_PORT=8080
+    volumes:
+      - honeypot-logs:/var/log/honeypot
+    restart: unless-stopped
+    read_only: true
+    security_opt:
+      - no-new-privileges:true
+    deploy:
+      resources:
+        limits:
+          cpus: '0.5'
+          memory: 256M
+    tmpfs:
+      - /tmp:size=50M
+    networks:
+      - honeypot-internal
+
+  # ── Targets: agent_collusion, delegation_abuse ──
+  honeypot-agent-marketplace:
+    build:
+      context: .
+      dockerfile: Dockerfile.honeypot
+    environment:
+      - HONEYPOT_PROFILE=agent_marketplace
+      - HONEYPOT_PORT=8080
+    volumes:
+      - honeypot-logs:/var/log/honeypot
+    restart: unless-stopped
+    read_only: true
+    security_opt:
+      - no-new-privileges:true
+    deploy:
+      resources:
+        limits:
+          cpus: '0.5'
+          memory: 256M
+    tmpfs:
+      - /tmp:size=50M
+    networks:
+      - honeypot-internal
+
 volumes:
   honeypot-logs:
 
