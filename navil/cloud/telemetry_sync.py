@@ -365,17 +365,19 @@ class CloudSyncWorker:
         from datetime import datetime as dt
         from datetime import timezone as tz
 
-        self._blocked_queue.append({
-            "agent_id": "blocked-caller",
-            "tool_name": tool_name,
-            "anomaly_type": anomaly_type,
-            "severity": "high",
-            "confidence": 1.0,
-            "action": action,
-            "timestamp": dt.now(tz.utc).strftime("%Y-%m-%dT%H:%M:%SZ"),
-            "event_uuid": str(uuid.uuid4()),
-            "machine_id": self.machine_id or "unknown",
-        })
+        self._blocked_queue.append(
+            {
+                "agent_id": "blocked-caller",
+                "tool_name": tool_name,
+                "anomaly_type": anomaly_type,
+                "severity": "high",
+                "confidence": 1.0,
+                "action": action,
+                "timestamp": dt.now(tz.utc).strftime("%Y-%m-%dT%H:%M:%SZ"),
+                "event_uuid": str(uuid.uuid4()),
+                "machine_id": self.machine_id or "unknown",
+            }
+        )
 
     def _collect_blocked_invocations(self) -> list[dict[str, Any]]:
         """Collect blocked invocations from the detector's invocation log.
@@ -413,9 +415,7 @@ class CloudSyncWorker:
                 "BLOCKED_POLICY": "POLICY",
                 "BLOCKED_BLOCKLIST": "RECONNAISSANCE",
             }
-            anomaly_type = action_to_anomaly.get(
-                action, "DEFENSE_EVASION"
-            )
+            anomaly_type = action_to_anomaly.get(action, "DEFENSE_EVASION")
 
             d: dict[str, Any] = {
                 "agent_name": agent,
