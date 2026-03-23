@@ -129,11 +129,12 @@ class TestParseHypotheses:
         assert parse_hypotheses("") == []
         assert parse_hypotheses("not json at all") == []
 
-    def test_sanitization_strips_code(self) -> None:
+    def test_sanitization_strips_control_chars(self) -> None:
+        """Sanitization strips control chars and terminal escapes, not backticks/HTML."""
         response = json.dumps(
             [
                 {
-                    "hypothesis": "Test `with code` and <html>",
+                    "hypothesis": "Test `with code` and <html>\x1b[31mRED\x1b[0m\x00null\x07bell",
                     "category": "prompt_injection",
                     "novelty_rationale": "N/A",
                     "expected_detection": "missed",
@@ -142,8 +143,13 @@ class TestParseHypotheses:
         )
         result = parse_hypotheses(response)
         assert len(result) == 1
-        assert "`" not in result[0]["hypothesis"]
-        assert "<" not in result[0]["hypothesis"]
+        # Backticks and HTML are safe text — preserved
+        assert "`" in result[0]["hypothesis"]
+        assert "<" in result[0]["hypothesis"]
+        # Control chars and terminal escapes are stripped
+        assert "\x1b" not in result[0]["hypothesis"]
+        assert "\x00" not in result[0]["hypothesis"]
+        assert "\x07" not in result[0]["hypothesis"]
 
 
 class TestComparePrediction:
