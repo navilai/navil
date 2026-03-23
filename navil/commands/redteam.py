@@ -135,7 +135,7 @@ def parse_hypotheses(response: str) -> list[dict[str, str]]:
             }
         )
 
-    return valid
+    return valid[:MAX_HYPOTHESES]
 
 
 # ── Prediction comparison ────────────────────────────────────
