@@ -229,6 +229,18 @@ navil proxy start --target http://your-mcp-server:3000 --no-auth
 # Point your OpenClaw MCP server URL at http://localhost:9090/mcp
 ```
 
+## OpenClaw Skills
+
+Install Navil directly from ClawHub — or just tell your OpenClaw agent "secure my setup."
+
+| Skill | What It Does | Install |
+|-------|-------------|---------|
+| **navil-shield** | Always-on runtime security proxy | `clawhub install ivanpantheon/navil-shield` |
+| **navil-audit** | Deep security audit with penetration testing | `clawhub install ivanpantheon/navil-audit` |
+| **navil-policy** | Token cost optimization via tool scoping | `clawhub install ivanpantheon/navil-policy` |
+
+Or paste any of these ClawHub links into your OpenClaw chat — the agent handles setup automatically.
+
 ## CI/CD Integration
 
 824 malicious skills in the OpenClaw registry. 100% of public MCP servers missing authentication. Don't let bad configs reach production.
