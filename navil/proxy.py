@@ -891,7 +891,10 @@ def create_proxy_app(proxy: MCPSecurityProxy) -> Any:
     )
 
     async def handle_mcp(request: Request) -> JSONResponse:
-        """Handle MCP JSON-RPC requests — registered via Starlette Route to avoid FastAPI/Pydantic conflict."""
+        """Handle MCP JSON-RPC requests.
+
+        Registered via Starlette Route to avoid FastAPI/Pydantic conflict.
+        """
         # Early byte-length check before reading the full body into memory
         content_length = int(request.headers.get("content-length", 0))
         if content_length > MCPSecurityProxy.MAX_PAYLOAD_BYTES:

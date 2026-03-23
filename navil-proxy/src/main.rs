@@ -817,8 +817,20 @@ async fn main() {
     }
 
     let app = Router::new()
-        .route("/mcp", post(handle_mcp).get(reject_non_post).put(reject_non_post).delete(reject_non_post))
-        .route("/a2a", post(handle_mcp).get(reject_non_post).put(reject_non_post).delete(reject_non_post))
+        .route(
+            "/mcp",
+            post(handle_mcp)
+                .get(reject_non_post)
+                .put(reject_non_post)
+                .delete(reject_non_post),
+        )
+        .route(
+            "/a2a",
+            post(handle_mcp)
+                .get(reject_non_post)
+                .put(reject_non_post)
+                .delete(reject_non_post),
+        )
         .route("/.well-known/agent.json", get(agent_card))
         .route("/health", get(health))
         .with_state(state);
