@@ -262,10 +262,11 @@ export default function SelfHealing() {
   }
 
   // Fetch health dashboard data
+  const [healthError, setHealthError] = useState(false)
   const fetchHealth = useCallback(() => {
     api.getHealthDashboard()
-      .then(data => { setHealth(data); setHealthLoading(false) })
-      .catch(() => setHealthLoading(false))
+      .then(data => { setHealth(data); setHealthLoading(false); setHealthError(false) })
+      .catch(() => { setHealthLoading(false); setHealthError(true) })
   }, [])
 
   useEffect(() => {
@@ -658,6 +659,55 @@ export default function SelfHealing() {
                 <Icon name="activity" size={32} className="text-violet-400 animate-pulse" />
               </div>
               <p className="text-[#8b9bc0]">Loading system health...</p>
+            </div>
+          )}
+
+          {/* API unreachable — show setup instructions */}
+          {healthError && !health && !healthLoading && (
+            <div className="glass-card p-8 text-center">
+              <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-[#ff4d6a]/10 border border-[#ff4d6a]/20 mb-4">
+                <Icon name="x" size={32} className="text-[#ff4d6a]" />
+              </div>
+              <h3 className="text-lg font-semibold text-[#f0f4fc] mb-2">
+                Navil API server is not running
+              </h3>
+              <p className="text-sm text-[#8b9bc0] mb-6 max-w-md mx-auto">
+                The self-healing dashboard needs the Navil backend to be running.
+                Start it in a separate terminal, then this page will connect automatically.
+              </p>
+              <div className="space-y-3 max-w-sm mx-auto text-left">
+                <div className="glass-card p-3">
+                  <p className="text-[10px] uppercase tracking-wider text-[#5a6a8a] font-medium mb-1.5">
+                    Step 1: Start the API server
+                  </p>
+                  <code className="block text-xs font-mono text-[#00e5c8] bg-[#111827] px-3 py-2 rounded">
+                    navil cloud serve
+                  </code>
+                </div>
+                <div className="glass-card p-3">
+                  <p className="text-[10px] uppercase tracking-wider text-[#5a6a8a] font-medium mb-1.5">
+                    Step 2: Start the MCP proxy
+                  </p>
+                  <code className="block text-xs font-mono text-[#00e5c8] bg-[#111827] px-3 py-2 rounded">
+                    navil proxy start &lt;YOUR_MCP_SERVER_URL&gt;
+                  </code>
+                </div>
+                <div className="glass-card p-3">
+                  <p className="text-[10px] uppercase tracking-wider text-[#5a6a8a] font-medium mb-1.5">
+                    Step 3: Open this dashboard
+                  </p>
+                  <code className="block text-xs font-mono text-[#8b9bc0] bg-[#111827] px-3 py-2 rounded">
+                    navil cloud serve --open
+                  </code>
+                </div>
+              </div>
+              <button
+                onClick={fetchHealth}
+                className="mt-6 px-4 py-2 text-xs bg-[#00e5c8]/15 text-[#00e5c8] border border-[#00e5c8]/30 rounded-lg hover:bg-[#00e5c8]/25 transition-colors"
+              >
+                <Icon name="activity" size={12} className="inline mr-1.5" />
+                Retry Connection
+              </button>
             </div>
           )}
         </div>
