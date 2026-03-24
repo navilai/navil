@@ -53,19 +53,51 @@ def get_policy_suggestions() -> dict[str, Any]:
     if hasattr(s, "self_healing") and s.self_healing is not None:
         pending = getattr(s.self_healing, "pending_actions", [])
         for i, action in enumerate(pending):
-            suggestions.append(
-                {
-                    "id": f"suggestion-{i}",
-                    "rule_type": getattr(action, "action_type", "deny"),
-                    "agent": getattr(action, "agent_name", "unknown"),
-                    "tool": getattr(action, "tool_name", ""),
-                    "description": getattr(action, "description", str(action)),
-                    "confidence": getattr(action, "confidence", 0.0),
-                    "source": "anomaly",
-                    "auto_applied": getattr(action, "applied", False),
-                    "timestamp": getattr(action, "timestamp", ""),
+            # Actions can be dicts (from LLM JSON) or objects
+            if isinstance(action, dict):
+                act_type = action.get("type", "deny")
+                target = action.get("target", "")
+                value = action.get("value", "")
+                reason = action.get("reason", "")
+                conf = action.get("confidence", 0.0)
+                # Map action types to rule types for display
+                rule_type_map = {
+                    "credential_rotation": "deny",
+                    "policy_update": "scope",
+                    "threshold_adjustment": "rate_limit",
+                    "block_tool": "deny",
+                    "scope_reduction": "scope",
                 }
-            )
+                rule_type = rule_type_map.get(act_type, "deny")
+                description = reason or str(value) or str(action)
+                suggestions.append(
+                    {
+                        "id": f"suggestion-{i}",
+                        "rule_type": rule_type,
+                        "agent": target or "all",
+                        "tool": act_type.replace("_", " "),
+                        "description": description,
+                        "confidence": conf,
+                        "source": "anomaly",
+                        "auto_applied": False,
+                        "timestamp": "",
+                        "_raw_action": action,
+                    }
+                )
+            else:
+                suggestions.append(
+                    {
+                        "id": f"suggestion-{i}",
+                        "rule_type": getattr(action, "action_type", "deny"),
+                        "agent": getattr(action, "agent_name", "unknown"),
+                        "tool": getattr(action, "tool_name", ""),
+                        "description": getattr(action, "description", str(action)),
+                        "confidence": getattr(action, "confidence", 0.0),
+                        "source": "anomaly",
+                        "auto_applied": getattr(action, "applied", False),
+                        "timestamp": getattr(action, "timestamp", ""),
+                    }
+                )
 
     # Also check for demo suggestions if no real ones
     if not suggestions and getattr(s, "demo_seeded", False):
@@ -136,12 +168,29 @@ def act_on_suggestion(suggestion_id: str, body: SuggestionAction) -> dict[str, A
         pending = getattr(s.self_healing, "pending_actions", [])
         for i, action in enumerate(pending):
             if f"suggestion-{i}" == suggestion_id:
-                suggestion = {
-                    "rule_type": getattr(action, "action_type", "deny"),
-                    "agent": getattr(action, "agent_name", "unknown"),
-                    "tool": getattr(action, "tool_name", ""),
-                    "description": getattr(action, "description", str(action)),
-                }
+                if isinstance(action, dict):
+                    act_type = action.get("type", "deny")
+                    rule_type_map = {
+                        "credential_rotation": "deny",
+                        "policy_update": "scope",
+                        "threshold_adjustment": "rate_limit",
+                        "block_tool": "deny",
+                        "scope_reduction": "scope",
+                    }
+                    suggestion = {
+                        "rule_type": rule_type_map.get(act_type, "deny"),
+                        "agent": action.get("target", "all"),
+                        "tool": act_type.replace("_", " "),
+                        "description": action.get("reason", str(action)),
+                        "_raw_action": action,
+                    }
+                else:
+                    suggestion = {
+                        "rule_type": getattr(action, "action_type", "deny"),
+                        "agent": getattr(action, "agent_name", "unknown"),
+                        "tool": getattr(action, "tool_name", ""),
+                        "description": getattr(action, "description", str(action)),
+                    }
                 break
 
     # No suggestion found from self-healing — return early
