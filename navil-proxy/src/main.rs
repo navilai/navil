@@ -745,7 +745,7 @@ async fn agent_card(State(_state): State<Arc<AppState>>) -> Json<serde_json::Val
             "url": format!("{}/a2a", base_url),
             "contentTypes": ["application/json"],
         }],
-        "documentationUrl": "https://github.com/nicholasgriffintn/navil",
+        "documentationUrl": "https://github.com/navilai/navil",
         "extensions": [{
             "name": "navil-governance",
             "version": "1.0.0",

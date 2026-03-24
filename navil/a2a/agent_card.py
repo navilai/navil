@@ -212,7 +212,7 @@ def build_navil_agent_card(
                 content_types=["application/json"],
             ),
         ],
-        documentation_url="https://github.com/nicholasgriffintn/navil",
+        documentation_url="https://github.com/navilai/navil",
         extensions=[
             {
                 "name": "navil-governance",

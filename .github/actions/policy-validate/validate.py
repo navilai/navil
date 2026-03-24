@@ -259,7 +259,7 @@ def findings_to_sarif(
                     "driver": {
                         "name": "navil-policy-validate",
                         "version": "1.0.0",
-                        "informationUri": "https://github.com/nicholasgriffintn/navil",
+                        "informationUri": "https://github.com/navilai/navil",
                         "rules": rules,
                     }
                 },
