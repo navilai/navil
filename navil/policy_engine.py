@@ -70,7 +70,7 @@ class PolicyEngine:
 
     def __init__(
         self,
-        policy_file: str = "default_policy.yaml",
+        policy_file: str = "policy.yaml",
         auto_policy_file: str | None = None,
         redis_client: Any | None = None,
     ) -> None:

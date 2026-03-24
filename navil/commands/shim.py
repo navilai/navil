@@ -55,7 +55,7 @@ def _wrap_command(cli, args: argparse.Namespace) -> int:  # type: ignore[no-unty
             undo=args.undo,
             dry_run=args.dry_run,
         )
-        print_summary(result, undo=args.undo)
+        print_summary(result, undo=args.undo, dry_run=args.dry_run)
         return 0
     except (FileNotFoundError, ValueError) as e:
         print(f"Error: {e}", file=sys.stderr)

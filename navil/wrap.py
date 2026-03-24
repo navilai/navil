@@ -180,7 +180,7 @@ def wrap_config(
     }
 
 
-def print_summary(result: dict[str, Any], undo: bool = False) -> None:
+def print_summary(result: dict[str, Any], undo: bool = False, dry_run: bool = False) -> None:
     """Pretty-print the wrap/unwrap result to stderr."""
     if undo:
         if result.get("restored"):
@@ -204,9 +204,18 @@ def print_summary(result: dict[str, Any], undo: bool = False) -> None:
     if skipped:
         names = ", ".join(skipped)
         print(f"\n  Skipped {len(skipped)}: {names} (already wrapped or filtered)", file=sys.stderr)
-    if result.get("backup_path"):
-        print(f"\n  Backup saved: {result['backup_path']}", file=sys.stderr)
-    print(f"  Config written: {result['output_path']}\n", file=sys.stderr)
+    if dry_run:
+        total = result.get("total", 0)
+        w = len(wrapped)
+        names = ", ".join(wrapped) if wrapped else "(none)"
+        print(
+            f"\n  DRY RUN \u2014 no changes made. Would wrap {w}/{total} servers: {names}\n",
+            file=sys.stderr,
+        )
+    else:
+        if result.get("backup_path"):
+            print(f"\n  Backup saved: {result['backup_path']}", file=sys.stderr)
+        print(f"  Config written: {result['output_path']}\n", file=sys.stderr)
 
     if wrapped:
         print(
