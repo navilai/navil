@@ -1,4 +1,5 @@
 import { useEffect, useState, useRef, useCallback } from 'react'
+import { Link } from 'react-router-dom'
 import { api, RemediationSuggestion, RemediationAction, AutoRemediateResult, LLMConfig, HealthDashboard } from '../api'
 import useSessionState from '../hooks/useSessionState'
 import useNavilStream from '../hooks/useNavilStream'
@@ -6,11 +7,14 @@ import PageHeader from '../components/PageHeader'
 import SeverityBadge from '../components/SeverityBadge'
 import MiniBar from '../components/MiniBar'
 import Icon from '../components/Icon'
+import type { IconName } from '../components/Icon'
 import LLMErrorCard from '../components/LLMErrorCard'
 import UpgradePrompt from '../components/UpgradePrompt'
 import useLLMAvailable from '../hooks/useLLMAvailable'
 import RelativeTime from '../components/RelativeTime'
 import AnimatedNumber from '../components/AnimatedNumber'
+
+// ── Constants & helpers ─────────────────────────────────────────
 
 const actionTypeColors: Record<string, string> = {
   policy_update: 'bg-[#00e5c8]/15 text-[#00e5c8] border-[#00e5c8]/30',
@@ -41,23 +45,7 @@ function formatUptime(seconds: number): string {
   return `${d}d ${h % 24}h`
 }
 
-const subsystemStatusColors: Record<string, { dot: string; text: string }> = {
-  running: { dot: 'bg-[#34d399]', text: 'text-[#34d399]' },
-  active: { dot: 'bg-[#34d399]', text: 'text-[#34d399]' },
-  connected: { dot: 'bg-[#34d399]', text: 'text-[#34d399]' },
-  loaded: { dot: 'bg-[#34d399]', text: 'text-[#34d399]' },
-  ready: { dot: 'bg-[#34d399]', text: 'text-[#34d399]' },
-  community: { dot: 'bg-[#00e5c8]', text: 'text-[#00e5c8]' },
-  stopped: { dot: 'bg-[#5a6a8a]', text: 'text-[#8b9bc0]' },
-  idle: { dot: 'bg-[#5a6a8a]', text: 'text-[#8b9bc0]' },
-  empty: { dot: 'bg-[#5a6a8a]', text: 'text-[#8b9bc0]' },
-  disconnected: { dot: 'bg-[#ff4d6a]', text: 'text-[#ff4d6a]' },
-  error: { dot: 'bg-[#ff4d6a]', text: 'text-[#ff4d6a]' },
-  no_key: { dot: 'bg-[#f59e0b]', text: 'text-[#f59e0b]' },
-  not_installed: { dot: 'bg-[#5a6a8a]', text: 'text-[#8b9bc0]' },
-}
-
-const healCategoryIcons: Record<string, { icon: 'shield' | 'alert' | 'lock' | 'activity' | 'eye'; color: string }> = {
+const healCategoryIcons: Record<string, { icon: IconName; color: string }> = {
   proxy: { icon: 'shield', color: 'text-[#00e5c8]' },
   pattern: { icon: 'eye', color: 'text-violet-400' },
   policy: { icon: 'lock', color: 'text-[#f59e0b]' },
@@ -65,6 +53,176 @@ const healCategoryIcons: Record<string, { icon: 'shield' | 'alert' | 'lock' | 'a
 }
 
 const POLL_INTERVAL = 15_000
+
+// ── Posture checklist logic ─────────────────────────────────────
+
+type PostureStatus = 'good' | 'warn' | 'bad'
+
+interface PostureItem {
+  label: string
+  status: PostureStatus
+  detail: string
+  icon: IconName
+}
+
+function derivePosture(h: HealthDashboard): PostureItem[] {
+  const items: PostureItem[] = []
+
+  // Proxy
+  items.push({
+    label: 'MCP Proxy',
+    icon: 'gateway',
+    status: h.proxy.running ? 'good' : 'bad',
+    detail: h.proxy.running
+      ? `Running — ${h.proxy.stats.total_requests} request(s) processed`
+      : 'Stopped',
+  })
+
+  // Cloud sync
+  const cloudOk = h.cloud_sync.enabled && h.cloud_sync.api_key_present
+  const cloudWarn = h.cloud_sync.enabled && !h.cloud_sync.api_key_present
+  items.push({
+    label: 'Cloud Sync',
+    icon: 'globe',
+    status: cloudOk ? 'good' : cloudWarn ? 'warn' : 'bad',
+    detail: cloudOk
+      ? 'Connected (paid mode)'
+      : cloudWarn
+        ? 'Community mode — no API key'
+        : 'Disabled',
+  })
+
+  // Patterns learned
+  items.push({
+    label: 'Patterns Learned',
+    icon: 'eye',
+    status: h.detection.patterns_learned > 0 ? 'good' : 'warn',
+    detail: h.detection.patterns_learned > 0
+      ? `${h.detection.patterns_learned} pattern(s)`
+      : 'None yet',
+  })
+
+  // Policy rules
+  items.push({
+    label: 'Policy Engine',
+    icon: 'lock',
+    status: h.policy.loaded ? 'good' : 'bad',
+    detail: h.policy.loaded
+      ? `Loaded — ${h.policy.recent_decisions} recent decision(s)`
+      : 'No policy defined',
+  })
+
+  // Auth (proxy with auth)
+  const proxySub = h.subsystems.find(s => s.name === 'MCP Proxy')
+  items.push({
+    label: 'Authentication',
+    icon: 'key',
+    status: h.proxy.running ? 'good' : 'warn',
+    detail: h.proxy.running
+      ? proxySub?.detail || 'Proxy auth active'
+      : 'Proxy not running — auth inactive',
+  })
+
+  // LLM
+  const llmSub = h.subsystems.find(s => s.name === 'LLM Engine')
+  const llmStatus = llmSub?.status || 'not_installed'
+  items.push({
+    label: 'LLM Engine',
+    icon: 'sparkles',
+    status: llmStatus === 'ready' ? 'good' : llmStatus === 'no_key' ? 'warn' : 'bad',
+    detail: llmSub?.detail || 'Not available',
+  })
+
+  return items
+}
+
+// ── Recommended actions logic ───────────────────────────────────
+
+interface RecommendedAction {
+  icon: IconName
+  title: string
+  description: string
+  linkTo?: string
+  command?: string
+}
+
+function deriveRecommendations(h: HealthDashboard): RecommendedAction[] {
+  const recs: RecommendedAction[] = []
+
+  if (!h.proxy.running) {
+    recs.push({
+      icon: 'gateway',
+      title: 'Start the proxy',
+      description: 'Begin monitoring MCP tool calls by starting the security proxy.',
+      command: 'navil proxy start <TARGET_URL>',
+    })
+  }
+
+  if (!h.policy.loaded) {
+    recs.push({
+      icon: 'lock',
+      title: 'Create a security policy',
+      description: 'Define access control rules so Navil can block unauthorized tool calls.',
+      linkTo: '/policy',
+    })
+  }
+
+  if (!h.cloud_sync.enabled || !h.cloud_sync.api_key_present) {
+    recs.push({
+      icon: 'globe',
+      title: 'Connect to Navil Cloud',
+      description: 'Get community threat intelligence and share anonymized attack patterns.',
+      linkTo: '/settings',
+    })
+  }
+
+  if (h.detection.patterns_learned === 0) {
+    recs.push({
+      icon: 'scan',
+      title: 'Run a vulnerability scan',
+      description: 'Discover security vulnerabilities in your MCP configuration.',
+      command: 'navil scan',
+    })
+  }
+
+  const llmSub = h.subsystems.find(s => s.name === 'LLM Engine')
+  if (llmSub && llmSub.status !== 'ready') {
+    recs.push({
+      icon: 'sparkles',
+      title: 'Configure AI analysis',
+      description: 'Set up an LLM provider to enable AI-powered threat analysis and auto-remediation.',
+      linkTo: '/settings',
+    })
+  }
+
+  return recs.slice(0, 3)
+}
+
+// ── Status icon component ───────────────────────────────────────
+
+function StatusIcon({ status }: { status: PostureStatus }) {
+  if (status === 'good') {
+    return (
+      <div className="w-5 h-5 rounded-full bg-[#34d399]/15 flex items-center justify-center shrink-0">
+        <Icon name="check" size={12} className="text-[#34d399]" />
+      </div>
+    )
+  }
+  if (status === 'warn') {
+    return (
+      <div className="w-5 h-5 rounded-full bg-[#f59e0b]/15 flex items-center justify-center shrink-0">
+        <Icon name="warning" size={12} className="text-[#f59e0b]" />
+      </div>
+    )
+  }
+  return (
+    <div className="w-5 h-5 rounded-full bg-[#ff4d6a]/15 flex items-center justify-center shrink-0">
+      <Icon name="x" size={12} className="text-[#ff4d6a]" />
+    </div>
+  )
+}
+
+// ── Main component ──────────────────────────────────────────────
 
 export default function SelfHealing() {
   const { canUseLLM } = useLLMAvailable()
@@ -214,14 +372,15 @@ export default function SelfHealing() {
     </div>
   )
 
-  // Derive overall health status
-  const overallHealthy = health
-    ? health.detection.critical_alerts === 0 && health.detection.high_alerts === 0
-    : true
+  // Derived state from health
+  const posture = health ? derivePosture(health) : []
+  const recommendations = health ? deriveRecommendations(health) : []
+  const postureScore = posture.filter(p => p.status === 'good').length
+  const postureTotal = posture.length
 
   return (
     <div className="space-y-6">
-      <PageHeader title="Self-Healing" subtitle="System health monitoring and AI-powered automated remediation">
+      <PageHeader title="Self-Healing" subtitle="Security posture, monitoring, and AI-powered automated remediation">
         <div className="flex items-center gap-2">
           <button
             onClick={handleAnalyze}
@@ -256,25 +415,46 @@ export default function SelfHealing() {
         <UpgradePrompt feature="Self-Healing AI" />
       )}
 
-      {/* ===== HEALTH DASHBOARD (always visible) ===== */}
+      {/* ===== HEALTH DASHBOARD (always visible when no LLM results shown) ===== */}
       {!suggestion && !autoResult && !busy && (
         <div className="space-y-5 animate-fadeIn">
 
-          {/* Overall Status Banner */}
+          {/* ── Section 1: Security Posture Checklist ── */}
           {health && (
-            <div className={`glass-card p-4 flex items-center gap-3 ${
-              overallHealthy ? 'border-[#34d399]/20' : 'border-[#ff4d6a]/20'
-            }`}>
-              <div className={`w-10 h-10 rounded-xl flex items-center justify-center ${
-                overallHealthy ? 'bg-[#34d399]/10' : 'bg-[#ff4d6a]/10'
-              }`}>
-                <Icon name={overallHealthy ? 'shield' : 'alert'} size={20}
-                  className={overallHealthy ? 'text-[#34d399]' : 'text-[#ff4d6a]'} />
+            <div className="glass-card p-5 animate-slideUp opacity-0" style={{ animationDelay: '0s' }}>
+              <div className="flex items-center justify-between mb-4">
+                <h3 className="text-xs font-semibold text-[#8b9bc0] uppercase tracking-wider flex items-center gap-2">
+                  <Icon name="shield" size={13} className="text-[#00e5c8]" />
+                  Security Posture
+                </h3>
+                <div className="flex items-center gap-2">
+                  <span className={`text-xs font-semibold ${
+                    postureScore === postureTotal ? 'text-[#34d399]'
+                      : postureScore >= postureTotal / 2 ? 'text-[#f59e0b]'
+                        : 'text-[#ff4d6a]'
+                  }`}>
+                    {postureScore}/{postureTotal} checks passed
+                  </span>
+                  <button onClick={fetchHealth} className="p-1.5 rounded-lg hover:bg-[#1f2a40] transition-colors" title="Refresh">
+                    <Icon name="activity" size={13} className="text-[#5a6a8a]" />
+                  </button>
+                </div>
               </div>
-              <div className="flex-1">
-                <p className={`text-sm font-semibold ${overallHealthy ? 'text-[#34d399]' : 'text-[#ff4d6a]'}`}>
-                  {overallHealthy ? 'All Systems Operational' : `${health.detection.critical_alerts + health.detection.high_alerts} Active Issue(s) Detected`}
-                </p>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                {posture.map((item, i) => (
+                  <div key={i} className="flex items-center gap-3 py-2.5 px-3 rounded-lg bg-[#111827]/50 hover:bg-[#111827] transition-colors">
+                    <StatusIcon status={item.status} />
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm text-[#f0f4fc] font-medium">{item.label}</p>
+                      <p className="text-[10px] text-[#5a6a8a] truncate">{item.detail}</p>
+                    </div>
+                    <Icon name={item.icon} size={14} className="text-[#5a6a8a] shrink-0" />
+                  </div>
+                ))}
+              </div>
+
+              <div className="mt-3 pt-3 border-t border-[#2a3650]">
                 <p className="text-xs text-[#5a6a8a]">
                   Server uptime: {formatUptime(health.server_uptime_seconds)}
                   {health.server_started_at && (
@@ -282,18 +462,51 @@ export default function SelfHealing() {
                   )}
                 </p>
               </div>
-              {!healthLoading && (
-                <button onClick={fetchHealth} className="p-2 rounded-lg hover:bg-[#1f2a40] transition-colors" title="Refresh">
-                  <Icon name="activity" size={14} className="text-[#5a6a8a]" />
-                </button>
-              )}
             </div>
           )}
 
-          {/* Stats Cards Row */}
+          {/* ── Section 2: Recommended Actions ── */}
+          {health && recommendations.length > 0 && (
+            <div className="animate-slideUp opacity-0" style={{ animationDelay: '0.08s' }}>
+              <h3 className="text-xs font-semibold text-[#8b9bc0] uppercase tracking-wider mb-3 flex items-center gap-2">
+                <Icon name="zap" size={13} className="text-[#f59e0b]" />
+                Recommended Actions
+              </h3>
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+                {recommendations.map((rec, i) => (
+                  <div key={i} className="glass-card p-4 flex flex-col gap-3 hover:border-[#00e5c8]/30 transition-colors">
+                    <div className="flex items-start gap-3">
+                      <div className="w-8 h-8 rounded-lg bg-[#00e5c8]/10 flex items-center justify-center shrink-0">
+                        <Icon name={rec.icon} size={16} className="text-[#00e5c8]" />
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm font-semibold text-[#f0f4fc]">{rec.title}</p>
+                        <p className="text-xs text-[#5a6a8a] mt-0.5 leading-relaxed">{rec.description}</p>
+                      </div>
+                    </div>
+                    {rec.linkTo && (
+                      <Link
+                        to={rec.linkTo}
+                        className="mt-auto text-xs text-[#00e5c8] hover:text-[#00b8a0] font-medium flex items-center gap-1 transition-colors"
+                      >
+                        Go to {rec.linkTo.replace('/', '')} <Icon name="arrow-right" size={12} />
+                      </Link>
+                    )}
+                    {rec.command && (
+                      <code className="mt-auto text-[10px] font-mono text-[#8b9bc0] bg-[#111827] px-2 py-1.5 rounded block truncate">
+                        {rec.command}
+                      </code>
+                    )}
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* ── Section 3: Stats Cards Row ── */}
           {health && (
             <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
-              <div className="bg-[#1a2235] border border-[#00e5c8]/20 rounded-[12px] p-4 animate-slideUp opacity-0 hover:bg-[#1f2a40] transition-all duration-200" style={{ animationDelay: '0s' }}>
+              <div className="bg-[#1a2235] border border-[#00e5c8]/20 rounded-[12px] p-4 animate-slideUp opacity-0 hover:bg-[#1f2a40] transition-all duration-200" style={{ animationDelay: '0.16s' }}>
                 <div className="flex items-center justify-between">
                   <div>
                     <p className="text-xs text-[#8b9bc0] font-medium">Invocations</p>
@@ -306,7 +519,7 @@ export default function SelfHealing() {
                 <p className="text-[10px] text-[#5a6a8a] mt-1">{health.detection.total_agents} agent(s) monitored</p>
               </div>
 
-              <div className="bg-[#1a2235] border border-[#ff4d6a]/20 rounded-[12px] p-4 animate-slideUp opacity-0 hover:bg-[#1f2a40] transition-all duration-200" style={{ animationDelay: '0.08s' }}>
+              <div className="bg-[#1a2235] border border-[#ff4d6a]/20 rounded-[12px] p-4 animate-slideUp opacity-0 hover:bg-[#1f2a40] transition-all duration-200" style={{ animationDelay: '0.2s' }}>
                 <div className="flex items-center justify-between">
                   <div>
                     <p className="text-xs text-[#8b9bc0] font-medium">Alerts</p>
@@ -321,7 +534,7 @@ export default function SelfHealing() {
                 </p>
               </div>
 
-              <div className="bg-[#1a2235] border border-violet-500/20 rounded-[12px] p-4 animate-slideUp opacity-0 hover:bg-[#1f2a40] transition-all duration-200" style={{ animationDelay: '0.16s' }}>
+              <div className="bg-[#1a2235] border border-violet-500/20 rounded-[12px] p-4 animate-slideUp opacity-0 hover:bg-[#1f2a40] transition-all duration-200" style={{ animationDelay: '0.24s' }}>
                 <div className="flex items-center justify-between">
                   <div>
                     <p className="text-xs text-[#8b9bc0] font-medium">Patterns Learned</p>
@@ -336,7 +549,7 @@ export default function SelfHealing() {
                 </p>
               </div>
 
-              <div className="bg-[#1a2235] border border-[#f59e0b]/20 rounded-[12px] p-4 animate-slideUp opacity-0 hover:bg-[#1f2a40] transition-all duration-200" style={{ animationDelay: '0.24s' }}>
+              <div className="bg-[#1a2235] border border-[#f59e0b]/20 rounded-[12px] p-4 animate-slideUp opacity-0 hover:bg-[#1f2a40] transition-all duration-200" style={{ animationDelay: '0.28s' }}>
                 <div className="flex items-center justify-between">
                   <div>
                     <p className="text-xs text-[#8b9bc0] font-medium">Policy Blocks</p>
@@ -353,85 +566,88 @@ export default function SelfHealing() {
             </div>
           )}
 
-          {/* Two-column layout: Subsystems + Recent Heals */}
+          {/* ── Section 4: Recent Activity Timeline ── */}
           {health && (
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
-
-              {/* Subsystem Health Checks */}
-              <div className="glass-card p-5 animate-slideUp opacity-0" style={{ animationDelay: '0.3s' }}>
-                <h3 className="text-xs font-semibold text-[#8b9bc0] uppercase tracking-wider mb-4 flex items-center gap-2">
-                  <Icon name="activity" size={13} className="text-[#00e5c8]" />
-                  Health Checks
-                </h3>
-                <div className="space-y-2.5">
-                  {health.subsystems.map((sub, i) => {
-                    const colors = subsystemStatusColors[sub.status] || subsystemStatusColors.stopped
+            <div className="glass-card p-5 animate-slideUp opacity-0" style={{ animationDelay: '0.32s' }}>
+              <h3 className="text-xs font-semibold text-[#8b9bc0] uppercase tracking-wider mb-4 flex items-center gap-2">
+                <Icon name="activity" size={13} className="text-[#00e5c8]" />
+                Recent Activity
+              </h3>
+              {health.recent_heals.length === 0 ? (
+                <div className="text-center py-8">
+                  <div className="inline-flex items-center justify-center w-12 h-12 rounded-2xl bg-[#111827] border border-[#2a3650] mb-3">
+                    <Icon name="clock" size={22} className="text-[#5a6a8a]" />
+                  </div>
+                  <p className="text-sm text-[#8b9bc0]">No activity yet</p>
+                  <p className="text-xs text-[#5a6a8a] mt-1.5 max-w-sm mx-auto leading-relaxed">
+                    Once the proxy starts processing requests, events will appear here.
+                    Proxy events, pattern matches, and policy decisions are all tracked.
+                  </p>
+                  {!health.proxy.running && (
+                    <code className="inline-block mt-3 text-[10px] font-mono text-[#8b9bc0] bg-[#111827] px-3 py-1.5 rounded">
+                      navil proxy start &lt;TARGET_URL&gt;
+                    </code>
+                  )}
+                </div>
+              ) : (
+                <div className="space-y-1">
+                  {health.recent_heals.map((heal, i) => {
+                    const catStyle = healCategoryIcons[heal.category] || healCategoryIcons.anomaly
                     return (
-                      <div key={i} className="flex items-center gap-3 py-2 px-3 rounded-lg bg-[#111827]/50 hover:bg-[#111827] transition-colors">
-                        <span className={`w-2 h-2 rounded-full ${colors.dot} shrink-0`} />
-                        <span className="text-sm text-[#f0f4fc] font-medium flex-1">{sub.name}</span>
-                        <span className={`text-[10px] font-semibold uppercase tracking-wide ${colors.text}`}>
-                          {sub.status.replace(/_/g, ' ')}
-                        </span>
+                      <div key={i} className="flex items-start gap-3 py-2.5 px-3 rounded-lg hover:bg-[#111827]/70 transition-colors group">
+                        {/* Timeline dot + line */}
+                        <div className="flex flex-col items-center shrink-0 mt-0.5">
+                          <div className={`w-2 h-2 rounded-full ${
+                            heal.severity === 'critical' || heal.severity === 'high'
+                              ? 'bg-[#ff4d6a]'
+                              : heal.severity === 'medium'
+                                ? 'bg-[#f59e0b]'
+                                : 'bg-[#00e5c8]'
+                          }`} />
+                          {i < health.recent_heals.length - 1 && (
+                            <div className="w-px h-6 bg-[#2a3650] mt-1" />
+                          )}
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center gap-2">
+                            <Icon name={catStyle.icon} size={12} className={catStyle.color} />
+                            <p className="text-xs text-[#f0f4fc] leading-relaxed truncate">{heal.event}</p>
+                          </div>
+                          <p className="text-[10px] text-[#5a6a8a] truncate mt-0.5 ml-[20px]">{heal.detail}</p>
+                        </div>
+                        {heal.timestamp && (
+                          <RelativeTime timestamp={heal.timestamp} className="text-[10px] text-[#5a6a8a] shrink-0" />
+                        )}
                       </div>
                     )
                   })}
                 </div>
+              )}
 
-                {/* Proxy stats mini-section */}
-                {health.proxy.running && (
-                  <div className="mt-4 pt-3 border-t border-[#2a3650]">
-                    <p className="text-[10px] text-[#5a6a8a] uppercase tracking-wider font-medium mb-2">Proxy Stats</p>
-                    <div className="grid grid-cols-2 gap-2">
-                      <div className="text-center p-2 rounded-lg bg-[#111827]/50">
-                        <p className="text-lg font-bold text-[#f0f4fc]">{health.proxy.stats.forwarded}</p>
-                        <p className="text-[10px] text-[#5a6a8a]">Forwarded</p>
-                      </div>
-                      <div className="text-center p-2 rounded-lg bg-[#111827]/50">
-                        <p className="text-lg font-bold text-[#ff4d6a]">{health.proxy.stats.blocked}</p>
-                        <p className="text-[10px] text-[#5a6a8a]">Blocked</p>
-                      </div>
+              {/* Proxy stats mini-section */}
+              {health.proxy.running && (
+                <div className="mt-4 pt-3 border-t border-[#2a3650]">
+                  <p className="text-[10px] text-[#5a6a8a] uppercase tracking-wider font-medium mb-2">Proxy Stats</p>
+                  <div className="grid grid-cols-4 gap-2">
+                    <div className="text-center p-2 rounded-lg bg-[#111827]/50">
+                      <p className="text-lg font-bold text-[#f0f4fc]">{health.proxy.stats.total_requests}</p>
+                      <p className="text-[10px] text-[#5a6a8a]">Total</p>
+                    </div>
+                    <div className="text-center p-2 rounded-lg bg-[#111827]/50">
+                      <p className="text-lg font-bold text-[#00e5c8]">{health.proxy.stats.forwarded}</p>
+                      <p className="text-[10px] text-[#5a6a8a]">Forwarded</p>
+                    </div>
+                    <div className="text-center p-2 rounded-lg bg-[#111827]/50">
+                      <p className="text-lg font-bold text-[#ff4d6a]">{health.proxy.stats.blocked}</p>
+                      <p className="text-[10px] text-[#5a6a8a]">Blocked</p>
+                    </div>
+                    <div className="text-center p-2 rounded-lg bg-[#111827]/50">
+                      <p className="text-lg font-bold text-[#f59e0b]">{health.proxy.stats.alerts_generated}</p>
+                      <p className="text-[10px] text-[#5a6a8a]">Alerts</p>
                     </div>
                   </div>
-                )}
-              </div>
-
-              {/* Recent Auto-Heals */}
-              <div className="glass-card p-5 animate-slideUp opacity-0" style={{ animationDelay: '0.36s' }}>
-                <h3 className="text-xs font-semibold text-[#8b9bc0] uppercase tracking-wider mb-4 flex items-center gap-2">
-                  <Icon name="shield" size={13} className="text-[#34d399]" />
-                  Recent Activity
-                </h3>
-                {health.recent_heals.length === 0 ? (
-                  <div className="text-center py-8">
-                    <div className="inline-flex items-center justify-center w-12 h-12 rounded-2xl bg-[#34d399]/10 border border-[#34d399]/20 mb-3">
-                      <Icon name="check" size={22} className="text-[#34d399]" />
-                    </div>
-                    <p className="text-sm text-[#8b9bc0]">No recent events</p>
-                    <p className="text-xs text-[#5a6a8a] mt-1">The system is running clean with no auto-heal actions triggered.</p>
-                  </div>
-                ) : (
-                  <div className="space-y-2">
-                    {health.recent_heals.map((heal, i) => {
-                      const catStyle = healCategoryIcons[heal.category] || healCategoryIcons.anomaly
-                      return (
-                        <div key={i} className="flex items-start gap-3 py-2 px-3 rounded-lg bg-[#111827]/50 hover:bg-[#111827] transition-colors">
-                          <div className="mt-0.5 shrink-0">
-                            <Icon name={catStyle.icon} size={14} className={catStyle.color} />
-                          </div>
-                          <div className="flex-1 min-w-0">
-                            <p className="text-xs text-[#f0f4fc] leading-relaxed truncate">{heal.event}</p>
-                            <p className="text-[10px] text-[#5a6a8a] truncate">{heal.detail}</p>
-                          </div>
-                          {heal.timestamp && (
-                            <RelativeTime timestamp={heal.timestamp} className="text-[10px] text-[#5a6a8a] shrink-0" />
-                          )}
-                        </div>
-                      )
-                    })}
-                  </div>
-                )}
-              </div>
+                </div>
+              )}
             </div>
           )}
 
@@ -447,7 +663,7 @@ export default function SelfHealing() {
         </div>
       )}
 
-      {/* Manual analyze spinner */}
+      {/* ===== MANUAL ANALYZE SPINNER ===== */}
       {(analyzing || stream.streaming) && !suggestion && (
         <div className="text-center py-16 animate-fadeIn">
           <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-violet-500/10 border border-violet-500/20 mb-4">
@@ -465,7 +681,7 @@ export default function SelfHealing() {
         </div>
       )}
 
-      {/* Auto-remediate phased progress */}
+      {/* ===== AUTO-REMEDIATE PHASED PROGRESS ===== */}
       {autoRemediating && !autoResult && (
         <div className="text-center py-16 animate-fadeIn">
           <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-[#34d399]/10 border border-[#34d399]/20 mb-6">
@@ -506,7 +722,7 @@ export default function SelfHealing() {
         </div>
       )}
 
-      {/* ===== MANUAL FLOW RESULTS ===== */}
+      {/* ===== SECTION 5: MANUAL FLOW RESULTS ===== */}
       {suggestion && (
         <div className="space-y-6 animate-fadeIn">
           <div className="glass-card p-5 flex items-start gap-4">
