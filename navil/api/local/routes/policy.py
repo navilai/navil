@@ -99,52 +99,6 @@ def get_policy_suggestions() -> dict[str, Any]:
                     }
                 )
 
-    # Also check for demo suggestions if no real ones
-    if not suggestions and getattr(s, "demo_seeded", False):
-        # Track which demo suggestions have been acted on
-        dismissed: set[str] = getattr(s, "_dismissed_suggestions", set())
-        demo_all = [
-            {
-                "id": "demo-1",
-                "rule_type": "deny",
-                "agent": "monitoring-agent",
-                "tool": "admin_panel",
-                "description": (
-                    "Agent accessed admin tools 47 times, baseline is 3."
-                    " Suggest denying admin_panel access."
-                ),
-                "confidence": 0.95,
-                "source": "anomaly",
-                "auto_applied": False,
-                "timestamp": "",
-            },
-            {
-                "id": "demo-2",
-                "rule_type": "rate_limit",
-                "agent": "data-reader",
-                "tool": "files",
-                "description": (
-                    "Data volume 5.2x above baseline. Suggest rate limiting to 30 req/hr."
-                ),
-                "confidence": 0.82,
-                "source": "baseline",
-                "auto_applied": False,
-                "timestamp": "",
-            },
-            {
-                "id": "demo-3",
-                "rule_type": "scope",
-                "agent": "code-assistant",
-                "tool": "terminal",
-                "description": "Agent only uses read-related tools. Suggest scoping to read-only.",
-                "confidence": 0.71,
-                "source": "baseline",
-                "auto_applied": False,
-                "timestamp": "",
-            },
-        ]
-        suggestions = [d for d in demo_all if d["id"] not in dismissed]
-
     return {"suggestions": suggestions, "count": len(suggestions)}
 
 
@@ -194,92 +148,8 @@ def act_on_suggestion(suggestion_id: str, body: SuggestionAction) -> dict[str, A
                 break
 
     # No suggestion found from self-healing — return early
-    if suggestion is None and not getattr(s, "demo_seeded", False):
+    if suggestion is None:
         return {"status": "approved", "suggestion_id": suggestion_id}
-
-    # Fall back to demo suggestions
-    if suggestion is None and getattr(s, "demo_seeded", False):
-        demo_suggestions = {
-            "demo-1": {
-                "rule_type": "deny",
-                "agent": "monitoring-agent",
-                "tool": "admin_panel",
-                "description": "Deny admin_panel access",
-            },
-            "demo-2": {
-                "rule_type": "rate_limit",
-                "agent": "data-reader",
-                "tool": "files",
-                "description": "Rate limit to 30 req/hr",
-            },
-            "demo-3": {
-                "rule_type": "scope",
-                "agent": "code-assistant",
-                "tool": "terminal",
-                "description": "Scope to read-only",
-            },
-        }
-        suggestion = demo_suggestions.get(suggestion_id)
-
-        if suggestion is None:
-            return {"status": "approved", "suggestion_id": suggestion_id}
-
-        # Read existing policy.auto.yaml
-        policy_path = Path(os.path.expanduser("~/.navil/policy.auto.yaml"))
-        if not policy_path.exists():
-            policy_path = Path("policy.auto.yaml")
-
-        policy: dict[str, Any] = {}
-        if policy_path.exists():
-            try:
-                policy = yaml.safe_load(policy_path.read_text()) or {}
-            except Exception:
-                policy = {}
-
-        if "version" not in policy:
-            policy["version"] = "1.0"
-        if "agents" not in policy:
-            policy["agents"] = {}
-
-        agent_name = suggestion["agent"]
-        if agent_name not in policy["agents"]:
-            policy["agents"][agent_name] = {
-                "tools_allowed": ["*"],
-                "tools_denied": [],
-                "rate_limit_per_hour": 1000,
-                "data_clearance": "PUBLIC",
-            }
-
-        agent_cfg = policy["agents"][agent_name]
-        rule_type = suggestion["rule_type"]
-
-        if rule_type == "deny":
-            denied = agent_cfg.get("tools_denied", [])
-            if suggestion["tool"] not in denied:
-                denied.append(suggestion["tool"])
-            agent_cfg["tools_denied"] = denied
-        elif rule_type == "rate_limit":
-            # Extract rate limit from description if possible, default 30
-            agent_cfg["rate_limit_per_hour"] = 30
-        elif rule_type == "scope":
-            if "scopes" not in policy:
-                policy["scopes"] = {}
-            scope_name = f"{agent_name}_scope"
-            policy["scopes"][scope_name] = {
-                "description": suggestion["description"],
-                "tools": "read-only",
-            }
-            agent_cfg["scope"] = scope_name
-
-        # Write back to disk
-        now = datetime.datetime.now(datetime.timezone.utc).isoformat()
-        header = f"# auto-generated by navil at {now}\n"
-        policy_path.parent.mkdir(parents=True, exist_ok=True)
-        yaml_content = yaml.dump(policy, default_flow_style=False, sort_keys=False)
-        policy_path.write_text(header + yaml_content)
-        _logger.info("Policy updated at %s", policy_path)
-
-        return {"status": "approved", "suggestion_id": suggestion_id, "policy": policy}
 
     return {"status": "approved", "suggestion_id": suggestion_id}
 

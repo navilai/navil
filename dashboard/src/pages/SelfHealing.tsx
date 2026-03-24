@@ -280,7 +280,7 @@ export default function SelfHealing() {
   const handleAnalyze = () => {
     setAnalyzing(true)
     setError(null)
-    setAutoResult(null)
+    setSuggestion(null)
     setApplied(new Set())
     setExpanded(new Set())
     stream.start({
@@ -312,9 +312,8 @@ export default function SelfHealing() {
     setAutoRemediating(true)
     setAutoPhase('analyzing')
     setError(null)
-    setSuggestion(null)
+    setAutoResult(null)
     setAutoApplied(new Set())
-    setApplied(new Set())
 
     const timers: ReturnType<typeof setTimeout>[] = []
     timers.push(setTimeout(() => setAutoPhase('applying'), 3000))
@@ -416,12 +415,11 @@ export default function SelfHealing() {
         <UpgradePrompt feature="Self-Healing AI" />
       )}
 
-      {/* ===== HEALTH DASHBOARD (always visible when no LLM results shown) ===== */}
-      {!suggestion && !autoResult && !busy && (
-        <div className="space-y-5 animate-fadeIn">
+      {/* ===== HEALTH DASHBOARD (always visible) ===== */}
+      <div className="space-y-5">
 
-          {/* ── Section 1: Security Posture Checklist ── */}
-          {health && (
+        {/* ── Section 1: Security Posture Checklist ── */}
+        {health && (
             <div className="glass-card p-5 animate-slideUp opacity-0" style={{ animationDelay: '0s' }}>
               <div className="flex items-center justify-between mb-4">
                 <h3 className="text-xs font-semibold text-[#8b9bc0] uppercase tracking-wider flex items-center gap-2">
@@ -466,8 +464,8 @@ export default function SelfHealing() {
             </div>
           )}
 
-          {/* ── Section 2: Recommended Actions ── */}
-          {health && recommendations.length > 0 && (
+          {/* ── Section 2: Recommended Actions (only when idle) ── */}
+          {!suggestion && !autoResult && !busy && health && recommendations.length > 0 && (
             <div className="animate-slideUp opacity-0" style={{ animationDelay: '0.08s' }}>
               <h3 className="text-xs font-semibold text-[#8b9bc0] uppercase tracking-wider mb-3 flex items-center gap-2">
                 <Icon name="zap" size={13} className="text-[#f59e0b]" />
@@ -567,8 +565,8 @@ export default function SelfHealing() {
             </div>
           )}
 
-          {/* ── Section 4: Recent Activity Timeline ── */}
-          {health && (
+          {/* ── Section 4: Recent Activity Timeline (only when idle) ── */}
+          {!suggestion && !autoResult && !busy && health && (
             <div className="glass-card p-5 animate-slideUp opacity-0" style={{ animationDelay: '0.32s' }}>
               <h3 className="text-xs font-semibold text-[#8b9bc0] uppercase tracking-wider mb-4 flex items-center gap-2">
                 <Icon name="activity" size={13} className="text-[#00e5c8]" />
@@ -710,8 +708,7 @@ export default function SelfHealing() {
               </button>
             </div>
           )}
-        </div>
-      )}
+      </div>
 
       {/* ===== MANUAL ANALYZE SPINNER ===== */}
       {(analyzing || stream.streaming) && !suggestion && (
@@ -790,12 +787,19 @@ export default function SelfHealing() {
               <Icon name="check" size={24} className="text-[#34d399] mx-auto mb-2" />
               <p className="text-[#8b9bc0] text-sm">No remediation actions needed. System looks healthy.</p>
             </div>
+          ) : applied.size >= suggestion.actions.length ? (
+            <div className="glass-card p-5 text-center animate-fadeIn border-[#34d399]/20">
+              <Icon name="check" size={22} className="text-[#34d399] mx-auto mb-2" />
+              <p className="text-sm text-[#34d399] font-medium">All {applied.size} remediation actions applied</p>
+              <p className="text-xs text-[#5a6a8a] mt-1">Click "Analyze Threats" again to verify the system is now healthy.</p>
+            </div>
           ) : (
             <div className="space-y-3">
               {suggestion.actions.map((action, i) => {
+                if (applied.has(i)) return null
                 const isExpanded = expanded.has(i)
                 return (
-                <div key={`${action.type}-${action.target}-${i}`} className={`glass-card p-4 animate-slideUp opacity-0 transition-all ${applied.has(i) ? 'border-[#34d399]/30' : ''}`}
+                <div key={`${action.type}-${action.target}-${i}`} className="glass-card p-4 animate-slideUp opacity-0 transition-all"
                   style={{ animationDelay: `${i * 0.06}s` }}>
                   <div className="flex items-start gap-4">
                     <div className="flex-1">
@@ -837,30 +841,16 @@ export default function SelfHealing() {
                       )}
                     </div>
                     <div className="shrink-0">
-                      {applied.has(i) ? (
-                        <span className="px-3 py-1.5 text-xs bg-[#34d399]/15 text-[#34d399] border border-[#34d399]/30 rounded-lg flex items-center gap-1.5">
-                          <Icon name="check" size={13} /> Applied
-                        </span>
-                      ) : (
-                        <button onClick={() => handleApply(action, i)} disabled={applying === i}
-                          className="px-3 py-1.5 text-xs bg-[#00e5c8]/15 text-[#00e5c8] border border-[#00e5c8]/30 rounded-lg hover:bg-[#00e5c8]/25 flex items-center gap-1.5 disabled:opacity-50">
-                          <Icon name="shield" size={13} className={applying === i ? 'animate-spin' : ''} />
-                          {applying === i ? 'Applying...' : 'Apply'}
-                        </button>
-                      )}
+                      <button onClick={() => handleApply(action, i)} disabled={applying === i}
+                        className="px-3 py-1.5 text-xs bg-[#00e5c8]/15 text-[#00e5c8] border border-[#00e5c8]/30 rounded-lg hover:bg-[#00e5c8]/25 flex items-center gap-1.5 disabled:opacity-50">
+                        <Icon name="shield" size={13} className={applying === i ? 'animate-spin' : ''} />
+                        {applying === i ? 'Applying...' : 'Apply'}
+                      </button>
                     </div>
                   </div>
                 </div>
                 )
               })}
-
-              {applied.size > 0 && applied.size >= suggestion.actions.length && (
-                <div className="glass-card p-5 text-center animate-fadeIn border-[#34d399]/20">
-                  <Icon name="check" size={22} className="text-[#34d399] mx-auto mb-2" />
-                  <p className="text-sm text-[#34d399] font-medium">All {applied.size} remediation actions applied</p>
-                  <p className="text-xs text-[#5a6a8a] mt-1">Click "Analyze Threats" again to verify the system is now healthy.</p>
-                </div>
-              )}
             </div>
           )}
         </div>
@@ -945,14 +935,16 @@ export default function SelfHealing() {
           )}
 
           {/* Manual review actions */}
-          {autoResult.manual_review.length > 0 && (
+          {autoResult.manual_review.length > 0 && autoResult.manual_review.some((_a, i) => !autoApplied.has(i)) && (
             <div>
               <h3 className="text-xs font-semibold text-[#fbbf24] uppercase tracking-wider mb-3 flex items-center gap-2">
                 <Icon name="eye" size={13} />
-                Needs Manual Review ({autoResult.manual_review.length})
+                Needs Manual Review ({autoResult.manual_review.filter((_a, i) => !autoApplied.has(i)).length})
               </h3>
               <div className="space-y-3">
-                {autoResult.manual_review.map((action, i) => (
+                {autoResult.manual_review.map((action, i) => {
+                  if (autoApplied.has(i)) return null
+                  return (
                   <div key={`manual-${action.type}-${action.target}-${i}`} className="glass-card p-4 border-[#fbbf24]/20 animate-slideUp opacity-0"
                     style={{ animationDelay: `${(autoResult.auto_applied.length + i) * 0.06}s` }}>
                     <div className="flex items-start gap-4">
@@ -971,21 +963,16 @@ export default function SelfHealing() {
                         </div>
                       </div>
                       <div className="shrink-0">
-                        {autoApplied.has(i) ? (
-                          <span className="px-3 py-1.5 text-xs bg-[#34d399]/15 text-[#34d399] border border-[#34d399]/30 rounded-lg flex items-center gap-1.5">
-                            <Icon name="check" size={13} /> Applied
-                          </span>
-                        ) : (
-                          <button onClick={() => handleAutoManualApply(action, i)} disabled={autoApplying === i}
-                            className="px-3 py-1.5 text-xs bg-[#00e5c8]/15 text-[#00e5c8] border border-[#00e5c8]/30 rounded-lg hover:bg-[#00e5c8]/25 flex items-center gap-1.5 disabled:opacity-50">
-                            <Icon name="shield" size={13} className={autoApplying === i ? 'animate-spin' : ''} />
-                            {autoApplying === i ? 'Applying...' : 'Apply'}
-                          </button>
-                        )}
+                        <button onClick={() => handleAutoManualApply(action, i)} disabled={autoApplying === i}
+                          className="px-3 py-1.5 text-xs bg-[#00e5c8]/15 text-[#00e5c8] border border-[#00e5c8]/30 rounded-lg hover:bg-[#00e5c8]/25 flex items-center gap-1.5 disabled:opacity-50">
+                          <Icon name="shield" size={13} className={autoApplying === i ? 'animate-spin' : ''} />
+                          {autoApplying === i ? 'Applying...' : 'Apply'}
+                        </button>
                       </div>
                     </div>
                   </div>
-                ))}
+                  )
+                })}
               </div>
             </div>
           )}
