@@ -339,6 +339,56 @@ export interface MachineInfo {
   machine_label: string
 }
 
+// Health Dashboard Types
+export interface HealthHealEvent {
+  event: string
+  detail: string
+  category: string
+  severity: string
+  timestamp: string
+}
+
+export interface HealthSubsystem {
+  name: string
+  status: string
+  detail: string
+}
+
+export interface HealthDashboard {
+  server_uptime_seconds: number
+  server_started_at: string
+  proxy: {
+    running: boolean
+    uptime_seconds: number
+    stats: {
+      total_requests: number
+      blocked: number
+      alerts_generated: number
+      forwarded: number
+    }
+  }
+  detection: {
+    total_invocations: number
+    total_alerts: number
+    critical_alerts: number
+    high_alerts: number
+    total_agents: number
+    patterns_learned: number
+    patterns_by_source: Record<string, number>
+  }
+  policy: {
+    loaded: boolean
+    recent_decisions: number
+    denied: number
+  }
+  cloud_sync: {
+    enabled: boolean
+    api_key_present: boolean
+  }
+  subsystems: HealthSubsystem[]
+  recent_heals: HealthHealEvent[]
+}
+
 // API calls
 export const api = {
   getOverview: () => get<Overview>('/overview'),
@@ -401,6 +451,9 @@ export const api = {
 
   // Machine identity
   getMachineInfo: () => get<MachineInfo>('/machine'),
+
+  // Health dashboard
+  getHealthDashboard: () => get<HealthDashboard>('/health/dashboard'),
 
   // Pentest endpoints
   pentest: (scenario?: string) =>
