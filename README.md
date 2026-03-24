@@ -308,7 +308,7 @@ navil scan config.json --format sarif --output results.sarif
 Axum-based reverse proxy with HMAC-SHA256 verification, JSON depth limiting, O(1) Redis threshold checks, and minute-bucketed rate limiting. Sub-millisecond overhead per request.
 
 ### Behavioral Anomaly Detection
-12 statistical detectors with adaptive EMA baselines, operator feedback loops, and learned pattern matching. Runs off the hot path via Redis-bridged telemetry -- security analysis never blocks your agents.
+11 statistical detectors with adaptive EMA baselines, operator feedback loops, and learned pattern matching. Runs off the hot path via Redis-bridged telemetry -- security analysis never blocks your agents.
 
 ### Configuration Scanning
 Detect plaintext credentials, over-privileged permissions, missing authentication, unverified sources, and malicious patterns. Produces a 0-100 security score.
@@ -329,10 +329,10 @@ OIDC token exchange converts external identity tokens into Navil credentials wit
 Issue, rotate, and revoke JWT tokens with JIT provisioning, configurable TTL, usage tracking, and immutable audit logs. Hardened with a global active-credential cap (500), auto-purge of expired credentials, and thread-safe rotation.
 
 ### Threat Intelligence & Blocklist Engine
-Community-sourced threat intel via the [Give-to-Get initiative](#community-threat-network), backed by a local blocklist engine for pattern matching. Ships with 568 detection patterns across 16 attack categories (v3 blocklist). The Navil-200 attack benchmark validates proxy detection across protocol manipulation, tool shadowing, context smuggling, multi-agent exploits, RAG poisoning, supply chain attacks, privilege escalation, and anti-forensics vectors.
+Community-sourced threat intel via the [Give-to-Get initiative](#community-threat-network), backed by a local blocklist engine for pattern matching. Ships with 568 detection patterns across 30 attack categories (v3 blocklist). The Navil-200 attack benchmark validates proxy detection across protocol manipulation, tool shadowing, context smuggling, multi-agent exploits, RAG poisoning, supply chain attacks, privilege escalation, and anti-forensics vectors.
 
 ### Honeypot & Canary Kit
-Deploy decoy MCP servers to detect and study attackers in the wild. 3 built-in profiles: `dev-tools`, `cloud-creds`, and `db-admin`. A built-in `SignatureExtractor` analyzes collected interactions and auto-generates blocklist entries. Production deployment uses Docker Compose with isolated networking.
+Deploy decoy MCP servers to detect and study attackers in the wild. 10 built-in profiles: `dev_tools`, `cloud_creds`, `db_admin`, `openclaw_registry`, `ci_pipeline`, `llm_gateway`, `k8s_dashboard`, `rag_endpoint`, `oauth_server`, and `agent_marketplace`. A built-in `SignatureExtractor` analyzes collected interactions and auto-generates blocklist entries. Production deployment uses Docker Compose with isolated networking.
 
 ### Tool Scoping
 Context-aware visibility control for MCP tools. Define scopes in `policy.yaml` to restrict which tools each agent *sees* in `tools/list` responses -- separate from policy enforcement (which controls what agents can *call*). Reduces schema token bloat by up to 94%. The Rust proxy reads scope definitions from Redis in O(1) and caches filtered responses with 60s TTL. Ships with community templates for GitHub, filesystem, and kubectl MCP servers.
