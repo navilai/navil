@@ -1,80 +1,122 @@
 name: 'Navil MCP Security Scan'
-description: 'Scan MCP server configurations for security vulnerabilities'
+description: 'Scan MCP server configurations for security vulnerabilities using Navil'
+author: 'navilai'
 branding:
   icon: 'shield'
   color: 'blue'
 
 inputs:
   config:
-    description: 'Path to MCP config file (auto-detects if not specified)'
-    required: false
-    default: ''
+    description: 'Path to MCP config file'
+    required: true
+    default: 'mcp_config.json'
   fail-on:
-    description: 'Fail if findings at this severity or above (critical, high, medium, low, info)'
+    description: 'Severity threshold to fail the action (critical, high, medium, low, info)'
     required: false
     default: 'critical'
-  sarif-output:
-    description: 'Path for SARIF output file'
+  format:
+    description: 'Output format (sarif, json, text)'
     required: false
-    default: 'navil-results.sarif'
+    default: 'sarif'
 
 outputs:
   score:
     description: 'Security score (0-100)'
     value: ${{ steps.scan.outputs.score }}
-  findings:
-    description: 'Number of findings'
-    value: ${{ steps.scan.outputs.findings }}
+  vulnerabilities:
+    description: 'Number of vulnerabilities found'
+    value: ${{ steps.scan.outputs.vulnerabilities }}
+  sarif-file:
+    description: 'Path to the SARIF output file'
+    value: ${{ steps.sarif.outputs.sarif-file }}
 
 runs:
   using: 'composite'
   steps:
+    - name: Set up Python
+      uses: actions/setup-python@v5
+      with:
+        python-version: '3.12'
+
     - name: Install Navil
       shell: bash
       run: pip install navil
 
-    - name: Auto-detect MCP config
-      id: detect
+    - name: Validate config exists
       shell: bash
       run: |
         CONFIG="${{ inputs.config }}"
         if [ -z "$CONFIG" ]; then
-          for f in mcp_config.json .mcp.json openclaw.json mcp.json; do
+          # Auto-detect config file
+          for f in mcp_config.json .mcp.json mcp.json claude_mcp_config.json; do
             if [ -f "$f" ]; then CONFIG="$f"; break; fi
           done
         fi
-        if [ -z "$CONFIG" ]; then
-          echo "::error::No MCP config file found. Specify with 'config' input."
+        if [ ! -f "$CONFIG" ]; then
+          echo "::error::MCP config file not found: $CONFIG"
+          echo "::error::Specify the path with the 'config' input or ensure the file exists."
           exit 1
         fi
-        echo "config=$CONFIG" >> "$GITHUB_OUTPUT"
+        echo "config=$CONFIG" >> "$GITHUB_ENV"
 
     - name: Run Navil scan
       id: scan
       shell: bash
       run: |
-        CONFIG="${{ steps.detect.outputs.config }}"
-        echo "Scanning: $CONFIG"
+        echo "::group::Navil MCP Security Scan"
+        echo "Scanning: ${{ env.config }}"
 
-        # Run scan with JSON output
-        navil scan "$CONFIG" --json > /tmp/navil-scan-result.json 2>/dev/null || true
+        # Run scan with JSON output to capture structured results
+        navil scan "${{ env.config }}" --json > /tmp/navil-scan-result.json 2>/dev/null || true
 
-        # Extract score and findings count
-        SCORE=$(python3 -c "import json; d=json.load(open('/tmp/navil-scan-result.json')); print(d.get('score', 0))" 2>/dev/null || echo "0")
-        FINDINGS=$(python3 -c "import json; d=json.load(open('/tmp/navil-scan-result.json')); print(len(d.get('vulnerabilities', [])))" 2>/dev/null || echo "0")
+        # Extract score and vulnerability count
+        SCORE=$(python3 -c "
+        import json
+        try:
+            with open('/tmp/navil-scan-result.json') as f:
+                d = json.load(f)
+            print(d.get('score', 0))
+        except Exception:
+            print(0)
+        " 2>/dev/null)
+
+        VULNS=$(python3 -c "
+        import json
+        try:
+            with open('/tmp/navil-scan-result.json') as f:
+                d = json.load(f)
+            print(len(d.get('vulnerabilities', [])))
+        except Exception:
+            print(0)
+        " 2>/dev/null)
 
         echo "score=$SCORE" >> "$GITHUB_OUTPUT"
-        echo "findings=$FINDINGS" >> "$GITHUB_OUTPUT"
+        echo "vulnerabilities=$VULNS" >> "$GITHUB_OUTPUT"
 
-        echo "Security Score: $SCORE/100"
-        echo "Findings: $FINDINGS"
-        echo "View community threat intelligence → https://navil.ai/radar"
+        # Summary
+        if [ "$SCORE" -ge 80 ] 2>/dev/null; then
+          ICON="✅"
+        elif [ "$SCORE" -ge 50 ] 2>/dev/null; then
+          ICON="⚠️"
+        else
+          ICON="❌"
+        fi
 
-    - name: Generate SARIF
+        echo "$ICON Security Score: $SCORE/100"
+        echo "Vulnerabilities found: $VULNS"
+        echo ""
+        echo "Powered by Navil — https://navil.ai"
+        echo "::endgroup::"
+
+    - name: Generate SARIF output
+      id: sarif
+      if: inputs.format == 'sarif'
       shell: bash
       run: |
+        SARIF_FILE="navil-results.sarif"
+
         python3 << 'PYEOF'
-        import json, sys
+        import json
 
         try:
             with open("/tmp/navil-scan-result.json") as f:
@@ -82,7 +124,7 @@ runs:
         except Exception:
             result = {"score": 0, "vulnerabilities": []}
 
-        severity_map = {
+        severity_to_level = {
             "CRITICAL": "error",
             "HIGH": "error",
             "MEDIUM": "warning",
@@ -90,32 +132,50 @@ runs:
             "INFO": "note",
         }
 
-        level_priority = {"error": 0, "warning": 1, "note": 2}
+        severity_to_score = {
+            "CRITICAL": "9.0",
+            "HIGH": "7.0",
+            "MEDIUM": "4.0",
+            "LOW": "2.0",
+            "INFO": "1.0",
+        }
 
         rules = []
         results = []
 
         for i, vuln in enumerate(result.get("vulnerabilities", [])):
-            rule_id = f"navil/{vuln.get('id', f'finding-{i}')}"
+            rule_id = "navil/{}".format(vuln.get("id", "finding-{}".format(i)))
             severity = vuln.get("severity", "INFO").upper()
-            sarif_level = severity_map.get(severity, "note")
+            level = severity_to_level.get(severity, "note")
 
             rules.append({
                 "id": rule_id,
                 "shortDescription": {"text": vuln.get("title", "Security finding")},
                 "fullDescription": {"text": vuln.get("description", "")},
-                "defaultConfiguration": {"level": sarif_level},
-                "properties": {"security-severity": {"CRITICAL": "9.0", "HIGH": "7.0", "MEDIUM": "4.0", "LOW": "2.0", "INFO": "1.0"}.get(severity, "1.0")},
+                "defaultConfiguration": {"level": level},
+                "helpUri": "https://navil.ai/docs/findings/" + vuln.get("id", ""),
+                "properties": {
+                    "security-severity": severity_to_score.get(severity, "1.0"),
+                    "tags": ["security", "mcp"],
+                },
             })
+
+            message_text = vuln.get("description", "")
+            remediation = vuln.get("remediation", "")
+            if remediation:
+                message_text += "\n\nRemediation: " + remediation
 
             results.append({
                 "ruleId": rule_id,
-                "level": sarif_level,
-                "message": {"text": vuln.get("description", "") + "\n\nRemediation: " + vuln.get("remediation", "Review the configuration.")},
+                "level": level,
+                "message": {"text": message_text},
                 "locations": [{
                     "physicalLocation": {
-                        "artifactLocation": {"uri": "${{ steps.detect.outputs.config }}"},
-                        "region": {"startLine": 1}
+                        "artifactLocation": {
+                            "uri": "${{ env.config }}",
+                            "uriBaseId": "%SRCROOT%",
+                        },
+                        "region": {"startLine": 1},
                     }
                 }],
             })
@@ -127,8 +187,8 @@ runs:
                 "tool": {
                     "driver": {
                         "name": "Navil",
+                        "semanticVersion": result.get("version", "0.2.1"),
                         "informationUri": "https://github.com/navilai/navil",
-                        "version": result.get("version", "0.2.1"),
                         "rules": rules,
                     }
                 },
@@ -136,42 +196,51 @@ runs:
             }],
         }
 
-        with open("${{ inputs.sarif-output }}", "w") as f:
+        with open("navil-results.sarif", "w") as f:
             json.dump(sarif, f, indent=2)
 
-        print(f"SARIF written: {len(results)} findings")
+        print("SARIF written to navil-results.sarif ({} findings)".format(len(results)))
         PYEOF
+
+        echo "sarif-file=$SARIF_FILE" >> "$GITHUB_OUTPUT"
 
     - name: Check severity threshold
       shell: bash
       run: |
-        FAIL_ON="${{ inputs.fail-on }}"
-
-        python3 << PYEOF
+        python3 << 'PYEOF'
         import json, sys
 
         threshold_order = ["info", "low", "medium", "high", "critical"]
-        fail_on = "$FAIL_ON".lower()
-        fail_idx = threshold_order.index(fail_on) if fail_on in threshold_order else 4
+        fail_on = "${{ inputs.fail-on }}".lower()
+
+        if fail_on not in threshold_order:
+            print("::warning::Unknown severity '{}', defaulting to 'critical'".format(fail_on))
+            fail_on = "critical"
+
+        fail_idx = threshold_order.index(fail_on)
 
         try:
             with open("/tmp/navil-scan-result.json") as f:
                 result = json.load(f)
         except Exception:
+            print("No scan results found. Passing.")
             sys.exit(0)
 
         blocking = []
         for vuln in result.get("vulnerabilities", []):
             sev = vuln.get("severity", "INFO").lower()
-            sev_idx = threshold_order.index(sev) if sev in threshold_order else 0
+            if sev in threshold_order:
+                sev_idx = threshold_order.index(sev)
+            else:
+                sev_idx = 0
             if sev_idx >= fail_idx:
-                blocking.append(f"  [{sev.upper()}] {vuln.get('title', 'Unknown')}")
+                blocking.append("  [{}] {}".format(sev.upper(), vuln.get("title", "Unknown")))
 
         if blocking:
-            print(f"::error::Navil found {len(blocking)} finding(s) at or above '{fail_on}' severity:")
+            print("::error::Navil found {} finding(s) at or above '{}' severity:".format(len(blocking), fail_on))
             for b in blocking:
                 print(b)
             sys.exit(1)
         else:
-            print(f"No findings at or above '{fail_on}' severity. Passed.")
+            print("No findings at or above '{}' severity. Passed.".format(fail_on))
         PYEOF
