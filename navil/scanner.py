@@ -247,6 +247,7 @@ class MCPSecurityScanner:
         self._check_supply_chain_risk(config)
         self._check_sensitive_data_exposure(config)
         self._check_excessive_permissions(config)
+        self._check_config_completeness(config)
 
         # Calculate security score
         security_score = self._calculate_score()
@@ -907,6 +908,167 @@ class MCPSecurityScanner:
         """Find the field path in config that matches evidence."""
         # Simple implementation - in production, would do proper path tracking
         return "unknown"
+
+    def _check_config_completeness(self, config: dict[str, Any]) -> None:
+        """Check for missing critical security sections.
+
+        A config that omits key sections should NOT score 100/100.
+        Missing sections are flagged as security issues, not just info.
+        """
+        server = config.get("server", {})
+
+        # TLS / transport encryption
+        has_tls = bool(
+            server.get("tls")
+            or server.get("ssl")
+            or server.get("https")
+            or config.get("authentication", {}).get("certificate_path")
+            or config.get("authentication", {}).get("tls")
+        )
+        transport = server.get("transport", "")
+        is_stdio = transport == "stdio"
+
+        if not has_tls and not is_stdio:
+            self.vulnerabilities.append(
+                Vulnerability(
+                    id="NET-NO-TLS",
+                    title="No TLS/SSL Configuration",
+                    description=(
+                        "No TLS configuration found. Network-exposed MCP "
+                        "servers should use TLS to encrypt traffic."
+                    ),
+                    risk_level=RiskLevel.HIGH.value,
+                    affected_field="server.tls",
+                    remediation=(
+                        "Add TLS configuration with a valid certificate. "
+                        'Example: "server": {"tls": {"cert": "/path/to/cert.pem", '
+                        '"key": "/path/to/key.pem"}}'
+                    ),
+                    evidence="No tls, ssl, or https field in server config",
+                )
+            )
+
+        # Rate limiting
+        tools = config.get("tools", {})
+        has_any_rate_limit = False
+        for _name, tool_config in tools.items():
+            if isinstance(tool_config, dict) and (
+                tool_config.get("rate_limit") or tool_config.get("rateLimit")
+            ):
+                has_any_rate_limit = True
+                break
+        global_rate_limit = (
+            server.get("rate_limit")
+            or server.get("rateLimit")
+            or config.get("rate_limit")
+            or config.get("rateLimit")
+        )
+        if not has_any_rate_limit and not global_rate_limit:
+            self.vulnerabilities.append(
+                Vulnerability(
+                    id="MISSING-RATE-LIMIT",
+                    title="No Rate Limiting Configured",
+                    description=(
+                        "No rate limiting found on tools or server. "
+                        "Without rate limits, agents can make unlimited "
+                        "requests, enabling DoS or resource exhaustion."
+                    ),
+                    risk_level=RiskLevel.MEDIUM.value,
+                    affected_field="rate_limit",
+                    remediation=(
+                        "Add rate limits per tool or globally. "
+                        'Example: "rate_limit": {"requests_per_minute": 60}'
+                    ),
+                    evidence="No rate_limit field found in config",
+                )
+            )
+
+        # Input validation / sanitization
+        has_input_validation = False
+        for _name, tool_config in tools.items():
+            if isinstance(tool_config, dict) and (
+                tool_config.get("input_validation")
+                or tool_config.get("inputValidation")
+                or tool_config.get("schema")
+                or tool_config.get("inputSchema")
+            ):
+                has_input_validation = True
+                break
+        if tools and not has_input_validation:
+            self.vulnerabilities.append(
+                Vulnerability(
+                    id="MISSING-INPUT-VALIDATION",
+                    title="No Input Validation on Tools",
+                    description=(
+                        "No input validation or schema defined for tools. "
+                        "Without validation, tools accept arbitrary input "
+                        "from agents, increasing injection risk."
+                    ),
+                    risk_level=RiskLevel.MEDIUM.value,
+                    affected_field="tools.*.input_validation",
+                    remediation=(
+                        "Add input schemas or validation rules per tool. "
+                        'Example: "inputSchema": {"type": "object", '
+                        '"properties": {...}, "required": [...]}'
+                    ),
+                    evidence="No input_validation or schema on any tool",
+                )
+            )
+
+        # Logging / audit trail
+        has_logging = bool(
+            config.get("logging")
+            or config.get("audit")
+            or config.get("audit_log")
+            or server.get("logging")
+            or server.get("log_level")
+        )
+        if not has_logging:
+            self.vulnerabilities.append(
+                Vulnerability(
+                    id="MISSING-LOGGING",
+                    title="No Logging or Audit Trail",
+                    description=(
+                        "No logging configuration found. Without audit "
+                        "logs, security incidents cannot be investigated."
+                    ),
+                    risk_level=RiskLevel.LOW.value,
+                    affected_field="logging",
+                    remediation=(
+                        "Add logging configuration. "
+                        'Example: "logging": {"level": "info", '
+                        '"destination": "/var/log/mcp.log"}'
+                    ),
+                    evidence="No logging or audit field in config",
+                )
+            )
+
+        # Server transport / binding
+        if not server or (
+            not server.get("transport")
+            and not server.get("host")
+            and not server.get("port")
+            and not server.get("command")
+        ):
+            self.vulnerabilities.append(
+                Vulnerability(
+                    id="MISSING-SERVER-CONFIG",
+                    title="Incomplete Server Configuration",
+                    description=(
+                        "Server section is empty or missing transport, "
+                        "host, and port. The server's network exposure "
+                        "cannot be assessed."
+                    ),
+                    risk_level=RiskLevel.MEDIUM.value,
+                    affected_field="server",
+                    remediation=(
+                        "Define server transport and binding. "
+                        'Example: "server": {"transport": "http", '
+                        '"host": "127.0.0.1", "port": 3000}'
+                    ),
+                    evidence="Server section is empty or incomplete",
+                )
+            )
 
     def _calculate_score(self) -> int:
         """Calculate security score from 0-100.
