@@ -7,6 +7,7 @@ from __future__ import annotations
 import os
 import time
 from datetime import datetime, timezone
+from pathlib import Path
 from typing import Any
 
 from fastapi import APIRouter
@@ -111,7 +112,19 @@ def health_dashboard() -> dict[str, Any]:
         "true",
         "yes",
     )
-    api_key_present = bool(os.environ.get("NAVIL_API_KEY", "").strip())
+    # Check env var first, then ~/.navil/config.yaml
+    api_key = os.environ.get("NAVIL_API_KEY", "").strip()
+    if not api_key:
+        try:
+            import yaml
+
+            cfg_path = Path.home() / ".navil" / "config.yaml"
+            if cfg_path.exists():
+                cfg = yaml.safe_load(cfg_path.read_text()) or {}
+                api_key = (cfg.get("cloud", {}).get("api_key") or "").strip()
+        except Exception:
+            pass
+    api_key_present = bool(api_key)
 
     # --- LLM status ---
     llm_available = s.llm_available
