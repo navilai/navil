@@ -452,6 +452,82 @@ Full-featured security dashboard for visualizing and managing your MCP fleet. Av
 
 </details>
 
+## CLI Reference
+
+### Getting Started
+| Command | What It Does |
+|---------|-------------|
+| `navil wrap config.json` | Wrap all MCP servers with security proxy |
+| `navil wrap config.json --undo` | Restore original config |
+| `navil wrap config.json --dry-run` | Preview without modifying |
+| `navil wrap config.json --agent-prefix openclaw` | Custom agent names (e.g. `openclaw-filesystem`) |
+| `navil init` | Initialize navil config in current directory |
+| `navil init --with-policy` | Initialize with a starter policy.yaml |
+
+> **Tip: Multi-client setups.** If you run multiple AI clients (OpenClaw + NemoClaw + Cursor) on the same machine, use `--agent-prefix` to distinguish them in the dashboard:
+> ```bash
+> navil wrap ~/.openclaw/config.json --agent-prefix openclaw
+> navil wrap ~/.nemoclaw/mcp.json --agent-prefix nemo
+> navil wrap ~/.cursor/mcp.json --agent-prefix cursor
+> ```
+> This gives you per-client visibility: `openclaw-filesystem`, `nemo-github`, `cursor-terminal`.
+
+### Security Analysis
+| Command | What It Does |
+|---------|-------------|
+| `navil scan config.json` | Scan config for vulnerabilities (0-100 score) |
+| `navil scan config.json --format sarif` | Output SARIF for CI/CD |
+| `navil analyze /path/to/server` | Static analysis of MCP server source code |
+| `navil pentest` | Run 11 SAFE-MCP attack simulations |
+| `navil test --pool default` | Test coverage against threat pool |
+| `navil redteam --generate` | AI-generated novel attack hypotheses |
+
+### Runtime Protection
+| Command | What It Does |
+|---------|-------------|
+| `navil proxy start --target URL` | Start HTTP security proxy |
+| `navil monitor start` | Start real-time anomaly monitoring |
+| `navil policy check --agent X --tool Y` | Check if a tool call would be allowed |
+| `navil policy auto-generate` | Generate policy from observed behavior |
+| `navil policy suggest` | Show pending policy suggestions |
+| `navil policy rollback` | Undo auto-generated policy changes |
+
+### Identity & Credentials
+| Command | What It Does |
+|---------|-------------|
+| `navil credential issue --agent X --scope Y` | Issue JWT credential |
+| `navil credential list` | List all credentials |
+| `navil credential revoke --token-id X` | Revoke a credential |
+| `navil credential delegate --parent X --child Y` | Delegate to sub-agent |
+| `navil a2a card` | Print agent discovery card (A2A spec) |
+
+### Cloud & Fleet
+| Command | What It Does |
+|---------|-------------|
+| `navil cloud login` | Connect to Navil Cloud (OAuth) |
+| `navil cloud status` | Show cloud connection status |
+| `navil cloud serve` | Start local dashboard + API server |
+| `navil report` | Generate security report |
+
+### Threat Intelligence
+| Command | What It Does |
+|---------|-------------|
+| `navil crawl registries` | Discover MCP servers from npm/PyPI |
+| `navil crawl threat-scan` | Crawl public threat intel sources |
+| `navil scan-batch results/` | Bulk scan crawl results |
+| `navil blocklist show` | Show loaded threat patterns |
+| `navil honeypot start` | Start honeypot decoy servers |
+
+### Advanced
+| Command | What It Does |
+|---------|-------------|
+| `navil openapi convert spec.yaml` | Convert OpenAPI to MCP server |
+| `navil llm analyze` | LLM-powered threat analysis |
+| `navil feedback submit --alert-id X` | Submit feedback on alerts |
+| `navil seed-database` | Populate with synthetic attack data |
+| `navil ml train` | Train ML anomaly detection models |
+| `navil adaptive show` | Show adaptive baselines |
+
 ## Architecture
 
 ```
