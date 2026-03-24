@@ -702,6 +702,9 @@ function TelemetryToggle() {
             Sharing anonymous attack metadata and receiving real-time protection.
             Add a Navil Cloud API key for dashboard access and premium features.
           </p>
+          <p className="text-[10px] text-[#5a6a8a] mt-2 leading-relaxed">
+            Paid subscribers (Pro+) can opt out of sharing while keeping full protection.
+          </p>
         </div>
       ) : (
         <>

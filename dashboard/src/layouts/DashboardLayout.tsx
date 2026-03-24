@@ -6,7 +6,14 @@ import Icon, { type IconName } from '../components/Icon'
 const hasClerk = !!import.meta.env.VITE_CLERK_PUBLISHABLE_KEY
 const hasCloudApi = !!import.meta.env.VITE_API_BASE_URL
 
-const navItems: { to: string; label: string; icon: IconName }[] = [
+interface NavItem {
+  to: string
+  label: string
+  icon: IconName
+  badge?: string
+}
+
+const navItems: NavItem[] = [
   { to: '/',             label: 'Agents',       icon: 'bot' },
   { to: '/gateway',      label: 'Gateway',      icon: 'gateway' },
   { to: '/pentest',      label: 'Pentest',      icon: 'pentest' },
@@ -17,7 +24,7 @@ const navItems: { to: string; label: string; icon: IconName }[] = [
   { to: '/scoping',      label: 'Scoping',      icon: 'layers' },
   { to: '/feedback',     label: 'Feedback',     icon: 'activity' },
   { to: '/self-healing', label: 'Self-Healing', icon: 'sparkles' },
-  { to: '/agent-card',   label: 'A2A',           icon: 'link' },
+  { to: '/agent-card',   label: 'A2A',           icon: 'link', badge: 'Beta' },
   { to: '/settings',     label: 'Settings',     icon: 'settings' },
 ]
 
@@ -67,7 +74,7 @@ export default function DashboardLayout() {
         </div>
 
         <nav className="relative flex-1 p-3 space-y-0.5 overflow-y-auto">
-          {navItems.map(({ to, label, icon }) => (
+          {navItems.map(({ to, label, icon, badge }) => (
             <NavLink
               key={to}
               to={to}
@@ -83,6 +90,11 @@ export default function DashboardLayout() {
             >
               <Icon name={icon} size={18} />
               {label}
+              {badge && (
+                <span className="ml-auto text-[9px] font-semibold px-1.5 py-0.5 rounded bg-amber-500/15 text-amber-400 uppercase tracking-wider">
+                  {badge}
+                </span>
+              )}
             </NavLink>
           ))}
 
