@@ -180,14 +180,24 @@ def fake_redis() -> FakeRedis:
 def sample_secure_config() -> dict[str, Any]:
     """A secure MCP server configuration with no vulnerabilities."""
     return {
-        "server": {"name": "Secure Server", "protocol": "https", "verified": True},
+        "server": {
+            "name": "Secure Server",
+            "protocol": "https",
+            "verified": True,
+            "host": "127.0.0.1",
+            "port": 3000,
+            "transport": "http",
+            "tls": {"cert": "/path/to/cert.pem", "key": "/path/to/key.pem"},
+        },
         "authentication": {"type": "mTLS", "key_rotation": True},
+        "logging": {"level": "info", "destination": "/var/log/mcp.log"},
         "tools": [
             {
                 "name": "safe_tool",
                 "permissions": ["read"],
                 "restrictions": {"max_size": "10MB"},
                 "rate_limit": 100,
+                "inputSchema": {"type": "object", "properties": {}},
             }
         ],
     }

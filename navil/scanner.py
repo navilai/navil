@@ -362,17 +362,16 @@ class MCPSecurityScanner:
                     id="AUTH-MISSING",
                     title="Missing Authentication Configuration",
                     description=(
-                        "No authentication mechanism configured. This is normal for local "
-                        "stdio MCP servers but should be addressed for HTTP deployments "
-                        "exposed to networks."
+                        "No authentication mechanism configured. "
+                        "HTTP deployments exposed to networks must have "
+                        "authentication to prevent unauthorized access."
                     ),
-                    risk_level=RiskLevel.INFO.value,
+                    risk_level=RiskLevel.MEDIUM.value,
                     affected_field="authentication",
                     remediation=(
-                        "For local development with stdio transport, authentication is "
-                        "typically not required. For HTTP deployments exposed to networks, "
-                        "implement strong authentication (OAuth2, mTLS, API keys) for "
-                        "server access."
+                        "Implement strong authentication (OAuth2, mTLS, API keys) for "
+                        "server access. For local stdio transport, authentication is "
+                        "typically not required."
                     ),
                     evidence="Authentication field is missing or empty",
                 )
@@ -860,11 +859,35 @@ class MCPSecurityScanner:
         "PERM-EXCESSIVE",
         "SUPPLY-PIPE-SHELL",
         "SUPPLY-PKG-INSTALL",
+        # Missing required fields are real security issues
+        "NET-NO-TLS",
+        "MISSING-RATE-LIMIT",
+        "AUTH-MISSING",
+        "MISSING-LOGGING",
+        "MISSING-SERVER-CONFIG",
+        "MISSING-INPUT-VALIDATION",
+        "MISSING-SERVER-HOST",
+        "MISSING-SERVER-PORT",
+        "MISSING-SERVER-TRANSPORT",
+    }
+
+    # Explicit per-finding point deductions.  When a finding ID appears here
+    # the fixed deduction is used instead of the generic risk-level-based one.
+    # This lets us assign precise penalties for missing required fields.
+    SCORE_DEDUCTIONS: dict[str, int] = {
+        "NET-NO-TLS": 15,
+        "MISSING-RATE-LIMIT": 10,
+        "AUTH-MISSING": 5,
+        "MISSING-LOGGING": 5,
+        "MISSING-SERVER-CONFIG": 10,
+        "MISSING-INPUT-VALIDATION": 5,
+        "MISSING-SERVER-HOST": 5,
+        "MISSING-SERVER-PORT": 5,
+        "MISSING-SERVER-TRANSPORT": 5,
     }
 
     # IDs that are hardening recommendations (nice to have)
     HARDENING_RECOMMENDATION_IDS = {
-        "AUTH-MISSING",
         "SRC-UNVERIFIED",
         "SUPPLY-NPX-EXEC",
         "SUPPLY-GH-UNVERIFIED",
@@ -918,12 +941,11 @@ class MCPSecurityScanner:
         server = config.get("server", {})
 
         # TLS / transport encryption
+        # Only count explicit TLS/SSL on the *server* block or a dedicated tls
+        # section.  An authentication certificate_path is for client-cert auth,
+        # not transport encryption, so it should not suppress this finding.
         has_tls = bool(
-            server.get("tls")
-            or server.get("ssl")
-            or server.get("https")
-            or config.get("authentication", {}).get("certificate_path")
-            or config.get("authentication", {}).get("tls")
+            server.get("tls") or server.get("ssl") or server.get("https") or config.get("tls")
         )
         transport = server.get("transport", "")
         is_stdio = transport == "stdio"
@@ -950,8 +972,17 @@ class MCPSecurityScanner:
 
         # Rate limiting
         tools = config.get("tools", {})
+        # Normalise tools to an iterable of tool config dicts regardless of
+        # whether the config uses a list or a dict of named tools.
+        if isinstance(tools, dict):
+            tool_configs = list(tools.values())
+        elif isinstance(tools, list):
+            tool_configs = tools
+        else:
+            tool_configs = []
+
         has_any_rate_limit = False
-        for _name, tool_config in tools.items():
+        for tool_config in tool_configs:
             if isinstance(tool_config, dict) and (
                 tool_config.get("rate_limit") or tool_config.get("rateLimit")
             ):
@@ -985,7 +1016,7 @@ class MCPSecurityScanner:
 
         # Input validation / sanitization
         has_input_validation = False
-        for _name, tool_config in tools.items():
+        for tool_config in tool_configs:
             if isinstance(tool_config, dict) and (
                 tool_config.get("input_validation")
                 or tool_config.get("inputValidation")
@@ -1043,7 +1074,7 @@ class MCPSecurityScanner:
                 )
             )
 
-        # Server transport / binding
+        # Server transport / binding — empty or missing server block
         if not server or (
             not server.get("transport")
             and not server.get("host")
@@ -1070,10 +1101,58 @@ class MCPSecurityScanner:
                 )
             )
 
+        # Individual missing server fields (deducted separately even when
+        # the server block exists but is incomplete)
+        if not server.get("host"):
+            self.vulnerabilities.append(
+                Vulnerability(
+                    id="MISSING-SERVER-HOST",
+                    title="Missing Server Host",
+                    description=(
+                        "No host/bind address configured. Cannot determine "
+                        "whether the server is locally bound or network-exposed."
+                    ),
+                    risk_level=RiskLevel.MEDIUM.value,
+                    affected_field="server.host",
+                    remediation=('Specify a bind address. Example: "host": "127.0.0.1"'),
+                    evidence="No host field in server config",
+                )
+            )
+
+        if not server.get("port"):
+            self.vulnerabilities.append(
+                Vulnerability(
+                    id="MISSING-SERVER-PORT",
+                    title="Missing Server Port",
+                    description=("No port configured. Cannot assess network exposure."),
+                    risk_level=RiskLevel.MEDIUM.value,
+                    affected_field="server.port",
+                    remediation=('Specify a port. Example: "port": 3000'),
+                    evidence="No port field in server config",
+                )
+            )
+
+        if not server.get("transport") and not server.get("command"):
+            self.vulnerabilities.append(
+                Vulnerability(
+                    id="MISSING-SERVER-TRANSPORT",
+                    title="Missing Server Transport",
+                    description=(
+                        "No transport type configured (http, stdio, etc.). "
+                        "Cannot determine communication method."
+                    ),
+                    risk_level=RiskLevel.MEDIUM.value,
+                    affected_field="server.transport",
+                    remediation=('Specify a transport. Example: "transport": "http"'),
+                    evidence="No transport field in server config",
+                )
+            )
+
     def _calculate_score(self) -> int:
         """Calculate security score from 0-100.
 
-        Security Issues receive full deduction weight.
+        Findings with an entry in SCORE_DEDUCTIONS use their fixed penalty.
+        Otherwise, Security Issues receive full deduction weight and
         Hardening Recommendations receive 1/3 of their normal deduction.
         """
         if not self.vulnerabilities:
@@ -1084,6 +1163,11 @@ class MCPSecurityScanner:
 
         score = 100.0
         for vuln in self.vulnerabilities:
+            # Use explicit per-finding deduction when available
+            if vuln.id in self.SCORE_DEDUCTIONS:
+                score -= self.SCORE_DEDUCTIONS[vuln.id]
+                continue
+
             is_security_issue = id(vuln) in security_issues
             weight = 1.0 if is_security_issue else (1.0 / 3.0)
 

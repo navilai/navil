@@ -142,9 +142,23 @@ def test_nonexistent_file(scanner: MCPSecurityScanner) -> None:
 def test_security_score_calculation(scanner: MCPSecurityScanner, config_file) -> None:
     """Secure config should produce a score between 70 and 100."""
     config = {
-        "server": {"protocol": "https", "verified": True},
+        "server": {
+            "protocol": "https",
+            "verified": True,
+            "host": "127.0.0.1",
+            "port": 3000,
+            "transport": "http",
+            "tls": {"cert": "/path/to/cert.pem", "key": "/path/to/key.pem"},
+        },
         "authentication": {"type": "mTLS"},
-        "tools": [{"name": "safe", "permissions": ["read"]}],
+        "logging": {"level": "info"},
+        "tools": [
+            {
+                "name": "safe",
+                "permissions": ["read"],
+                "inputSchema": {"type": "object"},
+            }
+        ],
     }
     path = config_file(config)
     result = scanner.scan(path)
@@ -771,17 +785,17 @@ class TestSecureConfigWithNewChecks:
 
 
 class TestAuthMissingDowngrade:
-    """AUTH-MISSING should now be INFO severity."""
+    """AUTH-MISSING should now be MEDIUM severity (security issue)."""
 
-    def test_auth_missing_is_info(self, scanner: MCPSecurityScanner, config_file) -> None:
-        """Missing auth should produce INFO, not HIGH."""
+    def test_auth_missing_is_medium(self, scanner: MCPSecurityScanner, config_file) -> None:
+        """Missing auth should produce MEDIUM severity."""
         config = {"server": {"name": "Test Server"}, "tools": []}
         path = config_file(config)
         result = scanner.scan(path)
         vulns = result["vulnerabilities"]
         auth_vulns = [v for v in vulns if v["id"] == "AUTH-MISSING"]
         assert len(auth_vulns) == 1
-        assert auth_vulns[0]["risk_level"] == "INFO"
+        assert auth_vulns[0]["risk_level"] == "MEDIUM"
 
 
 class TestNpxWhitelist:
@@ -1071,13 +1085,13 @@ class TestSeverityTiering:
         sec_ids = [v["id"] for v in result["security_issues"]]
         assert any("CRED-" in sid for sid in sec_ids)
 
-    def test_auth_missing_is_hardening(self, scanner: MCPSecurityScanner, config_file) -> None:
-        """Missing auth should be categorized as hardening recommendation."""
+    def test_auth_missing_is_security_issue(self, scanner: MCPSecurityScanner, config_file) -> None:
+        """Missing auth should be categorized as a security issue."""
         config = {"server": {"name": "Test Server"}, "tools": []}
         path = config_file(config)
         result = scanner.scan(path)
-        hard_ids = [v["id"] for v in result["hardening_recommendations"]]
-        assert "AUTH-MISSING" in hard_ids
+        sec_ids = [v["id"] for v in result["security_issues"]]
+        assert "AUTH-MISSING" in sec_ids
 
     def test_score_reduces_hardening_weight(self, scanner: MCPSecurityScanner, config_file) -> None:
         """Hardening recommendations should have 1/3 weight on score."""
