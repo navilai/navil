@@ -681,16 +681,26 @@ function TelemetryToggle() {
         )}
       </div>
 
-      {!apiKeyPresent ? (
+      {enabled === false ? (
         <div className="p-3 rounded-lg bg-[#ff4d6a]/5 border border-[#ff4d6a]/20">
           <div className="flex items-center gap-2 mb-1.5">
             <Icon name="warning" size={14} className="text-[#ff4d6a]" />
             <p className="text-sm text-[#ff4d6a] font-medium">Not sharing — not protected</p>
           </div>
           <p className="text-xs text-[#8b9bc0] leading-relaxed">
-            This instance is running without community threat intelligence. Add a free API key above
-            to join the threat feed — your instance shares anonymized attack metadata
-            and receives real-time protection from the network.
+            Community threat feed is disabled. Your instance is not receiving real-time
+            protection from the network. Enable sharing to join the community feed.
+          </p>
+        </div>
+      ) : !apiKeyPresent ? (
+        <div className="p-3 rounded-lg bg-[#00e5c8]/5 border border-[#00e5c8]/20">
+          <div className="flex items-center gap-2 mb-1.5">
+            <Icon name="check" size={14} className="text-[#00e5c8]" />
+            <p className="text-sm text-[#00e5c8] font-medium">Contributing to community feed</p>
+          </div>
+          <p className="text-xs text-[#8b9bc0] leading-relaxed">
+            Sharing anonymous attack metadata and receiving real-time protection.
+            Add a Navil Cloud API key for dashboard access and premium features.
           </p>
         </div>
       ) : (
