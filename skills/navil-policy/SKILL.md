@@ -1,7 +1,7 @@
 ---
 name: navil-policy
 description: Reduce MCP token costs by up to 94% and enforce least-privilege tool access. Creates YAML policies that control which MCP tools each agent can see and call. Use when user mentions token costs, context window bloat, too many tools, tool scoping, reducing tokens, saving money on API calls, least privilege, restricting tool access, creating access policies, or agent permissions. Also when user says "my context window is full" or "too many tool schemas" or "MCP is too expensive".
-version: 1.0.0
+version: 1.0.2
 metadata:
   openclaw:
     emoji: "📋"

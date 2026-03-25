@@ -1,7 +1,7 @@
 ---
 name: navil-shield
 description: Runtime security for OpenClaw. Protects MCP servers and CLI tools from prompt injection, data exfiltration, and privilege escalation at runtime — not just scan-time. Use when the user asks to secure their setup, protect against MCP attacks, audit installed skills, scan for threats, harden their OpenClaw configuration, check security status, wrap MCP servers with monitoring, block malicious tool calls, enable threat detection, or connect to community threat intelligence. Also activates when user mentions security, ClawHavoc, CVE-2026-25253, malicious skills, prompt injection, or data leaks.
-version: 1.0.0
+version: 1.0.2
 metadata:
   openclaw:
     emoji: "🛡️"
@@ -15,6 +15,13 @@ metadata:
         package: navil
         bins: [navil]
         label: "Install Navil runtime security"
+    env:
+      - name: NAVIL_DISABLE_CLOUD_SYNC
+        required: false
+        description: "Set to 'true' to disable anonymous telemetry sharing. Default: false (sharing enabled)."
+      - name: NAVIL_API_KEY
+        required: false
+        description: "API key for Navil Cloud (paid tiers). Not needed for Community tier."
 ---
 
 # Navil Shield — Runtime Security for OpenClaw
@@ -27,8 +34,8 @@ Static scanning catches 1.7% of threats. Runtime monitoring catches the other 98
 
 Navil Shield wraps every MCP server in your OpenClaw config with a transparent security proxy that:
 
-- **Intercepts every tool call** in real-time and checks it against 568+ known attack patterns
-- **Detects behavioral anomalies** using 12 statistical detectors with adaptive baselines
+- **Intercepts every tool call** in real-time and checks it against 568+ known attack patterns across 30 categories
+- **Detects behavioral anomalies** using 11 statistical detectors with adaptive baselines
 - **Enforces policies** — restrict which tools each agent can see and call
 - **Connects to the Community Threat Network** — attack patterns discovered by other Navil users protect you within seconds
 - **Logs everything** — full audit trail of every tool call, policy decision, and anomaly
@@ -157,6 +164,17 @@ navil wrap <path-to-config> --undo
 ```
 
 This restores the original config from the automatic backup.
+
+## Telemetry Transparency
+
+By default, Navil shares **anonymized threat metadata** with the Community Threat Network. Here is exactly what is sent:
+
+- **Sent:** anomaly type (e.g. "RATE_SPIKE"), severity, confidence score, tool name, timing metadata
+- **NOT sent:** raw tool arguments, tool responses, file contents, agent prompts, user data
+- **Agent IDs:** one-way HMAC-SHA256 hashed — irreversible, cannot be linked to real identities
+- **Destination:** `https://navil-cloud-api.onrender.com/v1/telemetry` (see source: `navil/cloud/telemetry_sync.py`)
+- **Opt-out:** set `NAVIL_DISABLE_CLOUD_SYNC=true` to stop all telemetry
+- **Full audit:** inspect `navil/cloud/telemetry_sync.py` in the repo to see exactly what is collected
 
 ## What Navil Shield Does NOT Do
 

@@ -1,7 +1,7 @@
 ---
 name: navil-audit
 description: Deep security audit for OpenClaw. Run a comprehensive scan of all installed skills, MCP servers, and agent configuration. Generates a detailed security report with severity-ranked findings and remediation steps. Use when user says "audit my security", "deep scan", "full security check", "pentest my setup", "run security tests", "check for vulnerabilities", "am I safe", or "what MCP attacks would work against me". Also for CI/CD security gates and compliance reporting.
-version: 1.0.0
+version: 1.0.2
 metadata:
   openclaw:
     emoji: "🔍"
