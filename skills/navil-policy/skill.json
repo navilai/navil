@@ -1,6 +1,6 @@
 {
   "name": "navil-policy",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "Reduce MCP token costs by up to 94% via tool scoping. YAML-driven policies that control which tools each agent can see and call.",
   "author": "ivanpantheon",
   "license": "Apache-2.0",

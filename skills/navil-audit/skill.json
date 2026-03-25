@@ -1,6 +1,6 @@
 {
   "name": "navil-audit",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "Deep security audit for OpenClaw. Comprehensive scan of MCP servers, penetration testing with 11 attack simulations, and actionable remediation reports.",
   "author": "ivanpantheon",
   "license": "Apache-2.0",
