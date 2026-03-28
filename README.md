@@ -23,7 +23,7 @@
 
 ```bash
 pip install navil
-navil wrap ~/.cursor/mcp.json    # or claude_desktop_config.json, openclaw.json
+navil secure
 ```
 
 <p align="center">
@@ -66,23 +66,61 @@ Navil fixes this in one command:
 
 ```bash
 pip install navil
-navil wrap your_mcp_config.json
+navil secure
 ```
 
-Every MCP server in your config is now behind a security proxy that monitors tool calls, enforces policies, detects anomalies, and blocks known attack patterns -- with [<3 us overhead per message](#performance). Your original config is backed up automatically.
+Every MCP config on your system is auto-discovered, every server is wrapped with the security proxy, baseline policies are generated, and you see a before/after coverage score — all in under 60 seconds. Your original configs are backed up automatically.
+
+```
+🔍 Discovering MCP configs...
+   Found: ~/.cursor/mcp.json (12 servers)
+   Found: ~/Library/Application Support/Claude/claude_desktop_config.json (4 servers)
+
+📊 Scanning current coverage...
+   Running 568 detection patterns across 30 categories...
+   Current coverage: 23% (4/30 categories protected)
+
+🔒 Wrapping servers with Navil proxy...
+   ✓ Wrapped 16 servers in ~/.cursor/mcp.json
+   ✓ Wrapped 4 servers in ~/Library/.../claude_desktop_config.json
+
+🧠 Generating baseline policies from server profiles...
+   ✓ 3 deny rules generated (secrets access, exfiltration endpoints, shell_exec)
+   ✓ 16 scope profiles created (agents see only the tools they need)
+
+📊 Re-scanning coverage with Navil active...
+   New coverage: 78% (23/30 categories protected)
+
+✅ Done in 47 seconds.
+
+   Before: 23% coverage  →  After: 78% coverage
+   7 categories still exposed — run navil test --show-gaps to see them.
+```
 
 This works for any MCP client, not just OpenClaw. But if you're running OpenClaw, you need this today.
 
 ## Getting Started
 
-Two lines. No API key. No signup.
+One command. No API key. No signup.
 
 ```bash
 pip install navil
-navil wrap ~/.cursor/mcp.json   # or claude_desktop_config.json, openclaw.json
+navil secure
 ```
 
-That's it. Every MCP server in your config is now wrapped with `navil shim`, which intercepts all tool calls and runs them through the security pipeline before forwarding.
+That's it. `navil secure` auto-discovers your MCP configs (Cursor, Claude Desktop, OpenClaw, Continue.dev), wraps every server with `navil shim`, generates baseline policies, and shows you a coverage score. Works fully offline.
+
+**Want to target a specific config?**
+
+```bash
+navil secure --config ~/.cursor/mcp.json
+```
+
+**Preview without making changes:**
+
+```bash
+navil secure --dry-run
+```
 
 **Already have Navil? Upgrade to the latest:**
 
@@ -97,6 +135,15 @@ navil cloud login    # OAuth device flow -- opens browser, no API key to paste
 ```
 
 This connects your local instance to [navil.ai](https://navil.ai) for dashboards, per-agent trust scores, and real-time access to the community threat network. The free tier works without it.
+
+**Individual commands** (for when you want fine-grained control):
+
+```bash
+navil wrap ~/.cursor/mcp.json          # wrap servers in a specific config
+navil scan config.json                 # audit vulnerabilities (static analysis)
+navil test                             # fire threat pool scenarios, see coverage
+navil policy auto-generate             # generate policies from behavioral baselines
+```
 
 ## Who Is Navil For
 
