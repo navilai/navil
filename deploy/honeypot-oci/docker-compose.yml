@@ -208,6 +208,30 @@ services:
         max-size: "10m"
         max-file: "3"
 
+  # ── Log Collector (syncs honeypot interactions → backend radar) ──
+  honeypot-collector:
+    image: python:3.12-slim
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+      - collector-data:/data
+      - ./honeypot-collector.py:/app/collector.py:ro
+    environment:
+      - NAVIL_CLOUD_API=https://navil-cloud-api.onrender.com
+      - NAVIL_API_KEY=${NAVIL_API_KEY}
+      - SYNC_INTERVAL=60
+      - CONTAINER_PREFIX=navil-honeypot-
+    entrypoint: ["sh", "-c", "apt-get update -qq && apt-get install -y -qq docker.io >/dev/null 2>&1; python3 /app/collector.py"]
+    restart: unless-stopped
+    deploy:
+      resources:
+        limits:
+          cpus: '0.25'
+          memory: 128M
+    depends_on:
+      - honeypot-dev-tools
+      - honeypot-cloud-creds
+      - honeypot-db-admin
+
   # ── Cloudflare Tunnel (exposes all 10 honeypots) ──
   cloudflared:
     image: cloudflare/cloudflared:latest
@@ -242,3 +266,4 @@ services:
 
 volumes:
   scan-data:
+  collector-data:
