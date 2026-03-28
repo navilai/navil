@@ -402,25 +402,280 @@ def _fetch_source_results(source: dict[str, str | list[str]]) -> list[dict[str, 
     try:
         req = urllib.request.Request(url, method="GET")
         req.add_header("User-Agent", "Navil-ThreatIntel/1.0")
-        with urllib.request.urlopen(req, timeout=15) as resp:
-            _body = resp.read().decode("utf-8", errors="replace")
+        if name == "NIST NVD":
+            req.add_header("Accept", "application/json")
+        if name == "GitHub Advisory Database":
+            req = urllib.request.Request(
+                "https://api.github.com/advisories?type=reviewed&ecosystem=npm&per_page=30",
+                method="GET",
+            )
+            req.add_header("User-Agent", "Navil-ThreatIntel/1.0")
+            req.add_header("Accept", "application/vnd.github+json")
+        timeout = 45 if name == "arXiv" else 20
+        with urllib.request.urlopen(req, timeout=timeout) as resp:
+            body = resp.read().decode("utf-8", errors="replace")
     except Exception as exc:
         print(f"  Warning: Could not fetch {name}: {exc}")
         return []
 
-    # TODO: Implement source-specific parsers for each threat intel source.
-    # Each parser should extract attack descriptions from the response body.
-    # For now, return empty results as the HTML/API parsing is source-specific.
+    keywords = [k.lower() for k in source.get("keywords", [])]
     results: list[dict[str, str]] = []
 
-    # Placeholder: source-specific parsing would go here
-    # if name == "arXiv":
-    #     results = _parse_arxiv(body)
-    # elif name == "GitHub Advisory Database":
-    #     results = _parse_github_advisories(body)
-    # elif name == "NIST NVD":
-    #     results = _parse_nvd_json(body)
-    # ...
+    if name == "NIST NVD":
+        results = _parse_nvd_json(body, keywords)
+    elif name == "GitHub Advisory Database":
+        results = _parse_github_advisories(body, keywords)
+    elif name == "arXiv":
+        results = _parse_arxiv(body, keywords)
+    elif name in ("Invariant Labs Blog", "Trail of Bits Blog", "HuggingFace Reports"):
+        results = _parse_blog_html(body, str(name), url, keywords)
+    elif name == "GitHub Search":
+        results = _parse_github_search(body, keywords)
+
+    return results
+
+
+def _keyword_match(text: str, keywords: list[str], threshold: int = 2) -> bool:
+    """Return True if text contains at least `threshold` keywords."""
+    text_lower = text.lower()
+    return sum(1 for kw in keywords if kw in text_lower) >= threshold
+
+
+def _parse_nvd_json(body: str, keywords: list[str]) -> list[dict[str, str]]:
+    """Parse NIST NVD REST API JSON response for MCP-related CVEs."""
+    import json as _json
+
+    results: list[dict[str, str]] = []
+    try:
+        data = _json.loads(body)
+    except _json.JSONDecodeError:
+        return results
+
+    for item in data.get("vulnerabilities", [])[:50]:
+        cve = item.get("cve", {})
+        cve_id = cve.get("id", "")
+        descriptions = cve.get("descriptions", [])
+        desc_text = ""
+        for d in descriptions:
+            if d.get("lang") == "en":
+                desc_text = d.get("value", "")
+                break
+        if not desc_text:
+            continue
+
+        combined = f"{cve_id} {desc_text}"
+        if _keyword_match(combined, keywords):
+            # Extract CVSS score if available
+            metrics = cve.get("metrics", {})
+            cvss_score = ""
+            for metric_key in ("cvssMetricV31", "cvssMetricV30", "cvssMetricV2"):
+                metric_list = metrics.get(metric_key, [])
+                if metric_list:
+                    cvss_score = str(metric_list[0].get("cvssData", {}).get("baseScore", ""))
+                    break
+
+            severity = "medium"
+            if cvss_score:
+                try:
+                    score = float(cvss_score)
+                    if score >= 9.0:
+                        severity = "critical"
+                    elif score >= 7.0:
+                        severity = "high"
+                    elif score >= 4.0:
+                        severity = "medium"
+                    else:
+                        severity = "low"
+                except ValueError:
+                    pass
+
+            results.append(
+                {
+                    "description": f"[{cve_id}] (CVSS {cvss_score or '?'}, {severity}) {desc_text}",
+                    "source": "NIST NVD",
+                    "url": f"https://nvd.nist.gov/vuln/detail/{cve_id}",
+                }
+            )
+
+    return results
+
+
+def _parse_github_advisories(body: str, keywords: list[str]) -> list[dict[str, str]]:
+    """Parse GitHub Security Advisories API JSON response."""
+    import json as _json
+
+    results: list[dict[str, str]] = []
+    try:
+        advisories = _json.loads(body)
+    except _json.JSONDecodeError:
+        return results
+
+    if not isinstance(advisories, list):
+        return results
+
+    for adv in advisories[:30]:
+        summary = adv.get("summary", "")
+        description = adv.get("description", "")
+        ghsa_id = adv.get("ghsa_id", "")
+        cve_id = adv.get("cve_id", "") or ""
+        severity = adv.get("severity", "unknown")
+        html_url = adv.get("html_url", "")
+
+        combined = f"{summary} {description} {cve_id}"
+        if _keyword_match(combined, keywords):
+            label = cve_id or ghsa_id
+            results.append(
+                {
+                    "description": f"[{label}] ({severity}) {summary}. {description[:300]}",
+                    "source": "GitHub Advisory Database",
+                    "url": html_url or f"https://github.com/advisories/{ghsa_id}",
+                }
+            )
+
+    return results
+
+
+def _parse_arxiv(body: str, keywords: list[str]) -> list[dict[str, str]]:
+    """Parse arXiv search results HTML for relevant security papers."""
+    import re
+
+    results: list[dict[str, str]] = []
+
+    # arXiv search results have <li class="arxiv-result"> blocks
+    # Extract title and abstract from each
+    paper_blocks = re.findall(r'<li\s+class="arxiv-result">(.*?)</li>', body, re.DOTALL)
+
+    for block in paper_blocks[:20]:
+        # Extract title
+        title_match = re.search(
+            r'<p\s+class="title\s+is-5\s+mathjax">\s*(.*?)\s*</p>', block, re.DOTALL
+        )
+        title = re.sub(r"<[^>]+>", "", title_match.group(1)).strip() if title_match else ""
+
+        # Extract abstract
+        abstract_match = re.search(
+            r'<span\s+class="abstract-full[^"]*"[^>]*>(.*?)(?:<a|$)', block, re.DOTALL
+        )
+        if not abstract_match:
+            abstract_match = re.search(
+                r'<p\s+class="abstract\s+mathjax">\s*<span[^>]*>.*?</span>\s*(.*?)</p>',
+                block,
+                re.DOTALL,
+            )
+        abstract = (
+            re.sub(r"<[^>]+>", "", abstract_match.group(1)).strip()[:500] if abstract_match else ""
+        )
+
+        # Extract paper URL
+        url_match = re.search(r'href="(https://arxiv\.org/abs/[\d.]+)"', block)
+        paper_url = url_match.group(1) if url_match else ""
+
+        combined = f"{title} {abstract}"
+        if title and _keyword_match(combined, keywords):
+            results.append(
+                {
+                    "description": f"{title}. {abstract[:300]}",
+                    "source": "arXiv",
+                    "url": paper_url,
+                }
+            )
+
+    return results
+
+
+def _parse_blog_html(
+    body: str, source_name: str, base_url: str, keywords: list[str]
+) -> list[dict[str, str]]:
+    """Generic blog HTML parser — extracts article titles and links."""
+    import re
+    from urllib.parse import urljoin
+
+    results: list[dict[str, str]] = []
+
+    # Look for article/post links with titles
+    # Common patterns: <a href="..."><h2>Title</h2></a>, <h2><a href="...">Title</a></h2>,
+    # <article>...<a href="...">Title</a>...</article>
+    patterns = [
+        # <h2/h3><a href="URL" or href=URL>TITLE</a></h2/h3>
+        r'<h[23][^>]*>\s*<a[^>]+href=["\']?([^"\'\s>]+)["\']?[^>]*>(.*?)</a>\s*</h[23]>',
+        # <a href="URL">...<h2/h3>TITLE</h2/h3>...</a>
+        r'<a[^>]+href=["\']?([^"\'\s>]+)["\']?[^>]*>.*?<h[23][^>]*>(.*?)</h[23]>',
+        # <a href="URL" class="...post/article...">TITLE</a>
+        r'<a[^>]+href=["\']?([^"\'\s>]+)["\']?[^>]*class="[^"]*(?:post|article|blog|entry)[^"]*"[^>]*>(.*?)</a>',
+    ]
+
+    seen_urls: set[str] = set()
+    for pattern in patterns:
+        for match in re.finditer(pattern, body, re.DOTALL | re.IGNORECASE):
+            href = match.group(1)
+            title = re.sub(r"<[^>]+>", "", match.group(2)).strip()
+            if not title or len(title) < 10 or len(title) > 300:
+                continue
+
+            full_url = urljoin(base_url, href)
+            if full_url in seen_urls:
+                continue
+            seen_urls.add(full_url)
+
+            if _keyword_match(title, keywords, threshold=1):
+                results.append(
+                    {
+                        "description": title,
+                        "source": source_name,
+                        "url": full_url,
+                    }
+                )
+
+    return results
+
+
+def _parse_github_search(body: str, keywords: list[str]) -> list[dict[str, str]]:
+    """Parse GitHub repository search results HTML."""
+    import re
+
+    results: list[dict[str, str]] = []
+
+    # GitHub search results contain repo links and descriptions
+    repo_blocks = re.findall(
+        r'<a[^>]+href="(/[^/]+/[^/"]+)"[^>]*class="[^"]*v-align-middle[^"]*"[^>]*>(.*?)</a>',
+        body,
+        re.DOTALL,
+    )
+
+    # Also try data-testid pattern used in newer GitHub UI
+    if not repo_blocks:
+        repo_blocks = re.findall(
+            r'<a[^>]+href="(/[^/]+/[^/"]+)"[^>]*>([\w\-./]+)</a>',
+            body,
+            re.DOTALL,
+        )
+
+    seen: set[str] = set()
+    for href, name in repo_blocks[:20]:
+        repo_path = href.strip("/")
+        if repo_path in seen or repo_path.count("/") != 1:
+            continue
+        seen.add(repo_path)
+
+        name_clean = re.sub(r"<[^>]+>", "", name).strip()
+
+        # Look for description near this repo link
+        desc_match = re.search(
+            rf'{re.escape(href)}.*?<p[^>]*class="[^"]*(?:description|mb-1)[^"]*"[^>]*>(.*?)</p>',
+            body,
+            re.DOTALL,
+        )
+        desc_text = re.sub(r"<[^>]+>", "", desc_match.group(1)).strip()[:300] if desc_match else ""
+
+        combined = f"{name_clean} {desc_text}"
+        if _keyword_match(combined, keywords, threshold=1):
+            results.append(
+                {
+                    "description": f"{name_clean}: {desc_text}" if desc_text else name_clean,
+                    "source": "GitHub Search",
+                    "url": f"https://github.com/{repo_path}",
+                }
+            )
 
     return results
 
@@ -445,11 +700,10 @@ def _threat_scan_command(cli, args: argparse.Namespace) -> int:  # type: ignore[
             print(f"    Found {len(results)} candidates")
             all_discoveries.extend(results)
         else:
-            print("    No results (parser not yet implemented)")
+            print("    No results")
 
     if not all_discoveries:
         print("\nNo new attack vectors discovered.")
-        print("Note: Source-specific parsers are not yet implemented.")
         return 0
 
     # Dedup against existing vectors

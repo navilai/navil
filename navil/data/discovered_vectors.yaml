@@ -1,0 +1,765 @@
+vectors:
+- description: '[CVE-2026-4923] (medium) path-to-regexp vulnerable to Regular Expression
+    Denial of Service via multiple wildcards. ### Impact
+
+
+    When using multiple wildcards, combined with at least one parameter, a regular
+    expression can be generated that is vulnerable to ReDoS. This backtracking vulnerability
+    requires the second wildcard to be somewhere other than the end of the path.
+
+
+    **Unsafe examples:**
+
+
+    ```
+
+    /*foo-*bar-:baz
+
+    '
+  source: GitHub Advisory Database
+  url: https://github.com/advisories/GHSA-27v5-c462-wpq7
+  discovered_at: '2026-03-28T10:14:46.754770+00:00'
+- description: '[GHSA-h8r8-wccr-v5f2] (medium) DOMPurify is vulnerable to mutation-XSS
+    via Re-Contextualization . ## Description
+
+
+    A mutation-XSS (mXSS) condition was confirmed when sanitized HTML is reinserted
+    into a new parsing context using `innerHTML` and special wrappers. The vulnerable
+    wrappers confirmed in browser behavior are `script`, `xmp`, `iframe`, `noembed`,
+    `noframes`, and `noscript`. The payload r'
+  source: GitHub Advisory Database
+  url: https://github.com/advisories/GHSA-h8r8-wccr-v5f2
+  discovered_at: '2026-03-28T10:14:46.754770+00:00'
+- description: '[CVE-2026-34076] (high) Clerk: SSRF in the opt-in clerkFrontendApiProxy
+    feature may leak secret keys to unintended host. ## Summary
+
+
+    The `clerkFrontendApiProxy` function in `@clerk/backend` is vulnerable to Server-Side
+    Request Forgery (SSRF). An unauthenticated attacker can craft a request path that
+    causes the proxy to send the application''s `Clerk-Secret-Key` to an attacker-controlled
+    server.
+
+
+    ## Affected packages
+
+
+    O'
+  source: GitHub Advisory Database
+  url: https://github.com/advisories/GHSA-gjxx-92w9-8v8f
+  discovered_at: '2026-03-28T10:14:46.754770+00:00'
+- description: '[CVE-2026-33989] (high) @mobilenext/mobile-mcp alllows arbitrary file
+    write via Path Traversal in mobile screen capture tools. ### Summary
+
+    The `@mobilenext/mobile-mcp` server contains a Path Traversal vulnerability in
+    the `mobile_save_screenshot` and `mobile_start_screen_recording` tools. The `saveTo`
+    and `output` parameters were passed directly to filesystem operations without
+    validation, allowing an attacker to write file'
+  source: GitHub Advisory Database
+  url: https://github.com/advisories/GHSA-3p2m-h2v6-g9mx
+  discovered_at: '2026-03-28T10:14:46.754770+00:00'
+- description: '[CVE-2026-34043] (medium) Serialize JavaScript has CPU Exhaustion
+    Denial of Service via crafted array-like objects. ### Impact
+
+
+    **What kind of vulnerability is it?**
+
+
+    It is a **Denial of Service (DoS)** vulnerability caused by CPU exhaustion. When
+    serializing a specially crafted "array-like" object (an object that inherits from
+    `Array.prototype` but has a very large `length` property), the process enters
+    an inten'
+  source: GitHub Advisory Database
+  url: https://github.com/advisories/GHSA-qj8w-gfj5-8c6v
+  discovered_at: '2026-03-28T10:14:46.754770+00:00'
+- description: '[CVE-2026-33994] (medium) Locutus Prototype Pollution due to incomplete
+    fix for CVE-2026-25521. ## Summary
+
+
+    A prototype pollution vulnerability exists in the `parse_str` function of the
+    npm package locutus. An attacker can pollute `Object.prototype` by overriding
+    `RegExp.prototype.test` and then passing a crafted query string to `parse_str`,
+    bypassing the prototype pollution guard.
+
+
+    This vulne'
+  source: GitHub Advisory Database
+  url: https://github.com/advisories/GHSA-vc8f-x9pp-wf5p
+  discovered_at: '2026-03-28T10:14:46.754770+00:00'
+- description: '[CVE-2026-33993] (medium) Locutus has Prototype Pollution via __proto__
+    Key Injection in unserialize(). ## Summary
+
+
+    The `unserialize()` function in `locutus/php/var/unserialize` assigns deserialized
+    keys to plain objects via bracket notation without filtering the `__proto__` key.
+    When a PHP serialized payload contains `__proto__` as an array or object key,
+    JavaScript''s `__proto__` setter is invoked, r'
+  source: GitHub Advisory Database
+  url: https://github.com/advisories/GHSA-4mph-v827-f877
+  discovered_at: '2026-03-28T10:14:46.754770+00:00'
+- description: "[CVE-2026-33979] (high) Express XSS Sanitizer: allowedTags/allowedAttributes\
+    \ bypass leads to permissive sanitization (XSS risk). ## Description\nA vulnerability\
+    \ has been identified in express-xss-sanitizer (<= 2.0.1) where restrictive sanitization\
+    \ configurations are silently ignored.\n\nWhen a developer explicitly sets:\n\n\
+    \  allowedTags: []\n  allowedAttributes: {}\n\nthe library incorrectly treats\
+    \ these values as \"not provided\" due "
+  source: GitHub Advisory Database
+  url: https://github.com/advisories/GHSA-3843-rr4g-m8jq
+  discovered_at: '2026-03-28T10:14:46.754770+00:00'
+- description: Snyk Acquires Invariant Labs to Accelerate Agentic AI Security Innovation
+  source: Invariant Labs Blog
+  url: https://snyk.io/news/snyk-acquires-invariant-labs-to-accelerate-agentic-ai-security-innovation/
+  discovered_at: '2026-03-28T10:14:46.754770+00:00'
+- description: 'GitHub MCP Exploited: Accessing private repositories via MCP'
+  source: Invariant Labs Blog
+  url: https://invariantlabs.ai/blog/mcp-github-vulnerability.html
+  discovered_at: '2026-03-28T10:14:46.754770+00:00'
+- description: 'Introducing Guardrails: The contextual security layer for the agentic
+    era'
+  source: Invariant Labs Blog
+  url: https://invariantlabs.ai/blog/guardrails.html
+  discovered_at: '2026-03-28T10:14:46.754770+00:00'
+- description: 'Introducing MCP-Scan: Protecting MCP with Invariant'
+  source: Invariant Labs Blog
+  url: https://invariantlabs.ai/blog/introducing-mcp-scan.html
+  discovered_at: '2026-03-28T10:14:46.754770+00:00'
+- description: 'WhatsApp MCP Exploited: Exfiltrating your message history via MCP'
+  source: Invariant Labs Blog
+  url: https://invariantlabs.ai/blog/whatsapp-mcp-exploited.html
+  discovered_at: '2026-03-28T10:14:46.754770+00:00'
+- description: 'MCP Security Notification: Tool Poisoning Attacks'
+  source: Invariant Labs Blog
+  url: https://invariantlabs.ai/blog/mcp-security-notification-tool-poisoning-attacks.html
+  discovered_at: '2026-03-28T10:14:46.754770+00:00'
+- description: 'Invariant Gateway: A Seamless Debugging and Security Layer for Agentic
+    Applications'
+  source: Invariant Labs Blog
+  url: https://invariantlabs.ai/blog/announcing-invariant-gateway.html
+  discovered_at: '2026-03-28T10:14:46.754770+00:00'
+- description: Enhancing Browser Agent Safety with Guardrails
+  source: Invariant Labs Blog
+  url: https://invariantlabs.ai/blog/enhancing-browser-agent-safety.html
+  discovered_at: '2026-03-28T10:14:46.754770+00:00'
+- description: Santa's Agent Challenge
+  source: Invariant Labs Blog
+  url: https://invariantlabs.ai/blog/santas-agent-challenge.html
+  discovered_at: '2026-03-28T10:14:46.754770+00:00'
+- description: 'Releasing Explorer & Testing: Visualize and Understand AI agents'
+  source: Invariant Labs Blog
+  url: https://invariantlabs.ai/blog/explorer.html
+  discovered_at: '2026-03-28T10:14:46.754770+00:00'
+- description: 'AgentDojo: Jointly evaluate security and utility of AI agents'
+  source: Invariant Labs Blog
+  url: https://invariantlabs.ai/blog/agentdojo.html
+  discovered_at: '2026-03-28T10:14:46.754770+00:00'
+- description: 'Cracking the Code: Insights from players hacking our agent in the
+    CTF'
+  source: Invariant Labs Blog
+  url: https://invariantlabs.ai/blog/ctf24-summary.html
+  discovered_at: '2026-03-28T10:14:46.754770+00:00'
+- description: Agents with Formal Security Guarantees
+  source: Invariant Labs Blog
+  url: https://invariantlabs.ai/blog/icml2024-agents-formal-security.html
+  discovered_at: '2026-03-28T10:14:46.754770+00:00'
+- description: What we've learned from analyzing hundreds of AI web agent traces
+  source: Invariant Labs Blog
+  url: https://invariantlabs.ai/blog/what-we-learned-from-analyzing-web-agents.html
+  discovered_at: '2026-03-28T10:14:46.754770+00:00'
+- description: Hugging Face and VirusTotal collaborate to strengthen AI security
+  source: HuggingFace Reports
+  url: https://huggingface.co/
+  discovered_at: '2026-03-28T10:14:46.754770+00:00'
+- description: '4M Models Scanned: Protect AI + Hugging Face 6 Months In'
+  source: HuggingFace Reports
+  url: https://huggingface.co/blog/pai-6-month
+  discovered_at: '2026-03-28T10:14:46.754770+00:00'
+- description: Hugging Face and JFrog partner to make AI Security more transparent
+  source: HuggingFace Reports
+  url: https://huggingface.co/blog/jfrog
+  discovered_at: '2026-03-28T10:14:46.754770+00:00'
+- description: 'Hugging Face Teams Up with Protect AI: Enhancing Model Security for
+    the ML Community'
+  source: HuggingFace Reports
+  url: https://huggingface.co/blog/protectai
+  discovered_at: '2026-03-28T10:14:46.754770+00:00'
+- description: A Security Review of Gradio 5
+  source: HuggingFace Reports
+  url: https://huggingface.co/blog/gradio-5-security
+  discovered_at: '2026-03-28T10:14:46.754770+00:00'
+- description: 2024 Security Feature Highlights
+  source: HuggingFace Reports
+  url: https://huggingface.co/blog/2024-security-features
+  discovered_at: '2026-03-28T10:14:46.754770+00:00'
+- description: Space secrets security update
+  source: HuggingFace Reports
+  url: https://huggingface.co/blog/space-secrets-disclosure
+  discovered_at: '2026-03-28T10:14:46.754770+00:00'
+- description: Hugging Face partners with Wiz Research to Improve AI Security
+  source: HuggingFace Reports
+  url: https://huggingface.co/blog/hugging-face-wiz-security-blog
+  discovered_at: '2026-03-28T10:14:46.754770+00:00'
+- description: "[CVE-2025-4143] (CVSS 6.1, medium) The OAuth implementation in workers-oauth-provider\
+    \ that is part of  MCP framework https://github.com/cloudflare/workers-mcp , did\
+    \ not correctly validate that redirect_uri was on the allowed list of redirect\
+    \ URIs for the given client registration.\n\nFixed in:\_ https://github.com/cloudflare/workers-oauth-provider/pull/26\
+    \ https://github.com/cloudflare/workers-oauth-provider/pull/26 \n\nImpact:\n\n\
+    \ \n\nUnder certain circumstances (see below), if a victim had previously authorized\
+    \ with a server built on workers-oath-provider, and an attacker could later trick\
+    \ the victim into visiting a malicious web site, then attacker could potentially\
+    \ steal the victim's credentials to the same OAuth server and subsequently impersonate\
+    \ them.\n\nIn order for the attack to be possible, the OAuth server's authorized\
+    \ callback must be designed to auto-approve authorizations that appear to come\
+    \ from an OAuth client that the victim has authorized previously. The authorization\
+    \ flow is not implemented by workers-oauth-provider; it is up to the application\
+    \ built on top to decide whether to implement such automatic re-authorization.\
+    \ However, many applications do implement such logic.\n\nNote: It is a basic,\
+    \ well-known requirement that OAuth servers should verify that the redirect URI\
+    \ is among the allowed list for the client, both during the authorization flow\
+    \ and subsequently when exchanging the authorization code for an access token.\
+    \ workers-oauth-provider implemented only the latter check, not the former. Unfortunately,\
+    \ the former is the much more important check.\_Readers who are familiar with\
+    \ OAuth may recognize that failing to check redirect URIs against the allowed\
+    \ list is a well-known, basic mistake, covered extensively in the RFC and elsewhere.\
+    \ The author of this library would like everyone to know that he was, in fact,\
+    \ well-aware of this requirement, thought about it a lot while designing the library,\
+    \ and then, somehow, forgot to actually make sure the check was in the code. That\
+    \ is, it's not that he didn't know what he was doing, it's that he knew what he\
+    \ was doing but flubbed it."
+  source: NIST NVD
+  url: https://nvd.nist.gov/vuln/detail/CVE-2025-4143
+  discovered_at: '2026-03-28T10:14:46.754770+00:00'
+- description: '[CVE-2025-47274] (CVSS ?, medium) ToolHive is a utility designed to
+    simplify the deployment and management of Model Context Protocol (MCP) servers.
+    Due to the ordering of code used to start an MCP server container, versions of
+    ToolHive prior to 0.0.33 inadvertently store secrets in the run config files which
+    are used to restart stopped containers. This means that an attacker who has access
+    to the home folder of the user who starts the MCP server can read secrets without
+    needing access to the secrets store itself. This only applies to secrets which
+    were used in containers whose run configs exist at a point in time - other secrets
+    remaining inaccessible. ToolHive 0.0.33 fixes the issue. Some workarounds are
+    available. Stop and delete any running MCP servers, or manually remove any runconfigs
+    from `$HOME/Library/Application Support/toolhive/runconfigs/` (macOS) or `$HOME/.state/toolhive/runconfigs/`
+    (Linux).'
+  source: NIST NVD
+  url: https://nvd.nist.gov/vuln/detail/CVE-2025-47274
+  discovered_at: '2026-03-28T10:14:46.754770+00:00'
+- description: '[CVE-2025-5277] (CVSS 9.6, critical) aws-mcp-server MCP server is
+    vulnerable to command injection. An attacker can craft a prompt that once accessed
+    by the MCP client will run arbitrary commands on the host system.'
+  source: NIST NVD
+  url: https://nvd.nist.gov/vuln/detail/CVE-2025-5277
+  discovered_at: '2026-03-28T10:14:46.754770+00:00'
+- description: '[CVE-2025-5273] (CVSS 6.5, medium) All versions of the package mcp-markdownify-server
+    are vulnerable to Files or Directories Accessible to External Parties via the
+    get-markdown-file tool. An attacker can craft a prompt that, once accessed by
+    the MCP host, will allow it to read arbitrary files from the host running the
+    server.'
+  source: NIST NVD
+  url: https://nvd.nist.gov/vuln/detail/CVE-2025-5273
+  discovered_at: '2026-03-28T10:14:46.754770+00:00'
+- description: '[CVE-2025-5276] (CVSS 7.4, high) All versions of the package mcp-markdownify-server
+    are vulnerable to Server-Side Request Forgery (SSRF) via the Markdownify.get()
+    function. An attacker can craft a prompt that, once accessed by the MCP host,
+    can invoke the webpage-to-markdown, bing-search-to-markdown, and youtube-to-markdown
+    tools to issue requests and read the responses to attacker-controlled URLs, potentially
+    leaking sensitive information.'
+  source: NIST NVD
+  url: https://nvd.nist.gov/vuln/detail/CVE-2025-5276
+  discovered_at: '2026-03-28T10:14:46.754770+00:00'
+- description: '[CVE-2025-49596] (CVSS ?, medium) The MCP inspector is a developer
+    tool for testing and debugging MCP servers. Versions of MCP Inspector below 0.14.1
+    are vulnerable to remote code execution due to lack of authentication between
+    the Inspector client and proxy, allowing unauthenticated requests to launch MCP
+    commands over stdio. Users should immediately upgrade to version 0.14.1 or later
+    to address these vulnerabilities.'
+  source: NIST NVD
+  url: https://nvd.nist.gov/vuln/detail/CVE-2025-49596
+  discovered_at: '2026-03-28T10:14:46.754770+00:00'
+- description: '[CVE-2025-52573] (CVSS 6.0, medium) iOS Simulator MCP Server (ios-simulator-mcp)
+    is a Model Context Protocol (MCP) server for interacting with iOS simulators.
+    Versions prior to 1.3.3 are written in a way that is vulnerable to command injection
+    vulnerability attacks as part of some of its MCP Server tool definition and implementation.
+    The MCP Server exposes the tool `ui_tap` which relies on Node.js child process
+    API `exec` which is an unsafe and vulnerable API if concatenated with untrusted
+    user input. LLM exposed user input for `duration`, `udid`, and `x` and `y` args
+    can be replaced with shell meta-characters like `;` or `&&` or others to change
+    the behavior from running the expected command `idb` to another command. When
+    LLMs are tricked through prompt injection (and other techniques and attack vectors)
+    to call the tool with input that uses special shell characters such as `; rm -rf
+    /tmp;#` and other payload variations, the full command-line text will be interepted
+    by the shell and result in other commands except of `ps` executing on the host
+    running the MCP Server. Version 1.3.3 contains a patch for the issue.'
+  source: NIST NVD
+  url: https://nvd.nist.gov/vuln/detail/CVE-2025-52573
+  discovered_at: '2026-03-28T10:14:46.754770+00:00'
+- description: '[CVE-2025-53100] (CVSS ?, medium) RestDB''s Codehooks.io MCP Server
+    is an MCP server on the Codehooks.io platform. Prior to version 0.2.2, the MCP
+    server is written in a way that is vulnerable to command injection attacks as
+    part of some of its MCP Server tools definition and implementation. This could
+    result in a user initiated remote command injection attack on a running MCP Server.
+    This issue has been patched in version 0.2.2.'
+  source: NIST NVD
+  url: https://nvd.nist.gov/vuln/detail/CVE-2025-53100
+  discovered_at: '2026-03-28T10:14:46.754770+00:00'
+- description: '[CVE-2025-53107] (CVSS 7.5, high) @cyanheads/git-mcp-server is an
+    MCP server designed to interact with Git repositories. Prior to version 2.1.5,
+    there is a command injection vulnerability caused by the unsanitized use of input
+    parameters within a call to child_process.exec, enabling an attacker to inject
+    arbitrary system commands. Successful exploitation can lead to remote code execution
+    under the server process''s privileges. The server constructs and executes shell
+    commands using unvalidated user input directly within command-line strings. This
+    introduces the possibility of shell metacharacter injection (|, >, &&, etc.).
+    An MCP Client can be instructed to execute additional actions for example via
+    indirect prompt injection when asked to read git logs. This issue has been patched
+    in version 2.1.5.'
+  source: NIST NVD
+  url: https://nvd.nist.gov/vuln/detail/CVE-2025-53107
+  discovered_at: '2026-03-28T10:14:46.754770+00:00'
+- description: "[CVE-2025-34072] (CVSS ?, medium) A data exfiltration vulnerability\
+    \ exists in Anthropic\u2019s deprecated Slack Model Context Protocol (MCP) Server\
+    \ via automatic link unfurling. When an AI agent using the Slack MCP Server processes\
+    \ untrusted data, it can be manipulated to generate messages containing attacker-crafted\
+    \ hyperlinks embedding sensitive data. Slack\u2019s link preview bots (e.g., Slack-LinkExpanding,\
+    \ Slackbot, Slack-ImgProxy) will then issue outbound requests to the attacker-controlled\
+    \ URL, resulting in zero-click exfiltration of private data."
+  source: NIST NVD
+  url: https://nvd.nist.gov/vuln/detail/CVE-2025-34072
+  discovered_at: '2026-03-28T10:14:46.754770+00:00'
+- description: '[CVE-2025-53365] (CVSS ?, medium) The MCP Python SDK, called `mcp`
+    on PyPI, is a Python implementation of the Model Context Protocol (MCP). Prior
+    to version 1.10.0, if a client deliberately triggers an exception after establishing
+    a streamable HTTP session, this can lead to an uncaught ClosedResourceError on
+    the server side, causing the server to crash and requiring a restart to restore
+    service. Impact may vary depending on the deployment conditions, and presence
+    of infrastructure-level resilience measures. Version 1.10.0 contains a patch for
+    the issue.'
+  source: NIST NVD
+  url: https://nvd.nist.gov/vuln/detail/CVE-2025-53365
+  discovered_at: '2026-03-28T10:14:46.754770+00:00'
+- description: "[CVE-2025-53372] (CVSS 7.5, high) node-code-sandbox-mcp is a Node.js\u2013\
+    based Model Context Protocol server that spins up disposable Docker containers\
+    \ to execute arbitrary JavaScript. Prior to 1.3.0, a command injection vulnerability\
+    \ exists in the node-code-sandbox-mcp MCP Server. The vulnerability is caused\
+    \ by the unsanitized use of input parameters within a call to child_process.execSync,\
+    \ enabling an attacker to inject arbitrary system commands. Successful exploitation\
+    \ can lead to remote code execution under the server process's privileges on the\
+    \ host machine, bypassing the sandbox protection of running code inside docker.\
+    \ This vulnerability is fixed in 1.3.0."
+  source: NIST NVD
+  url: https://nvd.nist.gov/vuln/detail/CVE-2025-53372
+  discovered_at: '2026-03-28T10:14:46.754770+00:00'
+- description: '[CVE-2025-53355] (CVSS 7.5, high) MCP Server Kubernetes is an MCP
+    Server that can connect to a Kubernetes cluster and manage it. A command injection
+    vulnerability exists in the mcp-server-kubernetes MCP Server. The vulnerability
+    is caused by the unsanitized use of input parameters within a call to child_process.execSync,
+    enabling an attacker to inject arbitrary system commands. Successful exploitation
+    can lead to remote code execution under the server process''s privileges. This
+    vulnerability is fixed in 2.5.0.'
+  source: NIST NVD
+  url: https://nvd.nist.gov/vuln/detail/CVE-2025-53355
+  discovered_at: '2026-03-28T10:14:46.754770+00:00'
+- description: '[CVE-2025-6514] (CVSS 9.6, critical) mcp-remote is exposed to OS command
+    injection when connecting to untrusted MCP servers due to crafted input from the
+    authorization_endpoint response URL'
+  source: NIST NVD
+  url: https://nvd.nist.gov/vuln/detail/CVE-2025-6514
+  discovered_at: '2026-03-28T10:14:46.754770+00:00'
+- description: '[CVE-2025-53818] (CVSS ?, medium) GitHub Kanban MCP Server is a Model
+    Context Protocol (MCP) server for managing GitHub issues in Kanban board format
+    and streamlining LLM task management. Version 0.3.0 of the MCP Server is written
+    in a way that is vulnerable to command injection vulnerability attacks as part
+    of some of its MCP Server tool definition and implementation. The MCP Server exposes
+    the tool `add_comment` which relies on Node.js child process API `exec` to execute
+    the GitHub (`gh`) command, is an unsafe and vulnerable API if concatenated with
+    untrusted user input. As of time of publication, no known patches are available.'
+  source: NIST NVD
+  url: https://nvd.nist.gov/vuln/detail/CVE-2025-53818
+  discovered_at: '2026-03-28T10:14:46.754770+00:00'
+- description: '[CVE-2025-54073] (CVSS 7.5, high) mcp-package-docs is an MCP (Model
+    Context Protocol) server that provides LLMs with efficient access to package documentation
+    across multiple programming languages and language server protocol (LSP) capabilities.
+    A command injection vulnerability exists in the `mcp-package-docs` MCP Server
+    prior to the fix in commit cb4ad49615275379fd6f2f1cf1ec4731eec56eb9. The vulnerability
+    is caused by the unsanitized use of input parameters within a call to `child_process.exec`,
+    enabling an attacker to inject arbitrary system commands. Successful exploitation
+    can lead to remote code execution under the server process''s privileges. The
+    server constructs and executes shell commands using unvalidated user input directly
+    within command-line strings. This introduces the possibility of shell metacharacter
+    injection (`|`, `>`, `&&`, etc.). Commit cb4ad49615275379fd6f2f1cf1ec4731eec56eb9
+    in version 0.1.27 contains a fix for the issue, but upgrading to 0.1.28 is recommended.'
+  source: NIST NVD
+  url: https://nvd.nist.gov/vuln/detail/CVE-2025-54073
+  discovered_at: '2026-03-28T10:14:46.754770+00:00'
+- description: '[CVE-2025-53832] (CVSS 7.5, high) Lara Translate MCP Server is a Model
+    Context Protocol (MCP) Server for Lara Translate API. Versions 0.0.11 and below
+    contain a command injection vulnerability which exists in the @translated/lara-mcp
+    MCP Server. The vulnerability is caused by the unsanitized use of input parameters
+    within a call to child_process.exec, enabling an attacker to inject arbitrary
+    system commands. Successful exploitation can lead to remote code execution under
+    the server process''s privileges. The server constructs and executes shell commands
+    using unvalidated user input directly within command-line strings. This introduces
+    the possibility of shell metacharacter injection (|, >, &&, etc.). This vulnerability
+    is fixed in version 0.0.12.'
+  source: NIST NVD
+  url: https://nvd.nist.gov/vuln/detail/CVE-2025-53832
+  discovered_at: '2026-03-28T10:14:46.754770+00:00'
+- description: '[CVE-2025-54424] (CVSS 8.1, high) 1Panel is a web interface and MCP
+    Server that manages websites, files, containers, databases, and LLMs on a Linux
+    server. In versions 2.0.5 and below, the HTTPS protocol used for communication
+    between the Core and Agent endpoints has incomplete certificate verification during
+    certificate validation, leading to unauthorized interface access. Due to the presence
+    of numerous command execution or high-privilege interfaces in 1Panel, this results
+    in Remote Code Execution (RCE). This is fixed in version 2.0.6. The CVE has been
+    translated from Simplified Chinese using GitHub Copilot.'
+  source: NIST NVD
+  url: https://nvd.nist.gov/vuln/detail/CVE-2025-54424
+  discovered_at: '2026-03-28T10:14:46.754770+00:00'
+- description: '[CVE-2025-54136] (CVSS 7.2, high) Cursor is a code editor built for
+    programming with AI. In versions 1.2.4 and below, attackers can achieve remote
+    and persistent code execution by modifying an already trusted MCP configuration
+    file inside a shared GitHub repository or editing the file locally on the target''s
+    machine. Once a collaborator accepts a harmless MCP, the attacker can silently
+    swap it for a malicious command (e.g., calc.exe) without triggering any warning
+    or re-prompt. If an attacker has write permissions on a user''s active branches
+    of a source repository that contains existing MCP servers the user has previously
+    approved, or allows an attacker has arbitrary file-write locally, the attacker
+    can achieve arbitrary code execution. This is fixed in version 1.3.'
+  source: NIST NVD
+  url: https://nvd.nist.gov/vuln/detail/CVE-2025-54136
+  discovered_at: '2026-03-28T10:14:46.754770+00:00'
+- description: '[CVE-2025-54074] (CVSS 9.8, critical) Cherry Studio is a desktop client
+    that supports for multiple LLM providers. From versions 1.2.5 to 1.5.1, Cherry
+    Studio is vulnerable to OS Command Injection during a connection with a malicious
+    MCP server in HTTP Streamable mode. Attackers can setup a malicious MCP server
+    with compatible OAuth authorization server endpoints and trick victims into connecting
+    it, leading to OS command injection in vulnerable clients. This issue has been
+    patched in version 1.5.2.'
+  source: NIST NVD
+  url: https://nvd.nist.gov/vuln/detail/CVE-2025-54074
+  discovered_at: '2026-03-28T10:14:46.754770+00:00'
+- description: "[CVE-2025-54382] (CVSS 9.6, critical) Cherry Studio is a desktop client\
+    \ that supports for multiple LLM providers. In version 1.5.1, a remote code execution\
+    \ (RCE) vulnerability exists in the Cherry Studio platform when connecting to\
+    \ streamableHttp MCP servers. The issue arises from the server\u2019s implicit\
+    \ trust in the oauth auth redirection endpoints and failure to properly sanitize\
+    \ the URL. This issue has been patched in version 1.5.2."
+  source: NIST NVD
+  url: https://nvd.nist.gov/vuln/detail/CVE-2025-54382
+  discovered_at: '2026-03-28T10:14:46.754770+00:00'
+- description: '[CVE-2025-8943] (CVSS 9.8, critical) The Custom MCPs feature is designed
+    to execute OS commands, for instance, using tools like `npx` to spin up local
+    MCP Servers. However, Flowise''s inherent authentication and authorization model
+    is minimal and lacks role-based access controls (RBAC). Furthermore, in Flowise
+    versions before 3.0.1 the default installation operates without authentication
+    unless explicitly configured. This combination allows unauthenticated network
+    attackers to execute unsandboxed OS commands.'
+  source: NIST NVD
+  url: https://nvd.nist.gov/vuln/detail/CVE-2025-8943
+  discovered_at: '2026-03-28T10:14:46.754770+00:00'
+- description: '[CVE-2025-58062] (CVSS ?, medium) LSTM-Kirigaya''s openmcp-client
+    is a vscode plugin for mcp developer. Prior to version 0.1.12, when users on a
+    Windows platform connect to an attacker controlled MCP server, attackers could
+    provision a malicious authorization server endpoint to silently achieve an OS
+    command injection attack in the open() invocation, leading to client system compromise.
+    This issue has been patched in version 0.1.12.'
+  source: NIST NVD
+  url: https://nvd.nist.gov/vuln/detail/CVE-2025-58062
+  discovered_at: '2026-03-28T10:14:46.754770+00:00'
+- description: '[CVE-2025-9654] (CVSS 6.3, medium) A security flaw has been discovered
+    in AiondaDotCom mcp-ssh up to 1.0.3. Affected by this issue is some unknown functionality
+    of the file server-simple.mjs. Performing manipulation results in command injection.
+    The attack can be initiated remotely. Upgrading to version 1.0.4 and 1.1.0 can
+    resolve this issue. The patch is named cd2566a948b696501abfa6c6b03462cac5fb43d8.
+    It is advisable to upgrade the affected component.'
+  source: NIST NVD
+  url: https://nvd.nist.gov/vuln/detail/CVE-2025-9654
+  discovered_at: '2026-03-28T10:14:46.754770+00:00'
+- description: '[CVE-2025-58357] (CVSS 9.6, critical) 5ire is a cross-platform desktop
+    artificial intelligence assistant and model context protocol client. Version 0.13.2
+    contains a vulnerability in the chat page''s script gadgets that enables content
+    injection attacks through multiple vectors: malicious prompt injection pages,
+    compromised MCP servers, and exploited tool integrations. This is fixed in version
+    0.14.0.'
+  source: NIST NVD
+  url: https://nvd.nist.gov/vuln/detail/CVE-2025-58357
+  discovered_at: '2026-03-28T10:14:46.754770+00:00'
+- description: '[CVE-2025-54994] (CVSS ?, medium) @akoskm/create-mcp-server-stdio
+    is an MCP server starter kit that uses the StdioServerTransport. Prior to version
+    0.0.13, the MCP Server is written in a way that is vulnerable to command injection
+    vulnerability attacks as part of some of its MCP Server tool definition and implementation.
+    The MCP Server exposes the tool `which-app-on-port` which relies on Node.js child
+    process API `exec` which is an unsafe and vulnerable API if concatenated with
+    untrusted user input. Version 0.0.13 contains a fix for the issue.'
+  source: NIST NVD
+  url: https://nvd.nist.gov/vuln/detail/CVE-2025-54994
+  discovered_at: '2026-03-28T10:14:46.754770+00:00'
+- description: '[CVE-2025-58444] (CVSS ?, medium) The MCP inspector is a developer
+    tool for testing and debugging MCP servers. A cross-site scripting issue was reported
+    in versions of the MCP Inspector local development tool prior to 0.16.6 when connecting
+    to untrusted remote MCP servers with a malicious redirect URI. This could be leveraged
+    to interact directly with the inspector proxy to trigger arbitrary command execution.
+    Users are advised to update to 0.16.6 to resolve this issue.'
+  source: NIST NVD
+  url: https://nvd.nist.gov/vuln/detail/CVE-2025-58444
+  discovered_at: '2026-03-28T10:14:46.754770+00:00'
+- description: '[CVE-2025-56406] (CVSS 7.5, high) An issue was discovered in mcp-neo4j
+    0.3.0 allowing attackers to obtain sensitive information or execute arbitrary
+    commands via the SSE service. NOTE: the Supplier''s position is that authentication
+    is not mandatory for MCP servers, and the mcp-neo4j MCP server is only intended
+    for use in a local environment where authentication realistically would not be
+    needed. Also, the Supplier provides middleware to help isolate the MCP server
+    from external access (if needed).'
+  source: NIST NVD
+  url: https://nvd.nist.gov/vuln/detail/CVE-2025-56406
+  discovered_at: '2026-03-28T10:14:46.754770+00:00'
+- description: "[CVE-2025-10193] (CVSS ?, medium) DNS rebinding vulnerability in Neo4j\
+    \ Cypher MCP server allows malicious websites to bypass Same-Origin Policy protections\
+    \ and execute unauthorised tool invocations against locally running Neo4j MCP\
+    \ instances.\_The attack relies on the user being enticed to visit a malicious\
+    \ website and spend sufficient time there for DNS rebinding to succeed."
+  source: NIST NVD
+  url: https://nvd.nist.gov/vuln/detail/CVE-2025-10193
+  discovered_at: '2026-03-28T10:14:46.754770+00:00'
+- description: '[CVE-2025-59333] (CVSS 8.1, high) The mcp-database-server (MCP Server)
+    1.1.0 and earlier, as distributed via the npm package @executeautomation/database-server,
+    fails to implement adequate security controls to properly enforce a "read-only"
+    mode. This vulnerability affects only the npm distribution; other distributions
+    are not impacted. As a result, the server is susceptible to abuse and attacks
+    on affected database systems such as PostgreSQL, and potentially others that expose
+    elevated functionalities. These attacks may lead to denial of service and other
+    unexpected behaviors.'
+  source: NIST NVD
+  url: https://nvd.nist.gov/vuln/detail/CVE-2025-59333
+  discovered_at: '2026-03-28T10:14:46.754770+00:00'
+- description: '[CVE-2025-10619] (CVSS 6.3, medium) A vulnerability was detected in
+    sequa-ai sequa-mcp up to 1.0.13. This affects the function redirectToAuthorization
+    of the file src/helpers/node-oauth-client-provider.ts of the component OAuth Server
+    Discovery. Performing manipulation results in os command injection. Remote exploitation
+    of the attack is possible. The exploit is now public and may be used. Upgrading
+    to version 1.0.14 is able to mitigate this issue. The patch is named e569815854166db5f71c2e722408f8957fb9e804.
+    It is recommended to upgrade the affected component. The vendor explains: "We
+    only promote that mcp server with our own URLs that have a valid response, but
+    yes if someone would use it with a non sequa url, this is a valid attack vector.
+    We have released a new version (1.0.14) that fixes this and validates that only
+    URLs can be opened."'
+  source: NIST NVD
+  url: https://nvd.nist.gov/vuln/detail/CVE-2025-10619
+  discovered_at: '2026-03-28T10:14:46.754770+00:00'
+- description: "[CVE-2025-59417] (CVSS 6.1, medium) Lobe Chat is an open-source artificial\
+    \ intelligence chat framework. Prior to version 1.129.4, there is a a cross-site\
+    \ scripting (XSS) vulnerability when handling chat message in lobe-chat that can\
+    \ be escalated to remote code execution on the user\u2019s machine. In lobe-chat,\
+    \ when the response from the server is like <lobeArtifact identifier=\"ai-new-interpretation\"\
+    \ ...> , it will be rendered with the lobeArtifact node, instead of the plain\
+    \ text. However, when the type of the lobeArtifact is image/svg+xml , it will\
+    \ be rendered as the SVGRender component, which internally uses dangerouslySetInnerHTML\
+    \ to set the content of the svg, resulting in XSS attack. Any party capable of\
+    \ injecting content into chat messages, such as hosting a malicious page for prompt\
+    \ injection, operating a compromised MCP server, or leveraging tool integrations,\
+    \ can exploit this vulnerability. This vulnerability is fixed in 1.129.4."
+  source: NIST NVD
+  url: https://nvd.nist.gov/vuln/detail/CVE-2025-59417
+  discovered_at: '2026-03-28T10:14:46.754770+00:00'
+- description: '[CVE-2025-59528] (CVSS 10.0, critical) Flowise is a drag & drop user
+    interface to build a customized large language model flow. In version 3.0.5, Flowise
+    is vulnerable to remote code execution. The CustomMCP node allows users to input
+    configuration settings for connecting to an external MCP server. This node parses
+    the user-provided mcpServerConfig string to build the MCP server configuration.
+    However, during this process, it executes JavaScript code without any security
+    validation. Specifically, inside the convertToValidJSONString function, user input
+    is directly passed to the Function() constructor, which evaluates and executes
+    the input as JavaScript code. Since this runs with full Node.js runtime privileges,
+    it can access dangerous modules such as child_process and fs. This issue has been
+    patched in version 3.0.6.'
+  source: NIST NVD
+  url: https://nvd.nist.gov/vuln/detail/CVE-2025-59528
+  discovered_at: '2026-03-28T10:14:46.754770+00:00'
+- description: '[CVE-2025-59834] (CVSS 9.8, critical) ADB MCP Server is a MCP (Model
+    Context Protocol) server for interacting with Android devices through ADB. In
+    versions 0.1.0 and prior, the MCP Server is written in a way that is vulnerable
+    to command injection vulnerability attacks as part of some of its MCP Server tool
+    definition and implementation. This issue has been patched via commit 041729c.'
+  source: NIST NVD
+  url: https://nvd.nist.gov/vuln/detail/CVE-2025-59834
+  discovered_at: '2026-03-28T10:14:46.754770+00:00'
+- description: '[CVE-2025-61590] (CVSS 7.5, high) Cursor is a code editor built for
+    programming with AI. Versions 1.6 and below are vulnerable to Remote Code Execution
+    (RCE) attacks through Visual Studio Code Workspaces. Workspaces allow users to
+    open more than a single folder and save specific settings (pretty similar to .vscode/settings.json)
+    for the folders / project. An untitled workspace is automatically created by VS
+    Code (untitled.code-workspace), which contains all the folders and workspace settings
+    from the user''s current session, opening up an entire new attack vector if the
+    user has a .code-workspace file in path (either untitled created automatically
+    or a saved one). If an attacker is able to hijack the chat context of the victim
+    (such as via a compromised MCP server), they can use prompt injection to make
+    the Cursor Agent write into this file and modify the workspace. This leads to
+    a bypass of CVE-2025-54130 which can lead to RCE by writing to the settings section.
+    This issue is fixed in version 1.7.'
+  source: NIST NVD
+  url: https://nvd.nist.gov/vuln/detail/CVE-2025-61590
+  discovered_at: '2026-03-28T10:14:46.754770+00:00'
+- description: '[CVE-2025-61591] (CVSS 8.8, high) Cursor is a code editor built for
+    programming with AI. In versions 1.7 and below, when MCP uses OAuth authentication
+    with an untrusted MCP server, an attacker can impersonate a malicious MCP server
+    and return crafted, maliciously injected commands during the interaction process,
+    leading to command injection and potential remote code execution. If chained with
+    an untrusted MCP service via OAuth, this command injection vulnerability could
+    allow arbitrary code execution on the host by the agent. This can then be used
+    to directly compromise the system by executing malicious commands with full user
+    privileges. This issue does not currently have a fixed release version, but there
+    is a patch, 2025.09.17-25b418f.'
+  source: NIST NVD
+  url: https://nvd.nist.gov/vuln/detail/CVE-2025-61591
+  discovered_at: '2026-03-28T10:14:46.754770+00:00'
+- description: '[CVE-2025-11286] (CVSS 4.7, medium) A vulnerability was determined
+    in samanhappy MCPHub up to 0.9.10. This affects an unknown part of the file src/controllers/serverController.ts
+    of the component MCPRouter Service. This manipulation of the argument baseUrl
+    causes server-side request forgery. The attack may be initiated remotely. The
+    exploit has been publicly disclosed and may be utilized. The vendor was contacted
+    early about this disclosure but did not respond in any way.'
+  source: NIST NVD
+  url: https://nvd.nist.gov/vuln/detail/CVE-2025-11286
+  discovered_at: '2026-03-28T10:14:46.754770+00:00'
+- description: '[CVE-2025-53967] (CVSS 8.0, high) Framelink Figma MCP Server before
+    0.6.3 allows an unauthenticated remote attacker to execute arbitrary operating
+    system commands via a crafted HTTP POST request with shell metacharacters in input
+    that is used by a fetchWithRetry curl command. The vulnerable endpoint fails to
+    properly sanitize user-supplied input, enabling the attacker to inject malicious
+    commands that are executed with the privileges of the MCP process. Exploitation
+    requires network access to the MCP interface.'
+  source: NIST NVD
+  url: https://nvd.nist.gov/vuln/detail/CVE-2025-53967
+  discovered_at: '2026-03-28T10:14:46.754770+00:00'
+- description: '[CVE-2025-58747] (CVSS 6.1, medium) Dify is an LLM application development
+    platform. In Dify versions through 1.9.1, the MCP OAuth component is vulnerable
+    to cross-site scripting when a victim connects to an attacker-controlled remote
+    MCP server. The vulnerability exists in the OAuth flow implementation where the
+    authorization_url provided by a remote MCP server is directly passed to window.open
+    without validation or sanitization. An attacker can craft a malicious MCP server
+    that returns a JavaScript URI (such as javascript:alert(1)) in the authorization_url
+    field, which is then executed when the victim attempts to connect to the MCP server.
+    This allows the attacker to execute arbitrary JavaScript in the context of the
+    Dify application.'
+  source: NIST NVD
+  url: https://nvd.nist.gov/vuln/detail/CVE-2025-58747
+  discovered_at: '2026-03-28T10:14:46.754770+00:00'
+- description: '[CVE-2025-6515] (CVSS 6.8, medium) The MCP SSE endpoint in oatpp-mcp
+    returns an instance pointer as the session ID, which is not unique nor cryptographically
+    secure. This allows network attackers with access to the oatpp-mcp server to guess
+    future session IDs and hijack legitimate client MCP sessions, returning malicious
+    responses from the oatpp-mcp server.'
+  source: NIST NVD
+  url: https://nvd.nist.gov/vuln/detail/CVE-2025-6515
+  discovered_at: '2026-03-28T10:14:46.754770+00:00'
+- description: '[CVE-2025-62800] (CVSS 6.1, medium) FastMCP is the standard framework
+    for building MCP applications. Versions prior to 2.13.0 have a reflected cross-site
+    scripting vulnerability in the OAuth client callback page (oauth_callback.py)
+    where unescaped user-controlled values are inserted into the generated HTML, allowing
+    arbitrary JavaScript execution in the callback server origin. The issue is fixed
+    in version 2.13.0.'
+  source: NIST NVD
+  url: https://nvd.nist.gov/vuln/detail/CVE-2025-62800
+  discovered_at: '2026-03-28T10:14:46.754770+00:00'
+- description: '[CVE-2025-62801] (CVSS 7.8, high) FastMCP is the standard framework
+    for building MCP applications. Versions prior to 2.13.0, a command-injection vulnerability
+    lets any attacker who can influence the server_name field of an MCP execute arbitrary
+    OS commands on Windows hosts that run fastmcp install cursor. This vulnerability
+    is fixed in 2.13.0.'
+  source: NIST NVD
+  url: https://nvd.nist.gov/vuln/detail/CVE-2025-62801
+  discovered_at: '2026-03-28T10:14:46.754770+00:00'
+- description: '[CVE-2025-64132] (CVSS 5.4, medium) Jenkins MCP Server Plugin 0.84.v50ca_24ef83f2
+    and earlier does not perform permission checks in multiple MCP tools, allowing
+    attackers to trigger builds and obtain information about job and cloud configuration
+    they should not be able to access.'
+  source: NIST NVD
+  url: https://nvd.nist.gov/vuln/detail/CVE-2025-64132
+  discovered_at: '2026-03-28T10:14:46.754770+00:00'
+- description: '[CVE-2025-64106] (CVSS 8.8, high) Cursor is a code editor built for
+    programming with AI. In versions 1.7.28 and below, an input validation flaw in
+    Cursor''s MCP server installation enables specially crafted deep-links to bypass
+    the standard security warnings and conceal executed commands from users if they
+    choose to accept the server. If an attacker is able to convince a victim to navigate
+    to a malicious deeplink, the victim will not see the correct speedbump modal,
+    and if they choose to accept, will execute commands specified by the attackers
+    deeplink.'
+  source: NIST NVD
+  url: https://nvd.nist.gov/vuln/detail/CVE-2025-64106
+  discovered_at: '2026-03-28T10:14:46.754770+00:00'
+- description: '[CVE-2025-64109] (CVSS 8.8, high) Cursor is a code editor built for
+    programming with AI. In versions and below, a vulnerability in the Cursor CLI
+    Beta allowed an attacker to achieve remote code execution through the MCP (Model
+    Context Protocol) server mechanism by uploading a malicious MCP configuration
+    in .cursor/mcp.json file in a GitHub repository. Once a victim clones the project
+    and opens it using Cursor CLI, the command to run the malicious MCP server is
+    immediately executed without any warning, leading to potential code execution
+    as soon as the command runs. This issue is fixed in version 2025.09.17-25b418f.'
+  source: NIST NVD
+  url: https://nvd.nist.gov/vuln/detail/CVE-2025-64109
+  discovered_at: '2026-03-28T10:14:46.754770+00:00'
+- description: "[CVE-2025-58337] (CVSS 5.4, medium) An attacker with a valid read-only\
+    \ account can bypass Doris MCP Server\u2019s read-only mode due to improper access\
+    \ control, allowing modifications that should have been prevented by read-only\
+    \ restrictions.\n\n\nImpact:\n\nBypasses read-only mode; attackers with read-only\
+    \ access may perform unauthorized modifications.\n\n\n\n\nRecommended action for\
+    \ operators: Upgrade to version 0.6.0 as soon as possible (this release contains\
+    \ the fix)."
+  source: NIST NVD
+  url: https://nvd.nist.gov/vuln/detail/CVE-2025-58337
+  discovered_at: '2026-03-28T10:14:46.754770+00:00'
+- description: '[CVE-2025-63603] (CVSS 6.5, medium) A command injection vulnerability
+    exists in the MCP Data Science Server''s (reading-plus-ai/mcp-server-data-exploration)
+    0.1.6 in the safe_eval() function (src/mcp_server_ds/server.py:108). The function
+    uses Python''s exec() to execute user-supplied scripts but fails to restrict the
+    __builtins__ dictionary in the globals parameter. When __builtins__ is not explicitly
+    defined, Python automatically provides access to all built-in functions including
+    __import__, exec, eval, and open. This allows an attacker to execute arbitrary
+    Python code with full system privileges, leading to complete system compromise.
+    The vulnerability can be exploited by submitting a malicious script to the run_script
+    tool, requiring no authentication or special privileges.'
+  source: NIST NVD
+  url: https://nvd.nist.gov/vuln/detail/CVE-2025-63603
+  discovered_at: '2026-03-28T10:14:46.754770+00:00'
+- description: "[CVE-2025-35028] (CVSS 9.1, critical) By providing a command-line\
+    \ argument starting with a semi-colon ; to an API endpoint created by the EnhancedCommandExecutor\
+    \ class of the HexStrike AI MCP server, the resultant composed command is executed\
+    \ directly in the context of the MCP server\u2019s normal privilege; typically,\
+    \ this is root. There is no attempt to sanitize these arguments in the default\
+    \ configuration of this MCP server at the affected version (as of commit 2f3a5512\
+    \ in September of 2025)."
+  source: NIST NVD
+  url: https://nvd.nist.gov/vuln/detail/CVE-2025-35028
+  discovered_at: '2026-03-28T10:14:46.754770+00:00'
+- description: '[CVE-2025-66401] (CVSS 9.8, critical) MCP Watch is a comprehensive
+    security scanner for Model Context Protocol (MCP) servers. In 0.1.2 and earlier,
+    the MCPScanner class contains a critical Command Injection vulnerability in the
+    cloneRepo method. The application passes the user-supplied githubUrl argument
+    directly to a system shell via execSync without sanitization. This allows an attacker
+    to execute arbitrary commands on the host machine by appending shell metacharacters
+    to the URL.'
+  source: NIST NVD
+  url: https://nvd.nist.gov/vuln/detail/CVE-2025-66401
+  discovered_at: '2026-03-28T10:14:46.754770+00:00'
+- description: Lack of isolation in agentic browsers resurfaces old vulnerabilities
+  source: Trail of Bits Blog
+  url: https://blog.trailofbits.com/2026/01/13/lack-of-isolation-in-agentic-browsers-resurfaces-old-vulnerabilities/
+  discovered_at: '2026-03-28T10:16:24.143284+00:00'
+- description: Level up your Solidity LLM tooling with Slither-MCP
+  source: Trail of Bits Blog
+  url: https://blog.trailofbits.com/2025/11/15/level-up-your-solidity-llm-tooling-with-slither-mcp/
+  discovered_at: '2026-03-28T10:16:24.143284+00:00'
+- description: Supply chain attacks are exploiting our assumptions
+  source: Trail of Bits Blog
+  url: https://blog.trailofbits.com/2025/09/24/supply-chain-attacks-are-exploiting-our-assumptions/
+  discovered_at: '2026-03-28T10:16:24.143284+00:00'
+- description: Lack of isolation in agentic browsers resurfaces old vulnerabilities
+  source: Trail of Bits Blog
+  url: https://blog.trailofbits.com/authors/riccardo-schirone/
+  discovered_at: '2026-03-28T10:16:24.143284+00:00'
+- description: Level up your Solidity LLM tooling with Slither-MCP
+  source: Trail of Bits Blog
+  url: https://blog.trailofbits.com/authors/markus-schiffermuller/
+  discovered_at: '2026-03-28T10:16:24.143284+00:00'
+- description: Supply chain attacks are exploiting our assumptions
+  source: Trail of Bits Blog
+  url: https://blog.trailofbits.com/authors/pawe%C5%82-p%C5%82atek/
+  discovered_at: '2026-03-28T10:16:24.143284+00:00'
