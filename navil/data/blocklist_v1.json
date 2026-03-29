@@ -2659,6 +2659,15 @@
       "source": "CVE-2025-66414"
     },
     {
+      "pattern_id": "BL-CVE-017",
+      "pattern_type": "argument_content",
+      "value": ".*content.type.*application/json.*files.*(/etc/shadow|credentials|\\.aws).*",
+      "severity": "CRITICAL",
+      "description": "n8n Ni8mare Content-Type confusion webhook RCE — LLM-mediated file exfiltration (CVE-2026-21858)",
+      "confidence": 0.92,
+      "source": "CVE-2026-21858"
+    },
+    {
       "pattern_id": "BL-ACA-001",
       "pattern_type": "description_injection",
       "value": ".*before\\s+(any|every|each)\\s+(file|tool|action|operation).*must\\s+(first\\s+)?(read|check|verify|access).*",
