@@ -8,7 +8,9 @@
 </p>
 
 <p align="center">
+  <a href="https://github.com/navilai/navil/stargazers"><img src="https://img.shields.io/github/stars/navilai/navil?style=social" alt="GitHub Stars" /></a>
   <a href="https://github.com/navilai/navil/actions/workflows/ci.yml"><img src="https://github.com/navilai/navil/actions/workflows/ci.yml/badge.svg" alt="CI" /></a>
+  <a href="https://pypi.org/project/navil/"><img src="https://img.shields.io/pypi/v/navil.svg" alt="PyPI" /></a>
   <a href="https://www.python.org/downloads/"><img src="https://img.shields.io/badge/python-3.10%2B-blue.svg" alt="Python 3.10+" /></a>
   <a href="https://www.rust-lang.org/"><img src="https://img.shields.io/badge/rust-stable-orange.svg" alt="Rust" /></a>
   <a href="LICENSE"><img src="https://img.shields.io/badge/License-Apache_2.0-blue.svg" alt="License: Apache 2.0" /></a>
@@ -26,8 +28,12 @@ pip install navil
 navil secure
 ```
 
+<!-- TODO: Replace with animated GIF of `navil secure` terminal session showing
+     real-time attack blocking. Record with `asciinema rec` or `vhs`.
+     Target: 15-20s clip showing discovery → wrapping → coverage score. -->
+
 <p align="center">
-  <a href="#the-openclaw-security-crisis">OpenClaw Crisis</a> &bull;
+  <a href="#why-runtime-monitoring-not-just-scanning">Why Navil?</a> &bull;
   <a href="#getting-started">Getting Started</a> &bull;
   <a href="#how-it-works">How It Works</a> &bull;
   <a href="#community-threat-network">Threat Network</a> &bull;
