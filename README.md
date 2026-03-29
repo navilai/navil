@@ -23,14 +23,40 @@
   <a href="https://navil.ai/radar"><img src="https://navil-cloud-api.onrender.com/v1/badge/blocked.svg" alt="Detection Rate" /></a>
 </p>
 
+<p align="center">
+  <em>Static scanning catches 1.7% of MCP threats. Runtime monitoring catches the other 98.3%.</em>
+</p>
+
 ```bash
-pip install navil
-navil secure
+pip install navil && navil secure
 ```
 
-<!-- TODO: Replace with animated GIF of `navil secure` terminal session showing
-     real-time attack blocking. Record with `asciinema rec` or `vhs`.
-     Target: 15-20s clip showing discovery → wrapping → coverage score. -->
+<!-- TODO: Replace with animated GIF of `navil secure` terminal session.
+     Record with `vhs` or `asciinema rec`. Target: 15-20s clip. -->
+
+```
+$ navil secure
+
+🔍 Discovering MCP configs...
+   Found: ~/.cursor/mcp.json (12 servers)
+   Found: ~/Library/.../claude_desktop_config.json (4 servers)
+
+📊 Scanning current coverage...
+   Running 568 detection patterns across 30 categories...
+   Current coverage: 23% (4/30 categories protected)
+
+🔒 Wrapping servers with Navil proxy...
+   ✓ Wrapped 16 servers in ~/.cursor/mcp.json
+   ✓ Wrapped 4 servers in ~/Library/.../claude_desktop_config.json
+
+📊 Re-scanning coverage with Navil active...
+   New coverage: 78% (23/30 categories protected)
+
+✅ Done in 47 seconds.
+   Before: 23% coverage  →  After: 78% coverage
+```
+
+> **One command. No API key. No signup. Works offline.** Navil auto-discovers your MCP configs, wraps every server with a security proxy, and shows you a before/after score.
 
 <p align="center">
   <a href="#why-runtime-monitoring-not-just-scanning">Why Navil?</a> &bull;
@@ -68,42 +94,7 @@ Static scanning catches 1.7%. Runtime monitoring catches the other 98.3%. That's
 
 **Meanwhile, the MCP protocol itself has real problems:** 8+ CVEs in 6 weeks (allowlist bypass, wrapper bypass, exec approval bypass, path traversal, memory bomb, token theft). 42,665+ instances exposed to the public internet with no authentication.
 
-Navil fixes this in one command:
-
-```bash
-pip install navil
-navil secure
-```
-
-Every MCP config on your system is auto-discovered, every server is wrapped with the security proxy, baseline policies are generated, and you see a before/after coverage score — all in under 60 seconds. Your original configs are backed up automatically.
-
-```
-🔍 Discovering MCP configs...
-   Found: ~/.cursor/mcp.json (12 servers)
-   Found: ~/Library/Application Support/Claude/claude_desktop_config.json (4 servers)
-
-📊 Scanning current coverage...
-   Running 568 detection patterns across 30 categories...
-   Current coverage: 23% (4/30 categories protected)
-
-🔒 Wrapping servers with Navil proxy...
-   ✓ Wrapped 16 servers in ~/.cursor/mcp.json
-   ✓ Wrapped 4 servers in ~/Library/.../claude_desktop_config.json
-
-🧠 Generating baseline policies from server profiles...
-   ✓ 3 deny rules generated (secrets access, exfiltration endpoints, shell_exec)
-   ✓ 16 scope profiles created (agents see only the tools they need)
-
-📊 Re-scanning coverage with Navil active...
-   New coverage: 78% (23/30 categories protected)
-
-✅ Done in 47 seconds.
-
-   Before: 23% coverage  →  After: 78% coverage
-   7 categories still exposed — run navil test --show-gaps to see them.
-```
-
-This works for any MCP client, not just OpenClaw. But if you're running OpenClaw, you need this today.
+Navil fixes this in one command: `pip install navil && navil secure`. Auto-discovers every MCP config, wraps every server with the security proxy, generates baseline policies, and shows you a before/after score — all in under 60 seconds. [See the demo above.](#navil)
 
 ## Getting Started
 
