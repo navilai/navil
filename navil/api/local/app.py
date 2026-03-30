@@ -89,6 +89,7 @@ def create_app(with_demo: bool = True) -> FastAPI:
         cloud_sync_task: asyncio.Task[None] | None = None
         fetcher: ThreatIntelFetcher | None = None
         fetcher_task: asyncio.Task[None] | None = None
+        registry_scan_task: asyncio.Task[None] | None = None
         if redis_url:
             try:
                 import redis.asyncio as aioredis
@@ -143,6 +144,19 @@ def create_app(with_demo: bool = True) -> FastAPI:
                 )
                 if fetcher.is_enabled():
                     fetcher_task = asyncio.create_task(fetcher.run())
+
+                # ── Registry Scanner (6-hour continuous scan) ────
+                if os.environ.get("NAVIL_REGISTRY_SCAN", "").lower() not in ("0", "false", "off"):
+                    from navil.crawler.scheduler import run_async_scheduler
+
+                    registry_scan_task = asyncio.create_task(
+                        run_async_scheduler(
+                            interval="6h",
+                            redis_client=state.redis_client,
+                            feed_to_cloud=bool(os.environ.get("NAVIL_API_KEY")),
+                        )
+                    )
+                    logger.info("Registry scanner started (6-hour interval)")
             except Exception:
                 logger.warning(
                     "Redis unavailable (%s) — running in standalone mode",
@@ -165,6 +179,10 @@ def create_app(with_demo: bool = True) -> FastAPI:
             fetcher_task.cancel()
             with contextlib.suppress(asyncio.CancelledError):
                 await fetcher_task
+        if registry_scan_task is not None:
+            registry_scan_task.cancel()
+            with contextlib.suppress(asyncio.CancelledError):
+                await registry_scan_task
         if cloud_sync_worker is not None:
             cloud_sync_worker.stop()
         if cloud_sync_task is not None:

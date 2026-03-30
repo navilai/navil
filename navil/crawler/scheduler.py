@@ -42,6 +42,7 @@ REDIS_LOCK_TTL_SECONDS = 7200  # 2 hours
 # ── Interval mapping ──────────────────────────────────────────
 
 INTERVAL_CRON: dict[str, str] = {
+    "6h": "0 */6 * * *",
     "hourly": "0 * * * *",
     "daily": "0 2 * * *",  # 2 AM
     "weekly": "0 2 * * 0",  # Sunday 2 AM
@@ -49,6 +50,7 @@ INTERVAL_CRON: dict[str, str] = {
 }
 
 INTERVAL_SECONDS: dict[str, int] = {
+    "6h": 21600,
     "hourly": 3600,
     "daily": 86400,
     "weekly": 604800,
@@ -118,6 +120,12 @@ def run_full_scan(
                 if line:
                     scan_records.append(orjson.loads(line))
 
+    # Step 3a: Risk assessment
+    from navil.crawler.risk_scorer import score_batch
+
+    assessments = score_batch(scan_records)
+    high_risk_count = sum(1 for a in assessments if a.is_high_risk)
+
     scan_id = store.store_scan_results(scan_records, source_file="scheduled_scan")
 
     elapsed = time.monotonic() - start_time
@@ -128,6 +136,12 @@ def run_full_scan(
         "servers_discovered": len(crawl_results),
         "stats": stats.to_dict(),
         "elapsed_seconds": round(elapsed, 1),
+        "risk_assessment": {
+            "total_assessed": len(assessments),
+            "high_risk_count": high_risk_count,
+            "high_risk_servers": [a.to_dict() for a in assessments if a.is_high_risk],
+        },
+        "_scan_records": scan_records,  # Internal: used by async scheduler
     }
 
     # Step 4: Optional webhook notification
@@ -523,6 +537,25 @@ async def run_async_scheduler(
                 ),
             )
             logger.info("Scan result: %s", result.get("status"))
+
+            # Auto-promote high-risk findings to threat intel channel
+            if (
+                redis_client is not None
+                and result.get("status") == "complete"
+                and result.get("_scan_records")
+            ):
+                from navil.crawler.auto_promoter import (
+                    promote_high_risk_to_threat_intel,
+                )
+                from navil.crawler.risk_scorer import score_batch as _score_batch
+
+                assessments = _score_batch(result["_scan_records"])
+                promoted = await promote_high_risk_to_threat_intel(assessments, redis_client)
+                if promoted:
+                    logger.info(
+                        "Auto-promoted %d high-risk servers to threat intel",
+                        promoted,
+                    )
 
             # Feed to cloud if enabled
             if feed_to_cloud and result.get("status") == "complete":
