@@ -18,6 +18,24 @@ from navil.safemcp.generator import (
     _random_hash,
 )
 
+# ── Catalog class ID mappings ────────────────────────────────────
+
+CATALOG_TO_SLUG = {
+    "AC-01": "multimodal_smuggling",
+    "AC-02": "handshake_hijacking",
+    "AC-03": "rag_memory_poisoning",
+    "AC-04": "supply_chain",
+    "AC-05": "privilege_escalation",
+    "AC-06": "defense_evasion",
+    "AC-07": "agent_collusion",
+    "AC-08": "cognitive_exploitation",
+    "AC-09": "temporal_stateful",
+    "AC-10": "output_weaponization",
+    "AC-11": "code_execution",
+}
+
+SLUG_TO_CATALOG = {v: k for k, v in CATALOG_TO_SLUG.items()}
+
 # ── Timing templates ─────────────────────────────────────────────
 
 _TIMING_TEMPLATES: dict[str, dict[str, Any]] = {
@@ -43,6 +61,7 @@ _VECTOR_GROUPS: list[dict[str, Any]] = [
         "id_range": (101, 115),
         "class_name": "Multi-Modal Smuggling",
         "category": "multimodal_smuggling",
+        "catalog_class_id": "AC-01",
         "tool_pool": "execute",
         "timing": "burst",
         "payload_range": (4000, 9000),
@@ -52,6 +71,7 @@ _VECTOR_GROUPS: list[dict[str, Any]] = [
         "id_range": (116, 130),
         "class_name": "Handshake Hijacking",
         "category": "handshake_hijacking",
+        "catalog_class_id": "AC-02",
         "tool_pool": "network",
         "timing": "sequential",
         "payload_range": (500, 3000),
@@ -61,6 +81,7 @@ _VECTOR_GROUPS: list[dict[str, Any]] = [
         "id_range": (131, 150),
         "class_name": "RAG/Memory Poisoning",
         "category": "rag_memory_poisoning",
+        "catalog_class_id": "AC-03",
         "tool_pool": "query",
         "timing": "slow_trickle",
         "payload_range": (2000, 8000),
@@ -70,6 +91,7 @@ _VECTOR_GROUPS: list[dict[str, Any]] = [
         "id_range": (151, 170),
         "class_name": "Supply Chain/Discovery",
         "category": "supply_chain",
+        "catalog_class_id": "AC-04",
         "tool_pool": "admin",
         "timing": "burst",
         "payload_range": (1000, 5000),
@@ -79,6 +101,7 @@ _VECTOR_GROUPS: list[dict[str, Any]] = [
         "id_range": (171, 190),
         "class_name": "Privilege Escalation",
         "category": "privilege_escalation",
+        "catalog_class_id": "AC-05",
         "tool_pool": "sensitive",
         "timing": "sequential",
         "payload_range": (500, 3000),
@@ -88,6 +111,7 @@ _VECTOR_GROUPS: list[dict[str, Any]] = [
         "id_range": (191, 200),
         "class_name": "Anti-Forensics",
         "category": "defense_evasion",
+        "catalog_class_id": "AC-06",
         "tool_pool": "execute",
         "timing": "slow_trickle",
         "payload_range": (3000, 7000),
@@ -97,6 +121,7 @@ _VECTOR_GROUPS: list[dict[str, Any]] = [
         "id_range": (201, 220),
         "class_name": "Agent Collusion & Multi-Agent Attacks",
         "category": "agent_collusion",
+        "catalog_class_id": "AC-07",
         "tool_pool": "network",
         "timing": "burst",
         "payload_range": (1000, 4000),
@@ -106,6 +131,7 @@ _VECTOR_GROUPS: list[dict[str, Any]] = [
         "id_range": (221, 240),
         "class_name": "Cognitive Architecture Exploitation",
         "category": "cognitive_exploitation",
+        "catalog_class_id": "AC-08",
         "tool_pool": "query",
         "timing": "sequential",
         "payload_range": (3000, 10000),
@@ -115,6 +141,7 @@ _VECTOR_GROUPS: list[dict[str, Any]] = [
         "id_range": (241, 260),
         "class_name": "Temporal & Stateful Attacks",
         "category": "temporal_stateful",
+        "catalog_class_id": "AC-09",
         "tool_pool": "admin",
         "timing": "slow_trickle",
         "payload_range": (500, 3000),
@@ -124,6 +151,7 @@ _VECTOR_GROUPS: list[dict[str, Any]] = [
         "id_range": (261, 280),
         "class_name": "Output Manipulation & Weaponization",
         "category": "output_weaponization",
+        "catalog_class_id": "AC-10",
         "tool_pool": "execute",
         "timing": "burst",
         "payload_range": (2000, 8000),
@@ -133,6 +161,7 @@ _VECTOR_GROUPS: list[dict[str, Any]] = [
         "id_range": (281, 300),
         "class_name": "Infrastructure & Runtime Attacks",
         "category": "code_execution",
+        "catalog_class_id": "AC-11",
         "tool_pool": "admin",
         "timing": "sequential",
         "payload_range": (1000, 5000),
@@ -158,6 +187,7 @@ def _build_vector_map() -> dict[int, dict[str, Any]]:
             r_hi = int(response_lo + (0.7 + frac * 0.3) * (response_hi - response_lo))
             mapping[vid] = {
                 "category": group["category"],
+                "catalog_class_id": group["catalog_class_id"],
                 "class_name": group["class_name"],
                 "tool_pool": group["tool_pool"],
                 "timing": group["timing"],
@@ -260,6 +290,11 @@ def convert_all(count_per_vector: int = 5) -> dict[int, list[list[dict[str, Any]
     for vid in sorted(VECTOR_TO_SAFEMCP):
         result[vid] = convert_vector(vid, count=count_per_vector)
     return result
+
+
+def get_catalog_class_id(vector_id: int) -> str:
+    """Return the threat catalog class ID (e.g. 'AC-01') for a vector."""
+    return VECTOR_TO_SAFEMCP[vector_id]["catalog_class_id"]
 
 
 def get_vector_category(vector_id: int) -> str:
