@@ -36,6 +36,44 @@ CATALOG_TO_SLUG = {
 
 SLUG_TO_CATALOG = {v: k for k, v in CATALOG_TO_SLUG.items()}
 
+# SAFE-MCP tactic → category slugs (short names for CLI output)
+SAFE_MCP_TACTICS: dict[str, list[str]] = {
+    "Tool Poisoning": ["handshake_hijacking"],
+    "Prompt Injection": ["multimodal_smuggling", "cognitive_exploitation"],
+    "OAuth & Auth Abuse": ["handshake_hijacking", "privilege_escalation"],
+    "Supply Chain": ["supply_chain"],
+    "Privilege Escalation": ["privilege_escalation"],
+    "Session Hijacking": ["handshake_hijacking"],
+    "RAG & Memory Poisoning": ["rag_memory_poisoning"],
+    "Multi-Agent Attacks": ["agent_collusion"],
+    "Cognitive Exploitation": ["cognitive_exploitation"],
+    "Temporal & Stateful": ["temporal_stateful"],
+    "Credential Scope": ["privilege_escalation", "code_execution"],
+    "Anti-Forensics": ["defense_evasion"],
+    "Infrastructure & Runtime": ["code_execution"],
+    "Output Weaponization": ["output_weaponization"],
+}
+
+
+def safe_mcp_tactic_coverage(
+    results_by_slug: dict[str, dict[str, int]],
+) -> dict[str, float]:
+    """Compute coverage percentage per SAFE-MCP tactic.
+
+    Args:
+        results_by_slug: mapping of category slug → {"blocked": int, "total": int}
+
+    Returns:
+        mapping of tactic name → coverage percentage (0-100)
+    """
+    tactic_coverage: dict[str, float] = {}
+    for tactic, slugs in SAFE_MCP_TACTICS.items():
+        total = sum(results_by_slug.get(s, {}).get("total", 0) for s in slugs)
+        blocked = sum(results_by_slug.get(s, {}).get("blocked", 0) for s in slugs)
+        tactic_coverage[tactic] = (blocked / total * 100) if total > 0 else 0.0
+    return tactic_coverage
+
+
 # ── Timing templates ─────────────────────────────────────────────
 
 _TIMING_TEMPLATES: dict[str, dict[str, Any]] = {

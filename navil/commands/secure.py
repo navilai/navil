@@ -391,6 +391,25 @@ def _secure_command(cli: Any, args: argparse.Namespace) -> int:
     after_str = _coverage_color(after_pct, use_color)
     print(f"   Before: {before_str} coverage  \u2192  After: {after_str} coverage", file=sys.stderr)
 
+    # SAFE-MCP tactic summary
+    try:
+        from navil.safemcp.pool_converter import SAFE_MCP_TACTICS, safe_mcp_tactic_coverage
+
+        tactic_cov = safe_mcp_tactic_coverage(after_results)
+        covered = sum(1 for p in tactic_cov.values() if p >= 70)
+        weakest = sorted(
+            [(t, p) for t, p in tactic_cov.items() if p < 70],
+            key=lambda x: x[1],
+        )[:2]
+        total_tactics = len(SAFE_MCP_TACTICS)
+        tactic_line = f"   SAFE-MCP: {covered}/{total_tactics} tactics covered"
+        if weakest:
+            weak_str = ", ".join(f"{t} ({p:.0f}%)" for t, p in weakest)
+            tactic_line += f"  \u2014  weakest: {weak_str}"
+        print(_dim(tactic_line, use_color), file=sys.stderr)
+    except ImportError:
+        pass
+
     # Gap categories
     gaps = _gap_categories(after_results)
     if gaps:

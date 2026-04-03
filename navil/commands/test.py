@@ -232,6 +232,22 @@ def format_report(
         f"  {grand_missed:>6d}  {grand_pct_str:>10s}"
     )
 
+    # ── SAFE-MCP tactic breakdown ──────────────────────────────
+    try:
+        from navil.safemcp.pool_converter import safe_mcp_tactic_coverage
+
+        tactic_cov = safe_mcp_tactic_coverage(results)
+        lines.append("")
+        lines.append(_color("  SAFE-MCP Tactic Coverage", "36", use_color))
+        lines.append("  " + "\u2500" * 68)
+        for tactic, pct in tactic_cov.items():
+            bar_filled = int(pct / 10)  # 0-10 blocks
+            bar = "\u2588" * bar_filled + "\u2591" * (10 - bar_filled)
+            pct_str = _coverage_color(pct, use_color)
+            lines.append(f"  {tactic:<28s}  {pct_str:>7s}  {bar}")
+    except ImportError:
+        pass
+
     exit_code = 0
     if threshold is not None:
         lines.append("")
