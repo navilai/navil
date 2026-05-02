@@ -1,9 +1,7 @@
 <p align="center">
-  <h1 align="center">Navil</h1>
+  <h1 align="center">Navil — Production Governance for AI Agents</h1>
   <p align="center">
-    <strong>The open-source agent governance middleware.</strong>
-    <br />
-    Observability, policy enforcement, and threat intelligence for AI agent tool calls -- whether your agents use MCP, CLI, or both.
+    <strong>The open-source security proxy for MCP servers, CLIs, and APIs that AI agents call. Policy at install, enforcement at every call.</strong>
   </p>
 </p>
 
@@ -27,6 +25,12 @@
   <em>Static scanning catches 1.7% of MCP threats. Runtime monitoring catches the other 98.3%.</em>
 </p>
 
+<p align="center">
+  <strong><a href="https://navil.ai">navil.ai</a></strong> · <a href="https://navil.ai/docs">Docs</a> · <a href="https://navil.ai/research/state-of-mcp-security-2026">MCP Security Report</a> · <a href="https://navil.ai/radar">Radar</a>
+</p>
+
+> **May 2026:** We scanned 400 public MCP packages. [75% carry known CVEs in their dependency tree](https://navil.ai/research/state-of-mcp-security-2026). Anthropic's own SDK has 6 HIGH-severity vulnerabilities affecting 54–68% of the ecosystem. `navil audit-deps` generates the report for your specific MCP config.
+
 ```bash
 pip install navil && navil secure
 ```
@@ -42,15 +46,15 @@ $ navil secure
    Found: ~/Library/.../claude_desktop_config.json (4 servers)
 
 📊 Scanning current coverage...
-   Running 568 detection patterns across 30 categories...
-   Current coverage: 23% (4/30 categories protected)
+   Running 568 detection patterns across 36 categories...
+   Current coverage: 23% (4/36 categories protected)
 
 🔒 Wrapping servers with Navil proxy...
    ✓ Wrapped 16 servers in ~/.cursor/mcp.json
    ✓ Wrapped 4 servers in ~/Library/.../claude_desktop_config.json
 
 📊 Re-scanning coverage with Navil active...
-   New coverage: 78% (23/30 categories protected)
+   New coverage: 78% (23/36 categories protected)
 
 ✅ Done in 47 seconds.
    Before: 23% coverage  →  After: 78% coverage
@@ -373,7 +377,7 @@ OIDC token exchange converts external identity tokens into Navil credentials wit
 Issue, rotate, and revoke JWT tokens with JIT provisioning, configurable TTL, usage tracking, and immutable audit logs. Hardened with a global active-credential cap (500), auto-purge of expired credentials, and thread-safe rotation.
 
 ### Threat Intelligence & Blocklist Engine
-Community-sourced threat intel via the [Give-to-Get initiative](#community-threat-network), backed by a local blocklist engine for pattern matching. Ships with 568 detection patterns across 30 attack categories (v3 blocklist). The Navil-200 attack benchmark validates proxy detection across protocol manipulation, tool shadowing, context smuggling, multi-agent exploits, RAG poisoning, supply chain attacks, privilege escalation, and anti-forensics vectors.
+Community-sourced threat intel via the [Give-to-Get initiative](#community-threat-network), backed by a local blocklist engine for pattern matching. Ships with 568 detection patterns across 36 attack categories (v3 blocklist). The Navil-200 attack benchmark validates proxy detection across protocol manipulation, tool shadowing, context smuggling, multi-agent exploits, RAG poisoning, supply chain attacks, privilege escalation, and anti-forensics vectors.
 
 ### Honeypot & Canary Kit
 Deploy decoy MCP servers to detect and study attackers in the wild. 10 built-in profiles: `dev_tools`, `cloud_creds`, `db_admin`, `openclaw_registry`, `ci_pipeline`, `llm_gateway`, `k8s_dashboard`, `rag_endpoint`, `oauth_server`, and `agent_marketplace`. A built-in `SignatureExtractor` analyzes collected interactions and auto-generates blocklist entries. Production deployment uses Docker Compose with isolated networking.
