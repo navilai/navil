@@ -1,23 +1,39 @@
 /** @type {import('tailwindcss').Config} */
 export default {
   content: ['./index.html', './src/**/*.{js,ts,jsx,tsx}'],
+  darkMode: 'class',
   theme: {
     extend: {
       colors: {
-        // Landing-page design tokens
+        // Token-driven Navil palette — see ./src/index.css for the values.
+        // Existing pages use these names (e.g. `bg-navil-bg`); they now
+        // automatically respond to the active theme via CSS variables.
         navil: {
-          bg: '#0a0e17',
-          'bg-secondary': '#111827',
-          card: '#1a2235',
-          'card-hover': '#1f2a40',
-          border: '#2a3650',
-          accent: '#00e5c8',
-          'accent-dim': '#00b8a0',
+          bg: 'var(--bg)',
+          'bg-secondary': 'var(--surface)',
+          card: 'var(--surface)',
+          'card-hover': 'var(--surface-elevated)',
+          border: 'var(--rule)',
+          accent: 'var(--signal-cyan)',
+          'accent-dim': 'var(--signal-cyan)',
         },
+        // Semantic tokens — preferred for new code.
+        bg: 'var(--bg)',
+        surface: 'var(--surface)',
+        'surface-elevated': 'var(--surface-elevated)',
+        ink: 'var(--ink)',
+        'ink-secondary': 'var(--ink-secondary)',
+        'ink-muted': 'var(--ink-muted)',
+        rule: 'var(--rule)',
+        'rule-strong': 'var(--rule-strong)',
+        'signal-cyan': 'var(--signal-cyan)',
+        'signal-amber': 'var(--signal-amber)',
+        'signal-red': 'var(--signal-red)',
+        'signal-green': 'var(--signal-green)',
       },
       fontFamily: {
-        sans: ['Inter', 'system-ui', 'sans-serif'],
-        mono: ['"JetBrains Mono"', 'ui-monospace', 'monospace'],
+        sans: ['Geist', 'system-ui', 'sans-serif'],
+        mono: ['"Geist Mono"', 'ui-monospace', 'monospace'],
       },
       borderRadius: {
         card: '12px',
@@ -35,10 +51,7 @@ export default {
         'scan-line': 'scanLine 4s linear infinite',
       },
       keyframes: {
-        fadeIn: {
-          '0%': { opacity: '0' },
-          '100%': { opacity: '1' },
-        },
+        fadeIn: { '0%': { opacity: '0' }, '100%': { opacity: '1' } },
         slideUp: {
           '0%': { opacity: '0', transform: 'translateY(12px)' },
           '100%': { opacity: '1', transform: 'translateY(0)' },
@@ -51,10 +64,7 @@ export default {
           '0%': { backgroundPosition: '-200% 0' },
           '100%': { backgroundPosition: '200% 0' },
         },
-        pulseGlow: {
-          '0%, 100%': { opacity: '0.4' },
-          '50%': { opacity: '1' },
-        },
+        pulseGlow: { '0%, 100%': { opacity: '0.4' }, '50%': { opacity: '1' } },
         scoreReveal: {
           '0%': { strokeDashoffset: '283' },
           '100%': { strokeDashoffset: 'var(--score-offset)' },
@@ -63,10 +73,7 @@ export default {
           '0%': { opacity: '0', transform: 'translateY(24px)' },
           '100%': { opacity: '1', transform: 'translateY(0)' },
         },
-        cursorBlink: {
-          '0%, 100%': { opacity: '1' },
-          '50%': { opacity: '0' },
-        },
+        cursorBlink: { '0%, 100%': { opacity: '1' }, '50%': { opacity: '0' } },
         pulseDot: {
           '0%, 100%': { opacity: '0.4', transform: 'scale(1)' },
           '50%': { opacity: '1', transform: 'scale(1.5)' },
@@ -76,9 +83,7 @@ export default {
           '100%': { transform: 'translateY(100%)' },
         },
       },
-      backdropBlur: {
-        xs: '2px',
-      },
+      backdropBlur: { xs: '2px' },
     },
   },
   plugins: [],
