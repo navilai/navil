@@ -18,8 +18,8 @@ const errorConfig: Record<string, { icon: IconName; title: string; hint: string;
 }
 
 const accentStyles = {
-  amber: { border: 'border-[#f59e0b]/30', iconBg: 'bg-[#f59e0b]/10', iconText: 'text-[#f59e0b]', title: 'text-[#f59e0b]' },
-  red: { border: 'border-[#ff4d6a]/30', iconBg: 'bg-[#ff4d6a]/10', iconText: 'text-[#ff4d6a]', title: 'text-[#ff4d6a]' },
+  amber: { border: 'border-signal-amber/30', iconBg: 'bg-signal-amber/10', iconText: 'text-signal-amber', title: 'text-signal-amber' },
+  red: { border: 'border-signal-red/30', iconBg: 'bg-signal-red/10', iconText: 'text-signal-red', title: 'text-signal-red' },
 }
 
 export default function LLMErrorCard({ message, errorType = 'unknown', onRetry, compact }: LLMErrorCardProps) {
@@ -29,19 +29,19 @@ export default function LLMErrorCard({ message, errorType = 'unknown', onRetry, 
 
   if (compact) {
     return (
-      <div className={`flex items-start gap-2 mt-2 p-2.5 rounded-lg bg-[#1a2235] border ${styles.border} animate-fadeIn`}>
+      <div className={`flex items-start gap-2 mt-2 p-2.5 rounded-lg bg-surface border ${styles.border} animate-fadeIn`}>
         <Icon name={cfg.icon} size={14} className={`${styles.iconText} shrink-0 mt-0.5`} />
         <div className="flex-1 min-w-0">
           <p className={`text-xs font-medium ${styles.title}`}>{cfg.title}</p>
-          <p className="text-xs text-[#5a6a8a] mt-0.5">{cfg.hint}</p>
+          <p className="text-xs text-ink-muted mt-0.5">{cfg.hint}</p>
           <div className="flex gap-3 mt-1">
             {cfg.showSettings && (
-              <Link to="/settings" className="text-xs text-[#00e5c8] hover:text-[#00b8a0]">
+              <Link to="/settings" className="text-xs text-signal-cyan hover:text-signal-cyan">
                 Go to Settings
               </Link>
             )}
             {onRetry && (
-              <button onClick={onRetry} className="text-xs text-[#00e5c8] hover:text-[#00b8a0]">
+              <button onClick={onRetry} className="text-xs text-signal-cyan hover:text-signal-cyan">
                 Retry
               </button>
             )}
@@ -59,19 +59,19 @@ export default function LLMErrorCard({ message, errorType = 'unknown', onRetry, 
         </div>
         <div className="flex-1 min-w-0">
           <p className={`font-medium ${styles.title}`}>{cfg.title}</p>
-          <p className="text-sm text-[#8b9bc0] mt-1">{cfg.hint}</p>
+          <p className="text-sm text-ink-secondary mt-1">{cfg.hint}</p>
 
           {message && message !== cfg.hint && (
             <button
               onClick={() => setShowDetail(!showDetail)}
-              className="text-xs text-[#5a6a8a] hover:text-[#8b9bc0] mt-2 flex items-center gap-1 transition-colors duration-200"
+              className="text-xs text-ink-muted hover:text-ink-secondary mt-2 flex items-center gap-1 transition-colors duration-200"
             >
               <Icon name={showDetail ? 'chevron-down' : 'chevron-right'} size={12} />
               Technical detail
             </button>
           )}
           {showDetail && (
-            <pre className="mt-2 text-xs text-[#5a6a8a] bg-[#0d1117] border border-[#2a3650] rounded-[12px] p-3 overflow-x-auto font-mono max-h-32 overflow-y-auto">
+            <pre className="mt-2 text-xs text-ink-muted bg-surface border border-rule rounded-[12px] p-3 overflow-x-auto font-mono max-h-32 overflow-y-auto">
               {message}
             </pre>
           )}
@@ -80,7 +80,7 @@ export default function LLMErrorCard({ message, errorType = 'unknown', onRetry, 
             {cfg.showSettings && (
               <Link
                 to="/settings"
-                className="px-3 py-1.5 text-xs bg-[#00e5c8]/15 text-[#00e5c8] border border-[#00e5c8]/30 rounded-lg hover:bg-[#00e5c8]/25 flex items-center gap-1.5"
+                className="px-3 py-1.5 text-xs bg-signal-cyan/15 text-signal-cyan border border-signal-cyan/30 rounded-lg hover:bg-signal-cyan/25 flex items-center gap-1.5"
               >
                 <Icon name="settings" size={13} />
                 Configure API Key
@@ -89,7 +89,7 @@ export default function LLMErrorCard({ message, errorType = 'unknown', onRetry, 
             {onRetry && (
               <button
                 onClick={onRetry}
-                className="px-3 py-1.5 text-xs bg-[#1a2235] text-[#8b9bc0] border border-[#2a3650] rounded-lg hover:bg-[#1f2a40] hover:text-[#f0f4fc] flex items-center gap-1.5 transition-colors"
+                className="px-3 py-1.5 text-xs bg-surface text-ink-secondary border border-rule rounded-lg hover:bg-surface-elevated hover:text-ink flex items-center gap-1.5 transition-colors"
               >
                 <Icon name="activity" size={13} />
                 Retry

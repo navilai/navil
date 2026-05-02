@@ -17,9 +17,9 @@ export default function UpgradePrompt({ feature, compact }: UpgradePromptProps) 
     return (
       <div className="flex items-center gap-3 p-3 rounded-lg bg-violet-500/5 border border-violet-500/20">
         <Icon name="sparkles" size={14} className="text-violet-400 shrink-0" />
-        <p className="text-xs text-[#8b9bc0] flex-1">
+        <p className="text-xs text-ink-secondary flex-1">
           {feature} requires an LLM API key.{' '}
-          <Link to="/settings" className="text-[#00e5c8] hover:underline">
+          <Link to="/settings" className="text-signal-cyan hover:underline">
             Configure in Settings
           </Link>
         </p>
@@ -32,13 +32,13 @@ export default function UpgradePrompt({ feature, compact }: UpgradePromptProps) 
       <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-violet-500/10 border border-violet-500/20 mb-4">
         <Icon name="sparkles" size={32} className="text-violet-400" />
       </div>
-      <h3 className="text-lg font-bold text-[#f0f4fc] mb-2">{feature}</h3>
-      <p className="text-sm text-[#5a6a8a] mb-6 max-w-md mx-auto leading-relaxed">
+      <h3 className="text-lg font-bold text-ink mb-2">{feature}</h3>
+      <p className="text-sm text-ink-muted mb-6 max-w-md mx-auto leading-relaxed">
         Configure an LLM API key in Settings to enable AI-powered analysis.
       </p>
       <Link
         to="/settings"
-        className="inline-flex items-center gap-2 px-5 py-2.5 bg-[#00e5c8] text-[#0a0e17] rounded-lg text-sm font-semibold hover:bg-[#00b8a0] transition-all duration-200 hover:-translate-y-0.5"
+        className="inline-flex items-center gap-2 px-5 py-2.5 bg-signal-cyan text-bg rounded-lg text-sm font-semibold hover:bg-signal-cyan transition-all duration-200 hover:-translate-y-0.5"
       >
         <Icon name="key" size={14} />
         Configure API Key

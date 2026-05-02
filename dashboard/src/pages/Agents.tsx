@@ -8,11 +8,11 @@ import { SkeletonCard, SkeletonTable } from '../components/Skeleton'
 import ConnectionError from '../components/ConnectionError'
 
 const anomalyBarColor: Record<string, string> = {
-  OK: 'bg-[#34d399]',
-  LOW: 'bg-[#3b82f6]',
-  MEDIUM: 'bg-[#f59e0b]',
+  OK: 'bg-signal-green',
+  LOW: 'bg-signal-cyan',
+  MEDIUM: 'bg-signal-amber',
   HIGH: 'bg-orange-500',
-  CRITICAL: 'bg-[#ff4d6a]',
+  CRITICAL: 'bg-signal-red',
 }
 
 export default function Agents() {
@@ -58,7 +58,7 @@ export default function Agents() {
       <div className="glass-card overflow-hidden">
         <table className="w-full text-sm">
           <thead>
-            <tr className="border-b border-[#2a3650] text-[#8b9bc0] text-left bg-[#111827]/60">
+            <tr className="border-b border-rule text-ink-secondary text-left bg-surface/60">
               <th className="px-4 py-3 font-medium text-xs uppercase tracking-wider">Agent</th>
               <th className="px-4 py-3 font-medium text-xs uppercase tracking-wider">Observations</th>
               <th className="px-4 py-3 font-medium text-xs uppercase tracking-wider">Alerts</th>
@@ -72,34 +72,34 @@ export default function Agents() {
               <tr
                 key={a.name}
                 onClick={() => setSelected(a.name)}
-                className={`border-b border-[#2a3650]/50 cursor-pointer transition-all duration-200 animate-fadeIn opacity-0 ${
+                className={`border-b border-rule/50 cursor-pointer transition-all duration-200 animate-fadeIn opacity-0 ${
                   selected === a.name
-                    ? 'bg-[#00e5c8]/[0.07] border-l-2 border-l-[#00e5c8]'
-                    : 'hover:bg-[#1f2a40]'
+                    ? 'bg-signal-cyan/[0.07] border-l-2 border-l-[#00e5c8]'
+                    : 'hover:bg-surface-elevated'
                 }`}
                 style={{ animationDelay: `${i * 0.04}s` }}
               >
-                <td className="px-4 py-3 font-semibold text-[#f0f4fc]">{a.name}</td>
-                <td className="px-4 py-3 text-[#8b9bc0]">{a.observations}</td>
+                <td className="px-4 py-3 font-semibold text-ink">{a.name}</td>
+                <td className="px-4 py-3 text-ink-secondary">{a.observations}</td>
                 <td className="px-4 py-3">
                   {a.alert_count > 0 ? (
-                    <span className="text-[#ff4d6a] font-semibold">{a.alert_count}</span>
+                    <span className="text-signal-red font-semibold">{a.alert_count}</span>
                   ) : (
-                    <span className="text-[#5a6a8a]">0</span>
+                    <span className="text-ink-muted">0</span>
                   )}
                 </td>
                 <td className="px-4 py-3">
                   <div className="flex gap-1 flex-wrap">
                     {a.known_tools.slice(0, 4).map(t => (
-                      <span key={t} className="px-2 py-0.5 bg-[#00e5c8]/10 text-[#00e5c8] border border-[#00e5c8]/20 rounded text-xs font-mono">
+                      <span key={t} className="px-2 py-0.5 bg-signal-cyan/10 text-signal-cyan border border-signal-cyan/20 rounded text-xs font-mono">
                         {t}
                       </span>
                     ))}
-                    {a.known_tools.length > 4 && <span className="text-xs text-[#5a6a8a]">+{a.known_tools.length - 4}</span>}
+                    {a.known_tools.length > 4 && <span className="text-xs text-ink-muted">+{a.known_tools.length - 4}</span>}
                   </div>
                 </td>
-                <td className="px-4 py-3 text-[#8b9bc0] font-mono text-xs">{a.duration_mean}ms</td>
-                <td className="px-4 py-3 text-[#8b9bc0] font-mono text-xs">{a.data_volume_mean}B</td>
+                <td className="px-4 py-3 text-ink-secondary font-mono text-xs">{a.duration_mean}ms</td>
+                <td className="px-4 py-3 text-ink-secondary font-mono text-xs">{a.data_volume_mean}B</td>
               </tr>
             ))}
           </tbody>
@@ -109,12 +109,12 @@ export default function Agents() {
       {/* Agent detail panel */}
       {selected && (
         <div className="space-y-4 animate-slideUp">
-          <h3 className="text-lg font-bold flex items-center gap-2 text-[#f0f4fc]">
-            <Icon name="bot" size={20} className="text-[#00e5c8]" />
+          <h3 className="text-lg font-bold flex items-center gap-2 text-ink">
+            <Icon name="bot" size={20} className="text-signal-cyan" />
             {selected}
             <button
               onClick={() => setSelected(null)}
-              className="ml-auto flex items-center gap-1 text-xs text-[#5a6a8a] hover:text-[#f0f4fc] transition-colors duration-200"
+              className="ml-auto flex items-center gap-1 text-xs text-ink-muted hover:text-ink transition-colors duration-200"
             >
               <Icon name="x" size={14} /> close
             </button>
@@ -129,8 +129,8 @@ export default function Agents() {
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
               {/* Baseline info */}
               <div className="glass-card p-5">
-                <h4 className="font-semibold text-[#f0f4fc] mb-4 flex items-center gap-2">
-                  <Icon name="chart" size={16} className="text-[#00e5c8]" />
+                <h4 className="font-semibold text-ink mb-4 flex items-center gap-2">
+                  <Icon name="chart" size={16} className="text-signal-cyan" />
                   Adaptive Baseline
                 </h4>
                 <div className="space-y-3">
@@ -142,10 +142,10 @@ export default function Agents() {
                       return (
                         <div key={k}>
                           <div className="flex justify-between mb-1">
-                            <p className="text-[#5a6a8a] text-xs">{k.replace(/_/g, ' ')}</p>
-                            <p className="text-[#f0f4fc] font-mono text-xs">{numVal.toFixed(2)}</p>
+                            <p className="text-ink-muted text-xs">{k.replace(/_/g, ' ')}</p>
+                            <p className="text-ink font-mono text-xs">{numVal.toFixed(2)}</p>
                           </div>
-                          <MiniBar value={Math.abs(numVal)} max={maxVal} color="bg-[#00e5c8]/60" height="h-1" />
+                          <MiniBar value={Math.abs(numVal)} max={maxVal} color="bg-signal-cyan/60" height="h-1" />
                         </div>
                       )
                     })
@@ -155,12 +155,12 @@ export default function Agents() {
 
               {/* Anomaly scores */}
               <div className="glass-card p-5">
-                <h4 className="font-semibold text-[#f0f4fc] mb-4 flex items-center gap-2">
-                  <Icon name="activity" size={16} className="text-[#fbbf24]" />
+                <h4 className="font-semibold text-ink mb-4 flex items-center gap-2">
+                  <Icon name="activity" size={16} className="text-signal-amber" />
                   Anomaly Scores
                 </h4>
                 {detail.anomaly_scores.length === 0 ? (
-                  <p className="text-[#5a6a8a] text-sm">No anomaly scores computed yet.</p>
+                  <p className="text-ink-muted text-sm">No anomaly scores computed yet.</p>
                 ) : (
                   <div className="space-y-3">
                     {detail.anomaly_scores.map((s) => (
@@ -168,14 +168,14 @@ export default function Agents() {
                         <div className="flex items-center justify-between mb-1">
                           <div className="flex items-center gap-2">
                             <SeverityBadge severity={s.level} />
-                            <span className="text-sm text-[#f0f4fc] font-mono">{s.anomaly_type}</span>
+                            <span className="text-sm text-ink font-mono">{s.anomaly_type}</span>
                           </div>
-                          <span className="text-sm font-semibold text-[#8b9bc0]">{(s.confidence * 100).toFixed(0)}%</span>
+                          <span className="text-sm font-semibold text-ink-secondary">{(s.confidence * 100).toFixed(0)}%</span>
                         </div>
                         <MiniBar
                           value={s.confidence * 100}
                           max={100}
-                          color={anomalyBarColor[s.level] || 'bg-[#5a6a8a]'}
+                          color={anomalyBarColor[s.level] || 'bg-ink-muted'}
                         />
                       </div>
                     ))}
@@ -186,17 +186,17 @@ export default function Agents() {
               {/* Agent alerts */}
               {detail.alerts.length > 0 && (
                 <div className="lg:col-span-2 glass-card p-5">
-                  <h4 className="font-semibold text-[#f0f4fc] mb-3 flex items-center gap-2">
-                    <Icon name="alert" size={16} className="text-[#ff4d6a]" />
+                  <h4 className="font-semibold text-ink mb-3 flex items-center gap-2">
+                    <Icon name="alert" size={16} className="text-signal-red" />
                     Active Alerts ({detail.alerts.length})
                   </h4>
                   <div className="space-y-2">
                     {detail.alerts.map((alert) => (
-                      <div key={`${alert.severity}-${alert.timestamp}-${alert.description.slice(0, 40)}`} className="flex items-start gap-3 py-2.5 border-b border-[#2a3650]/50 last:border-0">
+                      <div key={`${alert.severity}-${alert.timestamp}-${alert.description.slice(0, 40)}`} className="flex items-start gap-3 py-2.5 border-b border-rule/50 last:border-0">
                         <SeverityBadge severity={alert.severity} />
                         <div className="flex-1">
-                          <p className="text-sm text-[#f0f4fc]">{alert.description}</p>
-                          <p className="text-xs text-[#00e5c8] mt-1">{alert.recommended_action}</p>
+                          <p className="text-sm text-ink">{alert.description}</p>
+                          <p className="text-xs text-signal-cyan mt-1">{alert.recommended_action}</p>
                         </div>
                       </div>
                     ))}

@@ -26,10 +26,10 @@ export default function CodeBlock({ code, language, filename }: CodeBlockProps) 
     <div className="code-block">
       {headerLabel && (
         <div className="code-block-header flex items-center justify-between">
-          <span className="text-xs text-[#8b9bc0]">{headerLabel}</span>
+          <span className="text-xs text-ink-secondary">{headerLabel}</span>
           <button
             onClick={handleCopy}
-            className="flex items-center gap-1.5 text-xs text-[#5a6a8a] hover:text-[#f0f4fc] transition-colors duration-200"
+            className="flex items-center gap-1.5 text-xs text-ink-muted hover:text-ink transition-colors duration-200"
             aria-label="Copy code"
           >
             <Icon name={copied ? 'check' : 'copy'} size={14} />
@@ -40,14 +40,14 @@ export default function CodeBlock({ code, language, filename }: CodeBlockProps) 
       {!headerLabel && (
         <button
           onClick={handleCopy}
-          className="absolute top-3 right-3 flex items-center gap-1.5 text-xs text-[#5a6a8a] hover:text-[#f0f4fc] transition-colors duration-200"
+          className="absolute top-3 right-3 flex items-center gap-1.5 text-xs text-ink-muted hover:text-ink transition-colors duration-200"
           aria-label="Copy code"
         >
           <Icon name={copied ? 'check' : 'copy'} size={14} />
           {copied ? 'Copied!' : 'Copy'}
         </button>
       )}
-      <pre className="p-4 overflow-x-auto text-[#8b9bc0] leading-relaxed">
+      <pre className="p-4 overflow-x-auto text-ink-secondary leading-relaxed">
         <code>{code}</code>
       </pre>
     </div>

@@ -24,7 +24,7 @@ function DelegationChainTree({ chain, onClose }: { chain: CredentialChain; onClo
           <Icon name="lock" size={16} />
           Delegation Chain
         </h3>
-        <button onClick={onClose} className="text-[#5a6a8a] hover:text-[#f0f4fc]">
+        <button onClick={onClose} className="text-ink-muted hover:text-ink">
           <Icon name="x" size={14} />
         </button>
       </div>
@@ -32,19 +32,19 @@ function DelegationChainTree({ chain, onClose }: { chain: CredentialChain; onClo
       {/* Human identity at root */}
       {chain.human_context && (
         <div className="flex items-center gap-2 mb-3 pl-2">
-          <div className="w-6 h-6 rounded-full bg-[#3b82f6]/20 border border-[#3b82f6]/40 flex items-center justify-center">
-            <Icon name="users" size={12} className="text-[#3b82f6]" />
+          <div className="w-6 h-6 rounded-full bg-signal-cyan/20 border border-signal-cyan/40 flex items-center justify-center">
+            <Icon name="users" size={12} className="text-signal-cyan" />
           </div>
           <div>
-            <span className="text-xs text-[#3b82f6] font-medium">Human Identity</span>
-            <div className="text-xs text-[#8b9bc0]">
+            <span className="text-xs text-signal-cyan font-medium">Human Identity</span>
+            <div className="text-xs text-ink-secondary">
               {chain.human_context.email}
-              <span className="text-[#5a6a8a] ml-1">(sub: {chain.human_context.sub})</span>
+              <span className="text-ink-muted ml-1">(sub: {chain.human_context.sub})</span>
             </div>
             {chain.human_context.roles.length > 0 && (
               <div className="flex gap-1 mt-0.5">
                 {chain.human_context.roles.map(r => (
-                  <span key={r} className="px-1.5 py-0.5 bg-[#3b82f6]/10 text-[#3b82f6]/70 border border-[#3b82f6]/20 rounded text-[10px]">
+                  <span key={r} className="px-1.5 py-0.5 bg-signal-cyan/10 text-signal-cyan/70 border border-signal-cyan/20 rounded text-[10px]">
                     {r}
                   </span>
                 ))}
@@ -63,35 +63,35 @@ function DelegationChainTree({ chain, onClose }: { chain: CredentialChain; onClo
             <div key={node.token_id} className="flex items-stretch">
               {/* Connector line */}
               <div className="flex flex-col items-center w-8 flex-shrink-0">
-                <div className={`w-px flex-1 ${isRevoked ? 'bg-[#ff4d6a]/40' : 'bg-purple-500/40'}`} />
+                <div className={`w-px flex-1 ${isRevoked ? 'bg-signal-red/40' : 'bg-purple-500/40'}`} />
                 <div className={`w-3 h-3 rounded-full border-2 flex-shrink-0 ${
                   isRevoked
-                    ? 'border-[#ff4d6a]/60 bg-[#ff4d6a]/20'
+                    ? 'border-signal-red/60 bg-signal-red/20'
                     : isLast
-                      ? 'border-[#00e5c8]/60 bg-[#00e5c8]/20'
+                      ? 'border-signal-cyan/60 bg-signal-cyan/20'
                       : 'border-purple-500/60 bg-purple-500/20'
                 }`} />
-                {!isLast && <div className={`w-px flex-1 ${isRevoked ? 'bg-[#ff4d6a]/40' : 'bg-purple-500/40'}`} />}
+                {!isLast && <div className={`w-px flex-1 ${isRevoked ? 'bg-signal-red/40' : 'bg-purple-500/40'}`} />}
               </div>
 
               {/* Node content */}
               <div className={`flex-1 py-2 pl-2 ${isRevoked ? 'opacity-60' : ''}`}>
                 <div className="flex items-center gap-2">
-                  <span className={`text-xs font-medium ${isRevoked ? 'text-[#ff4d6a]' : 'text-[#f0f4fc]'}`}>
+                  <span className={`text-xs font-medium ${isRevoked ? 'text-signal-red' : 'text-ink'}`}>
                     {node.agent_name}
                   </span>
                   <StatusBadge status={node.status} />
                   {isLast && (
-                    <span className="px-1.5 py-0.5 bg-[#00e5c8]/15 text-[#00e5c8] rounded text-[10px] font-medium">
+                    <span className="px-1.5 py-0.5 bg-signal-cyan/15 text-signal-cyan rounded text-[10px] font-medium">
                       CURRENT
                     </span>
                   )}
                 </div>
                 <div className="flex items-center gap-2 mt-0.5">
-                  <span className="px-1.5 py-0.5 bg-[#111827] text-[#5a6a8a] rounded text-[10px] font-mono">
+                  <span className="px-1.5 py-0.5 bg-surface text-ink-muted rounded text-[10px] font-mono">
                     {node.scope || '(empty scope)'}
                   </span>
-                  <span className="text-[10px] text-[#5a6a8a] font-mono">
+                  <span className="text-[10px] text-ink-muted font-mono">
                     {node.token_id.slice(0, 16)}...
                   </span>
                 </div>
@@ -101,7 +101,7 @@ function DelegationChainTree({ chain, onClose }: { chain: CredentialChain; onClo
         })}
       </div>
 
-      <div className="mt-3 pt-3 border-t border-[#2a3650]/40 text-xs text-[#5a6a8a]">
+      <div className="mt-3 pt-3 border-t border-rule/40 text-xs text-ink-muted">
         Chain depth: {chain.chain_length} | Max further delegation: {chain.chain[chain.chain.length - 1]?.max_delegation_depth ?? 'N/A'}
       </div>
     </div>
@@ -191,37 +191,37 @@ export default function Credentials() {
 
       {/* Issue new credential */}
       <div className="glass-card p-5">
-        <h3 className="text-sm font-semibold text-[#f0f4fc] mb-4 flex items-center gap-2">
-          <Icon name="key" size={16} className="text-[#00e5c8]" />
+        <h3 className="text-sm font-semibold text-ink mb-4 flex items-center gap-2">
+          <Icon name="key" size={16} className="text-signal-cyan" />
           Issue New Credential
         </h3>
         <div className="flex flex-wrap gap-3 items-end">
           <div>
-            <label className="block text-xs text-[#5a6a8a] font-medium mb-1.5">Agent</label>
+            <label className="block text-xs text-ink-muted font-medium mb-1.5">Agent</label>
             <select
               value={agentName}
               onChange={e => setAgentName(e.target.value)}
-              className="bg-[#111827] border border-[#2a3650] rounded-lg px-3 py-2 text-sm text-[#f0f4fc] focus:border-[#00e5c8] focus:outline-none transition-colors"
+              className="bg-surface border border-rule rounded-lg px-3 py-2 text-sm text-ink focus:border-signal-cyan focus:outline-none transition-colors"
             >
               <option value="">Select agent...</option>
               {agents.map(a => <option key={a.name} value={a.name}>{a.name}</option>)}
             </select>
           </div>
           <div>
-            <label className="block text-xs text-[#5a6a8a] font-medium mb-1.5">Scope</label>
+            <label className="block text-xs text-ink-muted font-medium mb-1.5">Scope</label>
             <input
               value={scope}
               onChange={e => setScope(e.target.value)}
-              className="bg-[#111827] border border-[#2a3650] rounded-lg px-3 py-2 text-sm text-[#f0f4fc] font-mono focus:border-[#00e5c8] focus:outline-none w-48 transition-colors"
+              className="bg-surface border border-rule rounded-lg px-3 py-2 text-sm text-ink font-mono focus:border-signal-cyan focus:outline-none w-48 transition-colors"
               placeholder="read:tools write:logs"
             />
           </div>
           <div>
-            <label className="block text-xs text-[#5a6a8a] font-medium mb-1.5">TTL</label>
+            <label className="block text-xs text-ink-muted font-medium mb-1.5">TTL</label>
             <select
               value={ttl}
               onChange={e => setTtl(Number(e.target.value))}
-              className="bg-[#111827] border border-[#2a3650] rounded-lg px-3 py-2 text-sm text-[#f0f4fc] focus:border-[#00e5c8] focus:outline-none transition-colors"
+              className="bg-surface border border-rule rounded-lg px-3 py-2 text-sm text-ink focus:border-signal-cyan focus:outline-none transition-colors"
             >
               {TTL_OPTIONS.map(o => <option key={o.value} value={o.value}>{o.label}</option>)}
             </select>
@@ -229,7 +229,7 @@ export default function Credentials() {
           <button
             onClick={handleIssue}
             disabled={!agentName || issuing}
-            className="px-4 py-2 bg-[#00e5c8] text-[#0a0e17] rounded-lg text-sm font-semibold hover:bg-[#00b8a0] hover:-translate-y-0.5 disabled:opacity-40 disabled:cursor-not-allowed flex items-center gap-2 transition-all duration-200"
+            className="px-4 py-2 bg-signal-cyan text-bg rounded-lg text-sm font-semibold hover:bg-signal-cyan hover:-translate-y-0.5 disabled:opacity-40 disabled:cursor-not-allowed flex items-center gap-2 transition-all duration-200"
           >
             <Icon name="key" size={14} />
             {issuing ? 'Issuing...' : 'Issue Token'}
@@ -239,28 +239,28 @@ export default function Credentials() {
 
       {/* New token display */}
       {newToken && (
-        <div className="glass-card border-[#34d399]/30 p-5 animate-slideUp">
+        <div className="glass-card border-signal-green/30 p-5 animate-slideUp">
           <div className="flex items-start justify-between">
             <div>
-              <p className="text-sm font-medium text-[#34d399] mb-2 flex items-center gap-2">
+              <p className="text-sm font-medium text-signal-green mb-2 flex items-center gap-2">
                 <Icon name="check" size={16} /> Token issued successfully
               </p>
-              <p className="text-xs text-[#5a6a8a] mb-2">Copy this token now — it won't be shown again.</p>
-              <code className="block bg-[#111827] rounded-lg p-3 text-xs text-[#f0f4fc] font-mono break-all max-w-2xl">
+              <p className="text-xs text-ink-muted mb-2">Copy this token now — it won't be shown again.</p>
+              <code className="block bg-surface rounded-lg p-3 text-xs text-ink font-mono break-all max-w-2xl">
                 {newToken}
               </code>
             </div>
             <div className="flex gap-2">
               <button
                 onClick={copyToken}
-                className="px-3 py-1.5 bg-[#34d399]/15 text-[#34d399] border border-[#34d399]/30 rounded-lg text-xs hover:bg-[#34d399]/25 flex items-center gap-1"
+                className="px-3 py-1.5 bg-signal-green/15 text-signal-green border border-signal-green/30 rounded-lg text-xs hover:bg-signal-green/25 flex items-center gap-1"
               >
                 <Icon name="check" size={12} />
                 {copied ? 'Copied!' : 'Copy'}
               </button>
               <button
                 onClick={() => setNewToken('')}
-                className="px-2 py-1.5 text-[#5a6a8a] hover:text-[#f0f4fc]"
+                className="px-2 py-1.5 text-ink-muted hover:text-ink"
               >
                 <Icon name="x" size={14} />
               </button>
@@ -269,7 +269,7 @@ export default function Credentials() {
         </div>
       )}
 
-      {error && <p className="text-[#ff4d6a] text-sm">{error}</p>}
+      {error && <p className="text-signal-red text-sm">{error}</p>}
 
       {/* Delegation chain visualization */}
       {selectedChain && (
@@ -284,7 +284,7 @@ export default function Credentials() {
         <div className="glass-card overflow-hidden">
           <table className="w-full text-sm">
             <thead>
-              <tr className="border-b border-[#2a3650] text-[#8b9bc0] text-left bg-[#111827]/60">
+              <tr className="border-b border-rule text-ink-secondary text-left bg-surface/60">
                 <th className="px-4 py-3 font-medium text-xs uppercase tracking-wider">Token ID</th>
                 <th className="px-4 py-3 font-medium text-xs uppercase tracking-wider">Agent</th>
                 <th className="px-4 py-3 font-medium text-xs uppercase tracking-wider">Scope</th>
@@ -302,28 +302,28 @@ export default function Credentials() {
                 return (
                   <tr
                     key={c.token_id}
-                    className={`border-b border-[#2a3650]/50 animate-fadeIn opacity-0 ${
+                    className={`border-b border-rule/50 animate-fadeIn opacity-0 ${
                       c.status === 'REVOKED' ? 'opacity-50' : ''
                     }`}
                     style={{ animationDelay: `${i * 0.04}s` }}
                   >
-                    <td className="px-4 py-3 font-mono text-xs text-[#8b9bc0]">{c.token_id.slice(0, 16)}...</td>
-                    <td className="px-4 py-3 text-[#f0f4fc]">
+                    <td className="px-4 py-3 font-mono text-xs text-ink-secondary">{c.token_id.slice(0, 16)}...</td>
+                    <td className="px-4 py-3 text-ink">
                       {c.agent_name}
                       {c.delegated_by && (
-                        <span className="block text-[10px] text-[#5a6a8a] mt-0.5">
+                        <span className="block text-[10px] text-ink-muted mt-0.5">
                           via {c.delegated_by}
                         </span>
                       )}
                     </td>
                     <td className="px-4 py-3">
-                      <span className="px-2 py-0.5 bg-[#00e5c8]/10 text-[#00e5c8]/80 border border-[#00e5c8]/20 rounded-full text-xs">
+                      <span className="px-2 py-0.5 bg-signal-cyan/10 text-signal-cyan/80 border border-signal-cyan/20 rounded-full text-xs">
                         {c.scope}
                       </span>
                     </td>
                     <td className="px-4 py-3">
                       {hasHuman && (
-                        <span className="px-2 py-0.5 bg-[#3b82f6]/10 text-[#3b82f6]/80 border border-[#3b82f6]/20 rounded-full text-xs" title={c.human_context?.email}>
+                        <span className="px-2 py-0.5 bg-signal-cyan/10 text-signal-cyan/80 border border-signal-cyan/20 rounded-full text-xs" title={c.human_context?.email}>
                           {c.human_context?.email?.split('@')[0]}
                         </span>
                       )}
@@ -333,12 +333,12 @@ export default function Credentials() {
                         </span>
                       )}
                       {!hasHuman && !hasChain && (
-                        <span className="text-[#5a6a8a] text-xs">--</span>
+                        <span className="text-ink-muted text-xs">--</span>
                       )}
                     </td>
                     <td className="px-4 py-3"><StatusBadge status={c.status} /></td>
-                    <td className="px-4 py-3"><RelativeTime timestamp={c.issued_at} className="text-[#8b9bc0] text-xs" /></td>
-                    <td className="px-4 py-3"><RelativeTime timestamp={c.expires_at} className="text-[#8b9bc0] text-xs" /></td>
+                    <td className="px-4 py-3"><RelativeTime timestamp={c.issued_at} className="text-ink-secondary text-xs" /></td>
+                    <td className="px-4 py-3"><RelativeTime timestamp={c.expires_at} className="text-ink-secondary text-xs" /></td>
                     <td className="px-4 py-3">
                       <div className="flex items-center gap-1">
                         {(hasChain || hasHuman) && (
@@ -356,14 +356,14 @@ export default function Credentials() {
                           <>
                             <button
                               onClick={() => handleRevoke(c.token_id)}
-                              className="px-2 py-1 bg-[#ff4d6a]/15 text-[#ff4d6a] border border-[#ff4d6a]/30 rounded text-xs hover:bg-[#ff4d6a]/25 flex items-center gap-1"
+                              className="px-2 py-1 bg-signal-red/15 text-signal-red border border-signal-red/30 rounded text-xs hover:bg-signal-red/25 flex items-center gap-1"
                             >
                               <Icon name="x" size={12} /> Revoke
                             </button>
                             {hasChain && (
                               <button
                                 onClick={() => handleRevoke(c.token_id, true)}
-                                className="px-2 py-1 bg-[#ff4d6a]/15 text-[#ff4d6a] border border-[#ff4d6a]/30 rounded text-[10px] hover:bg-[#ff4d6a]/25"
+                                className="px-2 py-1 bg-signal-red/15 text-signal-red border border-signal-red/30 rounded text-[10px] hover:bg-signal-red/25"
                                 title="Cascade revoke: revoke this credential and all descendants"
                               >
                                 Cascade

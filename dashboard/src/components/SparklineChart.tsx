@@ -67,8 +67,8 @@ export default function SparklineChart({
       </svg>
       {/* X-axis labels */}
       <div className="flex justify-between mt-1.5 px-0.5">
-        <span className="text-[10px] text-[#5a6a8a] font-medium">{data[0].label}</span>
-        <span className="text-[10px] text-[#5a6a8a] font-medium">{data[data.length - 1].label}</span>
+        <span className="text-[10px] text-ink-muted font-medium">{data[0].label}</span>
+        <span className="text-[10px] text-ink-muted font-medium">{data[data.length - 1].label}</span>
       </div>
     </div>
   )

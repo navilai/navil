@@ -1,26 +1,26 @@
 const colors: Record<string, string> = {
-  CRITICAL: 'bg-[#ff4d6a]/15 text-[#ff4d6a] border-[#ff4d6a]/30',
+  CRITICAL: 'bg-signal-red/15 text-signal-red border-signal-red/30',
   HIGH: 'bg-orange-500/15 text-orange-400 border-orange-500/30',
-  MEDIUM: 'bg-[#fbbf24]/15 text-[#fbbf24] border-[#fbbf24]/30',
-  LOW: 'bg-[#60a5fa]/15 text-[#60a5fa] border-[#60a5fa]/30',
-  INFO: 'bg-[#5a6a8a]/15 text-[#8b9bc0] border-[#5a6a8a]/30',
-  OK: 'bg-[#34d399]/15 text-[#34d399] border-[#34d399]/30',
-  UNKNOWN: 'bg-[#5a6a8a]/15 text-[#8b9bc0] border-[#5a6a8a]/30',
+  MEDIUM: 'bg-signal-amber/15 text-signal-amber border-signal-amber/30',
+  LOW: 'bg-signal-cyan/15 text-signal-cyan border-signal-cyan/30',
+  INFO: 'bg-ink-muted/15 text-ink-secondary border-ink-muted/30',
+  OK: 'bg-signal-green/15 text-signal-green border-signal-green/30',
+  UNKNOWN: 'bg-ink-muted/15 text-ink-secondary border-ink-muted/30',
 }
 
 const dotColors: Record<string, string> = {
-  CRITICAL: 'bg-[#ff4d6a]',
+  CRITICAL: 'bg-signal-red',
   HIGH: 'bg-orange-400',
-  MEDIUM: 'bg-[#fbbf24]',
-  LOW: 'bg-[#60a5fa]',
-  INFO: 'bg-[#8b9bc0]',
-  OK: 'bg-[#34d399]',
-  UNKNOWN: 'bg-[#8b9bc0]',
+  MEDIUM: 'bg-signal-amber',
+  LOW: 'bg-signal-cyan',
+  INFO: 'bg-ink-secondary',
+  OK: 'bg-signal-green',
+  UNKNOWN: 'bg-ink-secondary',
 }
 
 export default function SeverityBadge({ severity }: { severity: string }) {
   const cls = colors[severity] || colors.INFO
-  const dot = dotColors[severity] || 'bg-[#8b9bc0]'
+  const dot = dotColors[severity] || 'bg-ink-secondary'
   return (
     <span className={`inline-flex items-center gap-1.5 px-2.5 py-0.5 text-[11px] font-semibold tracking-wide uppercase rounded-md border ${cls}`}>
       <span className={`w-1.5 h-1.5 rounded-full ${dot}`} />

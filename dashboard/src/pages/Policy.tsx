@@ -133,8 +133,8 @@ export default function Policy() {
       {toast && (
         <div className={`fixed top-4 right-4 z-50 px-4 py-3 rounded-lg text-sm font-medium shadow-lg animate-slideUp ${
           toast.type === 'success'
-            ? 'bg-[#34d399]/15 text-[#34d399] border border-[#34d399]/30'
-            : 'bg-[#ff4d6a]/15 text-[#ff4d6a] border border-[#ff4d6a]/30'
+            ? 'bg-signal-green/15 text-signal-green border border-signal-green/30'
+            : 'bg-signal-red/15 text-signal-red border border-signal-red/30'
         }`}>
           <div className="flex items-center gap-2">
             <Icon name={toast.type === 'success' ? 'check' : 'x'} size={14} />
@@ -148,42 +148,42 @@ export default function Policy() {
         {/* Policy Checker */}
         <div className="space-y-4">
           <div className="glass-card p-5">
-            <h3 className="text-sm font-semibold text-[#f0f4fc] mb-4 flex items-center gap-2">
-              <Icon name="shield" size={16} className="text-[#00e5c8]" />
+            <h3 className="text-sm font-semibold text-ink mb-4 flex items-center gap-2">
+              <Icon name="shield" size={16} className="text-signal-cyan" />
               Check Permission
             </h3>
             <div className="space-y-3">
               <div>
-                <label className="block text-xs text-[#5a6a8a] font-medium mb-1.5">Agent Name</label>
+                <label className="block text-xs text-ink-muted font-medium mb-1.5">Agent Name</label>
                 <input
                   value={agentName}
                   onChange={e => setAgentName(e.target.value)}
-                  className="w-full bg-[#111827] border border-[#2a3650] rounded-lg px-3 py-2.5 text-sm text-[#f0f4fc] focus:border-[#00e5c8] focus:outline-none transition-colors"
+                  className="w-full bg-surface border border-rule rounded-lg px-3 py-2.5 text-sm text-ink focus:border-signal-cyan focus:outline-none transition-colors"
                   placeholder="e.g., code-assistant"
                 />
               </div>
               <div>
-                <label className="block text-xs text-[#5a6a8a] font-medium mb-1.5">Tool Name</label>
+                <label className="block text-xs text-ink-muted font-medium mb-1.5">Tool Name</label>
                 <input
                   value={toolName}
                   onChange={e => setToolName(e.target.value)}
-                  className="w-full bg-[#111827] border border-[#2a3650] rounded-lg px-3 py-2.5 text-sm text-[#f0f4fc] focus:border-[#00e5c8] focus:outline-none transition-colors"
+                  className="w-full bg-surface border border-rule rounded-lg px-3 py-2.5 text-sm text-ink focus:border-signal-cyan focus:outline-none transition-colors"
                   placeholder="e.g., admin_panel"
                 />
               </div>
               <div>
-                <label className="block text-xs text-[#5a6a8a] font-medium mb-1.5">Action</label>
+                <label className="block text-xs text-ink-muted font-medium mb-1.5">Action</label>
                 <input
                   value={action}
                   onChange={e => setAction(e.target.value)}
-                  className="w-full bg-[#111827] border border-[#2a3650] rounded-lg px-3 py-2.5 text-sm text-[#f0f4fc] focus:border-[#00e5c8] focus:outline-none transition-colors"
+                  className="w-full bg-surface border border-rule rounded-lg px-3 py-2.5 text-sm text-ink focus:border-signal-cyan focus:outline-none transition-colors"
                   placeholder="e.g., read, write, delete"
                 />
               </div>
               <button
                 onClick={handleCheck}
                 disabled={!agentName || !toolName || !action || checking}
-                className="w-full px-4 py-2.5 bg-[#00e5c8] text-[#0a0e17] rounded-lg text-sm font-semibold hover:bg-[#00b8a0] hover:-translate-y-0.5 disabled:opacity-40 disabled:cursor-not-allowed flex items-center justify-center gap-2 transition-all duration-200"
+                className="w-full px-4 py-2.5 bg-signal-cyan text-bg rounded-lg text-sm font-semibold hover:bg-signal-cyan hover:-translate-y-0.5 disabled:opacity-40 disabled:cursor-not-allowed flex items-center justify-center gap-2 transition-all duration-200"
               >
                 <Icon name="shield" size={14} />
                 {checking ? 'Checking...' : 'Check Permission'}
@@ -195,53 +195,53 @@ export default function Policy() {
           {result && (
             <div className={`glass-card p-5 animate-slideUp ${
               result.allowed
-                ? 'border-[#34d399]/30'
-                : 'border-[#ff4d6a]/30'
+                ? 'border-signal-green/30'
+                : 'border-signal-red/30'
             }`}>
               <div className="flex items-center gap-3 mb-2">
                 {result.allowed ? (
                   <>
-                    <div className="w-10 h-10 rounded-full bg-[#34d399]/15 flex items-center justify-center">
-                      <Icon name="check" size={20} className="text-[#34d399]" />
+                    <div className="w-10 h-10 rounded-full bg-signal-green/15 flex items-center justify-center">
+                      <Icon name="check" size={20} className="text-signal-green" />
                     </div>
                     <div>
-                      <p className="font-medium text-[#34d399]">Allowed</p>
-                      <p className="text-xs text-[#5a6a8a]">This action is permitted</p>
+                      <p className="font-medium text-signal-green">Allowed</p>
+                      <p className="text-xs text-ink-muted">This action is permitted</p>
                     </div>
                   </>
                 ) : (
                   <>
-                    <div className="w-10 h-10 rounded-full bg-[#ff4d6a]/15 flex items-center justify-center">
-                      <Icon name="x" size={20} className="text-[#ff4d6a]" />
+                    <div className="w-10 h-10 rounded-full bg-signal-red/15 flex items-center justify-center">
+                      <Icon name="x" size={20} className="text-signal-red" />
                     </div>
                     <div>
-                      <p className="font-medium text-[#ff4d6a]">Denied</p>
-                      <p className="text-xs text-[#5a6a8a]">This action is blocked</p>
+                      <p className="font-medium text-signal-red">Denied</p>
+                      <p className="text-xs text-ink-muted">This action is blocked</p>
                     </div>
                   </>
                 )}
               </div>
-              <p className="text-sm text-[#8b9bc0] mt-2">{result.reason}</p>
+              <p className="text-sm text-ink-secondary mt-2">{result.reason}</p>
             </div>
           )}
         </div>
 
         {/* Decision Log */}
         <div>
-          <h3 className="text-sm font-semibold text-[#f0f4fc] mb-3 flex items-center gap-2">
-            <Icon name="clock" size={16} className="text-[#5a6a8a]" />
+          <h3 className="text-sm font-semibold text-ink mb-3 flex items-center gap-2">
+            <Icon name="clock" size={16} className="text-ink-muted" />
             Decision Log
           </h3>
           {!loaded ? <SkeletonTable rows={8} cols={4} /> : (
             decisions.length === 0 ? (
               <div className="glass-card p-8 text-center">
-                <p className="text-[#5a6a8a] text-sm">No policy decisions recorded yet.</p>
+                <p className="text-ink-muted text-sm">No policy decisions recorded yet.</p>
               </div>
             ) : (
               <div className="glass-card overflow-hidden max-h-[600px] overflow-y-auto">
                 <table className="w-full text-sm">
-                  <thead className="sticky top-0 bg-[#111827]/90 backdrop-blur">
-                    <tr className="border-b border-[#2a3650] text-[#8b9bc0] text-left">
+                  <thead className="sticky top-0 bg-surface/90 backdrop-blur">
+                    <tr className="border-b border-rule text-ink-secondary text-left">
                       <th className="px-3 py-2.5 font-medium text-xs uppercase tracking-wider">Decision</th>
                       <th className="px-3 py-2.5 font-medium text-xs uppercase tracking-wider">Agent</th>
                       <th className="px-3 py-2.5 font-medium text-xs uppercase tracking-wider">Tool / Action</th>
@@ -252,7 +252,7 @@ export default function Policy() {
                     {decisions.map((d, i) => (
                       <tr
                         key={`${d.timestamp}-${d.agent}-${d.tool}-${d.action}`}
-                        className="border-b border-[#2a3650]/50 hover:bg-[#1f2a40] animate-fadeIn opacity-0"
+                        className="border-b border-rule/50 hover:bg-surface-elevated animate-fadeIn opacity-0"
                         style={{ animationDelay: `${i * 0.03}s` }}
                       >
                         <td className="px-3 py-2.5">
@@ -260,14 +260,14 @@ export default function Policy() {
                             <StatusBadge status={d.decision} />
                           </div>
                         </td>
-                        <td className="px-3 py-2.5 text-[#f0f4fc] text-xs">{d.agent}</td>
+                        <td className="px-3 py-2.5 text-ink text-xs">{d.agent}</td>
                         <td className="px-3 py-2.5">
-                          <span className="text-[#f0f4fc] text-xs font-mono">{d.tool}</span>
-                          <span className="text-[#5a6a8a] text-xs mx-1">&rarr;</span>
-                          <span className="text-[#8b9bc0] text-xs">{d.action}</span>
+                          <span className="text-ink text-xs font-mono">{d.tool}</span>
+                          <span className="text-ink-muted text-xs mx-1">&rarr;</span>
+                          <span className="text-ink-secondary text-xs">{d.action}</span>
                         </td>
                         <td className="px-3 py-2.5">
-                          <RelativeTime timestamp={d.timestamp} className="text-[#5a6a8a] text-xs" />
+                          <RelativeTime timestamp={d.timestamp} className="text-ink-muted text-xs" />
                         </td>
                       </tr>
                     ))}
@@ -282,11 +282,11 @@ export default function Policy() {
       {/* AI Policy Builder — Suggestions */}
       <div className="glass-card p-5">
         <div className="flex items-center justify-between mb-4">
-          <h3 className="text-sm font-semibold text-[#f0f4fc] flex items-center gap-2">
-            <Icon name="sparkles" size={16} className="text-[#00e5c8]" />
+          <h3 className="text-sm font-semibold text-ink flex items-center gap-2">
+            <Icon name="sparkles" size={16} className="text-signal-cyan" />
             Policy Suggestions
             {suggestions.length > 0 && (
-              <span className="px-1.5 py-0.5 text-[10px] font-bold rounded bg-[#00e5c8]/15 text-[#00e5c8]">
+              <span className="px-1.5 py-0.5 text-[10px] font-bold rounded bg-signal-cyan/15 text-signal-cyan">
                 {suggestions.length}
               </span>
             )}
@@ -294,7 +294,7 @@ export default function Policy() {
           <button
             onClick={handleAutoGenerate}
             disabled={autoGenerating}
-            className="px-3 py-1.5 text-xs bg-[#00e5c8]/15 text-[#00e5c8] border border-[#00e5c8]/30 rounded-lg hover:bg-[#00e5c8]/25 flex items-center gap-1.5 disabled:opacity-40 transition-colors"
+            className="px-3 py-1.5 text-xs bg-signal-cyan/15 text-signal-cyan border border-signal-cyan/30 rounded-lg hover:bg-signal-cyan/25 flex items-center gap-1.5 disabled:opacity-40 transition-colors"
           >
             <Icon name="zap" size={12} className={autoGenerating ? 'animate-spin' : ''} />
             {autoGenerating ? 'Generating...' : 'Auto-Generate from Baselines'}
@@ -304,60 +304,60 @@ export default function Policy() {
         {!suggestionsLoaded ? <SkeletonTable rows={3} cols={4} /> : (
           suggestions.length === 0 ? (
             <div className="text-center py-6">
-              <Icon name="check" size={24} className="text-[#34d399] mx-auto mb-2" />
-              <p className="text-sm text-[#5a6a8a]">No pending suggestions. Your policy is up to date.</p>
+              <Icon name="check" size={24} className="text-signal-green mx-auto mb-2" />
+              <p className="text-sm text-ink-muted">No pending suggestions. Your policy is up to date.</p>
             </div>
           ) : (
             <div className="space-y-2">
               {suggestions.map(s => (
                 <div
                   key={s.id}
-                  className="flex items-start gap-3 p-3 rounded-lg bg-[#111827] border border-[#2a3650] hover:border-[#00e5c8]/30 transition-colors"
+                  className="flex items-start gap-3 p-3 rounded-lg bg-surface border border-rule hover:border-signal-cyan/30 transition-colors"
                 >
                   <div className="shrink-0 mt-0.5">
                     <div className={`w-8 h-8 rounded-lg flex items-center justify-center ${
-                      s.rule_type === 'deny' ? 'bg-[#ff4d6a]/15 text-[#ff4d6a]' :
-                      s.rule_type === 'rate_limit' ? 'bg-[#f59e0b]/15 text-[#f59e0b]' :
-                      'bg-[#00e5c8]/15 text-[#00e5c8]'
+                      s.rule_type === 'deny' ? 'bg-signal-red/15 text-signal-red' :
+                      s.rule_type === 'rate_limit' ? 'bg-signal-amber/15 text-signal-amber' :
+                      'bg-signal-cyan/15 text-signal-cyan'
                     }`}>
                       <Icon name={s.rule_type === 'deny' ? 'x' : s.rule_type === 'rate_limit' ? 'activity' : 'shield'} size={14} />
                     </div>
                   </div>
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2 mb-1">
-                      <span className="text-xs font-semibold text-[#f0f4fc]">{s.agent}</span>
-                      <span className="text-[#5a6a8a] text-xs">→</span>
-                      <span className="text-xs font-mono text-[#8b9bc0]">{s.tool}</span>
+                      <span className="text-xs font-semibold text-ink">{s.agent}</span>
+                      <span className="text-ink-muted text-xs">→</span>
+                      <span className="text-xs font-mono text-ink-secondary">{s.tool}</span>
                       <span className={`px-1.5 py-0.5 text-[10px] font-medium rounded ${
-                        s.rule_type === 'deny' ? 'bg-[#ff4d6a]/10 text-[#ff4d6a]' :
-                        s.rule_type === 'rate_limit' ? 'bg-[#f59e0b]/10 text-[#f59e0b]' :
-                        'bg-[#00e5c8]/10 text-[#00e5c8]'
+                        s.rule_type === 'deny' ? 'bg-signal-red/10 text-signal-red' :
+                        s.rule_type === 'rate_limit' ? 'bg-signal-amber/10 text-signal-amber' :
+                        'bg-signal-cyan/10 text-signal-cyan'
                       }`}>
                         {s.rule_type.toUpperCase()}
                       </span>
                     </div>
-                    <p className="text-xs text-[#8b9bc0] leading-relaxed">{s.description}</p>
+                    <p className="text-xs text-ink-secondary leading-relaxed">{s.description}</p>
                     <div className="flex items-center gap-3 mt-2">
-                      <span className="text-[10px] text-[#5a6a8a]">
-                        Confidence: <span className={s.confidence >= 0.9 ? 'text-[#34d399]' : s.confidence >= 0.7 ? 'text-[#f59e0b]' : 'text-[#8b9bc0]'}>
+                      <span className="text-[10px] text-ink-muted">
+                        Confidence: <span className={s.confidence >= 0.9 ? 'text-signal-green' : s.confidence >= 0.7 ? 'text-signal-amber' : 'text-ink-secondary'}>
                           {Math.round(s.confidence * 100)}%
                         </span>
                       </span>
-                      <span className="text-[10px] text-[#5a6a8a]">Source: {s.source}</span>
+                      <span className="text-[10px] text-ink-muted">Source: {s.source}</span>
                     </div>
                   </div>
                   <div className="flex items-center gap-1.5 shrink-0">
                     <button
                       onClick={() => handleSuggestionAction(s.id, 'approve')}
                       disabled={actingOn === s.id}
-                      className="px-2.5 py-1.5 text-xs bg-[#34d399]/15 text-[#34d399] border border-[#34d399]/30 rounded-lg hover:bg-[#34d399]/25 disabled:opacity-40 transition-colors min-h-[36px]"
+                      className="px-2.5 py-1.5 text-xs bg-signal-green/15 text-signal-green border border-signal-green/30 rounded-lg hover:bg-signal-green/25 disabled:opacity-40 transition-colors min-h-[36px]"
                     >
                       Approve
                     </button>
                     <button
                       onClick={() => handleSuggestionAction(s.id, 'reject')}
                       disabled={actingOn === s.id}
-                      className="px-2.5 py-1.5 text-xs bg-[#ff4d6a]/10 text-[#ff4d6a] border border-[#ff4d6a]/30 rounded-lg hover:bg-[#ff4d6a]/20 disabled:opacity-40 transition-colors min-h-[36px]"
+                      className="px-2.5 py-1.5 text-xs bg-signal-red/10 text-signal-red border border-signal-red/30 rounded-lg hover:bg-signal-red/20 disabled:opacity-40 transition-colors min-h-[36px]"
                     >
                       Reject
                     </button>
@@ -371,25 +371,25 @@ export default function Policy() {
         {autoGenYaml && (
           <div className="mt-4 space-y-2 animate-fadeIn">
             <div className="flex items-center justify-between">
-              <p className="text-xs text-[#5a6a8a]">Auto-generated policy from observed baselines</p>
+              <p className="text-xs text-ink-muted">Auto-generated policy from observed baselines</p>
               <div className="flex items-center gap-2">
                 <button
                   onClick={() => { navigator.clipboard.writeText(autoGenYaml); }}
-                  className="px-2 py-1 text-xs text-[#8b9bc0] hover:text-[#f0f4fc] border border-[#2a3650] rounded hover:border-[#5a6a8a] flex items-center gap-1 transition-colors"
+                  className="px-2 py-1 text-xs text-ink-secondary hover:text-ink border border-rule rounded hover:border-ink-muted flex items-center gap-1 transition-colors"
                 >
                   <Icon name="terminal" size={12} /> Copy
                 </button>
                 <button
                   onClick={() => handleSavePolicy(autoGenYaml)}
                   disabled={saving}
-                  className="px-3 py-1.5 text-xs bg-[#00e5c8] text-[#0a0e17] rounded-lg font-semibold hover:bg-[#00b8a0] disabled:opacity-40 disabled:cursor-not-allowed flex items-center gap-1.5 transition-all duration-200"
+                  className="px-3 py-1.5 text-xs bg-signal-cyan text-bg rounded-lg font-semibold hover:bg-signal-cyan disabled:opacity-40 disabled:cursor-not-allowed flex items-center gap-1.5 transition-all duration-200"
                 >
                   <Icon name="shield" size={12} />
                   {saving ? 'Saving...' : saved ? 'Saved!' : 'Save to policy.auto.yaml'}
                 </button>
               </div>
             </div>
-            <pre className="bg-[#0d1117] border border-[#2a3650] rounded-[12px] p-4 text-sm text-[#f0f4fc] font-mono overflow-x-auto max-h-60 overflow-y-auto whitespace-pre-wrap">
+            <pre className="bg-surface border border-rule rounded-[12px] p-4 text-sm text-ink font-mono overflow-x-auto max-h-60 overflow-y-auto whitespace-pre-wrap">
               {autoGenYaml}
             </pre>
           </div>
@@ -398,7 +398,7 @@ export default function Policy() {
 
       {/* AI Policy Generator */}
       <div className="glass-card p-5">
-        <h3 className="text-sm font-semibold text-[#f0f4fc] mb-4 flex items-center gap-2">
+        <h3 className="text-sm font-semibold text-ink mb-4 flex items-center gap-2">
           <Icon name="sparkles" size={16} className="text-violet-400" />
           Generate Policy with AI
         </h3>
@@ -407,15 +407,15 @@ export default function Policy() {
         ) : (
         <div className="space-y-3">
           <div>
-            <label className="block text-xs text-[#5a6a8a] font-medium mb-1.5">Describe your security policy</label>
+            <label className="block text-xs text-ink-muted font-medium mb-1.5">Describe your security policy</label>
             <textarea
               value={genDescription}
               onChange={e => setGenDescription(e.target.value)}
-              className="w-full h-24 bg-[#111827] border border-[#2a3650] rounded-lg px-3 py-2.5 text-sm text-[#f0f4fc] placeholder:text-[#5a6a8a] focus:border-[#00e5c8] focus:outline-none resize-none transition-colors"
+              className="w-full h-24 bg-surface border border-rule rounded-lg px-3 py-2.5 text-sm text-ink placeholder:text-ink-muted focus:border-signal-cyan focus:outline-none resize-none transition-colors"
               placeholder="e.g., Allow data-reader to read logs only. Deny write/delete for all agents except admin-bot. Rate limit 60 req/hr."
             />
             {genDescription.trim() && genDescription.trim().split(/\s+/).length < 5 && (
-              <p className="text-xs text-[#f59e0b] mt-1 flex items-center gap-1">
+              <p className="text-xs text-signal-amber mt-1 flex items-center gap-1">
                 <Icon name="warning" size={11} />
                 Vague descriptions produce weak policies. Be specific about agents, tools, and permissions.
               </p>
@@ -441,7 +441,7 @@ export default function Policy() {
           </button>
           {/* Streaming text preview */}
           {genStream.streaming && genStream.text && !generatedYaml && (
-            <pre className="mt-2 text-xs text-[#8b9bc0] whitespace-pre-wrap font-mono bg-[#0d1117] rounded-lg p-3 max-h-32 overflow-y-auto">
+            <pre className="mt-2 text-xs text-ink-secondary whitespace-pre-wrap font-mono bg-surface rounded-lg p-3 max-h-32 overflow-y-auto">
               {genStream.text}
               <span className="animate-pulse text-violet-400">|</span>
             </pre>
@@ -472,7 +472,7 @@ export default function Policy() {
         {generatedYaml && (
           <div className="mt-4 space-y-3 animate-fadeIn">
             <div className="flex items-center justify-between">
-              <p className="text-xs text-[#5a6a8a]">Generated YAML</p>
+              <p className="text-xs text-ink-muted">Generated YAML</p>
               <div className="flex items-center gap-2">
                 <button
                   onClick={() => {
@@ -480,7 +480,7 @@ export default function Policy() {
                     setCopied(true)
                     setTimeout(() => setCopied(false), 2000)
                   }}
-                  className="px-2 py-1 text-xs text-[#8b9bc0] hover:text-[#f0f4fc] border border-[#2a3650] rounded hover:border-[#5a6a8a] flex items-center gap-1 transition-colors"
+                  className="px-2 py-1 text-xs text-ink-secondary hover:text-ink border border-rule rounded hover:border-ink-muted flex items-center gap-1 transition-colors"
                 >
                   <Icon name={copied ? 'check' : 'terminal'} size={12} />
                   {copied ? 'Copied!' : 'Copy'}
@@ -488,21 +488,21 @@ export default function Policy() {
                 <button
                   onClick={() => handleSavePolicy(generatedYaml)}
                   disabled={saving}
-                  className="px-3 py-1.5 text-xs bg-[#00e5c8] text-[#0a0e17] rounded-lg font-semibold hover:bg-[#00b8a0] disabled:opacity-40 disabled:cursor-not-allowed flex items-center gap-1.5 transition-all duration-200"
+                  className="px-3 py-1.5 text-xs bg-signal-cyan text-bg rounded-lg font-semibold hover:bg-signal-cyan disabled:opacity-40 disabled:cursor-not-allowed flex items-center gap-1.5 transition-all duration-200"
                 >
                   <Icon name="shield" size={12} />
                   {saving ? 'Saving...' : saved ? 'Saved!' : 'Save to policy.auto.yaml'}
                 </button>
               </div>
             </div>
-            <pre className={`bg-[#0d1117] border border-[#2a3650] rounded-[12px] p-4 text-sm text-[#f0f4fc] font-mono overflow-x-auto max-h-80 overflow-y-auto whitespace-pre-wrap transition-opacity ${generating || refineStream.streaming ? 'opacity-30' : ''}`}>
+            <pre className={`bg-surface border border-rule rounded-[12px] p-4 text-sm text-ink font-mono overflow-x-auto max-h-80 overflow-y-auto whitespace-pre-wrap transition-opacity ${generating || refineStream.streaming ? 'opacity-30' : ''}`}>
               {generatedYaml}
             </pre>
             <div className="flex gap-2">
               <input
                 value={refineInput}
                 onChange={e => setRefineInput(e.target.value)}
-                className="flex-1 bg-[#111827] border border-[#2a3650] rounded-lg px-3 py-2.5 text-sm text-[#f0f4fc] focus:border-[#00e5c8] focus:outline-none transition-colors"
+                className="flex-1 bg-surface border border-rule rounded-lg px-3 py-2.5 text-sm text-ink focus:border-signal-cyan focus:outline-none transition-colors"
                 placeholder="Refine: e.g., Add a rate limit of 50/hr for deploy-agent"
               />
               <button
@@ -522,7 +522,7 @@ export default function Policy() {
                   })
                 }}
                 disabled={!refineInput.trim() || refineStream.streaming}
-                className="px-4 py-2 bg-[#00e5c8] text-[#0a0e17] rounded-lg text-sm font-semibold hover:bg-[#00b8a0] disabled:opacity-40 disabled:cursor-not-allowed flex items-center gap-1.5"
+                className="px-4 py-2 bg-signal-cyan text-bg rounded-lg text-sm font-semibold hover:bg-signal-cyan disabled:opacity-40 disabled:cursor-not-allowed flex items-center gap-1.5"
               >
                 <Icon name="sparkles" size={13} className={refineStream.streaming ? 'animate-spin' : ''} />
                 Refine
@@ -532,7 +532,7 @@ export default function Policy() {
         )}
       </div>
 
-      {error && <p className="text-[#ff4d6a] text-sm">{error}</p>}
+      {error && <p className="text-signal-red text-sm">{error}</p>}
     </div>
   )
 }

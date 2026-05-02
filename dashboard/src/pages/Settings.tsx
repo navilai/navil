@@ -108,24 +108,24 @@ export default function Settings() {
 
       {/* LLM Configuration */}
       <div className="glass-card p-6 animate-slideUp opacity-0 stagger-2">
-        <h3 className="text-sm font-semibold text-[#f0f4fc] mb-5 flex items-center gap-2">
+        <h3 className="text-sm font-semibold text-ink mb-5 flex items-center gap-2">
           <Icon name="sparkles" size={16} className="text-violet-400" />
           LLM Configuration
         </h3>
 
         {isCloudMode ? (
-          <div className="p-4 rounded-[12px] border bg-[#1a2235] border-[#2a3650]">
-            <p className="text-sm text-[#8b9bc0] mb-2">
+          <div className="p-4 rounded-[12px] border bg-surface border-rule">
+            <p className="text-sm text-ink-secondary mb-2">
               LLM configuration is managed locally on each machine running Navil.
             </p>
-            <div className="p-3 rounded-lg bg-[#111827] border border-[#2a3650]">
-              <code className="text-xs font-mono text-[#00e5c8] block leading-relaxed">
-                <span className="text-[#5a6a8a]"># Configure LLM provider locally:</span>{'\n'}
+            <div className="p-3 rounded-lg bg-surface border border-rule">
+              <code className="text-xs font-mono text-signal-cyan block leading-relaxed">
+                <span className="text-ink-muted"># Configure LLM provider locally:</span>{'\n'}
                 navil cloud serve{'\n'}
-                <span className="text-[#5a6a8a]"># Then open</span> http://localhost:5173/settings
+                <span className="text-ink-muted"># Then open</span> http://localhost:5173/settings
               </code>
             </div>
-            <p className="text-[10px] text-[#5a6a8a] mt-2 flex items-center gap-1">
+            <p className="text-[10px] text-ink-muted mt-2 flex items-center gap-1">
               <Icon name="info" size={10} />
               Supports Anthropic, OpenAI, Gemini, Ollama, and OpenAI-compatible APIs
             </p>
@@ -136,16 +136,16 @@ export default function Settings() {
             {config && (
               <div className={`mb-5 p-3 rounded-[12px] border flex items-center gap-3 ${
                 config.api_key_set
-                  ? 'bg-[#34d399]/5 border-[#34d399]/20'
-                  : 'bg-[#fbbf24]/5 border-[#fbbf24]/20'
+                  ? 'bg-signal-green/5 border-signal-green/20'
+                  : 'bg-signal-amber/5 border-signal-amber/20'
               }`}>
-                <div className={`w-2 h-2 rounded-full ${config.api_key_set ? 'bg-[#34d399]' : 'bg-[#fbbf24]'}`} />
+                <div className={`w-2 h-2 rounded-full ${config.api_key_set ? 'bg-signal-green' : 'bg-signal-amber'}`} />
                 <div>
-                  <p className={`text-sm ${config.api_key_set ? 'text-[#34d399]' : 'text-[#fbbf24]'}`}>
+                  <p className={`text-sm ${config.api_key_set ? 'text-signal-green' : 'text-signal-amber'}`}>
                     {config.api_key_set ? 'Connected' : 'Not configured'}
                   </p>
                   {config.api_key_set && (
-                    <p className="text-xs text-[#5a6a8a]">
+                    <p className="text-xs text-ink-muted">
                       Provider: {config.provider} · Model: {config.model}
                       {config.base_url ? ` · ${config.base_url}` : ''}
                     </p>
@@ -155,12 +155,12 @@ export default function Settings() {
             )}
 
             {config && !config.available && (
-              <div className="mb-5 p-3 rounded-[12px] border bg-[#ff4d6a]/5 border-[#ff4d6a]/20 flex items-center gap-3">
-                <Icon name="warning" size={14} className="text-[#ff4d6a] shrink-0" />
+              <div className="mb-5 p-3 rounded-[12px] border bg-signal-red/5 border-signal-red/20 flex items-center gap-3">
+                <Icon name="warning" size={14} className="text-signal-red shrink-0" />
                 <div>
-                  <p className="text-sm text-[#ff4d6a]">LLM SDKs not installed</p>
-                  <p className="text-xs text-[#5a6a8a]">
-                    Install with: <code className="font-mono text-[#ff4d6a]/80">pip install navil[llm]</code>
+                  <p className="text-sm text-signal-red">LLM SDKs not installed</p>
+                  <p className="text-xs text-ink-muted">
+                    Install with: <code className="font-mono text-signal-red/80">pip install navil[llm]</code>
                   </p>
                 </div>
               </div>
@@ -169,22 +169,22 @@ export default function Settings() {
             <div className="space-y-4">
               {/* Provider */}
               <div>
-                <label className="block text-xs text-[#5a6a8a] font-medium mb-1.5">Provider</label>
+                <label className="block text-xs text-ink-muted font-medium mb-1.5">Provider</label>
                 <select
                   value={provider}
                   onChange={e => { setProvider(e.target.value); setSaveResult(null); setTestResult(null) }}
-                  className="w-full bg-[#111827] border border-[#2a3650] rounded-lg px-3 py-2.5 text-sm text-[#f0f4fc] focus:border-[#00e5c8] focus:outline-none transition-colors"
+                  className="w-full bg-surface border border-rule rounded-lg px-3 py-2.5 text-sm text-ink focus:border-signal-cyan focus:outline-none transition-colors"
                 >
                   {providers.map(p => (
                     <option key={p.value} value={p.value}>{p.label}</option>
                   ))}
                 </select>
-                <p className="text-xs text-[#5a6a8a] mt-1">
+                <p className="text-xs text-ink-muted mt-1">
                   {isOllama
                     ? 'Runs locally — no API key needed. Make sure Ollama is running on your machine.'
                     : isCompatible
                       ? 'Works with OpenRouter, Together AI, Groq, DeepSeek, Fireworks, and any OpenAI-compatible API'
-                      : <>Or set via environment variable: <code className="font-mono text-[#5a6a8a]">{selectedHint}</code></>
+                      : <>Or set via environment variable: <code className="font-mono text-ink-muted">{selectedHint}</code></>
                   }
                 </p>
               </div>
@@ -192,11 +192,11 @@ export default function Settings() {
               {/* Base URL — only for OpenAI Compatible */}
               {isCompatible && (
                 <div>
-                  <label className="block text-xs text-[#5a6a8a] font-medium mb-1.5">Base URL</label>
+                  <label className="block text-xs text-ink-muted font-medium mb-1.5">Base URL</label>
                   <input
                     value={baseUrl}
                     onChange={e => { setBaseUrl(e.target.value); setSaveResult(null) }}
-                    className="w-full bg-[#111827] border border-[#2a3650] rounded-lg px-3 py-2.5 text-sm text-[#f0f4fc] focus:border-[#00e5c8] focus:outline-none font-mono transition-colors"
+                    className="w-full bg-surface border border-rule rounded-lg px-3 py-2.5 text-sm text-ink focus:border-signal-cyan focus:outline-none font-mono transition-colors"
                     placeholder="https://api.example.com/v1"
 
                   />
@@ -205,7 +205,7 @@ export default function Settings() {
                       <button
                         key={ex.name}
                         onClick={() => { setBaseUrl(ex.url); setSaveResult(null) }}
-                        className="px-2 py-0.5 text-[10px] bg-[#111827] text-[#8b9bc0] border border-[#2a3650] rounded hover:border-[#5a6a8a] hover:text-[#f0f4fc] transition-colors"
+                        className="px-2 py-0.5 text-[10px] bg-surface text-ink-secondary border border-rule rounded hover:border-ink-muted hover:text-ink transition-colors"
                       >
                         {ex.name}
                       </button>
@@ -217,11 +217,11 @@ export default function Settings() {
               {/* Model override */}
               {(isCompatible || isOllama) && (
                 <div>
-                  <label className="block text-xs text-[#5a6a8a] font-medium mb-1.5">Model {!isOllama && <span className="text-[#5a6a8a]">(optional)</span>}</label>
+                  <label className="block text-xs text-ink-muted font-medium mb-1.5">Model {!isOllama && <span className="text-ink-muted">(optional)</span>}</label>
                   <input
                     value={model}
                     onChange={e => { setModel(e.target.value); setSaveResult(null) }}
-                    className="w-full bg-[#111827] border border-[#2a3650] rounded-lg px-3 py-2.5 text-sm text-[#f0f4fc] focus:border-[#00e5c8] focus:outline-none font-mono transition-colors"
+                    className="w-full bg-surface border border-rule rounded-lg px-3 py-2.5 text-sm text-ink focus:border-signal-cyan focus:outline-none font-mono transition-colors"
                     placeholder={isOllama ? 'e.g., llama3.2, deepseek-r1:70b, qwen3' : 'e.g., anthropic/claude-sonnet-4, deepseek-chat, llama-3.1-70b'}
 
                   />
@@ -230,18 +230,18 @@ export default function Settings() {
 
               {/* API Key — hidden for Ollama */}
               {!isOllama && <div>
-                <label className="block text-xs text-[#5a6a8a] font-medium mb-1.5">API Key</label>
+                <label className="block text-xs text-ink-muted font-medium mb-1.5">API Key</label>
                 <input
                   type="password"
                   value={apiKey}
                   onChange={e => { setApiKey(e.target.value); setSaveResult(null) }}
                   onKeyDown={e => e.key === 'Enter' && handleSave()}
-                  className="w-full bg-[#111827] border border-[#2a3650] rounded-lg px-3 py-2.5 text-sm text-[#f0f4fc] focus:border-[#00e5c8] focus:outline-none font-mono transition-colors"
+                  className="w-full bg-surface border border-rule rounded-lg px-3 py-2.5 text-sm text-ink focus:border-signal-cyan focus:outline-none font-mono transition-colors"
                   placeholder={config?.api_key_set ? '--------  (key is set — enter new to replace)' : 'Paste your API key here'}
 
                 />
-                <p className="text-xs text-[#5a6a8a] mt-1 flex items-center gap-1">
-                  <Icon name="lock" size={10} className="text-[#5a6a8a]" />
+                <p className="text-xs text-ink-muted mt-1 flex items-center gap-1">
+                  <Icon name="lock" size={10} className="text-ink-muted" />
                   Stored in memory only. Not persisted to disk.
                 </p>
               </div>}
@@ -251,7 +251,7 @@ export default function Settings() {
                 <button
                   onClick={handleSave}
                   disabled={!canSave || saving}
-                  className="px-4 py-2.5 bg-[#00e5c8] text-[#0a0e17] rounded-lg text-sm font-semibold hover:bg-[#00b8a0] hover:-translate-y-0.5 disabled:opacity-40 disabled:cursor-not-allowed flex items-center gap-2 transition-all duration-200"
+                  className="px-4 py-2.5 bg-signal-cyan text-bg rounded-lg text-sm font-semibold hover:bg-signal-cyan hover:-translate-y-0.5 disabled:opacity-40 disabled:cursor-not-allowed flex items-center gap-2 transition-all duration-200"
                 >
                   <Icon name="check" size={14} />
                   {saving ? 'Saving...' : 'Save'}
@@ -259,7 +259,7 @@ export default function Settings() {
                 <button
                   onClick={handleTest}
                   disabled={testing || (!config?.api_key_set && !isOllama && !apiKey.trim())}
-                  className="px-4 py-2.5 bg-[#1a2235] text-[#f0f4fc] border border-[#2a3650] rounded-lg text-sm font-medium hover:bg-[#1f2a40] hover:border-[#5a6a8a] hover:-translate-y-0.5 disabled:opacity-40 disabled:cursor-not-allowed flex items-center gap-2 transition-all duration-200"
+                  className="px-4 py-2.5 bg-surface text-ink border border-rule rounded-lg text-sm font-medium hover:bg-surface-elevated hover:border-ink-muted hover:-translate-y-0.5 disabled:opacity-40 disabled:cursor-not-allowed flex items-center gap-2 transition-all duration-200"
                 >
                   <Icon name="activity" size={14} className={testing ? 'animate-spin' : ''} />
                   {testing ? 'Testing...' : 'Test Connection'}
@@ -269,9 +269,9 @@ export default function Settings() {
               {/* Result messages */}
               {saveResult && (
                 <div className={`p-3 rounded-[12px] border animate-fadeIn ${
-                  saveResult.ok ? 'bg-[#34d399]/5 border-[#34d399]/20' : 'bg-[#ff4d6a]/5 border-[#ff4d6a]/20'
+                  saveResult.ok ? 'bg-signal-green/5 border-signal-green/20' : 'bg-signal-red/5 border-signal-red/20'
                 }`}>
-                  <p className={`text-sm flex items-center gap-2 ${saveResult.ok ? 'text-[#34d399]' : 'text-[#ff4d6a]'}`}>
+                  <p className={`text-sm flex items-center gap-2 ${saveResult.ok ? 'text-signal-green' : 'text-signal-red'}`}>
                     <Icon name={saveResult.ok ? 'check' : 'warning'} size={14} />
                     {saveResult.msg}
                   </p>
@@ -279,9 +279,9 @@ export default function Settings() {
               )}
               {testResult && (
                 <div className={`p-3 rounded-[12px] border animate-fadeIn ${
-                  testResult.ok ? 'bg-[#34d399]/5 border-[#34d399]/20' : 'bg-[#ff4d6a]/5 border-[#ff4d6a]/20'
+                  testResult.ok ? 'bg-signal-green/5 border-signal-green/20' : 'bg-signal-red/5 border-signal-red/20'
                 }`}>
-                  <p className={`text-sm flex items-center gap-2 ${testResult.ok ? 'text-[#34d399]' : 'text-[#ff4d6a]'}`}>
+                  <p className={`text-sm flex items-center gap-2 ${testResult.ok ? 'text-signal-green' : 'text-signal-red'}`}>
                     <Icon name={testResult.ok ? 'check' : 'warning'} size={14} className="shrink-0" />
                     <span className="line-clamp-2 break-words">{testResult.msg}</span>
                   </p>
@@ -300,43 +300,43 @@ export default function Settings() {
 
       {/* About */}
       <div className="glass-card p-6 animate-slideUp opacity-0 stagger-3">
-        <h3 className="text-sm font-semibold text-[#f0f4fc] mb-4 flex items-center gap-2">
-          <Icon name="info" size={16} className="text-[#8b9bc0]" />
+        <h3 className="text-sm font-semibold text-ink mb-4 flex items-center gap-2">
+          <Icon name="info" size={16} className="text-ink-secondary" />
           About
         </h3>
         <div className="space-y-3 text-sm">
           <div className="flex justify-between">
-            <span className="text-[#5a6a8a]">Version</span>
-            <span className="text-[#f0f4fc] font-mono">{import.meta.env.VITE_APP_VERSION || '0.1.0'}</span>
+            <span className="text-ink-muted">Version</span>
+            <span className="text-ink font-mono">{import.meta.env.VITE_APP_VERSION || '0.1.0'}</span>
           </div>
           <div className="flex justify-between">
-            <span className="text-[#5a6a8a]">LLM SDK</span>
-            <span className={`font-mono ${isCloudMode ? 'text-[#5a6a8a]' : config?.available ? 'text-[#34d399]' : 'text-[#ff4d6a]'}`}>
+            <span className="text-ink-muted">LLM SDK</span>
+            <span className={`font-mono ${isCloudMode ? 'text-ink-muted' : config?.available ? 'text-signal-green' : 'text-signal-red'}`}>
               {isCloudMode ? 'Local only' : config?.available ? 'Installed' : 'Not installed'}
             </span>
           </div>
           {config?.api_key_set && (
             <>
               <div className="flex justify-between">
-                <span className="text-[#5a6a8a]">Active Provider</span>
-                <span className="text-[#f0f4fc] font-mono">{config.provider}</span>
+                <span className="text-ink-muted">Active Provider</span>
+                <span className="text-ink font-mono">{config.provider}</span>
               </div>
               <div className="flex justify-between">
-                <span className="text-[#5a6a8a]">Active Model</span>
-                <span className="text-[#f0f4fc] font-mono">{config.model}</span>
+                <span className="text-ink-muted">Active Model</span>
+                <span className="text-ink font-mono">{config.model}</span>
               </div>
               {config.base_url && (
                 <div className="flex justify-between">
-                  <span className="text-[#5a6a8a]">Base URL</span>
-                  <span className="text-[#f0f4fc] font-mono text-xs truncate max-w-[250px]">{config.base_url}</span>
+                  <span className="text-ink-muted">Base URL</span>
+                  <span className="text-ink font-mono text-xs truncate max-w-[250px]">{config.base_url}</span>
                 </div>
               )}
             </>
           )}
           {machineInfo?.machine_id && (
             <div className="flex justify-between">
-              <span className="text-[#5a6a8a]">Machine ID</span>
-              <span className="text-[#f0f4fc] font-mono text-xs" title={machineInfo.machine_id}>
+              <span className="text-ink-muted">Machine ID</span>
+              <span className="text-ink font-mono text-xs" title={machineInfo.machine_id}>
                 {machineInfo.machine_id.length > 12
                   ? `${machineInfo.machine_id.slice(0, 8)}...`
                   : machineInfo.machine_id}
@@ -345,8 +345,8 @@ export default function Settings() {
           )}
           {machineInfo?.machine_label && (
             <div className="flex justify-between">
-              <span className="text-[#5a6a8a]">Machine Label</span>
-              <span className="text-[#f0f4fc] font-mono">{machineInfo.machine_label}</span>
+              <span className="text-ink-muted">Machine Label</span>
+              <span className="text-ink font-mono">{machineInfo.machine_label}</span>
             </div>
           )}
         </div>
@@ -387,12 +387,12 @@ function ApiKeyManager() {
   if (!hasClerk) {
     return (
       <div className="glass-card p-6 animate-slideUp opacity-0 stagger-2">
-        <h3 className="text-sm font-semibold text-[#f0f4fc] mb-5 flex items-center gap-2">
-          <Icon name="key" size={16} className="text-[#fbbf24]" />
+        <h3 className="text-sm font-semibold text-ink mb-5 flex items-center gap-2">
+          <Icon name="key" size={16} className="text-signal-amber" />
           Cloud API Key
         </h3>
-        <div className="p-4 rounded-[12px] border bg-[#1a2235] border-[#2a3650] space-y-4">
-          <p className="text-sm text-[#8b9bc0]">
+        <div className="p-4 rounded-[12px] border bg-surface border-rule space-y-4">
+          <p className="text-sm text-ink-secondary">
             Navil uses a community threat feed — every instance shares anonymized attack data and receives real-time threat intelligence in return. Connect with a free API key to join.
           </p>
 
@@ -400,20 +400,20 @@ function ApiKeyManager() {
             href="https://navil.ai/settings"
             target="_blank"
             rel="noopener noreferrer"
-            className="flex items-center justify-center gap-2 w-full px-4 py-3 bg-[#00e5c8]/10 text-[#00e5c8] border border-[#00e5c8]/20 rounded-lg text-sm font-semibold hover:bg-[#00e5c8]/20 hover:-translate-y-0.5 transition-all duration-200"
+            className="flex items-center justify-center gap-2 w-full px-4 py-3 bg-signal-cyan/10 text-signal-cyan border border-signal-cyan/20 rounded-lg text-sm font-semibold hover:bg-signal-cyan/20 hover:-translate-y-0.5 transition-all duration-200"
           >
             <Icon name="external-link" size={14} />
             Get API Key at navil.ai
           </a>
 
-          <div className="p-3 rounded-lg bg-[#111827] border border-[#2a3650]">
-            <code className="text-xs font-mono text-[#00e5c8] block leading-relaxed">
-              <span className="text-[#5a6a8a]"># Then connect your local instance:</span>{'\n'}
+          <div className="p-3 rounded-lg bg-surface border border-rule">
+            <code className="text-xs font-mono text-signal-cyan block leading-relaxed">
+              <span className="text-ink-muted"># Then connect your local instance:</span>{'\n'}
               navil init --api-key navil_live_...
             </code>
           </div>
 
-          <p className="text-[10px] text-[#5a6a8a] flex items-center gap-1">
+          <p className="text-[10px] text-ink-muted flex items-center gap-1">
             <Icon name="info" size={10} />
             Free community tier — no credit card required. Share data, get protection.
           </p>
@@ -464,8 +464,8 @@ function ApiKeyManager() {
 
   return (
     <div className="glass-card p-6 animate-slideUp opacity-0 stagger-2">
-      <h3 className="text-sm font-semibold text-[#f0f4fc] mb-5 flex items-center gap-2">
-        <Icon name="key" size={16} className="text-[#fbbf24]" />
+      <h3 className="text-sm font-semibold text-ink mb-5 flex items-center gap-2">
+        <Icon name="key" size={16} className="text-signal-amber" />
         API Keys
       </h3>
 
@@ -476,13 +476,13 @@ function ApiKeyManager() {
             value={label}
             onChange={e => setLabel(e.target.value)}
             onKeyDown={e => e.key === 'Enter' && handleCreate()}
-            className="flex-1 bg-[#111827] border border-[#2a3650] rounded-lg px-3 py-2.5 text-sm text-[#f0f4fc] focus:border-[#00e5c8] focus:outline-none transition-colors"
+            className="flex-1 bg-surface border border-rule rounded-lg px-3 py-2.5 text-sm text-ink focus:border-signal-cyan focus:outline-none transition-colors"
             placeholder="Key label (e.g., Production, CI/CD)"
           />
           <button
             onClick={handleCreate}
             disabled={!label.trim() || creating}
-            className="px-4 py-2.5 bg-[#00e5c8] text-[#0a0e17] rounded-lg text-sm font-semibold hover:bg-[#00b8a0] hover:-translate-y-0.5 disabled:opacity-40 disabled:cursor-not-allowed flex items-center gap-2 transition-all duration-200 shrink-0"
+            className="px-4 py-2.5 bg-signal-cyan text-bg rounded-lg text-sm font-semibold hover:bg-signal-cyan hover:-translate-y-0.5 disabled:opacity-40 disabled:cursor-not-allowed flex items-center gap-2 transition-all duration-200 shrink-0"
           >
             <Icon name="key" size={14} />
             {creating ? 'Generating...' : 'Generate API Key'}
@@ -491,20 +491,20 @@ function ApiKeyManager() {
 
         {/* Newly created key */}
         {newKey && (
-          <div className="p-3 rounded-[12px] border bg-[#fbbf24]/5 border-[#fbbf24]/20 animate-fadeIn">
-            <p className="text-xs text-[#fbbf24] font-medium mb-2 flex items-center gap-1.5">
+          <div className="p-3 rounded-[12px] border bg-signal-amber/5 border-signal-amber/20 animate-fadeIn">
+            <p className="text-xs text-signal-amber font-medium mb-2 flex items-center gap-1.5">
               <Icon name="warning" size={12} />
               Copy this key now — it will not be shown again
             </p>
             <div className="flex items-center gap-2">
-              <code className="flex-1 bg-[#0d1117] border border-[#2a3650] rounded-lg px-3 py-2 text-sm font-mono text-[#f0f4fc] select-all break-all">
+              <code className="flex-1 bg-surface border border-rule rounded-lg px-3 py-2 text-sm font-mono text-ink select-all break-all">
                 {newKey}
               </code>
               <button
                 onClick={handleCopy}
-                className="px-3 py-2 bg-[#1a2235] border border-[#2a3650] rounded-lg text-[#8b9bc0] hover:text-[#f0f4fc] hover:border-[#5a6a8a] transition-all duration-200 shrink-0"
+                className="px-3 py-2 bg-surface border border-rule rounded-lg text-ink-secondary hover:text-ink hover:border-ink-muted transition-all duration-200 shrink-0"
               >
-                <Icon name={copied ? 'check' : 'copy'} size={14} className={copied ? 'text-[#34d399]' : ''} />
+                <Icon name={copied ? 'check' : 'copy'} size={14} className={copied ? 'text-signal-green' : ''} />
               </button>
             </div>
           </div>
@@ -513,9 +513,9 @@ function ApiKeyManager() {
         {/* Action messages */}
         {actionMsg && (
           <div className={`p-3 rounded-[12px] border animate-fadeIn ${
-            actionMsg.ok ? 'bg-[#34d399]/5 border-[#34d399]/20' : 'bg-[#ff4d6a]/5 border-[#ff4d6a]/20'
+            actionMsg.ok ? 'bg-signal-green/5 border-signal-green/20' : 'bg-signal-red/5 border-signal-red/20'
           }`}>
-            <p className={`text-sm flex items-center gap-2 ${actionMsg.ok ? 'text-[#34d399]' : 'text-[#ff4d6a]'}`}>
+            <p className={`text-sm flex items-center gap-2 ${actionMsg.ok ? 'text-signal-green' : 'text-signal-red'}`}>
               <Icon name={actionMsg.ok ? 'check' : 'warning'} size={14} />
               {actionMsg.msg}
             </p>
@@ -526,22 +526,22 @@ function ApiKeyManager() {
         {loading ? (
           <div className="skeleton h-16 rounded-lg" />
         ) : error ? (
-          <div className="p-3 rounded-[12px] border bg-[#ff4d6a]/5 border-[#ff4d6a]/20">
-            <p className="text-sm text-[#ff4d6a] flex items-center gap-2">
+          <div className="p-3 rounded-[12px] border bg-signal-red/5 border-signal-red/20">
+            <p className="text-sm text-signal-red flex items-center gap-2">
               <Icon name="warning" size={14} />
               {error}
             </p>
           </div>
         ) : keys.length === 0 ? (
           <div className="text-center py-6">
-            <p className="text-sm text-[#8b9bc0]">No API keys yet.</p>
-            <p className="text-xs text-[#5a6a8a] mt-0.5">Generate a key to authenticate with the Navil Cloud API.</p>
+            <p className="text-sm text-ink-secondary">No API keys yet.</p>
+            <p className="text-xs text-ink-muted mt-0.5">Generate a key to authenticate with the Navil Cloud API.</p>
           </div>
         ) : (
-          <div className="bg-[#111827] rounded-lg border border-[#2a3650] overflow-hidden">
+          <div className="bg-surface rounded-lg border border-rule overflow-hidden">
             <table className="w-full text-xs">
               <thead>
-                <tr className="border-b border-[#2a3650] text-[#5a6a8a]">
+                <tr className="border-b border-rule text-ink-muted">
                   <th className="text-left px-3 py-2 font-medium">Prefix</th>
                   <th className="text-left px-3 py-2 font-medium">Label</th>
                   <th className="text-left px-3 py-2 font-medium">Created</th>
@@ -551,13 +551,13 @@ function ApiKeyManager() {
               </thead>
               <tbody>
                 {keys.map(k => (
-                  <tr key={k.id} className="border-b border-[#2a3650]/50 hover:bg-[#1a2235] transition-colors">
-                    <td className="px-3 py-2 font-mono text-[#00e5c8]">{k.key_prefix}...</td>
-                    <td className="px-3 py-2 text-[#f0f4fc]">{k.label}</td>
-                    <td className="px-3 py-2 text-[#5a6a8a]">
+                  <tr key={k.id} className="border-b border-rule/50 hover:bg-surface transition-colors">
+                    <td className="px-3 py-2 font-mono text-signal-cyan">{k.key_prefix}...</td>
+                    <td className="px-3 py-2 text-ink">{k.label}</td>
+                    <td className="px-3 py-2 text-ink-muted">
                       {new Date(k.created_at).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' })}
                     </td>
-                    <td className="px-3 py-2 text-[#5a6a8a]">
+                    <td className="px-3 py-2 text-ink-muted">
                       {k.last_used_at
                         ? new Date(k.last_used_at).toLocaleDateString(undefined, { month: 'short', day: 'numeric' })
                         : 'Never'}
@@ -566,7 +566,7 @@ function ApiKeyManager() {
                       <button
                         onClick={() => handleRevoke(k.id)}
                         disabled={revoking === k.id}
-                        className="px-2 py-1 text-[10px] bg-[#ff4d6a]/10 text-[#ff4d6a] border border-[#ff4d6a]/20 rounded hover:bg-[#ff4d6a]/20 disabled:opacity-50 transition-all duration-200"
+                        className="px-2 py-1 text-[10px] bg-signal-red/10 text-signal-red border border-signal-red/20 rounded hover:bg-signal-red/20 disabled:opacity-50 transition-all duration-200"
                       >
                         {revoking === k.id ? 'Revoking...' : 'Revoke'}
                       </button>
@@ -578,8 +578,8 @@ function ApiKeyManager() {
           </div>
         )}
 
-        <p className="text-[10px] text-[#5a6a8a] flex items-center gap-1">
-          <Icon name="lock" size={10} className="text-[#5a6a8a]" />
+        <p className="text-[10px] text-ink-muted flex items-center gap-1">
+          <Icon name="lock" size={10} className="text-ink-muted" />
           API keys are hashed and cannot be retrieved after creation. Store them securely.
         </p>
       </div>
@@ -634,21 +634,21 @@ function TelemetryToggle() {
   if (isCloudMode) {
     return (
       <div className="glass-card p-6 animate-slideUp opacity-0 stagger-3">
-        <h3 className="text-sm font-semibold text-[#f0f4fc] mb-4 flex items-center gap-2">
-          <Icon name="activity" size={16} className="text-[#00e5c8]" />
+        <h3 className="text-sm font-semibold text-ink mb-4 flex items-center gap-2">
+          <Icon name="activity" size={16} className="text-signal-cyan" />
           Community Threat Feed
         </h3>
-        <div className="p-4 rounded-[12px] border bg-[#1a2235] border-[#2a3650]">
-          <p className="text-sm text-[#8b9bc0] mb-2">
+        <div className="p-4 rounded-[12px] border bg-surface border-rule">
+          <p className="text-sm text-ink-secondary mb-2">
             Threat feed sync is configured on each local Navil instance.
           </p>
-          <div className="p-3 rounded-lg bg-[#111827] border border-[#2a3650]">
-            <code className="text-xs font-mono text-[#00e5c8] block leading-relaxed">
-              <span className="text-[#5a6a8a]"># Enable/disable via environment variable:</span>{'\n'}
+          <div className="p-3 rounded-lg bg-surface border border-rule">
+            <code className="text-xs font-mono text-signal-cyan block leading-relaxed">
+              <span className="text-ink-muted"># Enable/disable via environment variable:</span>{'\n'}
               export NAVIL_DISABLE_CLOUD_SYNC=false
             </code>
           </div>
-          <p className="text-[10px] text-[#5a6a8a] mt-2 flex items-center gap-1">
+          <p className="text-[10px] text-ink-muted mt-2 flex items-center gap-1">
             <Icon name="info" size={10} />
             Community tier: give-to-get (share to receive). Paid tiers: optional sharing.
           </p>
@@ -660,49 +660,49 @@ function TelemetryToggle() {
   return (
     <div className="glass-card p-6 animate-slideUp opacity-0 stagger-3">
       <div className="flex items-center gap-3 mb-4">
-        <h3 className="text-sm font-semibold text-[#f0f4fc] flex items-center gap-2">
-          <Icon name="activity" size={16} className="text-[#00e5c8]" />
+        <h3 className="text-sm font-semibold text-ink flex items-center gap-2">
+          <Icon name="activity" size={16} className="text-signal-cyan" />
           Community Threat Feed
         </h3>
         {mode && (
           <span className={`px-2 py-0.5 text-[10px] font-medium rounded-full ${
             isCommunity
-              ? 'bg-[#00e5c8]/10 text-[#00e5c8] border border-[#00e5c8]/20'
+              ? 'bg-signal-cyan/10 text-signal-cyan border border-signal-cyan/20'
               : 'bg-violet-500/10 text-violet-400 border border-violet-500/20'
           }`}>
             {isCommunity ? 'Community' : 'Paid'}
           </span>
         )}
         {apiKeyPresent && (
-          <span className="px-2 py-0.5 text-[10px] font-medium rounded-full bg-[#34d399]/10 text-[#34d399] border border-[#34d399]/20 flex items-center gap-1">
-            <Icon name="lock" size={8} className="text-[#34d399]" />
+          <span className="px-2 py-0.5 text-[10px] font-medium rounded-full bg-signal-green/10 text-signal-green border border-signal-green/20 flex items-center gap-1">
+            <Icon name="lock" size={8} className="text-signal-green" />
             Privacy Premium
           </span>
         )}
       </div>
 
       {enabled === false ? (
-        <div className="p-3 rounded-lg bg-[#ff4d6a]/5 border border-[#ff4d6a]/20">
+        <div className="p-3 rounded-lg bg-signal-red/5 border border-signal-red/20">
           <div className="flex items-center gap-2 mb-1.5">
-            <Icon name="warning" size={14} className="text-[#ff4d6a]" />
-            <p className="text-sm text-[#ff4d6a] font-medium">Not sharing — not protected</p>
+            <Icon name="warning" size={14} className="text-signal-red" />
+            <p className="text-sm text-signal-red font-medium">Not sharing — not protected</p>
           </div>
-          <p className="text-xs text-[#8b9bc0] leading-relaxed">
+          <p className="text-xs text-ink-secondary leading-relaxed">
             Community threat feed is disabled. Your instance is not receiving real-time
             protection from the network. Enable sharing to join the community feed.
           </p>
         </div>
       ) : !apiKeyPresent ? (
-        <div className="p-3 rounded-lg bg-[#00e5c8]/5 border border-[#00e5c8]/20">
+        <div className="p-3 rounded-lg bg-signal-cyan/5 border border-signal-cyan/20">
           <div className="flex items-center gap-2 mb-1.5">
-            <Icon name="check" size={14} className="text-[#00e5c8]" />
-            <p className="text-sm text-[#00e5c8] font-medium">Contributing to community feed</p>
+            <Icon name="check" size={14} className="text-signal-cyan" />
+            <p className="text-sm text-signal-cyan font-medium">Contributing to community feed</p>
           </div>
-          <p className="text-xs text-[#8b9bc0] leading-relaxed">
+          <p className="text-xs text-ink-secondary leading-relaxed">
             Sharing anonymous attack metadata and receiving real-time protection.
             Add a Navil Cloud API key for dashboard access and premium features.
           </p>
-          <p className="text-[10px] text-[#5a6a8a] mt-2 leading-relaxed">
+          <p className="text-[10px] text-ink-muted mt-2 leading-relaxed">
             Paid subscribers (Pro+) can opt out of sharing while keeping full protection.
           </p>
         </div>
@@ -710,8 +710,8 @@ function TelemetryToggle() {
         <>
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm text-[#f0f4fc]">Share anonymous attack metadata</p>
-              <p className="text-xs text-[#5a6a8a] mt-0.5">
+              <p className="text-sm text-ink">Share anonymous attack metadata</p>
+              <p className="text-xs text-ink-muted mt-0.5">
                 {isCommunity
                   ? 'Give-to-get: share anonymous metadata to receive community threat intelligence.'
                   : 'Share anonymous attack metadata to help protect the global agent ecosystem.'}
@@ -721,7 +721,7 @@ function TelemetryToggle() {
               onClick={toggle}
               disabled={enabled === null || saving}
               className={`relative w-11 h-6 rounded-full transition-colors duration-200 focus:outline-none disabled:opacity-50 ${
-                enabled ? 'bg-[#00e5c8]' : 'bg-[#2a3650]'
+                enabled ? 'bg-signal-cyan' : 'bg-rule'
               }`}
             >
               <span className={`absolute top-0.5 left-0.5 w-5 h-5 bg-white rounded-full shadow transition-transform duration-200 ${
@@ -731,8 +731,8 @@ function TelemetryToggle() {
           </div>
 
           {isCommunity && enabled && (
-            <div className="mt-3 p-2.5 rounded-lg bg-[#00e5c8]/5 border border-[#00e5c8]/15">
-              <p className="text-[11px] text-[#00e5c8]/80 leading-relaxed">
+            <div className="mt-3 p-2.5 rounded-lg bg-signal-cyan/5 border border-signal-cyan/15">
+              <p className="text-[11px] text-signal-cyan/80 leading-relaxed">
                 Community tier: sharing must stay enabled to receive threat intelligence.
                 Upgrade to a paid plan for optional sharing (privacy premium).
               </p>
@@ -742,16 +742,16 @@ function TelemetryToggle() {
       )}
 
       {error && (
-        <div className="mt-3 p-2.5 rounded-lg bg-[#ff4d6a]/5 border border-[#ff4d6a]/20 animate-fadeIn">
-          <p className="text-[11px] text-[#ff4d6a] flex items-center gap-1.5">
-            <Icon name="warning" size={11} className="text-[#ff4d6a] shrink-0" />
+        <div className="mt-3 p-2.5 rounded-lg bg-signal-red/5 border border-signal-red/20 animate-fadeIn">
+          <p className="text-[11px] text-signal-red flex items-center gap-1.5">
+            <Icon name="warning" size={11} className="text-signal-red shrink-0" />
             {error}
           </p>
         </div>
       )}
 
-      <p className="text-[10px] text-[#5a6a8a] mt-3 flex items-center gap-1">
-        <Icon name="lock" size={10} className="text-[#5a6a8a]" />
+      <p className="text-[10px] text-ink-muted mt-3 flex items-center gap-1">
+        <Icon name="lock" size={10} className="text-ink-muted" />
         {isCommunity
           ? 'Community tier: sharing is required to receive threat intelligence.'
           : 'Paid tier: sharing is optional. Controlled by NAVIL_DISABLE_CLOUD_SYNC.'}

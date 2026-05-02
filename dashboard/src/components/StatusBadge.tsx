@@ -1,26 +1,26 @@
 const colors: Record<string, string> = {
-  ACTIVE: 'bg-[#34d399]/15 text-[#34d399] border-[#34d399]/30',
-  ALLOW: 'bg-[#34d399]/15 text-[#34d399] border-[#34d399]/30',
-  EXPIRED: 'bg-[#fbbf24]/15 text-[#fbbf24] border-[#fbbf24]/30',
-  ALERT: 'bg-[#fbbf24]/15 text-[#fbbf24] border-[#fbbf24]/30',
-  REVOKED: 'bg-[#ff4d6a]/15 text-[#ff4d6a] border-[#ff4d6a]/30',
-  DENY: 'bg-[#ff4d6a]/15 text-[#ff4d6a] border-[#ff4d6a]/30',
-  INACTIVE: 'bg-[#5a6a8a]/15 text-[#8b9bc0] border-[#5a6a8a]/30',
+  ACTIVE: 'bg-signal-green/15 text-signal-green border-signal-green/30',
+  ALLOW: 'bg-signal-green/15 text-signal-green border-signal-green/30',
+  EXPIRED: 'bg-signal-amber/15 text-signal-amber border-signal-amber/30',
+  ALERT: 'bg-signal-amber/15 text-signal-amber border-signal-amber/30',
+  REVOKED: 'bg-signal-red/15 text-signal-red border-signal-red/30',
+  DENY: 'bg-signal-red/15 text-signal-red border-signal-red/30',
+  INACTIVE: 'bg-ink-muted/15 text-ink-secondary border-ink-muted/30',
 }
 
 const dotColors: Record<string, string> = {
-  ACTIVE: 'bg-[#34d399]',
-  ALLOW: 'bg-[#34d399]',
-  EXPIRED: 'bg-[#fbbf24]',
-  ALERT: 'bg-[#fbbf24]',
-  REVOKED: 'bg-[#ff4d6a]',
-  DENY: 'bg-[#ff4d6a]',
-  INACTIVE: 'bg-[#8b9bc0]',
+  ACTIVE: 'bg-signal-green',
+  ALLOW: 'bg-signal-green',
+  EXPIRED: 'bg-signal-amber',
+  ALERT: 'bg-signal-amber',
+  REVOKED: 'bg-signal-red',
+  DENY: 'bg-signal-red',
+  INACTIVE: 'bg-ink-secondary',
 }
 
 export default function StatusBadge({ status }: { status: string }) {
   const cls = colors[status] || colors.INACTIVE
-  const dot = dotColors[status] || 'bg-[#8b9bc0]'
+  const dot = dotColors[status] || 'bg-ink-secondary'
   return (
     <span className={`inline-flex items-center gap-1.5 px-2.5 py-0.5 text-[11px] font-semibold tracking-wide uppercase rounded-md border ${cls}`}>
       <span className={`w-1.5 h-1.5 rounded-full ${dot}`} />

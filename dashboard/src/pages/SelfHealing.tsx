@@ -17,10 +17,10 @@ import AnimatedNumber from '../components/AnimatedNumber'
 // ── Constants & helpers ─────────────────────────────────────────
 
 const actionTypeColors: Record<string, string> = {
-  policy_update: 'bg-[#00e5c8]/15 text-[#00e5c8] border-[#00e5c8]/30',
-  threshold_adjustment: 'bg-[#f59e0b]/15 text-[#f59e0b] border-[#f59e0b]/30',
-  credential_rotation: 'bg-[#f59e0b]/15 text-[#f59e0b] border-[#f59e0b]/30',
-  agent_block: 'bg-[#ff4d6a]/15 text-[#ff4d6a] border-[#ff4d6a]/30',
+  policy_update: 'bg-signal-cyan/15 text-signal-cyan border-signal-cyan/30',
+  threshold_adjustment: 'bg-signal-amber/15 text-signal-amber border-signal-amber/30',
+  credential_rotation: 'bg-signal-amber/15 text-signal-amber border-signal-amber/30',
+  agent_block: 'bg-signal-red/15 text-signal-red border-signal-red/30',
   alert_escalation: 'bg-orange-500/15 text-orange-400 border-orange-500/30',
 }
 
@@ -48,10 +48,10 @@ function formatUptime(seconds: number): string {
 }
 
 const healCategoryIcons: Record<string, { icon: IconName; color: string }> = {
-  proxy: { icon: 'shield', color: 'text-[#00e5c8]' },
+  proxy: { icon: 'shield', color: 'text-signal-cyan' },
   pattern: { icon: 'eye', color: 'text-violet-400' },
-  policy: { icon: 'lock', color: 'text-[#f59e0b]' },
-  anomaly: { icon: 'alert', color: 'text-[#ff4d6a]' },
+  policy: { icon: 'lock', color: 'text-signal-amber' },
+  anomaly: { icon: 'alert', color: 'text-signal-red' },
 }
 
 const POLL_INTERVAL = 15_000
@@ -205,21 +205,21 @@ function deriveRecommendations(h: HealthDashboard): RecommendedAction[] {
 function StatusIcon({ status }: { status: PostureStatus }) {
   if (status === 'good') {
     return (
-      <div className="w-5 h-5 rounded-full bg-[#34d399]/15 flex items-center justify-center shrink-0">
-        <Icon name="check" size={12} className="text-[#34d399]" />
+      <div className="w-5 h-5 rounded-full bg-signal-green/15 flex items-center justify-center shrink-0">
+        <Icon name="check" size={12} className="text-signal-green" />
       </div>
     )
   }
   if (status === 'warn') {
     return (
-      <div className="w-5 h-5 rounded-full bg-[#f59e0b]/15 flex items-center justify-center shrink-0">
-        <Icon name="warning" size={12} className="text-[#f59e0b]" />
+      <div className="w-5 h-5 rounded-full bg-signal-amber/15 flex items-center justify-center shrink-0">
+        <Icon name="warning" size={12} className="text-signal-amber" />
       </div>
     )
   }
   return (
-    <div className="w-5 h-5 rounded-full bg-[#ff4d6a]/15 flex items-center justify-center shrink-0">
-      <Icon name="x" size={12} className="text-[#ff4d6a]" />
+    <div className="w-5 h-5 rounded-full bg-signal-red/15 flex items-center justify-center shrink-0">
+      <Icon name="x" size={12} className="text-signal-red" />
     </div>
   )
 }
@@ -365,16 +365,16 @@ export default function SelfHealing() {
   const renderActionBadges = (action: RemediationAction) => (
     <div className="flex items-center gap-2 flex-wrap">
       <span className={`px-2 py-0.5 text-[10px] font-medium rounded-md border ${
-        actionTypeColors[action.type] || 'bg-[#5a6a8a]/15 text-[#8b9bc0] border-[#5a6a8a]/30'
+        actionTypeColors[action.type] || 'bg-ink-muted/15 text-ink-secondary border-ink-muted/30'
       }`}>
         {action.type.replace(/_/g, ' ')}
       </span>
-      <span className="text-xs font-mono text-[#8b9bc0]">{action.target}</span>
+      <span className="text-xs font-mono text-ink-secondary">{action.target}</span>
       {action.reversible && (
-        <span className="px-1.5 py-0.5 text-[10px] bg-[#34d399]/10 text-[#34d399] rounded">reversible</span>
+        <span className="px-1.5 py-0.5 text-[10px] bg-signal-green/10 text-signal-green rounded">reversible</span>
       )}
       {!action.reversible && (
-        <span className="px-1.5 py-0.5 text-[10px] bg-[#ff4d6a]/10 text-[#ff4d6a] rounded">irreversible</span>
+        <span className="px-1.5 py-0.5 text-[10px] bg-signal-red/10 text-signal-red rounded">irreversible</span>
       )}
     </div>
   )
@@ -392,8 +392,8 @@ export default function SelfHealing() {
       onClick={() => setActiveTab(key)}
       className={`px-4 py-2 text-xs font-medium rounded-lg transition-colors ${
         activeTab === key
-          ? 'bg-[#00e5c8]/15 text-[#00e5c8] border border-[#00e5c8]/30'
-          : 'text-[#5a6a8a] hover:text-[#8b9bc0]'
+          ? 'bg-signal-cyan/15 text-signal-cyan border border-signal-cyan/30'
+          : 'text-ink-muted hover:text-ink-secondary'
       }`}
     >
       {label}
@@ -411,42 +411,42 @@ export default function SelfHealing() {
         {health && (
           <div className="glass-card p-5 animate-slideUp opacity-0" style={{ animationDelay: '0s' }}>
             <div className="flex items-center justify-between mb-4">
-              <h3 className="text-xs font-semibold text-[#8b9bc0] uppercase tracking-wider flex items-center gap-2">
-                <Icon name="shield" size={13} className="text-[#00e5c8]" />
+              <h3 className="text-xs font-semibold text-ink-secondary uppercase tracking-wider flex items-center gap-2">
+                <Icon name="shield" size={13} className="text-signal-cyan" />
                 Security Posture
               </h3>
               <div className="flex items-center gap-2">
                 <span className={`text-xs font-semibold ${
-                  postureScore === postureTotal ? 'text-[#34d399]'
-                    : postureScore >= postureTotal / 2 ? 'text-[#f59e0b]'
-                      : 'text-[#ff4d6a]'
+                  postureScore === postureTotal ? 'text-signal-green'
+                    : postureScore >= postureTotal / 2 ? 'text-signal-amber'
+                      : 'text-signal-red'
                 }`}>
                   {postureScore}/{postureTotal} checks passed
                 </span>
-                <button onClick={fetchHealth} className="p-1.5 rounded-lg hover:bg-[#1f2a40] transition-colors" title="Refresh">
-                  <Icon name="activity" size={13} className="text-[#5a6a8a]" />
+                <button onClick={fetchHealth} className="p-1.5 rounded-lg hover:bg-surface-elevated transition-colors" title="Refresh">
+                  <Icon name="activity" size={13} className="text-ink-muted" />
                 </button>
               </div>
             </div>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
               {posture.map((item, i) => (
-                <div key={i} className="flex items-center gap-3 py-2.5 px-3 rounded-lg bg-[#111827]/50 hover:bg-[#111827] transition-colors">
+                <div key={i} className="flex items-center gap-3 py-2.5 px-3 rounded-lg bg-surface/50 hover:bg-surface transition-colors">
                   <StatusIcon status={item.status} />
                   <div className="flex-1 min-w-0">
-                    <p className="text-sm text-[#f0f4fc] font-medium">{item.label}</p>
-                    <p className="text-[10px] text-[#5a6a8a] truncate">{item.detail}</p>
+                    <p className="text-sm text-ink font-medium">{item.label}</p>
+                    <p className="text-[10px] text-ink-muted truncate">{item.detail}</p>
                   </div>
-                  <Icon name={item.icon} size={14} className="text-[#5a6a8a] shrink-0" />
+                  <Icon name={item.icon} size={14} className="text-ink-muted shrink-0" />
                 </div>
               ))}
             </div>
 
-            <div className="mt-3 pt-3 border-t border-[#2a3650]">
-              <p className="text-xs text-[#5a6a8a]">
+            <div className="mt-3 pt-3 border-t border-rule">
+              <p className="text-xs text-ink-muted">
                 Server uptime: {formatUptime(health.server_uptime_seconds)}
                 {health.server_started_at && (
-                  <> &middot; Started <RelativeTime timestamp={health.server_started_at} className="text-[#5a6a8a]" /></>
+                  <> &middot; Started <RelativeTime timestamp={health.server_started_at} className="text-ink-muted" /></>
                 )}
               </p>
             </div>
@@ -456,60 +456,60 @@ export default function SelfHealing() {
         {/* ── Stats Cards Row ── */}
         {health && (
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
-            <div className="bg-[#1a2235] border border-[#00e5c8]/20 rounded-[12px] p-4 animate-slideUp opacity-0 hover:bg-[#1f2a40] transition-all duration-200" style={{ animationDelay: '0.16s' }}>
+            <div className="bg-surface border border-signal-cyan/20 rounded-[12px] p-4 animate-slideUp opacity-0 hover:bg-surface-elevated transition-all duration-200" style={{ animationDelay: '0.16s' }}>
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-xs text-[#8b9bc0] font-medium">Invocations</p>
-                  <AnimatedNumber value={health.detection.total_invocations} className="text-2xl font-bold mt-1 block text-[#f0f4fc]" />
+                  <p className="text-xs text-ink-secondary font-medium">Invocations</p>
+                  <AnimatedNumber value={health.detection.total_invocations} className="text-2xl font-bold mt-1 block text-ink" />
                 </div>
-                <div className="w-10 h-10 rounded-xl bg-[#00e5c8]/10 flex items-center justify-center">
-                  <Icon name="activity" size={20} className="text-[#00e5c8]" />
+                <div className="w-10 h-10 rounded-xl bg-signal-cyan/10 flex items-center justify-center">
+                  <Icon name="activity" size={20} className="text-signal-cyan" />
                 </div>
               </div>
-              <p className="text-[10px] text-[#5a6a8a] mt-1">{health.detection.total_agents} agent(s) monitored</p>
+              <p className="text-[10px] text-ink-muted mt-1">{health.detection.total_agents} agent(s) monitored</p>
             </div>
 
-            <div className="bg-[#1a2235] border border-[#ff4d6a]/20 rounded-[12px] p-4 animate-slideUp opacity-0 hover:bg-[#1f2a40] transition-all duration-200" style={{ animationDelay: '0.2s' }}>
+            <div className="bg-surface border border-signal-red/20 rounded-[12px] p-4 animate-slideUp opacity-0 hover:bg-surface-elevated transition-all duration-200" style={{ animationDelay: '0.2s' }}>
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-xs text-[#8b9bc0] font-medium">Alerts</p>
-                  <AnimatedNumber value={health.detection.total_alerts} className="text-2xl font-bold mt-1 block text-[#f0f4fc]" />
+                  <p className="text-xs text-ink-secondary font-medium">Alerts</p>
+                  <AnimatedNumber value={health.detection.total_alerts} className="text-2xl font-bold mt-1 block text-ink" />
                 </div>
-                <div className="w-10 h-10 rounded-xl bg-[#ff4d6a]/10 flex items-center justify-center">
-                  <Icon name="alert" size={20} className="text-[#ff4d6a]" />
+                <div className="w-10 h-10 rounded-xl bg-signal-red/10 flex items-center justify-center">
+                  <Icon name="alert" size={20} className="text-signal-red" />
                 </div>
               </div>
-              <p className="text-[10px] text-[#5a6a8a] mt-1">
+              <p className="text-[10px] text-ink-muted mt-1">
                 {health.detection.critical_alerts} critical, {health.detection.high_alerts} high
               </p>
             </div>
 
-            <div className="bg-[#1a2235] border border-violet-500/20 rounded-[12px] p-4 animate-slideUp opacity-0 hover:bg-[#1f2a40] transition-all duration-200" style={{ animationDelay: '0.24s' }}>
+            <div className="bg-surface border border-violet-500/20 rounded-[12px] p-4 animate-slideUp opacity-0 hover:bg-surface-elevated transition-all duration-200" style={{ animationDelay: '0.24s' }}>
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-xs text-[#8b9bc0] font-medium">Patterns Learned</p>
-                  <AnimatedNumber value={health.detection.patterns_learned} className="text-2xl font-bold mt-1 block text-[#f0f4fc]" />
+                  <p className="text-xs text-ink-secondary font-medium">Patterns Learned</p>
+                  <AnimatedNumber value={health.detection.patterns_learned} className="text-2xl font-bold mt-1 block text-ink" />
                 </div>
                 <div className="w-10 h-10 rounded-xl bg-violet-500/10 flex items-center justify-center">
                   <Icon name="eye" size={20} className="text-violet-400" />
                 </div>
               </div>
-              <p className="text-[10px] text-[#5a6a8a] mt-1">
+              <p className="text-[10px] text-ink-muted mt-1">
                 {Object.entries(health.detection.patterns_by_source).map(([src, count]) => `${count} ${src}`).join(', ') || 'No patterns yet'}
               </p>
             </div>
 
-            <div className="bg-[#1a2235] border border-[#f59e0b]/20 rounded-[12px] p-4 animate-slideUp opacity-0 hover:bg-[#1f2a40] transition-all duration-200" style={{ animationDelay: '0.28s' }}>
+            <div className="bg-surface border border-signal-amber/20 rounded-[12px] p-4 animate-slideUp opacity-0 hover:bg-surface-elevated transition-all duration-200" style={{ animationDelay: '0.28s' }}>
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-xs text-[#8b9bc0] font-medium">Policy Blocks</p>
-                  <AnimatedNumber value={health.policy.denied} className="text-2xl font-bold mt-1 block text-[#f0f4fc]" />
+                  <p className="text-xs text-ink-secondary font-medium">Policy Blocks</p>
+                  <AnimatedNumber value={health.policy.denied} className="text-2xl font-bold mt-1 block text-ink" />
                 </div>
-                <div className="w-10 h-10 rounded-xl bg-[#f59e0b]/10 flex items-center justify-center">
-                  <Icon name="lock" size={20} className="text-[#f59e0b]" />
+                <div className="w-10 h-10 rounded-xl bg-signal-amber/10 flex items-center justify-center">
+                  <Icon name="lock" size={20} className="text-signal-amber" />
                 </div>
               </div>
-              <p className="text-[10px] text-[#5a6a8a] mt-1">
+              <p className="text-[10px] text-ink-muted mt-1">
                 {health.policy.recent_decisions} recent decision(s)
               </p>
             </div>
@@ -522,52 +522,52 @@ export default function SelfHealing() {
             <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-violet-500/10 border border-violet-500/20 mb-4">
               <Icon name="activity" size={32} className="text-violet-400 animate-pulse" />
             </div>
-            <p className="text-[#8b9bc0]">Loading system health...</p>
+            <p className="text-ink-secondary">Loading system health...</p>
           </div>
         )}
 
         {/* API unreachable — show setup instructions */}
         {healthError && !health && !healthLoading && (
           <div className="glass-card p-8 text-center">
-            <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-[#ff4d6a]/10 border border-[#ff4d6a]/20 mb-4">
-              <Icon name="x" size={32} className="text-[#ff4d6a]" />
+            <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-signal-red/10 border border-signal-red/20 mb-4">
+              <Icon name="x" size={32} className="text-signal-red" />
             </div>
-            <h3 className="text-lg font-semibold text-[#f0f4fc] mb-2">
+            <h3 className="text-lg font-semibold text-ink mb-2">
               Navil API server is not running
             </h3>
-            <p className="text-sm text-[#8b9bc0] mb-6 max-w-md mx-auto">
+            <p className="text-sm text-ink-secondary mb-6 max-w-md mx-auto">
               The self-healing dashboard needs the Navil backend to be running.
               Start it in a separate terminal, then this page will connect automatically.
             </p>
             <div className="space-y-3 max-w-sm mx-auto text-left">
               <div className="glass-card p-3">
-                <p className="text-[10px] uppercase tracking-wider text-[#5a6a8a] font-medium mb-1.5">
+                <p className="text-[10px] uppercase tracking-wider text-ink-muted font-medium mb-1.5">
                   Step 1: Start the API server
                 </p>
-                <code className="block text-xs font-mono text-[#00e5c8] bg-[#111827] px-3 py-2 rounded">
+                <code className="block text-xs font-mono text-signal-cyan bg-surface px-3 py-2 rounded">
                   navil cloud serve
                 </code>
               </div>
               <div className="glass-card p-3">
-                <p className="text-[10px] uppercase tracking-wider text-[#5a6a8a] font-medium mb-1.5">
+                <p className="text-[10px] uppercase tracking-wider text-ink-muted font-medium mb-1.5">
                   Step 2: Start the MCP proxy
                 </p>
-                <code className="block text-xs font-mono text-[#00e5c8] bg-[#111827] px-3 py-2 rounded">
+                <code className="block text-xs font-mono text-signal-cyan bg-surface px-3 py-2 rounded">
                   navil proxy start &lt;YOUR_MCP_SERVER_URL&gt;
                 </code>
               </div>
               <div className="glass-card p-3">
-                <p className="text-[10px] uppercase tracking-wider text-[#5a6a8a] font-medium mb-1.5">
+                <p className="text-[10px] uppercase tracking-wider text-ink-muted font-medium mb-1.5">
                   Step 3: Open this dashboard
                 </p>
-                <code className="block text-xs font-mono text-[#8b9bc0] bg-[#111827] px-3 py-2 rounded">
+                <code className="block text-xs font-mono text-ink-secondary bg-surface px-3 py-2 rounded">
                   navil cloud serve --open
                 </code>
               </div>
             </div>
             <button
               onClick={fetchHealth}
-              className="mt-6 px-4 py-2 text-xs bg-[#00e5c8]/15 text-[#00e5c8] border border-[#00e5c8]/30 rounded-lg hover:bg-[#00e5c8]/25 transition-colors"
+              className="mt-6 px-4 py-2 text-xs bg-signal-cyan/15 text-signal-cyan border border-signal-cyan/30 rounded-lg hover:bg-signal-cyan/25 transition-colors"
             >
               <Icon name="activity" size={12} className="inline mr-1.5" />
               Retry Connection
@@ -592,32 +592,32 @@ export default function SelfHealing() {
             <div className="animate-fadeIn">
               {recommendations.length > 0 ? (
                 <div>
-                  <h3 className="text-xs font-semibold text-[#8b9bc0] uppercase tracking-wider mb-3 flex items-center gap-2">
-                    <Icon name="zap" size={13} className="text-[#f59e0b]" />
+                  <h3 className="text-xs font-semibold text-ink-secondary uppercase tracking-wider mb-3 flex items-center gap-2">
+                    <Icon name="zap" size={13} className="text-signal-amber" />
                     Recommended Actions
                   </h3>
                   <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
                     {recommendations.map((rec, i) => (
-                      <div key={i} className="glass-card p-4 flex flex-col gap-3 hover:border-[#00e5c8]/30 transition-colors">
+                      <div key={i} className="glass-card p-4 flex flex-col gap-3 hover:border-signal-cyan/30 transition-colors">
                         <div className="flex items-start gap-3">
-                          <div className="w-8 h-8 rounded-lg bg-[#00e5c8]/10 flex items-center justify-center shrink-0">
-                            <Icon name={rec.icon} size={16} className="text-[#00e5c8]" />
+                          <div className="w-8 h-8 rounded-lg bg-signal-cyan/10 flex items-center justify-center shrink-0">
+                            <Icon name={rec.icon} size={16} className="text-signal-cyan" />
                           </div>
                           <div className="flex-1 min-w-0">
-                            <p className="text-sm font-semibold text-[#f0f4fc]">{rec.title}</p>
-                            <p className="text-xs text-[#5a6a8a] mt-0.5 leading-relaxed">{rec.description}</p>
+                            <p className="text-sm font-semibold text-ink">{rec.title}</p>
+                            <p className="text-xs text-ink-muted mt-0.5 leading-relaxed">{rec.description}</p>
                           </div>
                         </div>
                         {rec.linkTo && (
                           <Link
                             to={rec.linkTo}
-                            className="mt-auto text-xs text-[#00e5c8] hover:text-[#00b8a0] font-medium flex items-center gap-1 transition-colors"
+                            className="mt-auto text-xs text-signal-cyan hover:text-signal-cyan font-medium flex items-center gap-1 transition-colors"
                           >
                             Go to {rec.linkTo.replace('/', '')} <Icon name="arrow-right" size={12} />
                           </Link>
                         )}
                         {rec.command && (
-                          <code className="mt-auto text-[10px] font-mono text-[#8b9bc0] bg-[#111827] px-2 py-1.5 rounded block truncate">
+                          <code className="mt-auto text-[10px] font-mono text-ink-secondary bg-surface px-2 py-1.5 rounded block truncate">
                             {rec.command}
                           </code>
                         )}
@@ -627,10 +627,10 @@ export default function SelfHealing() {
                 </div>
               ) : (
                 <div className="glass-card p-8 text-center">
-                  <div className="inline-flex items-center justify-center w-12 h-12 rounded-2xl bg-[#34d399]/10 border border-[#34d399]/20 mb-3">
-                    <Icon name="check" size={22} className="text-[#34d399]" />
+                  <div className="inline-flex items-center justify-center w-12 h-12 rounded-2xl bg-signal-green/10 border border-signal-green/20 mb-3">
+                    <Icon name="check" size={22} className="text-signal-green" />
                   </div>
-                  <p className="text-sm text-[#8b9bc0]">All systems operational. No actions needed.</p>
+                  <p className="text-sm text-ink-secondary">All systems operational. No actions needed.</p>
                 </div>
               )}
             </div>
@@ -653,7 +653,7 @@ export default function SelfHealing() {
                 <button
                   onClick={handleAutoRemediate}
                   disabled={busy || !llmReady || !canUseLLM}
-                  className="px-4 py-2 bg-[#34d399] text-[#0a0e17] rounded-lg text-sm font-semibold hover:bg-[#10b981] hover:-translate-y-0.5 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2 transition-all duration-200"
+                  className="px-4 py-2 bg-signal-green text-bg rounded-lg text-sm font-semibold hover:bg-signal-green hover:-translate-y-0.5 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2 transition-all duration-200"
                 >
                   <Icon name="shield" size={14} className={autoRemediating ? 'animate-spin' : ''} />
                   {autoRemediating ? 'Remediating...' : 'Auto-Remediate'}
@@ -680,14 +680,14 @@ export default function SelfHealing() {
                   <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-violet-500/10 border border-violet-500/20 mb-4">
                     <Icon name="sparkles" size={32} className="text-violet-400 animate-spin" />
                   </div>
-                  <p className="text-[#8b9bc0]">Analyzing threats with AI...</p>
+                  <p className="text-ink-secondary">Analyzing threats with AI...</p>
                   {stream.text ? (
-                    <pre className="mt-3 mx-auto max-w-lg text-left text-xs text-[#8b9bc0] whitespace-pre-wrap font-mono bg-[#0d1117] rounded-lg p-3 max-h-40 overflow-y-auto">
+                    <pre className="mt-3 mx-auto max-w-lg text-left text-xs text-ink-secondary whitespace-pre-wrap font-mono bg-surface rounded-lg p-3 max-h-40 overflow-y-auto">
                       {stream.text}
                       <span className="animate-pulse text-violet-400">|</span>
                     </pre>
                   ) : (
-                    <p className="text-xs text-[#5a6a8a] mt-1">This may take a few seconds</p>
+                    <p className="text-xs text-ink-muted mt-1">This may take a few seconds</p>
                   )}
                 </div>
               )}
@@ -695,8 +695,8 @@ export default function SelfHealing() {
               {/* Auto-remediate phased progress */}
               {autoRemediating && !autoResult && (
                 <div className="text-center py-16 animate-fadeIn">
-                  <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-[#34d399]/10 border border-[#34d399]/20 mb-6">
-                    <Icon name="shield" size={32} className="text-[#34d399] animate-spin" />
+                  <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-signal-green/10 border border-signal-green/20 mb-6">
+                    <Icon name="shield" size={32} className="text-signal-green animate-spin" />
                   </div>
 
                   {/* Phase stepper */}
@@ -708,18 +708,18 @@ export default function SelfHealing() {
                       return (
                         <div key={phase} className="flex items-center gap-2">
                           {i > 0 && (
-                            <div className={`w-8 h-px ${isDone ? 'bg-[#34d399]' : 'bg-[#2a3650]'}`} />
+                            <div className={`w-8 h-px ${isDone ? 'bg-signal-green' : 'bg-rule'}`} />
                           )}
                           <div className="flex items-center gap-1.5">
                             <div className={`w-6 h-6 rounded-full flex items-center justify-center text-[10px] font-medium ${
-                              isDone ? 'bg-[#34d399]/20 text-[#34d399]'
-                                : isCurrent ? 'bg-[#34d399]/20 text-[#34d399] animate-pulse'
-                                : 'bg-[#111827] text-[#5a6a8a]'
+                              isDone ? 'bg-signal-green/20 text-signal-green'
+                                : isCurrent ? 'bg-signal-green/20 text-signal-green animate-pulse'
+                                : 'bg-surface text-ink-muted'
                             }`}>
                               {isDone ? <Icon name="check" size={11} /> : i + 1}
                             </div>
                             <span className={`text-xs capitalize ${
-                              isCurrent ? 'text-[#34d399] font-medium' : isDone ? 'text-[#34d399]' : 'text-[#5a6a8a]'
+                              isCurrent ? 'text-signal-green font-medium' : isDone ? 'text-signal-green' : 'text-ink-muted'
                             }`}>
                               {phase === 'analyzing' ? 'Analyzing' : phase === 'applying' ? 'Applying' : 'Verifying'}
                             </span>
@@ -729,7 +729,7 @@ export default function SelfHealing() {
                     })}
                   </div>
 
-                  <p className="text-xs text-[#5a6a8a]">Autonomous remediation in progress...</p>
+                  <p className="text-xs text-ink-muted">Autonomous remediation in progress...</p>
                 </div>
               )}
 
@@ -739,18 +739,18 @@ export default function SelfHealing() {
                   <div className="glass-card p-5 flex items-start gap-4">
                     <div className="shrink-0"><SeverityBadge severity={suggestion.risk_assessment} /></div>
                     <div>
-                      <p className="text-sm text-[#f0f4fc]">{suggestion.summary}</p>
-                      <p className="text-xs text-[#5a6a8a] mt-1">
+                      <p className="text-sm text-ink">{suggestion.summary}</p>
+                      <p className="text-xs text-ink-muted mt-1">
                         {suggestion.actions.filter((_a, i) => !applied.has(i)).length} remediation action{suggestion.actions.filter((_a, i) => !applied.has(i)).length !== 1 ? 's' : ''} suggested
                       </p>
                     </div>
                   </div>
 
                   {suggestion.actions.filter((_a, i) => !applied.has(i)).length === 0 ? (
-                    <div className="glass-card p-5 text-center animate-fadeIn border-[#34d399]/20">
-                      <Icon name="check" size={22} className="text-[#34d399] mx-auto mb-2" />
-                      <p className="text-sm text-[#34d399] font-medium">All remediation actions applied</p>
-                      <p className="text-xs text-[#5a6a8a] mt-1">Click "Analyze Threats" again to verify the system is now healthy.</p>
+                    <div className="glass-card p-5 text-center animate-fadeIn border-signal-green/20">
+                      <Icon name="check" size={22} className="text-signal-green mx-auto mb-2" />
+                      <p className="text-sm text-signal-green font-medium">All remediation actions applied</p>
+                      <p className="text-xs text-ink-muted mt-1">Click "Analyze Threats" again to verify the system is now healthy.</p>
                     </div>
                   ) : (
                     <div className="space-y-3">
@@ -763,34 +763,34 @@ export default function SelfHealing() {
                           <div className="flex items-start gap-4">
                             <div className="flex-1">
                               <div className="mb-2">{renderActionBadges(action)}</div>
-                              <p className="text-sm text-[#f0f4fc]">{action.reason}</p>
+                              <p className="text-sm text-ink">{action.reason}</p>
                               <div className="flex items-center gap-2 mt-2">
-                                <span className="text-[10px] text-[#5a6a8a]">Confidence</span>
+                                <span className="text-[10px] text-ink-muted">Confidence</span>
                                 <MiniBar value={action.confidence * 100} max={100}
-                                  color={action.confidence >= 0.8 ? 'bg-[#34d399]' : action.confidence >= 0.5 ? 'bg-[#fbbf24]' : 'bg-orange-500'}
+                                  color={action.confidence >= 0.8 ? 'bg-signal-green' : action.confidence >= 0.5 ? 'bg-signal-amber' : 'bg-orange-500'}
                                   height="h-1" className="w-24" />
-                                <span className="text-[10px] text-[#8b9bc0]">{(action.confidence * 100).toFixed(0)}%</span>
-                                <button onClick={() => toggleExpand(i)} className="ml-auto text-[10px] text-[#5a6a8a] hover:text-[#f0f4fc] flex items-center gap-1 transition-colors">
+                                <span className="text-[10px] text-ink-secondary">{(action.confidence * 100).toFixed(0)}%</span>
+                                <button onClick={() => toggleExpand(i)} className="ml-auto text-[10px] text-ink-muted hover:text-ink flex items-center gap-1 transition-colors">
                                   <Icon name="info" size={11} />
                                   {isExpanded ? 'Less' : 'Details'}
                                 </button>
                               </div>
                               {isExpanded && (
-                                <div className="mt-3 pt-3 border-t border-[#2a3650] space-y-2.5 animate-fadeIn">
+                                <div className="mt-3 pt-3 border-t border-rule space-y-2.5 animate-fadeIn">
                                   <div>
-                                    <span className="text-[10px] uppercase tracking-wider text-[#5a6a8a] font-medium">What this does</span>
-                                    <p className="text-xs text-[#8b9bc0] mt-0.5">{actionTypeDescriptions[action.type] || 'Applies the recommended security change.'}</p>
+                                    <span className="text-[10px] uppercase tracking-wider text-ink-muted font-medium">What this does</span>
+                                    <p className="text-xs text-ink-secondary mt-0.5">{actionTypeDescriptions[action.type] || 'Applies the recommended security change.'}</p>
                                   </div>
                                   <div>
-                                    <span className="text-[10px] uppercase tracking-wider text-[#5a6a8a] font-medium">Change</span>
-                                    <p className="text-xs font-mono text-[#f0f4fc] mt-0.5 bg-[#111827] rounded px-2 py-1.5">
+                                    <span className="text-[10px] uppercase tracking-wider text-ink-muted font-medium">Change</span>
+                                    <p className="text-xs font-mono text-ink mt-0.5 bg-surface rounded px-2 py-1.5">
                                       {typeof action.value === 'string' ? action.value : JSON.stringify(action.value, null, 2)}
                                     </p>
                                   </div>
                                   {action.reversible !== undefined && (
                                     <div>
-                                      <span className="text-[10px] uppercase tracking-wider text-[#5a6a8a] font-medium">Reversibility</span>
-                                      <p className="text-xs text-[#8b9bc0] mt-0.5">
+                                      <span className="text-[10px] uppercase tracking-wider text-ink-muted font-medium">Reversibility</span>
+                                      <p className="text-xs text-ink-secondary mt-0.5">
                                         {action.reversible ? 'This action can be undone. The previous state will be restored if reverted.'
                                           : 'This action cannot be easily undone. Review carefully before applying.'}
                                       </p>
@@ -801,7 +801,7 @@ export default function SelfHealing() {
                             </div>
                             <div className="shrink-0">
                               <button onClick={() => handleApply(action, i)} disabled={applying === i}
-                                className="px-3 py-1.5 text-xs bg-[#00e5c8]/15 text-[#00e5c8] border border-[#00e5c8]/30 rounded-lg hover:bg-[#00e5c8]/25 flex items-center gap-1.5 disabled:opacity-50">
+                                className="px-3 py-1.5 text-xs bg-signal-cyan/15 text-signal-cyan border border-signal-cyan/30 rounded-lg hover:bg-signal-cyan/25 flex items-center gap-1.5 disabled:opacity-50">
                                 <Icon name="shield" size={13} className={applying === i ? 'animate-spin' : ''} />
                                 {applying === i ? 'Applying...' : 'Apply'}
                               </button>
@@ -822,8 +822,8 @@ export default function SelfHealing() {
                   <div className="glass-card p-5 flex items-start gap-4">
                     <div className="shrink-0"><SeverityBadge severity={autoResult.initial_analysis.risk_assessment} /></div>
                     <div>
-                      <p className="text-sm text-[#f0f4fc]">{autoResult.initial_analysis.summary}</p>
-                      <p className="text-xs text-[#5a6a8a] mt-1">
+                      <p className="text-sm text-ink">{autoResult.initial_analysis.summary}</p>
+                      <p className="text-xs text-ink-muted mt-1">
                         {autoResult.auto_applied.length} auto-applied
                         {autoResult.manual_review.filter((_a, i) => !autoApplied.has(i)).length > 0 && `, ${autoResult.manual_review.filter((_a, i) => !autoApplied.has(i)).length} need review`}
                         {autoResult.failed_to_apply.length > 0 && `, ${autoResult.failed_to_apply.length} failed`}
@@ -833,17 +833,17 @@ export default function SelfHealing() {
 
                   {/* Post-status banner */}
                   <div className={`glass-card p-4 flex items-center gap-3 ${
-                    autoResult.post_status.healthy ? 'border-[#34d399]/20' : 'border-[#fbbf24]/20'
+                    autoResult.post_status.healthy ? 'border-signal-green/20' : 'border-signal-amber/20'
                   }`}>
                     <Icon name={autoResult.post_status.healthy ? 'check' : 'alert'} size={18}
-                      className={autoResult.post_status.healthy ? 'text-[#34d399]' : 'text-[#fbbf24]'} />
+                      className={autoResult.post_status.healthy ? 'text-signal-green' : 'text-signal-amber'} />
                     <div>
-                      <p className={`text-sm font-medium ${autoResult.post_status.healthy ? 'text-[#34d399]' : 'text-[#fbbf24]'}`}>
+                      <p className={`text-sm font-medium ${autoResult.post_status.healthy ? 'text-signal-green' : 'text-signal-amber'}`}>
                         {autoResult.post_status.healthy
                           ? 'System Healthy — All Threats Resolved'
                           : `${autoResult.post_status.remaining_alert_count} alert${autoResult.post_status.remaining_alert_count !== 1 ? 's' : ''} remaining`}
                       </p>
-                      <p className="text-xs text-[#5a6a8a]">
+                      <p className="text-xs text-ink-muted">
                         {autoResult.post_status.healthy
                           ? 'All threats have been automatically resolved.'
                           : 'Some actions require manual review below.'}
@@ -854,20 +854,20 @@ export default function SelfHealing() {
                   {/* Auto-applied actions */}
                   {autoResult.auto_applied.length > 0 && (
                     <div>
-                      <h3 className="text-xs font-semibold text-[#34d399] uppercase tracking-wider mb-3 flex items-center gap-2">
+                      <h3 className="text-xs font-semibold text-signal-green uppercase tracking-wider mb-3 flex items-center gap-2">
                         <Icon name="check" size={13} />
                         Auto-Applied ({autoResult.auto_applied.length})
                       </h3>
                       <div className="space-y-2">
                         {autoResult.auto_applied.map((action, i) => (
-                          <div key={`auto-${action.type}-${action.target}-${i}`} className="glass-card p-3 border-[#34d399]/20 animate-slideUp opacity-0"
+                          <div key={`auto-${action.type}-${action.target}-${i}`} className="glass-card p-3 border-signal-green/20 animate-slideUp opacity-0"
                             style={{ animationDelay: `${i * 0.06}s` }}>
                             <div className="flex items-center gap-3">
                               <div className="flex-1">
                                 {renderActionBadges(action)}
-                                <p className="text-xs text-[#8b9bc0] mt-1.5">{action.reason}</p>
+                                <p className="text-xs text-ink-secondary mt-1.5">{action.reason}</p>
                               </div>
-                              <Icon name="check" size={14} className="text-[#34d399] shrink-0" />
+                              <Icon name="check" size={14} className="text-signal-green shrink-0" />
                             </div>
                           </div>
                         ))}
@@ -878,15 +878,15 @@ export default function SelfHealing() {
                   {/* Failed actions */}
                   {autoResult.failed_to_apply.length > 0 && (
                     <div>
-                      <h3 className="text-xs font-semibold text-[#ff4d6a] uppercase tracking-wider mb-3 flex items-center gap-2">
+                      <h3 className="text-xs font-semibold text-signal-red uppercase tracking-wider mb-3 flex items-center gap-2">
                         <Icon name="alert" size={13} />
                         Failed ({autoResult.failed_to_apply.length})
                       </h3>
                       <div className="space-y-2">
                         {autoResult.failed_to_apply.map((action, i) => (
-                          <div key={`fail-${action.type}-${action.target}-${i}`} className="glass-card p-3 border-[#ff4d6a]/20">
+                          <div key={`fail-${action.type}-${action.target}-${i}`} className="glass-card p-3 border-signal-red/20">
                             {renderActionBadges(action)}
-                            <p className="text-xs text-[#8b9bc0] mt-1.5">{action.reason}</p>
+                            <p className="text-xs text-ink-secondary mt-1.5">{action.reason}</p>
                           </div>
                         ))}
                       </div>
@@ -896,7 +896,7 @@ export default function SelfHealing() {
                   {/* Manual review actions — filter out applied */}
                   {autoResult.manual_review.length > 0 && autoResult.manual_review.some((_a, i) => !autoApplied.has(i)) && (
                     <div>
-                      <h3 className="text-xs font-semibold text-[#fbbf24] uppercase tracking-wider mb-3 flex items-center gap-2">
+                      <h3 className="text-xs font-semibold text-signal-amber uppercase tracking-wider mb-3 flex items-center gap-2">
                         <Icon name="eye" size={13} />
                         Needs Manual Review ({autoResult.manual_review.filter((_a, i) => !autoApplied.has(i)).length})
                       </h3>
@@ -904,26 +904,26 @@ export default function SelfHealing() {
                         {autoResult.manual_review.map((action, i) => {
                           if (autoApplied.has(i)) return null
                           return (
-                          <div key={`manual-${action.type}-${action.target}-${i}`} className="glass-card p-4 border-[#fbbf24]/20 animate-slideUp opacity-0"
+                          <div key={`manual-${action.type}-${action.target}-${i}`} className="glass-card p-4 border-signal-amber/20 animate-slideUp opacity-0"
                             style={{ animationDelay: `${(autoResult.auto_applied.length + i) * 0.06}s` }}>
                             <div className="flex items-start gap-4">
                               <div className="flex-1">
                                 <div className="mb-2">{renderActionBadges(action)}</div>
-                                <p className="text-sm text-[#f0f4fc]">{action.reason}</p>
+                                <p className="text-sm text-ink">{action.reason}</p>
                                 <div className="flex items-center gap-2 mt-2">
-                                  <span className="text-[10px] text-[#5a6a8a]">Confidence</span>
+                                  <span className="text-[10px] text-ink-muted">Confidence</span>
                                   <MiniBar value={action.confidence * 100} max={100}
-                                    color={action.confidence >= 0.8 ? 'bg-[#34d399]' : action.confidence >= 0.5 ? 'bg-[#fbbf24]' : 'bg-orange-500'}
+                                    color={action.confidence >= 0.8 ? 'bg-signal-green' : action.confidence >= 0.5 ? 'bg-signal-amber' : 'bg-orange-500'}
                                     height="h-1" className="w-24" />
-                                  <span className="text-[10px] text-[#8b9bc0]">{(action.confidence * 100).toFixed(0)}%</span>
+                                  <span className="text-[10px] text-ink-secondary">{(action.confidence * 100).toFixed(0)}%</span>
                                   {!action.reversible && (
-                                    <span className="text-[10px] text-[#fbbf24] ml-2">Irreversible — review carefully</span>
+                                    <span className="text-[10px] text-signal-amber ml-2">Irreversible — review carefully</span>
                                   )}
                                 </div>
                               </div>
                               <div className="shrink-0">
                                 <button onClick={() => handleAutoManualApply(action, i)} disabled={autoApplying === i}
-                                  className="px-3 py-1.5 text-xs bg-[#00e5c8]/15 text-[#00e5c8] border border-[#00e5c8]/30 rounded-lg hover:bg-[#00e5c8]/25 flex items-center gap-1.5 disabled:opacity-50">
+                                  className="px-3 py-1.5 text-xs bg-signal-cyan/15 text-signal-cyan border border-signal-cyan/30 rounded-lg hover:bg-signal-cyan/25 flex items-center gap-1.5 disabled:opacity-50">
                                   <Icon name="shield" size={13} className={autoApplying === i ? 'animate-spin' : ''} />
                                   {autoApplying === i ? 'Applying...' : 'Apply'}
                                 </button>
@@ -939,8 +939,8 @@ export default function SelfHealing() {
                   {/* No actions at all */}
                   {autoResult.auto_applied.length === 0 && autoResult.manual_review.length === 0 && autoResult.failed_to_apply.length === 0 && (
                     <div className="glass-card p-8 text-center">
-                      <Icon name="check" size={24} className="text-[#34d399] mx-auto mb-2" />
-                      <p className="text-[#8b9bc0] text-sm">No remediation actions needed. System looks healthy.</p>
+                      <Icon name="check" size={24} className="text-signal-green mx-auto mb-2" />
+                      <p className="text-ink-secondary text-sm">No remediation actions needed. System looks healthy.</p>
                     </div>
                   )}
                 </div>
@@ -952,7 +952,7 @@ export default function SelfHealing() {
                   <div className="inline-flex items-center justify-center w-12 h-12 rounded-2xl bg-violet-500/10 border border-violet-500/20 mb-3">
                     <Icon name="sparkles" size={22} className="text-violet-400" />
                   </div>
-                  <p className="text-sm text-[#8b9bc0]">Run an analysis to see AI-powered threat assessment and remediation suggestions.</p>
+                  <p className="text-sm text-ink-secondary">Run an analysis to see AI-powered threat assessment and remediation suggestions.</p>
                 </div>
               )}
             </div>
@@ -962,45 +962,45 @@ export default function SelfHealing() {
           {activeTab === 'activity' && (
             <div className="animate-fadeIn">
               <div className="glass-card p-5">
-                <h3 className="text-xs font-semibold text-[#8b9bc0] uppercase tracking-wider mb-4 flex items-center gap-2">
-                  <Icon name="activity" size={13} className="text-[#00e5c8]" />
+                <h3 className="text-xs font-semibold text-ink-secondary uppercase tracking-wider mb-4 flex items-center gap-2">
+                  <Icon name="activity" size={13} className="text-signal-cyan" />
                   Recent Activity
                 </h3>
                 {health.recent_heals.length === 0 ? (
                   <div className="text-center py-8">
-                    <div className="inline-flex items-center justify-center w-12 h-12 rounded-2xl bg-[#111827] border border-[#2a3650] mb-3">
-                      <Icon name="clock" size={22} className="text-[#5a6a8a]" />
+                    <div className="inline-flex items-center justify-center w-12 h-12 rounded-2xl bg-surface border border-rule mb-3">
+                      <Icon name="clock" size={22} className="text-ink-muted" />
                     </div>
-                    <p className="text-sm text-[#8b9bc0]">No activity yet. Events will appear here once the proxy starts processing requests.</p>
+                    <p className="text-sm text-ink-secondary">No activity yet. Events will appear here once the proxy starts processing requests.</p>
                   </div>
                 ) : (
                   <div className="space-y-1">
                     {health.recent_heals.map((heal, i) => {
                       const catStyle = healCategoryIcons[heal.category] || healCategoryIcons.anomaly
                       return (
-                        <div key={i} className="flex items-start gap-3 py-2.5 px-3 rounded-lg hover:bg-[#111827]/70 transition-colors group">
+                        <div key={i} className="flex items-start gap-3 py-2.5 px-3 rounded-lg hover:bg-surface/70 transition-colors group">
                           {/* Timeline dot + line */}
                           <div className="flex flex-col items-center shrink-0 mt-0.5">
                             <div className={`w-2 h-2 rounded-full ${
                               heal.severity === 'critical' || heal.severity === 'high'
-                                ? 'bg-[#ff4d6a]'
+                                ? 'bg-signal-red'
                                 : heal.severity === 'medium'
-                                  ? 'bg-[#f59e0b]'
-                                  : 'bg-[#00e5c8]'
+                                  ? 'bg-signal-amber'
+                                  : 'bg-signal-cyan'
                             }`} />
                             {i < health.recent_heals.length - 1 && (
-                              <div className="w-px h-6 bg-[#2a3650] mt-1" />
+                              <div className="w-px h-6 bg-rule mt-1" />
                             )}
                           </div>
                           <div className="flex-1 min-w-0">
                             <div className="flex items-center gap-2">
                               <Icon name={catStyle.icon} size={12} className={catStyle.color} />
-                              <p className="text-xs text-[#f0f4fc] leading-relaxed truncate">{heal.event}</p>
+                              <p className="text-xs text-ink leading-relaxed truncate">{heal.event}</p>
                             </div>
-                            <p className="text-[10px] text-[#5a6a8a] truncate mt-0.5 ml-[20px]">{heal.detail}</p>
+                            <p className="text-[10px] text-ink-muted truncate mt-0.5 ml-[20px]">{heal.detail}</p>
                           </div>
                           {heal.timestamp && (
-                            <RelativeTime timestamp={heal.timestamp} className="text-[10px] text-[#5a6a8a] shrink-0" />
+                            <RelativeTime timestamp={heal.timestamp} className="text-[10px] text-ink-muted shrink-0" />
                           )}
                         </div>
                       )
@@ -1010,24 +1010,24 @@ export default function SelfHealing() {
 
                 {/* Proxy stats mini-section */}
                 {health.proxy.running && (
-                  <div className="mt-4 pt-3 border-t border-[#2a3650]">
-                    <p className="text-[10px] text-[#5a6a8a] uppercase tracking-wider font-medium mb-2">Proxy Stats</p>
+                  <div className="mt-4 pt-3 border-t border-rule">
+                    <p className="text-[10px] text-ink-muted uppercase tracking-wider font-medium mb-2">Proxy Stats</p>
                     <div className="grid grid-cols-4 gap-2">
-                      <div className="text-center p-2 rounded-lg bg-[#111827]/50">
-                        <p className="text-lg font-bold text-[#f0f4fc]">{health.proxy.stats.total_requests}</p>
-                        <p className="text-[10px] text-[#5a6a8a]">Total</p>
+                      <div className="text-center p-2 rounded-lg bg-surface/50">
+                        <p className="text-lg font-bold text-ink">{health.proxy.stats.total_requests}</p>
+                        <p className="text-[10px] text-ink-muted">Total</p>
                       </div>
-                      <div className="text-center p-2 rounded-lg bg-[#111827]/50">
-                        <p className="text-lg font-bold text-[#00e5c8]">{health.proxy.stats.forwarded}</p>
-                        <p className="text-[10px] text-[#5a6a8a]">Forwarded</p>
+                      <div className="text-center p-2 rounded-lg bg-surface/50">
+                        <p className="text-lg font-bold text-signal-cyan">{health.proxy.stats.forwarded}</p>
+                        <p className="text-[10px] text-ink-muted">Forwarded</p>
                       </div>
-                      <div className="text-center p-2 rounded-lg bg-[#111827]/50">
-                        <p className="text-lg font-bold text-[#ff4d6a]">{health.proxy.stats.blocked}</p>
-                        <p className="text-[10px] text-[#5a6a8a]">Blocked</p>
+                      <div className="text-center p-2 rounded-lg bg-surface/50">
+                        <p className="text-lg font-bold text-signal-red">{health.proxy.stats.blocked}</p>
+                        <p className="text-[10px] text-ink-muted">Blocked</p>
                       </div>
-                      <div className="text-center p-2 rounded-lg bg-[#111827]/50">
-                        <p className="text-lg font-bold text-[#f59e0b]">{health.proxy.stats.alerts_generated}</p>
-                        <p className="text-[10px] text-[#5a6a8a]">Alerts</p>
+                      <div className="text-center p-2 rounded-lg bg-surface/50">
+                        <p className="text-lg font-bold text-signal-amber">{health.proxy.stats.alerts_generated}</p>
+                        <p className="text-[10px] text-ink-muted">Alerts</p>
                       </div>
                     </div>
                   </div>

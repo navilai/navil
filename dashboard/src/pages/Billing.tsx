@@ -92,7 +92,7 @@ export default function Billing() {
           <button
             onClick={handleManageBilling}
             disabled={portalLoading}
-            className="px-4 py-2.5 bg-[#1a2235] text-[#f0f4fc] border border-[#2a3650] rounded-lg text-sm font-medium hover:bg-[#1f2a40] hover:border-[#5a6a8a] hover:-translate-y-0.5 disabled:opacity-40 disabled:cursor-not-allowed flex items-center gap-2 transition-all duration-200"
+            className="px-4 py-2.5 bg-surface text-ink border border-rule rounded-lg text-sm font-medium hover:bg-surface-elevated hover:border-ink-muted hover:-translate-y-0.5 disabled:opacity-40 disabled:cursor-not-allowed flex items-center gap-2 transition-all duration-200"
           >
             <Icon name="external-link" size={14} />
             {portalLoading ? 'Opening...' : 'Manage Billing'}
@@ -103,11 +103,11 @@ export default function Billing() {
       {/* Current Plan */}
       <div className="glass-card p-6 animate-slideUp opacity-0 stagger-1">
         <div className="flex items-center justify-between mb-5">
-          <h3 className="text-sm font-semibold text-[#f0f4fc] flex items-center gap-2">
-            <Icon name="star" size={16} className="text-[#fbbf24]" />
+          <h3 className="text-sm font-semibold text-ink flex items-center gap-2">
+            <Icon name="star" size={16} className="text-signal-amber" />
             Current Plan
           </h3>
-          <span className="px-3 py-1 text-xs font-semibold rounded-full bg-[#00e5c8]/10 text-[#00e5c8] border border-[#00e5c8]/20 uppercase tracking-wider">
+          <span className="px-3 py-1 text-xs font-semibold rounded-full bg-signal-cyan/10 text-signal-cyan border border-signal-cyan/20 uppercase tracking-wider">
             {org?.tier || 'community'}
           </span>
         </div>
@@ -120,20 +120,20 @@ export default function Billing() {
 
       {/* Interval Toggle */}
       <div className="flex items-center justify-center gap-3 animate-slideUp opacity-0 stagger-2">
-        <span className={`text-sm ${interval === 'monthly' ? 'text-[#f0f4fc] font-semibold' : 'text-[#5a6a8a]'}`}>Monthly</span>
+        <span className={`text-sm ${interval === 'monthly' ? 'text-ink font-semibold' : 'text-ink-muted'}`}>Monthly</span>
         <button
           onClick={() => setInterval(i => i === 'monthly' ? 'annual' : 'monthly')}
           className={`relative w-11 h-6 rounded-full transition-colors duration-200 ${
-            interval === 'annual' ? 'bg-[#00e5c8]' : 'bg-[#2a3650]'
+            interval === 'annual' ? 'bg-signal-cyan' : 'bg-rule'
           }`}
         >
           <span className={`absolute top-0.5 left-0.5 w-5 h-5 bg-white rounded-full shadow transition-transform duration-200 ${
             interval === 'annual' ? 'translate-x-5' : 'translate-x-0'
           }`} />
         </button>
-        <span className={`text-sm ${interval === 'annual' ? 'text-[#f0f4fc] font-semibold' : 'text-[#5a6a8a]'}`}>
+        <span className={`text-sm ${interval === 'annual' ? 'text-ink font-semibold' : 'text-ink-muted'}`}>
           Annual
-          <span className="ml-1.5 px-1.5 py-0.5 text-[10px] font-semibold rounded bg-[#34d399]/10 text-[#34d399] border border-[#34d399]/20">
+          <span className="ml-1.5 px-1.5 py-0.5 text-[10px] font-semibold rounded bg-signal-green/10 text-signal-green border border-signal-green/20">
             Save 17%
           </span>
         </span>
@@ -148,52 +148,52 @@ export default function Billing() {
             <div
               key={plan.tier}
               className={`glass-card p-5 flex flex-col transition-all duration-200 hover:-translate-y-0.5 ${
-                plan.highlighted ? 'border-[#00e5c8]/40 ring-1 ring-[#00e5c8]/20' : ''
-              } ${isCurrent ? 'border-[#00e5c8]/60' : ''}`}
+                plan.highlighted ? 'border-signal-cyan/40 ring-1 ring-signal-cyan/20' : ''
+              } ${isCurrent ? 'border-signal-cyan/60' : ''}`}
             >
               {plan.highlighted && (
-                <div className="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-[#00e5c8]/10 text-[#00e5c8] border border-[#00e5c8]/20 self-start mb-3 uppercase tracking-wider">
+                <div className="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-signal-cyan/10 text-signal-cyan border border-signal-cyan/20 self-start mb-3 uppercase tracking-wider">
                   Most Popular
                 </div>
               )}
-              <h4 className="text-lg font-bold text-[#f0f4fc]">{plan.name}</h4>
-              <p className="text-2xl font-extrabold text-[#f0f4fc] mt-2">
+              <h4 className="text-lg font-bold text-ink">{plan.name}</h4>
+              <p className="text-2xl font-extrabold text-ink mt-2">
                 {interval === 'monthly' ? plan.price : plan.annualPrice}
               </p>
               <div className="mt-4 space-y-2 text-sm flex-1">
-                <div className="flex justify-between text-[#8b9bc0]">
+                <div className="flex justify-between text-ink-secondary">
                   <span>Agents</span>
-                  <span className="font-mono text-[#f0f4fc]">{plan.agents}</span>
+                  <span className="font-mono text-ink">{plan.agents}</span>
                 </div>
-                <div className="flex justify-between text-[#8b9bc0]">
+                <div className="flex justify-between text-ink-secondary">
                   <span>Requests</span>
-                  <span className="font-mono text-[#f0f4fc]">{plan.requests}</span>
+                  <span className="font-mono text-ink">{plan.requests}</span>
                 </div>
-                <div className="border-t border-[#2a3650] pt-2 mt-3">
+                <div className="border-t border-rule pt-2 mt-3">
                   {plan.features.map(f => (
-                    <p key={f} className="text-[#8b9bc0] flex items-center gap-2 py-0.5">
-                      <Icon name="check" size={12} className="text-[#34d399] shrink-0" />
+                    <p key={f} className="text-ink-secondary flex items-center gap-2 py-0.5">
+                      <Icon name="check" size={12} className="text-signal-green shrink-0" />
                       {f}
                     </p>
                   ))}
                 </div>
               </div>
-              <div className="mt-4 pt-3 border-t border-[#2a3650]">
+              <div className="mt-4 pt-3 border-t border-rule">
                 {isCurrent ? (
-                  <div className="px-4 py-2.5 text-center text-sm font-semibold text-[#00e5c8] bg-[#00e5c8]/10 rounded-lg border border-[#00e5c8]/20">
+                  <div className="px-4 py-2.5 text-center text-sm font-semibold text-signal-cyan bg-signal-cyan/10 rounded-lg border border-signal-cyan/20">
                     Current Plan
                   </div>
                 ) : plan.tier === 'enterprise' ? (
                   <a
                     href="mailto:sales@navil.ai"
-                    className="block px-4 py-2.5 text-center text-sm font-semibold text-[#f0f4fc] bg-[#1a2235] border border-[#2a3650] rounded-lg hover:bg-[#1f2a40] hover:border-[#5a6a8a] transition-all duration-200"
+                    className="block px-4 py-2.5 text-center text-sm font-semibold text-ink bg-surface border border-rule rounded-lg hover:bg-surface-elevated hover:border-ink-muted transition-all duration-200"
                   >
                     Contact Sales
                   </a>
                 ) : isDowngrade ? (
                   <button
                     disabled
-                    className="w-full px-4 py-2.5 text-sm font-medium text-[#5a6a8a] bg-[#111827] rounded-lg border border-[#2a3650] cursor-not-allowed"
+                    className="w-full px-4 py-2.5 text-sm font-medium text-ink-muted bg-surface rounded-lg border border-rule cursor-not-allowed"
                   >
                     Downgrade
                   </button>
@@ -201,7 +201,7 @@ export default function Billing() {
                   <button
                     onClick={() => handleUpgrade(plan.tier)}
                     disabled={upgrading === plan.tier}
-                    className="w-full px-4 py-2.5 bg-[#00e5c8] text-[#0a0e17] rounded-lg text-sm font-semibold hover:bg-[#00b8a0] hover:-translate-y-0.5 disabled:opacity-40 disabled:cursor-not-allowed flex items-center justify-center gap-2 transition-all duration-200"
+                    className="w-full px-4 py-2.5 bg-signal-cyan text-bg rounded-lg text-sm font-semibold hover:bg-signal-cyan hover:-translate-y-0.5 disabled:opacity-40 disabled:cursor-not-allowed flex items-center justify-center gap-2 transition-all duration-200"
                   >
                     {upgrading === plan.tier ? (
                       <>
@@ -225,9 +225,9 @@ export default function Billing() {
       {/* Action messages */}
       {actionMsg && (
         <div className={`p-3 rounded-[12px] border animate-fadeIn ${
-          actionMsg.ok ? 'bg-[#34d399]/5 border-[#34d399]/20' : 'bg-[#ff4d6a]/5 border-[#ff4d6a]/20'
+          actionMsg.ok ? 'bg-signal-green/5 border-signal-green/20' : 'bg-signal-red/5 border-signal-red/20'
         }`}>
-          <p className={`text-sm flex items-center gap-2 ${actionMsg.ok ? 'text-[#34d399]' : 'text-[#ff4d6a]'}`}>
+          <p className={`text-sm flex items-center gap-2 ${actionMsg.ok ? 'text-signal-green' : 'text-signal-red'}`}>
             <Icon name={actionMsg.ok ? 'check' : 'warning'} size={14} />
             {actionMsg.msg}
           </p>
@@ -236,17 +236,17 @@ export default function Billing() {
 
       {/* Usage note */}
       <div className="glass-card p-6 animate-slideUp opacity-0 stagger-4">
-        <h3 className="text-sm font-semibold text-[#f0f4fc] mb-3 flex items-center gap-2">
-          <Icon name="info" size={16} className="text-[#8b9bc0]" />
+        <h3 className="text-sm font-semibold text-ink mb-3 flex items-center gap-2">
+          <Icon name="info" size={16} className="text-ink-secondary" />
           Billing Details
         </h3>
         <div className="space-y-2 text-sm">
-          <p className="text-[#8b9bc0]">
+          <p className="text-ink-secondary">
             Your subscription is managed through Stripe. Click "Manage Billing" to view invoices,
             update payment methods, or cancel your subscription.
           </p>
-          <p className="text-[#5a6a8a] text-xs flex items-center gap-1.5">
-            <Icon name="lock" size={10} className="text-[#5a6a8a]" />
+          <p className="text-ink-muted text-xs flex items-center gap-1.5">
+            <Icon name="lock" size={10} className="text-ink-muted" />
             Payment data is handled securely by Stripe. Navil never stores your card details.
           </p>
         </div>

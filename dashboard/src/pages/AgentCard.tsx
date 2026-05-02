@@ -80,27 +80,27 @@ export default function AgentCard() {
 
       {/* Section 1: Current Agent Card */}
       <div className="glass-card p-6 animate-slideUp opacity-0 stagger-1">
-        <h3 className="text-sm font-semibold text-[#f0f4fc] mb-4 flex items-center gap-2">
-          <Icon name="code" size={16} className="text-[#00e5c8]" />
+        <h3 className="text-sm font-semibold text-ink mb-4 flex items-center gap-2">
+          <Icon name="code" size={16} className="text-signal-cyan" />
           Current Agent Card
         </h3>
 
         {/* Status indicator */}
         <div className={`mb-4 p-3 rounded-[12px] border flex items-center gap-3 ${
           error
-            ? 'bg-[#fbbf24]/5 border-[#fbbf24]/20'
-            : 'bg-[#34d399]/5 border-[#34d399]/20'
+            ? 'bg-signal-amber/5 border-signal-amber/20'
+            : 'bg-signal-green/5 border-signal-green/20'
         }`}>
-          <div className={`w-2 h-2 rounded-full shrink-0 ${error ? 'bg-[#fbbf24]' : 'bg-[#34d399]'}`} />
-          <p className={`text-sm ${error ? 'text-[#fbbf24]' : 'text-[#34d399]'}`}>
+          <div className={`w-2 h-2 rounded-full shrink-0 ${error ? 'bg-signal-amber' : 'bg-signal-green'}`} />
+          <p className={`text-sm ${error ? 'text-signal-amber' : 'text-signal-green'}`}>
             {error || 'Published at /.well-known/agent.json'}
           </p>
         </div>
 
         {loading ? (
           <div className="p-8 text-center">
-            <Icon name="activity" size={20} className="text-[#5a6a8a] animate-spin mx-auto" />
-            <p className="text-sm text-[#5a6a8a] mt-2">Fetching agent card...</p>
+            <Icon name="activity" size={20} className="text-ink-muted animate-spin mx-auto" />
+            <p className="text-sm text-ink-muted mt-2">Fetching agent card...</p>
           </div>
         ) : (
           <>
@@ -108,7 +108,7 @@ export default function AgentCard() {
             <div className="flex gap-2 mb-3">
               <button
                 onClick={handleCopy}
-                className="px-3 py-1.5 bg-[#1a2235] text-[#8b9bc0] border border-[#2a3650] rounded-lg text-xs font-medium hover:bg-[#1f2a40] hover:text-[#f0f4fc] hover:border-[#5a6a8a] flex items-center gap-1.5 transition-all duration-200"
+                className="px-3 py-1.5 bg-surface text-ink-secondary border border-rule rounded-lg text-xs font-medium hover:bg-surface-elevated hover:text-ink hover:border-ink-muted flex items-center gap-1.5 transition-all duration-200"
               >
                 <Icon name={copied ? 'check' : 'copy'} size={12} />
                 {copied ? 'Copied!' : 'Copy'}
@@ -117,7 +117,7 @@ export default function AgentCard() {
                 href="/.well-known/agent.json"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="px-3 py-1.5 bg-[#1a2235] text-[#8b9bc0] border border-[#2a3650] rounded-lg text-xs font-medium hover:bg-[#1f2a40] hover:text-[#f0f4fc] hover:border-[#5a6a8a] flex items-center gap-1.5 transition-all duration-200"
+                className="px-3 py-1.5 bg-surface text-ink-secondary border border-rule rounded-lg text-xs font-medium hover:bg-surface-elevated hover:text-ink hover:border-ink-muted flex items-center gap-1.5 transition-all duration-200"
               >
                 <Icon name="external-link" size={12} />
                 Open in browser
@@ -125,11 +125,11 @@ export default function AgentCard() {
             </div>
 
             {/* JSON code block */}
-            <div className="relative rounded-[12px] bg-[#0d1117] border border-[#2a3650] overflow-hidden">
-              <div className="px-4 py-2 border-b border-[#2a3650] flex items-center gap-2">
-                <span className="text-[10px] font-mono text-[#5a6a8a]">/.well-known/agent.json</span>
+            <div className="relative rounded-[12px] bg-surface border border-rule overflow-hidden">
+              <div className="px-4 py-2 border-b border-rule flex items-center gap-2">
+                <span className="text-[10px] font-mono text-ink-muted">/.well-known/agent.json</span>
               </div>
-              <pre className="p-4 overflow-x-auto text-xs font-mono leading-relaxed text-[#8b9bc0] max-h-[400px] overflow-y-auto">
+              <pre className="p-4 overflow-x-auto text-xs font-mono leading-relaxed text-ink-secondary max-h-[400px] overflow-y-auto">
                 <code>{cardJson}</code>
               </pre>
             </div>
@@ -139,7 +139,7 @@ export default function AgentCard() {
 
       {/* Section 2: Configuration */}
       <div className="glass-card p-6 animate-slideUp opacity-0 stagger-2">
-        <h3 className="text-sm font-semibold text-[#f0f4fc] mb-5 flex items-center gap-2">
+        <h3 className="text-sm font-semibold text-ink mb-5 flex items-center gap-2">
           <Icon name="settings" size={16} className="text-violet-400" />
           Configuration
         </h3>
@@ -147,58 +147,58 @@ export default function AgentCard() {
         <div className="space-y-4">
           {/* Agent Name */}
           <div>
-            <label className="block text-xs text-[#5a6a8a] font-medium mb-1.5">Agent Name</label>
+            <label className="block text-xs text-ink-muted font-medium mb-1.5">Agent Name</label>
             <input
               value={agentName}
               onChange={e => setAgentName(e.target.value)}
-              className="w-full bg-[#111827] border border-[#2a3650] rounded-lg px-3 py-2.5 text-sm text-[#f0f4fc] focus:border-[#00e5c8] focus:outline-none font-mono transition-colors"
+              className="w-full bg-surface border border-rule rounded-lg px-3 py-2.5 text-sm text-ink focus:border-signal-cyan focus:outline-none font-mono transition-colors"
               placeholder="navil-agent"
             />
-            <p className="text-xs text-[#5a6a8a] mt-1">
-              Environment variable: <code className="font-mono text-[#5a6a8a]">NAVIL_AGENT_NAME</code>
+            <p className="text-xs text-ink-muted mt-1">
+              Environment variable: <code className="font-mono text-ink-muted">NAVIL_AGENT_NAME</code>
             </p>
           </div>
 
           {/* Description */}
           <div>
-            <label className="block text-xs text-[#5a6a8a] font-medium mb-1.5">Description</label>
+            <label className="block text-xs text-ink-muted font-medium mb-1.5">Description</label>
             <textarea
               value={agentDescription}
               onChange={e => setAgentDescription(e.target.value)}
               rows={2}
-              className="w-full bg-[#111827] border border-[#2a3650] rounded-lg px-3 py-2.5 text-sm text-[#f0f4fc] focus:border-[#00e5c8] focus:outline-none transition-colors resize-none"
+              className="w-full bg-surface border border-rule rounded-lg px-3 py-2.5 text-sm text-ink focus:border-signal-cyan focus:outline-none transition-colors resize-none"
               placeholder="An agent protected by Navil agent governance middleware"
             />
-            <p className="text-xs text-[#5a6a8a] mt-1">
-              Environment variable: <code className="font-mono text-[#5a6a8a]">NAVIL_AGENT_DESCRIPTION</code>
+            <p className="text-xs text-ink-muted mt-1">
+              Environment variable: <code className="font-mono text-ink-muted">NAVIL_AGENT_DESCRIPTION</code>
             </p>
           </div>
 
           {/* Provider Organization */}
           <div>
-            <label className="block text-xs text-[#5a6a8a] font-medium mb-1.5">Provider Organization</label>
+            <label className="block text-xs text-ink-muted font-medium mb-1.5">Provider Organization</label>
             <input
               value={providerOrg}
               onChange={e => setProviderOrg(e.target.value)}
-              className="w-full bg-[#111827] border border-[#2a3650] rounded-lg px-3 py-2.5 text-sm text-[#f0f4fc] focus:border-[#00e5c8] focus:outline-none font-mono transition-colors"
+              className="w-full bg-surface border border-rule rounded-lg px-3 py-2.5 text-sm text-ink focus:border-signal-cyan focus:outline-none font-mono transition-colors"
               placeholder="Your Organization"
             />
-            <p className="text-xs text-[#5a6a8a] mt-1">
-              Environment variable: <code className="font-mono text-[#5a6a8a]">NAVIL_PROVIDER_ORG</code>
+            <p className="text-xs text-ink-muted mt-1">
+              Environment variable: <code className="font-mono text-ink-muted">NAVIL_PROVIDER_ORG</code>
             </p>
           </div>
 
           {/* Provider URL */}
           <div>
-            <label className="block text-xs text-[#5a6a8a] font-medium mb-1.5">Provider URL</label>
+            <label className="block text-xs text-ink-muted font-medium mb-1.5">Provider URL</label>
             <input
               value={providerUrl}
               onChange={e => setProviderUrl(e.target.value)}
-              className="w-full bg-[#111827] border border-[#2a3650] rounded-lg px-3 py-2.5 text-sm text-[#f0f4fc] focus:border-[#00e5c8] focus:outline-none font-mono transition-colors"
+              className="w-full bg-surface border border-rule rounded-lg px-3 py-2.5 text-sm text-ink focus:border-signal-cyan focus:outline-none font-mono transition-colors"
               placeholder="https://your-org.com"
             />
-            <p className="text-xs text-[#5a6a8a] mt-1">
-              Environment variable: <code className="font-mono text-[#5a6a8a]">NAVIL_PROVIDER_URL</code>
+            <p className="text-xs text-ink-muted mt-1">
+              Environment variable: <code className="font-mono text-ink-muted">NAVIL_PROVIDER_URL</code>
             </p>
           </div>
 
@@ -230,16 +230,16 @@ export default function AgentCard() {
                   setSaving(false)
                 }
               }}
-              className="px-4 py-2.5 bg-[#00e5c8] text-[#0a0e17] rounded-lg text-sm font-semibold disabled:opacity-60 disabled:cursor-not-allowed hover:bg-[#00ccb3] flex items-center gap-2 transition-all duration-200"
+              className="px-4 py-2.5 bg-signal-cyan text-bg rounded-lg text-sm font-semibold disabled:opacity-60 disabled:cursor-not-allowed hover:bg-signal-cyan flex items-center gap-2 transition-all duration-200"
             >
               <Icon name={saving ? 'activity' : 'check'} size={14} className={saving ? 'animate-spin' : ''} />
               {saving ? 'Saving...' : 'Save Configuration'}
             </button>
             {saveStatus === 'success' && (
-              <span className="text-xs text-[#34d399]">Saved successfully</span>
+              <span className="text-xs text-signal-green">Saved successfully</span>
             )}
             {saveStatus === 'error' && (
-              <span className="text-xs text-[#f87171]">Failed to save — is the proxy running?</span>
+              <span className="text-xs text-signal-red">Failed to save — is the proxy running?</span>
             )}
           </div>
         </div>
@@ -247,43 +247,43 @@ export default function AgentCard() {
 
       {/* Section 3: A2A Endpoints */}
       <div className="glass-card p-6 animate-slideUp opacity-0 stagger-3">
-        <h3 className="text-sm font-semibold text-[#f0f4fc] mb-4 flex items-center gap-2">
-          <Icon name="link" size={16} className="text-[#00e5c8]" />
+        <h3 className="text-sm font-semibold text-ink mb-4 flex items-center gap-2">
+          <Icon name="link" size={16} className="text-signal-cyan" />
           A2A Endpoints
         </h3>
 
-        <div className="rounded-[12px] border border-[#2a3650] overflow-hidden">
+        <div className="rounded-[12px] border border-rule overflow-hidden">
           <table className="w-full text-sm">
             <thead>
-              <tr className="border-b border-[#2a3650] bg-[#0d1117]">
-                <th className="text-left px-4 py-2.5 text-xs font-semibold text-[#5a6a8a] uppercase tracking-wider">Endpoint</th>
-                <th className="text-left px-4 py-2.5 text-xs font-semibold text-[#5a6a8a] uppercase tracking-wider">Method</th>
-                <th className="text-left px-4 py-2.5 text-xs font-semibold text-[#5a6a8a] uppercase tracking-wider">Description</th>
+              <tr className="border-b border-rule bg-surface">
+                <th className="text-left px-4 py-2.5 text-xs font-semibold text-ink-muted uppercase tracking-wider">Endpoint</th>
+                <th className="text-left px-4 py-2.5 text-xs font-semibold text-ink-muted uppercase tracking-wider">Method</th>
+                <th className="text-left px-4 py-2.5 text-xs font-semibold text-ink-muted uppercase tracking-wider">Description</th>
               </tr>
             </thead>
             <tbody>
               {ENDPOINTS.map((ep, i) => (
-                <tr key={ep.path} className={`border-b border-[#2a3650] last:border-b-0 ${i % 2 === 0 ? 'bg-[#111827]' : 'bg-[#0d1117]'}`}>
-                  <td className="px-4 py-2.5 font-mono text-xs text-[#00e5c8]">{ep.path}</td>
+                <tr key={ep.path} className={`border-b border-rule last:border-b-0 ${i % 2 === 0 ? 'bg-surface' : 'bg-surface'}`}>
+                  <td className="px-4 py-2.5 font-mono text-xs text-signal-cyan">{ep.path}</td>
                   <td className="px-4 py-2.5">
                     <span className={`inline-block px-2 py-0.5 rounded text-[10px] font-semibold uppercase tracking-wider ${
                       ep.method === 'GET'
-                        ? 'bg-[#34d399]/10 text-[#34d399]'
-                        : 'bg-[#60a5fa]/10 text-[#60a5fa]'
+                        ? 'bg-signal-green/10 text-signal-green'
+                        : 'bg-signal-cyan/10 text-signal-cyan'
                     }`}>
                       {ep.method}
                     </span>
                   </td>
-                  <td className="px-4 py-2.5 text-[#8b9bc0]">{ep.description}</td>
+                  <td className="px-4 py-2.5 text-ink-secondary">{ep.description}</td>
                 </tr>
               ))}
             </tbody>
           </table>
         </div>
 
-        <p className="text-xs text-[#5a6a8a] mt-3 flex items-center gap-1.5">
-          <Icon name="info" size={12} className="text-[#5a6a8a] shrink-0" />
-          All endpoints are served by the Navil proxy. Start with: <code className="font-mono text-[#5a6a8a] ml-1">navil proxy start</code>
+        <p className="text-xs text-ink-muted mt-3 flex items-center gap-1.5">
+          <Icon name="info" size={12} className="text-ink-muted shrink-0" />
+          All endpoints are served by the Navil proxy. Start with: <code className="font-mono text-ink-muted ml-1">navil proxy start</code>
         </p>
       </div>
     </div>

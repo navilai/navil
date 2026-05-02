@@ -151,15 +151,15 @@ export default function ThreatRules() {
         <PageHeader title="Threat Rules" subtitle="Custom detection rules" />
         <div className="max-w-lg mx-auto mt-8 text-center animate-fadeIn">
           <div className="glass-card p-8">
-            <div className="w-14 h-14 mx-auto mb-5 rounded-2xl bg-[#fbbf24]/10 border border-[#fbbf24]/20 flex items-center justify-center">
-              <Icon name="lock" size={24} className="text-[#fbbf24]" />
+            <div className="w-14 h-14 mx-auto mb-5 rounded-2xl bg-signal-amber/10 border border-signal-amber/20 flex items-center justify-center">
+              <Icon name="lock" size={24} className="text-signal-amber" />
             </div>
-            <h2 className="text-lg font-bold text-[#f0f4fc] mb-2">Custom Threat Rules</h2>
-            <p className="text-sm text-[#8b9bc0] mb-2">
+            <h2 className="text-lg font-bold text-ink mb-2">Custom Threat Rules</h2>
+            <p className="text-sm text-ink-secondary mb-2">
               Create custom detection rules with regex patterns, severity levels, and automated actions.
             </p>
-            <p className="text-sm text-[#8b9bc0] mb-6">
-              Available on <span className="text-[#00e5c8] font-semibold">Team</span> and <span className="text-[#00e5c8] font-semibold">Enterprise</span> plans.
+            <p className="text-sm text-ink-secondary mb-6">
+              Available on <span className="text-signal-cyan font-semibold">Team</span> and <span className="text-signal-cyan font-semibold">Enterprise</span> plans.
             </p>
             <div className="space-y-3 text-left mb-6">
               {[
@@ -168,20 +168,20 @@ export default function ThreatRules() {
                 'Test rules against sample data before deploying',
                 'Enable/disable rules without deleting them',
               ].map(feat => (
-                <div key={feat} className="flex items-center gap-2 text-sm text-[#8b9bc0]">
-                  <Icon name="check" size={14} className="text-[#00e5c8] shrink-0" />
+                <div key={feat} className="flex items-center gap-2 text-sm text-ink-secondary">
+                  <Icon name="check" size={14} className="text-signal-cyan shrink-0" />
                   {feat}
                 </div>
               ))}
             </div>
             <a
               href="/billing"
-              className="inline-flex items-center gap-2 px-5 py-2.5 bg-[#00e5c8] text-[#0a0e17] rounded-lg text-sm font-semibold hover:bg-[#00b8a0] hover:-translate-y-0.5 transition-all duration-200"
+              className="inline-flex items-center gap-2 px-5 py-2.5 bg-signal-cyan text-bg rounded-lg text-sm font-semibold hover:bg-signal-cyan hover:-translate-y-0.5 transition-all duration-200"
             >
               <Icon name="arrow-up" size={14} />
               Upgrade to Team
             </a>
-            <p className="text-[10px] text-[#5a6a8a] mt-4">
+            <p className="text-[10px] text-ink-muted mt-4">
               Current plan: <span className="uppercase font-semibold">{org?.tier || 'community'}</span>
             </p>
           </div>
@@ -195,7 +195,7 @@ export default function ThreatRules() {
       <PageHeader title="Threat Rules" subtitle={`${rules.length} custom rule${rules.length !== 1 ? 's' : ''}`}>
         <button
           onClick={() => { setShowCreate(!showCreate); setActionMsg(null); setTestResult(null) }}
-          className="px-4 py-2.5 bg-[#00e5c8] text-[#0a0e17] rounded-lg text-sm font-semibold hover:bg-[#00b8a0] hover:-translate-y-0.5 flex items-center gap-2 transition-all duration-200"
+          className="px-4 py-2.5 bg-signal-cyan text-bg rounded-lg text-sm font-semibold hover:bg-signal-cyan hover:-translate-y-0.5 flex items-center gap-2 transition-all duration-200"
         >
           <Icon name="shield" size={14} />
           {showCreate ? 'Cancel' : 'New Rule'}
@@ -205,27 +205,27 @@ export default function ThreatRules() {
       {/* Create Form */}
       {showCreate && (
         <div className="glass-card p-6 animate-slideUp opacity-0 stagger-1">
-          <h3 className="text-sm font-semibold text-[#f0f4fc] mb-5 flex items-center gap-2">
+          <h3 className="text-sm font-semibold text-ink mb-5 flex items-center gap-2">
             <Icon name="code" size={16} className="text-violet-400" />
             Create Rule
           </h3>
           <div className="space-y-4">
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div>
-                <label className="block text-xs text-[#5a6a8a] font-medium mb-1.5">Rule Name</label>
+                <label className="block text-xs text-ink-muted font-medium mb-1.5">Rule Name</label>
                 <input
                   value={name}
                   onChange={e => setName(e.target.value)}
-                  className="w-full bg-[#111827] border border-[#2a3650] rounded-lg px-3 py-2.5 text-sm text-[#f0f4fc] focus:border-[#00e5c8] focus:outline-none transition-colors"
+                  className="w-full bg-surface border border-rule rounded-lg px-3 py-2.5 text-sm text-ink focus:border-signal-cyan focus:outline-none transition-colors"
                   placeholder="e.g., SQL Injection Detection"
                 />
               </div>
               <div>
-                <label className="block text-xs text-[#5a6a8a] font-medium mb-1.5">Severity</label>
+                <label className="block text-xs text-ink-muted font-medium mb-1.5">Severity</label>
                 <select
                   value={severity}
                   onChange={e => setSeverity(e.target.value)}
-                  className="w-full bg-[#111827] border border-[#2a3650] rounded-lg px-3 py-2.5 text-sm text-[#f0f4fc] focus:border-[#00e5c8] focus:outline-none transition-colors"
+                  className="w-full bg-surface border border-rule rounded-lg px-3 py-2.5 text-sm text-ink focus:border-signal-cyan focus:outline-none transition-colors"
                 >
                   {SEVERITIES.map(s => (
                     <option key={s} value={s}>{s}</option>
@@ -235,18 +235,18 @@ export default function ThreatRules() {
             </div>
 
             <div>
-              <label className="block text-xs text-[#5a6a8a] font-medium mb-1.5">Pattern (regex)</label>
+              <label className="block text-xs text-ink-muted font-medium mb-1.5">Pattern (regex)</label>
               <input
                 value={pattern}
                 onChange={e => setPattern(e.target.value)}
-                className="w-full bg-[#111827] border border-[#2a3650] rounded-lg px-3 py-2.5 text-sm text-[#f0f4fc] focus:border-[#00e5c8] focus:outline-none font-mono transition-colors"
+                className="w-full bg-surface border border-rule rounded-lg px-3 py-2.5 text-sm text-ink focus:border-signal-cyan focus:outline-none font-mono transition-colors"
                 placeholder="(?i)(union\s+select|drop\s+table)"
               />
-              <p className="text-xs text-[#5a6a8a] mt-1">Standard regex syntax. Case-insensitive recommended with (?i) flag.</p>
+              <p className="text-xs text-ink-muted mt-1">Standard regex syntax. Case-insensitive recommended with (?i) flag.</p>
             </div>
 
             <div>
-              <label className="block text-xs text-[#5a6a8a] font-medium mb-2">Action</label>
+              <label className="block text-xs text-ink-muted font-medium mb-2">Action</label>
               <div className="flex gap-3">
                 {ACTIONS.map(a => (
                   <button
@@ -255,9 +255,9 @@ export default function ThreatRules() {
                     className={`px-4 py-2 text-sm rounded-lg border font-medium transition-all duration-200 ${
                       action === a
                         ? a === 'block'
-                          ? 'bg-[#ff4d6a]/15 border-[#ff4d6a]/40 text-[#ff4d6a]'
-                          : 'bg-[#fbbf24]/15 border-[#fbbf24]/40 text-[#fbbf24]'
-                        : 'bg-[#111827] border-[#2a3650] text-[#8b9bc0] hover:border-[#5a6a8a] hover:text-[#f0f4fc]'
+                          ? 'bg-signal-red/15 border-signal-red/40 text-signal-red'
+                          : 'bg-signal-amber/15 border-signal-amber/40 text-signal-amber'
+                        : 'bg-surface border-rule text-ink-secondary hover:border-ink-muted hover:text-ink'
                     }`}
                   >
                     <Icon name={a === 'block' ? 'shield' : 'alert'} size={14} className="inline mr-1.5" />
@@ -268,12 +268,12 @@ export default function ThreatRules() {
             </div>
 
             {/* Test area */}
-            <div className="border-t border-[#2a3650] pt-4">
-              <label className="block text-xs text-[#5a6a8a] font-medium mb-1.5">Test Against Sample Data</label>
+            <div className="border-t border-rule pt-4">
+              <label className="block text-xs text-ink-muted font-medium mb-1.5">Test Against Sample Data</label>
               <textarea
                 value={testSample}
                 onChange={e => setTestSample(e.target.value)}
-                className="w-full bg-[#111827] border border-[#2a3650] rounded-lg px-3 py-2.5 text-sm text-[#f0f4fc] focus:border-[#00e5c8] focus:outline-none font-mono transition-colors resize-none h-20"
+                className="w-full bg-surface border border-rule rounded-lg px-3 py-2.5 text-sm text-ink focus:border-signal-cyan focus:outline-none font-mono transition-colors resize-none h-20"
                 placeholder="Paste sample input to test the regex pattern..."
               />
               <div className="flex gap-3 mt-2">
@@ -289,10 +289,10 @@ export default function ThreatRules() {
               {testResult && (
                 <div className={`mt-3 p-3 rounded-[12px] border animate-fadeIn ${
                   testResult.matched
-                    ? 'bg-[#ff4d6a]/5 border-[#ff4d6a]/20'
-                    : 'bg-[#34d399]/5 border-[#34d399]/20'
+                    ? 'bg-signal-red/5 border-signal-red/20'
+                    : 'bg-signal-green/5 border-signal-green/20'
                 }`}>
-                  <p className={`text-sm flex items-center gap-2 ${testResult.matched ? 'text-[#ff4d6a]' : 'text-[#34d399]'}`}>
+                  <p className={`text-sm flex items-center gap-2 ${testResult.matched ? 'text-signal-red' : 'text-signal-green'}`}>
                     <Icon name={testResult.matched ? 'warning' : 'check'} size={14} />
                     {testResult.matched
                       ? `Pattern matched! ${testResult.matches.length} match${testResult.matches.length !== 1 ? 'es' : ''} found.`
@@ -301,7 +301,7 @@ export default function ThreatRules() {
                   {testResult.matched && testResult.matches.length > 0 && (
                     <div className="mt-2 flex flex-wrap gap-1.5">
                       {testResult.matches.map((m, i) => (
-                        <code key={i} className="px-2 py-0.5 text-xs bg-[#0d1117] text-[#ff4d6a] border border-[#ff4d6a]/20 rounded font-mono">
+                        <code key={i} className="px-2 py-0.5 text-xs bg-surface text-signal-red border border-signal-red/20 rounded font-mono">
                           {m}
                         </code>
                       ))}
@@ -316,7 +316,7 @@ export default function ThreatRules() {
               <button
                 onClick={handleCreate}
                 disabled={!name.trim() || !pattern.trim() || creating}
-                className="px-4 py-2.5 bg-[#00e5c8] text-[#0a0e17] rounded-lg text-sm font-semibold hover:bg-[#00b8a0] hover:-translate-y-0.5 disabled:opacity-40 disabled:cursor-not-allowed flex items-center gap-2 transition-all duration-200"
+                className="px-4 py-2.5 bg-signal-cyan text-bg rounded-lg text-sm font-semibold hover:bg-signal-cyan hover:-translate-y-0.5 disabled:opacity-40 disabled:cursor-not-allowed flex items-center gap-2 transition-all duration-200"
               >
                 <Icon name="check" size={14} />
                 {creating ? 'Creating...' : 'Create Rule'}
@@ -329,9 +329,9 @@ export default function ThreatRules() {
       {/* Action messages */}
       {actionMsg && (
         <div className={`p-3 rounded-[12px] border animate-fadeIn ${
-          actionMsg.ok ? 'bg-[#34d399]/5 border-[#34d399]/20' : 'bg-[#ff4d6a]/5 border-[#ff4d6a]/20'
+          actionMsg.ok ? 'bg-signal-green/5 border-signal-green/20' : 'bg-signal-red/5 border-signal-red/20'
         }`}>
-          <p className={`text-sm flex items-center gap-2 ${actionMsg.ok ? 'text-[#34d399]' : 'text-[#ff4d6a]'}`}>
+          <p className={`text-sm flex items-center gap-2 ${actionMsg.ok ? 'text-signal-green' : 'text-signal-red'}`}>
             <Icon name={actionMsg.ok ? 'check' : 'warning'} size={14} />
             {actionMsg.msg}
           </p>
@@ -341,11 +341,11 @@ export default function ThreatRules() {
       {/* Rules List */}
       {rules.length === 0 ? (
         <div className="text-center py-16 animate-fadeIn">
-          <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-[#00e5c8]/10 border border-[#00e5c8]/20 mb-4">
-            <Icon name="code" size={32} className="text-[#00e5c8]" />
+          <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-signal-cyan/10 border border-signal-cyan/20 mb-4">
+            <Icon name="code" size={32} className="text-signal-cyan" />
           </div>
-          <p className="text-[#8b9bc0]">No custom rules yet.</p>
-          <p className="text-xs text-[#5a6a8a] mt-1">Create a rule to add custom threat detection patterns.</p>
+          <p className="text-ink-secondary">No custom rules yet.</p>
+          <p className="text-xs text-ink-muted mt-1">Create a rule to add custom threat detection patterns.</p>
         </div>
       ) : (
         <div className="space-y-2">
@@ -357,13 +357,13 @@ export default function ThreatRules() {
             >
               <div
                 onClick={() => setEditing(editing === rule.id ? null : rule.id)}
-                className="flex items-center gap-4 px-4 py-3 cursor-pointer hover:bg-[#1f2a40] transition-colors duration-200"
+                className="flex items-center gap-4 px-4 py-3 cursor-pointer hover:bg-surface-elevated transition-colors duration-200"
               >
                 {/* Enable/disable toggle */}
                 <button
                   onClick={(e) => { e.stopPropagation(); handleToggleEnabled(rule) }}
                   className={`relative w-9 h-5 rounded-full transition-colors duration-200 shrink-0 ${
-                    rule.enabled ? 'bg-[#00e5c8]' : 'bg-[#2a3650]'
+                    rule.enabled ? 'bg-signal-cyan' : 'bg-rule'
                   }`}
                 >
                   <span className={`absolute top-0.5 left-0.5 w-4 h-4 bg-white rounded-full shadow transition-transform duration-200 ${
@@ -372,19 +372,19 @@ export default function ThreatRules() {
                 </button>
 
                 <SeverityBadge severity={rule.severity} />
-                <span className="text-sm text-[#f0f4fc] font-medium flex-1">{rule.name}</span>
+                <span className="text-sm text-ink font-medium flex-1">{rule.name}</span>
                 <span className={`px-2 py-0.5 text-[10px] font-semibold rounded-full uppercase ${
                   rule.action === 'block'
-                    ? 'bg-[#ff4d6a]/10 text-[#ff4d6a] border border-[#ff4d6a]/20'
-                    : 'bg-[#fbbf24]/10 text-[#fbbf24] border border-[#fbbf24]/20'
+                    ? 'bg-signal-red/10 text-signal-red border border-signal-red/20'
+                    : 'bg-signal-amber/10 text-signal-amber border border-signal-amber/20'
                 }`}>
                   {rule.action}
                 </span>
-                <span className="text-xs font-mono text-[#5a6a8a]">{rule.match_count} matches</span>
+                <span className="text-xs font-mono text-ink-muted">{rule.match_count} matches</span>
                 <Icon
                   name="chevron-down"
                   size={16}
-                  className={`text-[#5a6a8a] transition-transform duration-200 ${editing === rule.id ? 'rotate-0' : '-rotate-90'}`}
+                  className={`text-ink-muted transition-transform duration-200 ${editing === rule.id ? 'rotate-0' : '-rotate-90'}`}
                 />
               </div>
 
@@ -394,14 +394,14 @@ export default function ThreatRules() {
                   editing === rule.id ? 'max-h-64 opacity-100' : 'max-h-0 opacity-0'
                 }`}
               >
-                <div className="px-4 pb-4 pt-2 border-t border-[#2a3650] space-y-3">
+                <div className="px-4 pb-4 pt-2 border-t border-rule space-y-3">
                   <div>
-                    <p className="text-xs text-[#5a6a8a] font-medium uppercase tracking-wider mb-1.5">Pattern</p>
-                    <code className="block bg-[#0d1117] border border-[#2a3650] rounded-lg px-3 py-2 text-sm font-mono text-[#00e5c8]">
+                    <p className="text-xs text-ink-muted font-medium uppercase tracking-wider mb-1.5">Pattern</p>
+                    <code className="block bg-surface border border-rule rounded-lg px-3 py-2 text-sm font-mono text-signal-cyan">
                       {rule.pattern}
                     </code>
                   </div>
-                  <div className="flex gap-4 text-xs text-[#5a6a8a]">
+                  <div className="flex gap-4 text-xs text-ink-muted">
                     <span>Created: {new Date(rule.created_at).toLocaleDateString()}</span>
                     <span>Matches: {rule.match_count}</span>
                     <span>Status: {rule.enabled ? 'Enabled' : 'Disabled'}</span>
@@ -410,7 +410,7 @@ export default function ThreatRules() {
                     <button
                       onClick={(e) => { e.stopPropagation(); handleDelete(rule.id) }}
                       disabled={deleting === rule.id}
-                      className="px-3 py-1.5 text-xs bg-[#ff4d6a]/10 text-[#ff4d6a] border border-[#ff4d6a]/20 rounded-lg hover:bg-[#ff4d6a]/20 flex items-center gap-1.5 disabled:opacity-50 transition-all duration-200"
+                      className="px-3 py-1.5 text-xs bg-signal-red/10 text-signal-red border border-signal-red/20 rounded-lg hover:bg-signal-red/20 flex items-center gap-1.5 disabled:opacity-50 transition-all duration-200"
                     >
                       <Icon name="x" size={12} />
                       {deleting === rule.id ? 'Deleting...' : 'Delete Rule'}

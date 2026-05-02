@@ -123,8 +123,8 @@ export default function Analytics() {
               onClick={() => setDays(opt.value)}
               className={`px-3 py-1.5 text-xs rounded-lg border font-medium transition-all duration-200 ${
                 days === opt.value
-                  ? 'bg-[#00e5c8]/15 border-[#00e5c8]/40 text-[#00e5c8]'
-                  : 'bg-[#1a2235] border-[#2a3650] text-[#8b9bc0] hover:border-[#5a6a8a] hover:text-[#f0f4fc]'
+                  ? 'bg-signal-cyan/15 border-signal-cyan/40 text-signal-cyan'
+                  : 'bg-surface border-rule text-ink-secondary hover:border-ink-muted hover:text-ink'
               }`}
             >
               {opt.label}
@@ -143,8 +143,8 @@ export default function Analytics() {
 
       {/* Alerts Over Time */}
       <div className="glass-card p-6 animate-slideUp opacity-0 stagger-2">
-        <h3 className="text-sm font-semibold text-[#f0f4fc] mb-5 flex items-center gap-2">
-          <Icon name="chart" size={16} className="text-[#00e5c8]" />
+        <h3 className="text-sm font-semibold text-ink mb-5 flex items-center gap-2">
+          <Icon name="chart" size={16} className="text-signal-cyan" />
           Alerts Over Time
         </h3>
         <div className="h-72">
@@ -204,8 +204,8 @@ export default function Analytics() {
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
         {/* Top Threats */}
         <div className="glass-card p-6 animate-slideUp opacity-0 stagger-3">
-          <h3 className="text-sm font-semibold text-[#f0f4fc] mb-5 flex items-center gap-2">
-            <Icon name="shield" size={16} className="text-[#ff4d6a]" />
+          <h3 className="text-sm font-semibold text-ink mb-5 flex items-center gap-2">
+            <Icon name="shield" size={16} className="text-signal-red" />
             Top Threats
           </h3>
           <div className="h-64">
@@ -255,8 +255,8 @@ export default function Analytics() {
 
         {/* Threat Breakdown Table */}
         <div className="glass-card p-6 animate-slideUp opacity-0 stagger-4">
-          <h3 className="text-sm font-semibold text-[#f0f4fc] mb-5 flex items-center gap-2">
-            <Icon name="tag" size={16} className="text-[#fbbf24]" />
+          <h3 className="text-sm font-semibold text-ink mb-5 flex items-center gap-2">
+            <Icon name="tag" size={16} className="text-signal-amber" />
             Severity Breakdown
           </h3>
           {threats && threats.data.length > 0 ? (
@@ -267,24 +267,24 @@ export default function Analytics() {
                 return (
                   <div key={t.event_type} className="flex items-center gap-3 animate-slideUp opacity-0" style={{ animationDelay: `${i * 0.04}s` }}>
                     <SeverityBadge severity={severity} />
-                    <span className="text-sm text-[#f0f4fc] flex-1 truncate">
+                    <span className="text-sm text-ink flex-1 truncate">
                       {t.event_type.replace(/_/g, ' ')}
                     </span>
-                    <div className="w-24 h-1.5 bg-[#111827] rounded-full overflow-hidden">
+                    <div className="w-24 h-1.5 bg-surface rounded-full overflow-hidden">
                       <div
                         className="h-full rounded-full transition-all duration-500"
                         style={{ width: `${pct}%`, backgroundColor: getSeverityColor(t.event_type) }}
                       />
                     </div>
-                    <span className="text-sm font-mono text-[#8b9bc0] w-10 text-right">{t.count}</span>
+                    <span className="text-sm font-mono text-ink-secondary w-10 text-right">{t.count}</span>
                   </div>
                 )
               })}
             </div>
           ) : (
             <div className="text-center py-8">
-              <Icon name="check" size={24} className="text-[#34d399] mx-auto mb-2" />
-              <p className="text-sm text-[#8b9bc0]">No threats detected in this period.</p>
+              <Icon name="check" size={24} className="text-signal-green mx-auto mb-2" />
+              <p className="text-sm text-ink-secondary">No threats detected in this period.</p>
             </div>
           )}
         </div>
@@ -292,7 +292,7 @@ export default function Analytics() {
 
       {/* Activity Heatmap */}
       <div className="glass-card p-6 animate-slideUp opacity-0 stagger-5">
-        <h3 className="text-sm font-semibold text-[#f0f4fc] mb-5 flex items-center gap-2">
+        <h3 className="text-sm font-semibold text-ink mb-5 flex items-center gap-2">
           <Icon name="activity" size={16} className="text-violet-400" />
           Detection Heatmap
         </h3>
@@ -304,22 +304,22 @@ export default function Analytics() {
               <div
                 key={i}
                 title={`${cell.date}: ${cell.count} alerts`}
-                className="w-8 h-8 rounded-md border border-[#2a3650] flex items-center justify-center text-[9px] font-mono transition-all duration-200 hover:scale-110 cursor-default"
+                className="w-8 h-8 rounded-md border border-rule flex items-center justify-center text-[9px] font-mono transition-all duration-200 hover:scale-110 cursor-default"
                 style={{ backgroundColor: `rgba(0, 229, 200, ${opacity})` }}
               >
-                <span className={`${opacity > 0.5 ? 'text-[#0a0e17]' : 'text-[#8b9bc0]'}`}>
+                <span className={`${opacity > 0.5 ? 'text-bg' : 'text-ink-secondary'}`}>
                   {cell.count}
                 </span>
               </div>
             )
           })}
         </div>
-        <div className="flex items-center gap-2 mt-3 text-[10px] text-[#5a6a8a]">
+        <div className="flex items-center gap-2 mt-3 text-[10px] text-ink-muted">
           <span>Less</span>
           {[0.1, 0.3, 0.5, 0.7, 0.9].map(o => (
             <div
               key={o}
-              className="w-4 h-4 rounded-sm border border-[#2a3650]"
+              className="w-4 h-4 rounded-sm border border-rule"
               style={{ backgroundColor: `rgba(0, 229, 200, ${o})` }}
             />
           ))}
@@ -330,8 +330,8 @@ export default function Analytics() {
       {/* Detection Rate Trend */}
       {timeseries && timeseries.data.length >= 2 && (
         <div className="glass-card p-6 animate-slideUp opacity-0 stagger-6">
-          <h3 className="text-sm font-semibold text-[#f0f4fc] mb-3 flex items-center gap-2">
-            <Icon name="signal" size={16} className="text-[#34d399]" />
+          <h3 className="text-sm font-semibold text-ink mb-3 flex items-center gap-2">
+            <Icon name="signal" size={16} className="text-signal-green" />
             Detection Trend
           </h3>
           {(() => {
@@ -343,12 +343,12 @@ export default function Analytics() {
             return (
               <div className="flex items-center gap-4">
                 <div className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-semibold ${
-                  isUp ? 'bg-[#ff4d6a]/10 text-[#ff4d6a]' : 'bg-[#34d399]/10 text-[#34d399]'
+                  isUp ? 'bg-signal-red/10 text-signal-red' : 'bg-signal-green/10 text-signal-green'
                 }`}>
                   <Icon name={isUp ? 'arrow-up' : 'arrow-down'} size={14} />
                   {Math.abs(change)}%
                 </div>
-                <p className="text-sm text-[#8b9bc0]">
+                <p className="text-sm text-ink-secondary">
                   {isUp ? 'Increase' : 'Decrease'} in detections compared to the first half of the selected period.
                 </p>
               </div>

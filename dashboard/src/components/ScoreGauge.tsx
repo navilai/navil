@@ -60,10 +60,10 @@ export default function ScoreGauge({ score, size = 140, strokeWidth = 10, classN
         <AnimatedNumber
           value={score}
           duration={1200}
-          className="text-3xl font-extrabold text-[#f0f4fc]"
+          className="text-3xl font-extrabold text-ink"
           formatFn={n => `${n}`}
         />
-        <span className="text-xs text-[#5a6a8a] mt-0.5 font-medium">/ 100</span>
+        <span className="text-xs text-ink-muted mt-0.5 font-medium">/ 100</span>
       </div>
     </div>
   )
