@@ -60,6 +60,14 @@ def register(subparsers: argparse._SubParsersAction, _cli_class: Any) -> None:  
         action="store_true",
         help="Suppress progress output.",
     )
+    parser.add_argument(
+        "--stdio-flaw",
+        action="store_true",
+        help=(
+            "Scan local MCP configs for the unpatched STDIO transport "
+            "vulnerability (Ox disclosure, April 2026). Skips OSV CVE pipeline."
+        ),
+    )
     parser.set_defaults(func=_audit_deps_command)
 
 
@@ -69,6 +77,9 @@ def _audit_deps_command(_cli: Any, args: argparse.Namespace) -> int:
         logging.getLogger("navil").setLevel(logging.WARNING)
     else:
         logging.getLogger("navil").setLevel(logging.INFO)
+
+    if getattr(args, "stdio_flaw", False):
+        return _stdio_flaw_command(args)
 
     ecosystems = ["npm", "pypi"] if args.ecosystem == "all" else [args.ecosystem]
 
@@ -126,4 +137,39 @@ def _audit_deps_command(_cli: Any, args: argparse.Namespace) -> int:
     print(f"  Data   → {json_path}")
     print()
 
+    return 0
+
+
+def _stdio_flaw_command(args: argparse.Namespace) -> int:
+    """Run the local STDIO-flaw scan and write stdio-flaw.md / .json."""
+    from navil.report import stdio_flaw
+
+    print("\n  navil audit-deps --stdio-flaw")
+    print("  ─────────────────────────────────────────────────────────")
+    print("  Mode       : local STDIO transport flaw scan (no network)")
+    print(f"  Output     : {args.output}")
+    print()
+
+    report = stdio_flaw.run_scan()
+
+    out_dir = Path(args.output)
+    out_dir.mkdir(parents=True, exist_ok=True)
+    md_path = out_dir / "stdio-flaw.md"
+    json_path = out_dir / "stdio-flaw.json"
+    md_path.write_text(stdio_flaw.render_markdown(report), encoding="utf-8")
+    json_path.write_text(stdio_flaw.render_json(report), encoding="utf-8")
+
+    print(f"  ✓ Configs scanned    : {report.configs_scanned}")
+    print(f"  ✓ Servers examined   : {report.servers_examined}")
+    print(f"  ✓ Servers flagged    : {report.servers_flagged}")
+    if report.flagged:
+        from collections import Counter
+
+        counts = Counter(f.risk_class for f in report.flagged)
+        for risk, n in counts.most_common():
+            print(f"    {risk:<20}: {n}")
+    print()
+    print(f"  Report → {md_path}")
+    print(f"  Data   → {json_path}")
+    print()
     return 0
