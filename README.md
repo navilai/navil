@@ -143,8 +143,33 @@ This connects your local instance to [navil.ai](https://navil.ai) for dashboards
 navil wrap ~/.cursor/mcp.json          # wrap servers in a specific config
 navil scan config.json                 # audit vulnerabilities (static analysis)
 navil test                             # fire threat pool scenarios, see coverage
-navil policy auto-generate             # generate policies from behavioral baselines
+navil policy auto-generate             # rule-based policy from behavioral baselines
+navil policy generate --engine=opus-4-7  # AI-reasoned policy + per-rule rationale (see below)
+navil audit-deps --top 200             # ecosystem CVE scan against OSV.dev
+navil audit-deps --stdio-flaw          # local scan for the unfixed MCP STDIO transport vuln
+navil rank-tracker                     # track Google rankings for our keywords
 ```
+
+### AI Policy Builder
+
+`navil policy generate` reads your MCP configs + tool-call audit log and asks Claude to reason about the agent's real exposure surface — emitting both a strict `navil.yaml` and a `navil-policy.md` rationale document a security team can defend in front of an auditor.
+
+Modular reasoning engine. Use `--engine=opus-4-7` for Anthropic's deepest reasoning, `sonnet-4-6` (default) for speed, or `haiku-4-5` for cost. Vendor-neutral by design — same SAFE-MCP-cached system prompt across engines.
+
+```bash
+# One-time: provide your Anthropic key (the SDK ships with `pip install navil`)
+export ANTHROPIC_API_KEY=sk-ant-...
+
+navil policy generate --engine=opus-4-7
+#   Policy written to:    navil.yaml
+#   Rationale written to: navil-policy.md
+```
+
+No key set? `navil policy generate` falls back to a deterministic rule-based generator that still produces a usable least-privilege policy from your MCP configs alone — without the per-rule reasoning paragraphs. The reasoning step is the upgrade, not the floor.
+
+### MCP STDIO transport flaw detection
+
+In April 2026, [Ox researchers disclosed](https://www.theregister.com/2026/04/16/anthropic_mcp_design_flaw/) a class of vulnerability in MCP's STDIO transport affecting ~200,000 servers (150M+ downloads). Anthropic declined to patch the protocol, calling the behavior "expected." `navil audit-deps --stdio-flaw` scans your local MCP configs for the vulnerable launcher patterns (shell wrappers, unpinned `npx`, untrusted authors, remote pipes, unknown binaries) and flags them with concrete mitigations. Pure-local, no network calls, completes in under a second.
 
 ## Who Is Navil For
 
@@ -529,6 +554,10 @@ Full-featured security dashboard for visualizing and managing your MCP fleet. Av
 | `navil pentest` | Run 11 SAFE-MCP attack simulations |
 | `navil test --pool default` | Test coverage against threat pool |
 | `navil redteam --generate` | AI-generated novel attack hypotheses |
+| `navil audit-deps --top 200` | Ecosystem CVE scan via OSV.dev (npm + PyPI) |
+| `navil audit-deps --stdio-flaw` | Local scan for the unfixed MCP STDIO transport vuln |
+| `navil policy generate --engine=opus-4-7` | AI-reasoned policy + per-rule rationale |
+| `navil rank-tracker` | Track Google rankings for target keywords |
 
 ### Runtime Protection
 | Command | What It Does |
