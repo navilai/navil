@@ -51,6 +51,23 @@ def register_subcommand(policy_subparsers: argparse._SubParsersAction) -> None:
         help="Override the LLM model (default: project's standard Claude model)",
     )
     p.add_argument(
+        "--engine",
+        default=None,
+        choices=[
+            "sonnet-4-6",
+            "opus-4-7",
+            "haiku-4-5",
+            "claude-sonnet-4-6",
+            "claude-opus-4-7",
+            "claude-haiku-4-5",
+        ],
+        help=(
+            "Reasoning engine alias. "
+            "sonnet-4-6 (default, fast), opus-4-7 (deepest reasoning), "
+            "haiku-4-5 (cheapest). Overrides --model when set."
+        ),
+    )
+    p.add_argument(
         "--dry-run",
         action="store_true",
         help="Print the policy + rationale; do not write files",
@@ -63,11 +80,24 @@ def register_subcommand(policy_subparsers: argparse._SubParsersAction) -> None:
     p.set_defaults(func=lambda cli, args: _run(cli, args))
 
 
+_ENGINE_ALIASES = {
+    "sonnet-4-6": "claude-sonnet-4-6",
+    "opus-4-7": "claude-opus-4-7",
+    "haiku-4-5": "claude-haiku-4-5",
+    "claude-sonnet-4-6": "claude-sonnet-4-6",
+    "claude-opus-4-7": "claude-opus-4-7",
+    "claude-haiku-4-5": "claude-haiku-4-5",
+}
+
+
 def _run(_cli: Any, args: argparse.Namespace) -> int:
     audit_path: Path | None = Path(args.from_log) if args.from_log else None
 
     kwargs: dict[str, Any] = {"audit_log": audit_path}
-    if args.model:
+    engine_value = getattr(args, "engine", None)
+    if engine_value:
+        kwargs["model"] = _ENGINE_ALIASES.get(engine_value, engine_value)
+    elif args.model:
         kwargs["model"] = args.model
 
     result = generate_policy(**kwargs)
