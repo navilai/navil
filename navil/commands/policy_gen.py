@@ -91,14 +91,31 @@ _ENGINE_ALIASES = {
 
 
 def _run(_cli: Any, args: argparse.Namespace) -> int:
+    import os
+
     audit_path: Path | None = Path(args.from_log) if args.from_log else None
+    engine_value = getattr(args, "engine", None)
+    user_picked_engine = bool(engine_value or args.model)
 
     kwargs: dict[str, Any] = {"audit_log": audit_path}
-    engine_value = getattr(args, "engine", None)
     if engine_value:
         kwargs["model"] = _ENGINE_ALIASES.get(engine_value, engine_value)
     elif args.model:
         kwargs["model"] = args.model
+
+    # Up-front warning if user asked for an LLM engine but no key is set.
+    # We still proceed (the fallback is useful) but they need to know why
+    # the output is rule-based instead of reasoned.
+    if user_picked_engine and not os.environ.get("ANTHROPIC_API_KEY"):
+        print()
+        print("  ⚠  ANTHROPIC_API_KEY not set — using rule-based fallback.")
+        print("     For LLM-reasoned policy, set the key and re-run:")
+        print()
+        print("       export ANTHROPIC_API_KEY=sk-ant-...")
+        print(f"       navil policy generate --engine={engine_value or 'sonnet-4-6'}")
+        print()
+        print("     Get a key at: https://console.anthropic.com/settings/keys")
+        print()
 
     result = generate_policy(**kwargs)
 
