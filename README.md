@@ -1,7 +1,8 @@
 <p align="center">
-  <h1 align="center">Navil — Production Governance for AI Agents</h1>
+  <h1 align="center">Navil — Runtime Security for AI Agent Tool Calls</h1>
   <p align="center">
-    <strong>The open-source security proxy for MCP servers, CLIs, and APIs that AI agents call. Policy at install, enforcement at every call.</strong>
+    <strong>One command. Zero overhead. Your agents stay fast while you see everything they do.</strong><br>
+    <sub>Rust data plane · 2.7µs per-call · 568 detection patterns · Apache 2.0</sub>
   </p>
 </p>
 
@@ -35,11 +36,13 @@
 pip install navil && navil secure
 ```
 
-<!-- TODO: Replace with animated GIF of `navil secure` terminal session.
-     Record with `vhs` or `asciinema rec`. Target: 15-20s clip. -->
+<p align="center">
+  <img src="https://navil-cloud-api.onrender.com/v1/badge/overhead.svg" alt="2.7µs overhead" />
+  <img src="https://img.shields.io/badge/zero_config-required-success" alt="Zero config" />
+</p>
 
 ```
-$ navil secure
+$  navil secure
 
 🔍 Discovering MCP configs...
    Found: ~/.cursor/mcp.json (12 servers)
