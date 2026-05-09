@@ -43,9 +43,16 @@ navil policy test \
   --fixture templates/fixtures/github-risky-calls.jsonl
 ```
 
-A passing run confirms your policy catches the dangerous-by-default
-operations. A failing run prints the divergence so you can tighten
-specific rules.
+All five templates in this library pass their own fixtures (35/35 cases
+total) — that's the contract for new templates to land. A failing run
+prints the divergence so you can tighten specific rules.
+
+> **Note on argument-level fields.** Some templates declare
+> `path_allowlist`, `path_denylist`, `channel_allowlist`, and similar
+> argument-level enforcement rules. These are honored by the runtime
+> proxy (which inspects each tool call's arguments live), not by the
+> static `policy test` engine which checks tool-name decisions only.
+> Fixtures focus on tool-level decisions for that reason.
 
 ### Combine multiple templates
 

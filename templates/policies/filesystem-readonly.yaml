@@ -5,69 +5,64 @@
 # This is the default for code-review agents (Claude Code in
 # read-only mode, doc summarization, codebase indexing).
 
-version: "1.0"
-
+version: '1.0'
 scopes:
   filesystem-readonly:
-    description: "Read + search only — never modify the filesystem"
+    description: "Read + search only \u2014 never modify the filesystem"
     tools:
-      - filesystem.read_file
-      - filesystem.read_multiple_files
-      - filesystem.list_directory
-      - filesystem.search_files
-      - filesystem.get_file_info
-
+    - filesystem.read_file
+    - filesystem.read_multiple_files
+    - filesystem.list_directory
+    - filesystem.search_files
+    - filesystem.get_file_info
 agents:
   default:
     scope: filesystem-readonly
     rate_limit_per_hour: 5000
     tools_denied:
-      - filesystem.write_file
-      - filesystem.create_file
-      - filesystem.append_file
-      - filesystem.edit_file
-      - filesystem.delete_file
-      - filesystem.move_file
-      - filesystem.copy_file
-      - filesystem.create_directory
-      - filesystem.delete_directory
-      - filesystem.move_directory
-      - filesystem.set_permissions
-      - filesystem.chmod
-      - filesystem.chown
-      - filesystem.symlink
-      - filesystem.execute   # never let an FS server execute commands
-
-# Path-level allowlist — agents may only read FROM these roots.
-# Reads outside the allowlist are denied at the proxy.
+    - filesystem.write_file
+    - filesystem.create_file
+    - filesystem.append_file
+    - filesystem.edit_file
+    - filesystem.delete_file
+    - filesystem.move_file
+    - filesystem.copy_file
+    - filesystem.create_directory
+    - filesystem.delete_directory
+    - filesystem.move_directory
+    - filesystem.set_permissions
+    - filesystem.chmod
+    - filesystem.chown
+    - filesystem.symlink
+    - filesystem.execute
+    tools_allowed:
+    - filesystem.read_file
+    - filesystem.read_multiple_files
+    - filesystem.list_directory
+    - filesystem.search_files
+    - filesystem.get_file_info
 path_allowlist:
-  - "${HOME}/code/**"
-  - "${HOME}/projects/**"
-
-# Path-level denylist — even within allowed roots, these are blocked.
-# Catches accidental access to credentials and shell history.
+- ${HOME}/code/**
+- ${HOME}/projects/**
 path_denylist:
-  - "**/.env"
-  - "**/.env.*"
-  - "**/.aws/credentials"
-  - "**/.ssh/id_*"
-  - "**/.ssh/known_hosts"
-  - "**/.npmrc"
-  - "**/.netrc"
-  - "**/.gitconfig"
-  - "**/.pypirc"
-  - "**/.docker/config.json"
-  - "**/*history*"
-  - "**/.bash_history"
-  - "**/.zsh_history"
-  - "**/.python_history"
-
+- '**/.env'
+- '**/.env.*'
+- '**/.aws/credentials'
+- '**/.ssh/id_*'
+- '**/.ssh/known_hosts'
+- '**/.npmrc'
+- '**/.netrc'
+- '**/.gitconfig'
+- '**/.pypirc'
+- '**/.docker/config.json'
+- '**/*history*'
+- '**/.bash_history'
+- '**/.zsh_history'
+- '**/.python_history'
 sensitive_data:
-  # Even when the file is allow-listed, redact common secret patterns
-  # in the audit log.
   redact_patterns:
-    - "AKIA[0-9A-Z]{16}"          # AWS Access Key
-    - "ghp_[0-9A-Za-z]{36}"       # GitHub PAT
-    - "sk-ant-[0-9A-Za-z\\-_]{50,}"   # Anthropic API key
-    - "sk-[0-9A-Za-z]{48}"        # OpenAI API key
-    - "xox[baprs]-[0-9A-Za-z]{10,}"   # Slack tokens
+  - AKIA[0-9A-Z]{16}
+  - ghp_[0-9A-Za-z]{36}
+  - sk-ant-[0-9A-Za-z\-_]{50,}
+  - sk-[0-9A-Za-z]{48}
+  - xox[baprs]-[0-9A-Za-z]{10,}

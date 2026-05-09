@@ -4,55 +4,65 @@
 # reporting / standup automation. Writing issues is allowed but bulk
 # operations and team/admin changes are blocked.
 
-version: "1.0"
-
+version: '1.0'
 scopes:
   linear-reporter:
-    description: "Read-only for status reports and burndown"
+    description: Read-only for status reports and burndown
     tools:
-      - linear.issues.list
-      - linear.issues.get
-      - linear.cycles.list
-      - linear.cycles.get
-      - linear.projects.list
-      - linear.projects.get
-      - linear.users.list
-      - linear.teams.list
-      - linear.workflowStates.list
-
+    - linear.issues.list
+    - linear.issues.get
+    - linear.cycles.list
+    - linear.cycles.get
+    - linear.projects.list
+    - linear.projects.get
+    - linear.users.list
+    - linear.teams.list
+    - linear.workflowStates.list
   linear-triage:
-    description: "Read + create/update individual issues (no bulk, no admin)"
+    description: Read + create/update individual issues (no bulk, no admin)
     tools:
-      - linear.issues.*
-      - linear.comments.create
-      - linear.comments.update
-      - linear.cycles.list
-      - linear.projects.list
-
+    - linear.issues.*
+    - linear.comments.create
+    - linear.comments.update
+    - linear.cycles.list
+    - linear.projects.list
 agents:
   default:
     scope: linear-reporter
     rate_limit_per_hour: 500
     tools_denied:
-      - linear.teams.create
-      - linear.teams.delete
-      - linear.teams.update
-      - linear.users.delete
-      - linear.organizations.update
-      - linear.workflowStates.create
-      - linear.workflowStates.delete
-      - linear.apiKey.create
-      - linear.webhooks.create
-
+    - linear.teams.create
+    - linear.teams.delete
+    - linear.teams.update
+    - linear.users.delete
+    - linear.organizations.update
+    - linear.workflowStates.create
+    - linear.workflowStates.delete
+    - linear.apiKey.create
+    - linear.webhooks.create
+    tools_allowed:
+    - linear.issues.list
+    - linear.issues.get
+    - linear.cycles.list
+    - linear.cycles.get
+    - linear.projects.list
+    - linear.projects.get
+    - linear.users.list
+    - linear.teams.list
+    - linear.workflowStates.list
+    - linear.issues.delete
+    - linear.issues.archive_bulk
+    - linear.projects.delete
+    - linear.cycles.delete
+    - linear.comments.delete
 require_approval:
-  - linear.issues.delete
-  - linear.issues.archive_bulk
-  - linear.projects.delete
-  - linear.cycles.delete
-  - linear.comments.delete
-
+- linear.issues.delete
+- linear.issues.archive_bulk
+- linear.projects.delete
+- linear.cycles.delete
+- linear.comments.delete
 sensitive_data:
   redact_in_logs:
-    - api_key
-    - oauth_token
-    - webhook_secret
+  - api_key
+  - oauth_token
+  - webhook_secret

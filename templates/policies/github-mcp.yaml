@@ -4,76 +4,90 @@
 # code, propose changes via PRs, and comment — but should never push
 # directly to main or modify repo settings.
 
-version: "1.0"
-
+version: '1.0'
 scopes:
   github-reviewer:
-    description: "Read-only for review and code understanding"
+    description: Read-only for review and code understanding
     tools:
-      - github.repos.get
-      - github.repos.listContents
-      - github.repos.getContent
-      - github.pulls.get
-      - github.pulls.list
-      - github.pulls.listFiles
-      - github.pulls.listReviews
-      - github.issues.list
-      - github.issues.get
-      - github.search.code
-      - github.search.issuesAndPullRequests
-
+    - github.repos.get
+    - github.repos.listContents
+    - github.repos.getContent
+    - github.pulls.get
+    - github.pulls.list
+    - github.pulls.listFiles
+    - github.pulls.listReviews
+    - github.issues.list
+    - github.issues.get
+    - github.search.code
+    - github.search.issuesAndPullRequests
   github-pr-author:
-    description: "Read + open PRs from a feature branch (never push to main)"
+    description: Read + open PRs from a feature branch (never push to main)
     tools:
-      - github.repos.get
-      - github.repos.listContents
-      - github.repos.getContent
-      - github.repos.createOrUpdateFileContents  # only on non-protected branches
-      - github.git.createRef
-      - github.git.createCommit
-      - github.git.updateRef       # blocked on protected branches at API level
-      - github.pulls.create
-      - github.pulls.update
-      - github.pulls.listFiles
-      - github.pulls.createReview
-      - github.pulls.createReviewComment
-      - github.issues.createComment
-      - github.search.code
-
+    - github.repos.get
+    - github.repos.listContents
+    - github.repos.getContent
+    - github.repos.createOrUpdateFileContents
+    - github.git.createRef
+    - github.git.createCommit
+    - github.git.updateRef
+    - github.pulls.create
+    - github.pulls.update
+    - github.pulls.listFiles
+    - github.pulls.createReview
+    - github.pulls.createReviewComment
+    - github.issues.createComment
+    - github.search.code
 agents:
   default:
     scope: github-reviewer
     rate_limit_per_hour: 1500
     tools_denied:
-      # Hard-deny — even a misconfigured agent should never reach these
-      - github.repos.delete
-      - github.repos.transfer
-      - github.repos.updateBranchProtection
-      - github.repos.removeBranchProtection
-      - github.repos.deleteAccessRestrictions
-      - github.actions.disableSelectedRepositories
-      - github.orgs.update
-      - github.orgs.removeMember
-      - github.teams.delete
-      - github.users.deleteAuthenticated
-      - github.apps.deleteAuthorization
-
+    - github.repos.delete
+    - github.repos.transfer
+    - github.repos.updateBranchProtection
+    - github.repos.removeBranchProtection
+    - github.repos.deleteAccessRestrictions
+    - github.actions.disableSelectedRepositories
+    - github.orgs.update
+    - github.orgs.removeMember
+    - github.teams.delete
+    - github.users.deleteAuthenticated
+    - github.apps.deleteAuthorization
+    tools_allowed:
+    - github.repos.get
+    - github.repos.listContents
+    - github.repos.getContent
+    - github.pulls.get
+    - github.pulls.list
+    - github.pulls.listFiles
+    - github.pulls.listReviews
+    - github.issues.list
+    - github.issues.get
+    - github.search.code
+    - github.search.issuesAndPullRequests
+    - github.pulls.merge
+    - github.pulls.dismissReview
+    - github.repos.createDeployment
+    - github.actions.createWorkflowDispatch
+    - github.actions.reRunWorkflow
+    - github.releases.create
+    - github.releases.delete
+    - github.issues.delete
 require_approval:
-  - github.pulls.merge
-  - github.pulls.dismissReview
-  - github.repos.createDeployment
-  - github.actions.createWorkflowDispatch
-  - github.actions.reRunWorkflow
-  - github.releases.create
-  - github.releases.delete
-  - github.issues.delete
-
+- github.pulls.merge
+- github.pulls.dismissReview
+- github.repos.createDeployment
+- github.actions.createWorkflowDispatch
+- github.actions.reRunWorkflow
+- github.releases.create
+- github.releases.delete
+- github.issues.delete
 sensitive_data:
   redact_in_logs:
-    - token
-    - personal_access_token
-    - installation_token
-    - oauth_token
-    - private_key
-    - X-Hub-Signature
-    - X-Hub-Signature-256
+  - token
+  - personal_access_token
+  - installation_token
+  - oauth_token
+  - private_key
+  - X-Hub-Signature
+  - X-Hub-Signature-256

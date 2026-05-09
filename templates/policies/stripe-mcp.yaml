@@ -9,68 +9,74 @@
 #
 # Or adapt manually: replace "stripe" with your server prefix.
 
-version: "1.0"
-
+version: '1.0'
 scopes:
   stripe-readonly:
-    description: "Read-only access for analytics + support agents"
+    description: Read-only access for analytics + support agents
     tools:
-      - stripe.customers.retrieve
-      - stripe.customers.list
-      - stripe.charges.retrieve
-      - stripe.charges.list
-      - stripe.invoices.retrieve
-      - stripe.invoices.list
-      - stripe.subscriptions.retrieve
-      - stripe.subscriptions.list
-      - stripe.payment_intents.retrieve
-      - stripe.balance.retrieve
-      - stripe.events.list
-
+    - stripe.customers.retrieve
+    - stripe.customers.list
+    - stripe.charges.retrieve
+    - stripe.charges.list
+    - stripe.invoices.retrieve
+    - stripe.invoices.list
+    - stripe.subscriptions.retrieve
+    - stripe.subscriptions.list
+    - stripe.payment_intents.retrieve
+    - stripe.balance.retrieve
+    - stripe.events.list
   stripe-support:
-    description: "Read + low-risk support actions (refunds REQUIRE approval)"
+    description: Read + low-risk support actions (refunds REQUIRE approval)
     tools:
-      - stripe.customers.*
-      - stripe.charges.retrieve
-      - stripe.charges.list
-      - stripe.invoices.retrieve
-      - stripe.invoices.list
-      - stripe.subscriptions.retrieve
-
+    - stripe.customers.*
+    - stripe.charges.retrieve
+    - stripe.charges.list
+    - stripe.invoices.retrieve
+    - stripe.invoices.list
+    - stripe.subscriptions.retrieve
 agents:
   default:
     scope: stripe-readonly
     rate_limit_per_hour: 1000
     tools_denied:
-      # Never allow without explicit policy override:
-      - stripe.charges.create
-      - stripe.payment_intents.create
-      - stripe.payment_intents.confirm
-      - stripe.payment_intents.capture
-      - stripe.transfers.create
-      - stripe.payouts.create
-      - stripe.refunds.create
-      - stripe.subscriptions.cancel
-      - stripe.subscriptions.update
-      - stripe.customers.delete
-      - stripe.api_keys.create
-      - stripe.webhook_endpoints.create
-
+    - stripe.charges.create
+    - stripe.payment_intents.create
+    - stripe.payment_intents.confirm
+    - stripe.payment_intents.capture
+    - stripe.transfers.create
+    - stripe.payouts.create
+    - stripe.customers.delete
+    - stripe.api_keys.create
+    - stripe.webhook_endpoints.create
+    tools_allowed:
+    - stripe.customers.retrieve
+    - stripe.customers.list
+    - stripe.charges.retrieve
+    - stripe.charges.list
+    - stripe.invoices.retrieve
+    - stripe.invoices.list
+    - stripe.subscriptions.retrieve
+    - stripe.subscriptions.list
+    - stripe.payment_intents.retrieve
+    - stripe.balance.retrieve
+    - stripe.events.list
+    - stripe.refunds.create
+    - stripe.subscriptions.update
+    - stripe.subscriptions.cancel
+    - stripe.invoices.send
+    - stripe.invoices.void
+    - stripe.invoices.mark_uncollectible
 require_approval:
-  # Tools that may be called but always require human approval first.
-  # Replays and audit log entries are still recorded.
-  - stripe.refunds.create
-  - stripe.subscriptions.update
-  - stripe.subscriptions.cancel
-  - stripe.invoices.send
-  - stripe.invoices.void
-  - stripe.invoices.mark_uncollectible
-
+- stripe.refunds.create
+- stripe.subscriptions.update
+- stripe.subscriptions.cancel
+- stripe.invoices.send
+- stripe.invoices.void
+- stripe.invoices.mark_uncollectible
 sensitive_data:
-  # Tag fields that should be redacted in audit logs.
   redact_in_logs:
-    - card.number
-    - card.cvc
-    - bank_account.account_number
-    - bank_account.routing_number
-    - source.id
+  - card.number
+  - card.cvc
+  - bank_account.account_number
+  - bank_account.routing_number
+  - source.id
