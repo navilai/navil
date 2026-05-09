@@ -1,0 +1,8 @@
+{"agent":"claude-code","tool":"filesystem.read_file","args":{"path":"/Users/dev/code/project/src/main.ts"},"description":"Read in allowlisted path — allowed","expected_decision":"allow"}
+{"agent":"claude-code","tool":"filesystem.read_file","args":{"path":"/Users/dev/.aws/credentials"},"description":"Read AWS credentials — denylisted, deny","expected_decision":"deny"}
+{"agent":"claude-code","tool":"filesystem.read_file","args":{"path":"/Users/dev/.ssh/id_rsa"},"description":"Read SSH private key — denylisted, deny","expected_decision":"deny"}
+{"agent":"claude-code","tool":"filesystem.read_file","args":{"path":"/etc/passwd"},"description":"Read /etc/passwd — outside allowlist, deny","expected_decision":"deny"}
+{"agent":"claude-code","tool":"filesystem.write_file","args":{"path":"/Users/dev/code/main.ts","content":"hi"},"description":"Write file — read-only mode, deny","expected_decision":"deny"}
+{"agent":"claude-code","tool":"filesystem.delete_file","args":{"path":"/Users/dev/code/old.ts"},"description":"Delete file — read-only mode, deny","expected_decision":"deny"}
+{"agent":"claude-code","tool":"filesystem.execute","args":{"command":"rm -rf /"},"description":"Execute shell command — never allowed via FS server, deny","expected_decision":"deny"}
+{"agent":"claude-code","tool":"filesystem.read_file","args":{"path":"/Users/dev/.bash_history"},"description":"Read shell history — denylisted, deny","expected_decision":"deny"}

@@ -1,0 +1,69 @@
+# Slack MCP — least-privilege policy template
+#
+# Use case: agents that read channel context, summarize threads, or
+# post status updates to a small set of allowlisted channels. Sending
+# DMs and posting to private/sensitive channels requires approval.
+
+version: "1.0"
+
+scopes:
+  slack-reader:
+    description: "Read-only for summarization + standup digests"
+    tools:
+      - slack.channels.list
+      - slack.channels.history
+      - slack.channels.info
+      - slack.conversations.list
+      - slack.conversations.history
+      - slack.conversations.replies
+      - slack.users.list
+      - slack.users.info
+      - slack.search.messages
+
+  slack-bot:
+    description: "Read + post to allowlisted public channels only"
+    tools:
+      - slack.channels.history
+      - slack.conversations.history
+      - slack.conversations.replies
+      - slack.chat.postMessage    # constrained by channel allowlist below
+      - slack.reactions.add
+      - slack.users.list
+
+agents:
+  default:
+    scope: slack-reader
+    rate_limit_per_hour: 600
+    tools_denied:
+      - slack.channels.delete
+      - slack.channels.archive
+      - slack.users.admin.invite
+      - slack.users.admin.setRegular
+      - slack.users.admin.setUltraRestricted
+      - slack.team.profile.set
+      - slack.apps.uninstall
+      - slack.files.delete
+
+require_approval:
+  - slack.chat.postMessage
+  - slack.chat.update
+  - slack.chat.delete
+  - slack.conversations.invite
+  - slack.conversations.kick
+  - slack.files.upload
+  - slack.dnd.endSnooze   # don't unmute users without consent
+
+# Channel-level allowlist — enforced at the proxy by inspecting the
+# `channel` argument of slack.chat.postMessage. Any channel not in
+# this list triggers require_approval.
+channel_allowlist:
+  - "#bot-status"
+  - "#agent-deploys"
+  - "#general"
+
+sensitive_data:
+  redact_in_logs:
+    - bot_token
+    - user_token
+    - signing_secret
+    - DM messages   # don't log direct-message content

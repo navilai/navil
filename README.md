@@ -170,6 +170,26 @@ navil policy generate --engine=opus-4-7
 
 No key set? `navil policy generate` falls back to a deterministic rule-based generator that still produces a usable least-privilege policy from your MCP configs alone — without the per-rule reasoning paragraphs. The reasoning step is the upgrade, not the floor.
 
+### Policy Template Library
+
+Production-ready, opinionated policies for the most common MCP servers — each paired with an executable fixture of risky tool calls the policy must catch.
+
+| Template | Use case |
+|---|---|
+| [`stripe-mcp.yaml`](templates/policies/stripe-mcp.yaml) | Read-only analytics + support agents |
+| [`linear-mcp.yaml`](templates/policies/linear-mcp.yaml) | Standup digests, status reports, triage |
+| [`github-mcp.yaml`](templates/policies/github-mcp.yaml) | Code review (Claude Code, Cursor) |
+| [`slack-mcp.yaml`](templates/policies/slack-mcp.yaml) | Channel summaries + status posts |
+| [`filesystem-readonly.yaml`](templates/policies/filesystem-readonly.yaml) | Code understanding, doc summarization |
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/navilai/navil/main/templates/policies/github-mcp.yaml \
+  > .navil/policy.yaml
+navil secure --policy .navil/policy.yaml
+```
+
+See the full [Policy Template Library README](templates/README.md) for the contribution guide and the request list (Notion, Postgres, AWS, Kubernetes, Jira, Gmail).
+
 ### MCP STDIO transport flaw detection
 
 In April 2026, [Ox researchers disclosed](https://www.theregister.com/2026/04/16/anthropic_mcp_design_flaw/) a class of vulnerability in MCP's STDIO transport affecting ~200,000 servers (150M+ downloads). Anthropic declined to patch the protocol, calling the behavior "expected." `navil audit-deps --stdio-flaw` scans your local MCP configs for the vulnerable launcher patterns (shell wrappers, unpinned `npx`, untrusted authors, remote pipes, unknown binaries) and flags them with concrete mitigations. Pure-local, no network calls, completes in under a second.

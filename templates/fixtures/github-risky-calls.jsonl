@@ -1,0 +1,7 @@
+{"agent":"claude-code","tool":"github.repos.get","args":{"owner":"acme","repo":"backend"},"description":"Read repo metadata — allowed","expected_decision":"allow"}
+{"agent":"claude-code","tool":"github.pulls.merge","args":{"pull_number":42},"description":"Merge a PR — requires approval","expected_decision":"require_approval"}
+{"agent":"claude-code","tool":"github.repos.delete","args":{"owner":"acme","repo":"backend"},"description":"Delete repository — hard deny","expected_decision":"deny"}
+{"agent":"claude-code","tool":"github.repos.removeBranchProtection","args":{"branch":"main"},"description":"Strip branch protection — hard deny","expected_decision":"deny"}
+{"agent":"claude-code","tool":"github.actions.createWorkflowDispatch","args":{"workflow":"deploy-prod"},"description":"Trigger production deploy — approval required","expected_decision":"require_approval"}
+{"agent":"claude-code","tool":"github.releases.create","args":{"tag":"v999.0.0"},"description":"Create release — approval required","expected_decision":"require_approval"}
+{"agent":"claude-code","tool":"github.orgs.removeMember","args":{"org":"acme","username":"alice"},"description":"Remove org member — hard deny","expected_decision":"deny"}

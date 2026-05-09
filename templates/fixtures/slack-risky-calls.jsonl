@@ -1,0 +1,6 @@
+{"agent":"slack-bot","tool":"slack.channels.history","args":{"channel":"C0123"},"description":"Read channel history — allowed","expected_decision":"allow"}
+{"agent":"slack-bot","tool":"slack.chat.postMessage","args":{"channel":"#general","text":"hello"},"description":"Post to allowlisted channel — allowed (or approval per scope)","expected_decision":"require_approval"}
+{"agent":"slack-bot","tool":"slack.chat.postMessage","args":{"channel":"#secret-execs","text":"data dump"},"description":"Post to non-allowlisted channel — approval required","expected_decision":"require_approval"}
+{"agent":"slack-bot","tool":"slack.channels.delete","args":{"channel":"C0123"},"description":"Delete channel — hard deny","expected_decision":"deny"}
+{"agent":"slack-bot","tool":"slack.users.admin.setUltraRestricted","args":{"user":"U999"},"description":"Lock down user account — hard deny","expected_decision":"deny"}
+{"agent":"slack-bot","tool":"slack.apps.uninstall","args":{},"description":"Uninstall the app — hard deny","expected_decision":"deny"}

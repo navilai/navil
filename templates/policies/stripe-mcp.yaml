@@ -1,0 +1,76 @@
+# Stripe MCP — least-privilege policy template
+#
+# Use case: agents that read Stripe data for analytics, support, or
+# customer-success automation but should never move money or change
+# customer-facing state without human approval.
+#
+# Map this onto your real Stripe MCP server name in agents:
+#   navil policy apply --template stripe-mcp --server stripe
+#
+# Or adapt manually: replace "stripe" with your server prefix.
+
+version: "1.0"
+
+scopes:
+  stripe-readonly:
+    description: "Read-only access for analytics + support agents"
+    tools:
+      - stripe.customers.retrieve
+      - stripe.customers.list
+      - stripe.charges.retrieve
+      - stripe.charges.list
+      - stripe.invoices.retrieve
+      - stripe.invoices.list
+      - stripe.subscriptions.retrieve
+      - stripe.subscriptions.list
+      - stripe.payment_intents.retrieve
+      - stripe.balance.retrieve
+      - stripe.events.list
+
+  stripe-support:
+    description: "Read + low-risk support actions (refunds REQUIRE approval)"
+    tools:
+      - stripe.customers.*
+      - stripe.charges.retrieve
+      - stripe.charges.list
+      - stripe.invoices.retrieve
+      - stripe.invoices.list
+      - stripe.subscriptions.retrieve
+
+agents:
+  default:
+    scope: stripe-readonly
+    rate_limit_per_hour: 1000
+    tools_denied:
+      # Never allow without explicit policy override:
+      - stripe.charges.create
+      - stripe.payment_intents.create
+      - stripe.payment_intents.confirm
+      - stripe.payment_intents.capture
+      - stripe.transfers.create
+      - stripe.payouts.create
+      - stripe.refunds.create
+      - stripe.subscriptions.cancel
+      - stripe.subscriptions.update
+      - stripe.customers.delete
+      - stripe.api_keys.create
+      - stripe.webhook_endpoints.create
+
+require_approval:
+  # Tools that may be called but always require human approval first.
+  # Replays and audit log entries are still recorded.
+  - stripe.refunds.create
+  - stripe.subscriptions.update
+  - stripe.subscriptions.cancel
+  - stripe.invoices.send
+  - stripe.invoices.void
+  - stripe.invoices.mark_uncollectible
+
+sensitive_data:
+  # Tag fields that should be redacted in audit logs.
+  redact_in_logs:
+    - card.number
+    - card.cvc
+    - bank_account.account_number
+    - bank_account.routing_number
+    - source.id
