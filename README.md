@@ -1,7 +1,7 @@
 <p align="center">
   <h1 align="center">Navil — Production Governance for AI Agents</h1>
   <p align="center">
-    <strong>Runtime security for agent tool calls. Policy at install, enforcement at every call.</strong>
+    <strong>The open-source security proxy for MCP servers, CLIs, and APIs that AI agents call. Policy at install, enforcement at every call.</strong>
   </p>
 </p>
 
@@ -30,18 +30,6 @@
 </p>
 
 > **May 2026:** We scanned 400 public MCP packages. [75% carry known CVEs in their dependency tree](https://navil.ai/research/state-of-mcp-security-2026). Anthropic's own SDK has 6 HIGH-severity vulnerabilities affecting 54–68% of the ecosystem. `navil audit-deps` generates the report for your specific MCP config.
-
-> **Launch Week:** Benchmarked against 5 governance platforms. Navil comes in at **2.7µs per-call overhead** with 568 live detection patterns. See [Performance benchmarks](#performance).
-
-### The Only Runtime Governance Built for Agents
-
-| Capability | Navil | LangSmith | Guardrails AI | Lakera | Promptfoo |
-|--|--:|--:|--:|--:|--:|
-| **Runtime tool call security** | ✅ | ❌ (tracing only) | ❌ (output validation) | ❌ (Guard API) | ❌ (pre-deploy tests) |
-| **Sub-microsecond overhead** | ✅ (2.7µs) | N/A | ❌ (50-200ms) | ❌ (API call) | N/A |
-| **Open source + commercial** | ✅ (Apache 2.0) | ❌ (closed) | ✅ (AGPL) | ❌ (closed) | ✅ (MIT + paid Pro) |
-| **568 detection patterns** | ✅ | N/A | ~8 rules | ~50 patterns | ~20 tests |
-| **Fleet-wide threat signal** | ✅ (network) | ❌ (per-project) | ❌ (per-project) | ❌ (per-project) | ❌ |
 
 ```bash
 pip install navil && navil secure
