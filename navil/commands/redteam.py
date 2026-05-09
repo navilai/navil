@@ -288,7 +288,12 @@ def _redteam_command(cli: Any, args: argparse.Namespace) -> int:
     try:
         from navil.llm.client import LLMClient
 
-        llm = LLMClient(max_tokens=4096, temperature=0.7)
+        provider = args.provider or os.environ.get("NAVIL_LLM_PROVIDER", "anthropic")
+        model = args.model or os.environ.get("NAVIL_LLM_MODEL") or None
+        base_url = os.environ.get("NAVIL_LLM_BASE_URL") or None
+        llm = LLMClient(
+            provider=provider, model=model, base_url=base_url, max_tokens=4096, temperature=0.7
+        )
     except Exception as exc:
         print(f"Error initializing LLM client: {exc}", file=sys.stderr)
         print("Install LLM dependencies: pip install navil[llm]", file=sys.stderr)
@@ -425,5 +430,18 @@ def register(subparsers: argparse._SubParsersAction, cli_class: type) -> None:
         "--dry-run",
         action="store_true",
         help="Generate hypotheses but don't fire them",
+    )
+    redteam_parser.add_argument(
+        "--provider",
+        default=None,
+        help=(
+            "LLM provider: anthropic, ollama, openai "
+            "(default: NAVIL_LLM_PROVIDER env var or 'anthropic')"
+        ),
+    )
+    redteam_parser.add_argument(
+        "--model",
+        default=None,
+        help="Model name override (default: NAVIL_LLM_MODEL env var or provider default)",
     )
     redteam_parser.set_defaults(func=lambda cli, args: _redteam_command(cli, args))
