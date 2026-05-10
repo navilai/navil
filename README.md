@@ -357,20 +357,18 @@ jobs:
       contents: read
     steps:
       - uses: actions/checkout@v4
-
-      - uses: navil/scan-action@v1
+      - uses: actions/setup-python@v5
         with:
-          config: mcp_config.json
-          fail-on: critical
-
-      - name: Upload SARIF results
+          python-version: "3.12"
+      - run: pip install navil
+      - run: navil scan mcp_config.json --format sarif --output navil-results.sarif
+      - uses: github/codeql-action/upload-sarif@v3
         if: always()
-        uses: github/codeql-action/upload-sarif@v3
         with:
           sarif_file: navil-results.sarif
 ```
 
-Scan results appear in the GitHub **Security** tab under **Code scanning alerts**. Every PR that touches an MCP config gets scanned automatically. Critical findings block the merge.
+Scan results appear in the GitHub **Security** tab under **Code scanning alerts**. Every PR that touches an MCP config gets scanned automatically.
 
 ### GitLab CI
 
